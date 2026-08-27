@@ -126,7 +126,7 @@ export default function FloodDistrictMap({ points = [], lang }: Props) {
         }
         if (n) {
           ctx.fillStyle = severe ? '#ffd9dd' : '#ffe6bf';
-          ctx.font = `${severe ? '600 ' : ''}11px ui-monospace, monospace`;
+          ctx.font = `${severe ? '600 ' : ''}11px "Geist Pixel"`;
           ctx.textAlign = 'center';
           ctx.fillText(lang === 'ne' ? f.properties.name_ne : f.properties.name_en, cx / n, cy / n);
         }

@@ -494,7 +494,7 @@ export default function NepalSignalsMap({ stories }: NepalSignalsMapProps) {
           ctx.beginPath(); ctx.strokeStyle = 'rgba(106,214,255,0.28)'; ctx.lineWidth = 5; ctx.arc(bx, by, r + 3, 0, Math.PI * 2); ctx.stroke();
         }
 
-        ctx.fillStyle = lightTheme ? '#19302d' : '#d9e7fb'; ctx.font = '10px "IBM Plex Mono",monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillStyle = lightTheme ? '#19302d' : '#d9e7fb'; ctx.font = '10px "Geist Pixel"'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText(String(count), bx, by);
 
         badgeHitsRef.current.push({ provinceCode: code, count, x: bx, y: by, radius: r + 5 });
@@ -505,7 +505,7 @@ export default function NepalSignalsMap({ stories }: NepalSignalsMapProps) {
     for (const prov of geoData.provinces) {
       const c = getCentroid(prov);
       if (!c) continue;
-      ctx.fillStyle = lightTheme ? 'rgba(35,65,60,0.88)' : 'rgba(230,238,250,0.88)'; ctx.font = '10px "IBM Plex Mono",monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = lightTheme ? 'rgba(35,65,60,0.88)' : 'rgba(230,238,250,0.88)'; ctx.font = '10px "Geist Pixel"'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillText(prov.name, c[0], c[1]);
     }
   };

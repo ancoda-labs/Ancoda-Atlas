@@ -1,8 +1,14 @@
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@font-face {
+  font-family: 'Geist Pixel';
+  src: url('/fonts/GeistPixel-Square.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
 
 :root {
   --bg:#f7f8f7;
@@ -16,8 +22,9 @@
   --accent2:#27728a;
   --warn:#a86a11;
   --danger:#b83d49;
-  --mono:'IBM Plex Mono',monospace;
-  --sans:'Space Grotesk',sans-serif;
+  --mono:'Geist Pixel';
+  --sans:'Geist Pixel';
+  --serif:'Geist Pixel';
 }
 
 body.dark-theme {
@@ -1271,7 +1278,6 @@ body.low-perf .logo-ring::before, body.low-perf .logo-ring::after, body.low-perf
   --amber:    #ffb020;
   --green:    #45c97c;
   --blue:     #6fb4e8;
-  --serif: ui-serif, Georgia, 'Iowan Old Style', 'Palatino Linotype', Palatino, serif;
 
   min-height: 100vh;
   background: var(--paper);

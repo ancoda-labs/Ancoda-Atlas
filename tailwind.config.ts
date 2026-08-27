@@ -21,8 +21,8 @@ const config: Config = {
         danger: '#ff5f63',
       },
       fontFamily: {
-        sans: ['"Space Grotesk"', 'sans-serif'],
-        mono: ['"IBM Plex Mono"', 'monospace'],
+        sans: ['"Geist Pixel"'],
+        mono: ['"Geist Pixel"'],
       },
     },
   },
