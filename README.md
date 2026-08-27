@@ -6,10 +6,9 @@
 
 An open-source project by [Ancoda Labs](https://github.com/ancodalabs).
 
-## [Visit The Live Site: atlas.live](https://www.atlas.live/)
+## [Visit Ancoda Labs](https://ancodalabs.com/)
 
-[![Live Website](https://img.shields.io/badge/live-atlas.live-00d4ff?style=for-the-badge)](https://www.atlas.live/)
-[![Open Demo](https://img.shields.io/badge/open-live%20dashboard-0b1220?style=for-the-badge&logo=googlechrome&logoColor=white)](https://www.atlas.live/)
+[![Ancoda Labs](https://img.shields.io/badge/Ancoda%20Labs-website-00d4ff?style=for-the-badge)](https://ancodalabs.com/)
 
 [![Node.js 22+](https://img.shields.io/badge/node-22%2B-brightgreen)](#quick-start)
 [![License: AGPL v3](https://img.shields.io/badge/license-AGPLv3-blue.svg)](LICENSE)
@@ -18,10 +17,12 @@ An open-source project by [Ancoda Labs](https://github.com/ancodalabs).
 [![Focus](https://img.shields.io/badge/focus-Nepal%20%F0%9F%87%B3%F0%9F%87%B5-dc143c)](#scope)
 [![Docker](https://img.shields.io/badge/docker-ready-blue?logo=docker)](#docker)
 
-**Enter The Signal Network**
+**Follow Ancoda Labs**
 
-[![Signal Wire](https://img.shields.io/badge/Signal%20Wire-%40atlasmonitor-111111?style=for-the-badge&logo=x&logoColor=white)](https://x.com/atlasmonitor)
-[![Ops Room](https://img.shields.io/badge/Ops%20Room-Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/ChVy7SF4)
+[![X](https://img.shields.io/badge/X-%40ancodalabs-111111?style=for-the-badge&logo=x&logoColor=white)](https://twitter.com/ancodalabs)
+[![Instagram](https://img.shields.io/badge/Instagram-%40ancodalabs-E4405F?style=for-the-badge&logo=instagram&logoColor=white)](https://www.instagram.com/ancodalabs)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Ancoda%20Labs-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/company/ancodalab/)
+[![Discord](https://img.shields.io/badge/Discord-Ancoda%20Labs-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/g9wZXVxTcx)
 
 </div>
 
