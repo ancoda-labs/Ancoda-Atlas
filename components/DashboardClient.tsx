@@ -122,6 +122,58 @@ const PRIORITY_TERMS = [
 ];
 const LOCAL_SOURCE_HINTS = ['kathmandu post', 'onlinekhabar', 'online khabar', 'the rising nepal', 'nepal news', 'setopati', 'ratopati', 'nepali times', 'khabarhub'];
 
+const DASHBOARD_COPY = {
+  overview: { en: 'Nepal hazard overview', ne: 'नेपाल विपद् अवलोकन' },
+  attention: { en: 'What needs attention today?', ne: 'आज के कुरामा ध्यान दिने?' },
+  intro: {
+    en: 'A plain-language view of earthquakes, rain, fires, air quality, and active response signals.',
+    ne: 'भूकम्प, वर्षा, आगलागी, वायु गुणस्तर र सक्रिय उद्धारसम्बन्धी सरल जानकारी।',
+  },
+  floodNews: { en: 'Bhotekoshi flood news', ne: 'भोटेकोशी बाढी समाचार' },
+  loadingNews: { en: 'Looking for the latest flood updates…', ne: 'पछिल्लो बाढी अपडेट खोजिँदैछ…' },
+  noFloodNews: { en: 'No Bhotekoshi flood updates in the current feed.', ne: 'हालको फिडमा भोटेकोशी बाढीसम्बन्धी अपडेट छैन।' },
+  liveUpdates: { en: 'Live updates', ne: 'प्रत्यक्ष अपडेट' },
+  liveFeed: { en: 'Live hazard feed', ne: 'प्रत्यक्ष विपद् फिड' },
+  showUpdates: { en: 'Show updates from', ne: 'अपडेटको समय' },
+  moreContext: { en: 'A little more context', ne: 'थप जानकारी' },
+  happening: { en: 'What else is happening?', ne: 'अरू के भइरहेको छ?' },
+  contextHint: { en: 'Simple summaries to help explain the map and live updates.', ne: 'नक्सा र प्रत्यक्ष अपडेट बुझ्न सहयोग गर्ने सरल सारांश।' },
+  earthquakes: { en: 'Earthquakes nearby', ne: 'नजिकका भूकम्प' },
+  noEarthquakes: { en: 'No significant earthquakes reported', ne: 'महत्त्वपूर्ण भूकम्पको सूचना छैन' },
+  earthquakeDetected: { en: 'Significant earthquake detected', ne: 'महत्त्वपूर्ण भूकम्प भेटियो' },
+  noRecent: { en: 'No recent events', ne: 'हालैका घटना छैनन्' },
+  rainRisk: { en: 'Rain and flood risk', ne: 'वर्षा र बाढीको जोखिम' },
+  noWeather: { en: 'No severe weather alerts', ne: 'गम्भीर मौसम चेतावनी छैन' },
+  wettest: { en: 'Where the most rain is expected', ne: 'सबैभन्दा बढी वर्षा हुने ठाउँ' },
+  wildfire: { en: 'Wildfire activity', ne: 'डढेलो गतिविधि' },
+  fireDisconnected: { en: 'Satellite fire data is not connected', ne: 'स्याटेलाइट आगलागी तथ्यांक जोडिएको छैन' },
+  fireDetections: { en: 'Total detections (48h)', ne: 'कुल पहिचान (४८ घण्टा)' },
+  overnight: { en: 'Overnight', ne: 'रातभरि' },
+  noFire: { en: 'No active fire detections', ne: 'सक्रिय आगलागी पहिचान छैन' },
+  airQuality: { en: 'Air quality', ne: 'वायु गुणस्तर' },
+  noAir: { en: 'No air quality data', ne: 'वायु गुणस्तरको तथ्यांक छैन' },
+  insights: { en: 'What the signals suggest', ne: 'संकेतहरूले के देखाउँछन्' },
+  awaiting: { en: 'Awaiting sweep data.', ne: 'तथ्यांकको प्रतीक्षा हुँदैछ।' },
+  glance: { en: 'At a glance', ne: 'एक नजरमा' },
+  response: { en: 'Current response', ne: 'हालको उद्धार' },
+  noDisasters: { en: 'No active declared disasters', ne: 'सक्रिय घोषित विपद् छैन' },
+  sources: { en: 'Data sources', ne: 'तथ्यांकका स्रोत' },
+  responseUnavailable: { en: 'Response information is temporarily unavailable', ne: 'उद्धारसम्बन्धी जानकारी अहिले उपलब्ध छैन' },
+  updatedLive: { en: 'UPDATED LIVE', ne: 'प्रत्यक्ष अपडेट' },
+  earthquakesToday: { en: 'Earthquakes today', ne: 'आजका भूकम्प' },
+  weatherAlerts: { en: 'Weather alerts', ne: 'मौसम चेतावनी' },
+  rainExpected: { en: 'Rain expected (5 days)', ne: 'अपेक्षित वर्षा (५ दिन)' },
+  activeResponses: { en: 'Active responses', ne: 'सक्रिय उद्धार' },
+  fetching: { en: 'Fetching the latest hazard updates…', ne: 'पछिल्ला विपद् अपडेट ल्याइँदैछ…' },
+  dictionary: { en: 'Nepal Hazard Dictionary', ne: 'नेपाल विपद् शब्दकोश' },
+  lexicon: { en: 'Atlas Hazard Lexicon', ne: 'एट्लस विपद् शब्दावली' },
+  guide: { en: 'Guide to natural-hazard triggers and severity thresholds', ne: 'प्राकृतिक विपद्का संकेत र गम्भीरता तहको मार्गदर्शन' },
+  meaning: { en: 'Meaning', ne: 'अर्थ' },
+  matters: { en: 'Why it matters', ne: 'किन महत्त्वपूर्ण छ' },
+  notProof: { en: 'Not proof of', ne: 'यसको प्रमाण होइन' },
+  example: { en: 'Example', ne: 'उदाहरण' },
+} as const;
+
 const SIGNAL_GUIDE_ITEMS = [
   {
     term: 'Magnitude and Depth',
@@ -273,6 +325,10 @@ function meterPercent(value: number, ceiling: number) {
   return Math.max(4, Math.min(100, Math.round((value / ceiling) * 100)));
 }
 
+function copy(key: keyof typeof DASHBOARD_COPY, language: 'en' | 'ne') {
+  return DASHBOARD_COPY[key][language];
+}
+
 export default function DashboardClient({ initialData }: DashboardClientProps) {
   const [D, setD] = useState(initialData);
   const meta = D.meta || {};
@@ -295,6 +351,8 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
   useEffect(() => {
     const cachedPerf = localStorage.getItem('atlas_low_perf') === 'true';
     const cachedTheme = localStorage.getItem('atlas_theme') === 'dark';
+    const cachedLanguage = localStorage.getItem('atlas_language');
+    if (cachedLanguage === 'en' || cachedLanguage === 'ne') setLanguage(cachedLanguage);
     setDarkTheme(cachedTheme);
     if (cachedPerf) {
       document.body.classList.add('low-perf');
@@ -383,6 +441,11 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
     document.body.classList.toggle('dark-theme', target);
   };
 
+  const changeLanguage = (next: 'en' | 'ne') => {
+    setLanguage(next);
+    localStorage.setItem('atlas_language', next);
+  };
+
   // Rule-based hazard read-out, shown when the LLM layer is off
   const buildInsights = () => {
     const lines: Array<{ tone: string; text: string }> = [];
@@ -466,6 +529,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
   const totalThermal = D.fire?.totalDetections || 0;
   const activeDisasters = D.relief?.disasters?.length || 0;
   const extremeAlerts = (wx.alerts || []).filter((a: WeatherAlert) => a.severity === 'extreme').length;
+  const floodTickerItems = (newsCache['flood-news']?.items || []).slice(0, 8);
   const impact = D.impact || { count: 0, topRegions: [] };
   const wettest = [...(wx.stations || [])].sort((a: WeatherStation, b: WeatherStation) => (b.rain5dMm || 0) - (a.rain5dMm || 0))[0];
 
@@ -491,10 +555,10 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
     : 'NO MAJOR SIGNALS';
 
   const signalCoreMetrics = [
-    { label: 'Earthquakes today', value: sq.events24h || 0, percent: meterPercent(sq.events24h || 0, 10) },
-    { label: 'Weather alerts', value: wx.totalAlerts || 0, percent: meterPercent(wx.totalAlerts || 0, 12) },
-    { label: 'Rain expected (5 days)', value: wettest?.rain5dMm ? Math.round(wettest.rain5dMm) : 0, percent: meterPercent(wettest?.rain5dMm || 0, 400) },
-    { label: 'Active responses', value: activeDisasters, percent: meterPercent(activeDisasters, 6) },
+    { label: copy('earthquakesToday', language), value: sq.events24h || 0, percent: meterPercent(sq.events24h || 0, 10) },
+    { label: copy('weatherAlerts', language), value: wx.totalAlerts || 0, percent: meterPercent(wx.totalAlerts || 0, 12) },
+    { label: copy('rainExpected', language), value: wettest?.rain5dMm ? Math.round(wettest.rain5dMm) : 0, percent: meterPercent(wettest?.rain5dMm || 0, 400) },
+    { label: copy('activeResponses', language), value: activeDisasters, percent: meterPercent(activeDisasters, 6) },
   ];
 
   if (booting) {
@@ -521,7 +585,9 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
           />
           <span className="regime-chip">
             <span className="blink" />
-            {regimeChip === 'BACKGROUND MONITORING' ? 'Routine monitoring' : regimeChip.replace('SIGNIFICANT SEISMIC EVENT', 'Significant earthquake').replace('DISASTER RESPONSE UNDER WAY', 'LIVE').replace('MONSOON HAZARD SEASON', 'Monsoon season').replace('WILDFIRE SEASON', 'Wildfire season')}
+            {language === 'ne'
+              ? regimeChip === 'BACKGROUND MONITORING' ? 'नियमित निगरानी' : regimeChip === 'DISASTER RESPONSE UNDER WAY' ? 'प्रत्यक्ष' : regimeChip === 'MONSOON HAZARD SEASON' ? 'मनसुनको समय' : regimeChip === 'WILDFIRE SEASON' ? 'डढेलोको समय' : 'महत्त्वपूर्ण भूकम्प'
+              : regimeChip === 'BACKGROUND MONITORING' ? 'Routine monitoring' : regimeChip.replace('SIGNIFICANT SEISMIC EVENT', 'Significant earthquake').replace('DISASTER RESPONSE UNDER WAY', 'LIVE').replace('MONSOON HAZARD SEASON', 'Monsoon season').replace('WILDFIRE SEASON', 'Wildfire season')}
           </span>
         </div>
         <div className="top-right">
@@ -537,8 +603,8 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
             </span>
           </button>
           <div className="language-toggle" role="group" aria-label="Language">
-            <button className={language === 'en' ? 'active' : ''} onClick={() => setLanguage('en')} aria-pressed={language === 'en'}>EN</button>
-            <button className={language === 'ne' ? 'active' : ''} onClick={() => setLanguage('ne')} aria-pressed={language === 'ne'}>ने</button>
+            <button className={language === 'en' ? 'active' : ''} onClick={() => changeLanguage('en')} aria-pressed={language === 'en'}>EN</button>
+            <button className={language === 'ne' ? 'active' : ''} onClick={() => changeLanguage('ne')} aria-pressed={language === 'ne'}>ने</button>
           </div>
           <span className="meta-pill" suppressHydrationWarning>
             Updated in <span className="v">{((meta.totalDurationMs || 0) / 1000).toFixed(1)}s</span>
@@ -553,12 +619,27 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
         </div>
       </div>
 
+      <section className="flood-news-ticker" aria-label={copy('floodNews', language)}>
+        <span className="flood-news-label"><span className="blink" />{copy('floodNews', language)}</span>
+        <div className="flood-news-track">
+          {floodTickerItems.length > 0 ? (
+            [...floodTickerItems, ...floodTickerItems].map((item, index) => (
+              <a key={`${item.link}-${index}`} href={item.link} target="_blank" rel="noopener noreferrer">
+                {cleanText(item.title)} <span>· {item.source}</span>
+              </a>
+            ))
+          ) : (
+            <span>{newsCache['flood-news']?.status === 'loading' ? copy('loadingNews', language) : copy('noFloodNews', language)}</span>
+          )}
+        </div>
+      </section>
+
       <section className="dashboard-intro" aria-labelledby="dashboard-title">
         <div>
-          <p className="eyebrow">Nepal hazard overview</p>
-          <h1 id="dashboard-title">What needs attention today?</h1>
+          <p className="eyebrow">{copy('overview', language)}</p>
+          <h1 id="dashboard-title">{copy('attention', language)}</h1>
           <p className="intro-copy">
-            A plain-language view of earthquakes, rain, fires, air quality, and active response signals.
+            {copy('intro', language)}
           </p>
         </div>
         <BhotekoshiFloodButton />
@@ -572,15 +653,15 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
           <div className="live-feed-panel g-panel">
             <div className="sec-head">
               <div>
-                <p className="eyebrow">Live updates</p>
-                <h3>Live hazard feed</h3>
+                <p className="eyebrow">{copy('liveUpdates', language)}</p>
+                <h3>{copy('liveFeed', language)}</h3>
               </div>
               <span className="badge">
                 {(newsCache['live-hazard']?.items || []).length} ITEMS
               </span>
             </div>
             <div className="news-window-bar">
-              <span>Show updates from</span>
+              <span>{copy('showUpdates', language)}</span>
               {['6h', '24h', '48h', '7d'].map((w) => (
                 <button key={w} className={`win-btn ${w === newsWindow ? 'active' : ''}`} onClick={() => setNewsWindow(w)}>
                   {w.toUpperCase()}
@@ -589,7 +670,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
             </div>
             <div className="news-list" suppressHydrationWarning>
               {(newsCache['live-hazard']?.items || []).length === 0 ? (
-                <div className="news-empty">Fetching the latest hazard updates…</div>
+                <div className="news-empty">{copy('fetching', language)}</div>
               ) : (
                 (newsCache['live-hazard']?.items || []).slice(0, 8).map((item, idx) => {
                   const isClickable = !!item.link;
@@ -619,10 +700,10 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
       <section className="supporting-section" aria-labelledby="supporting-title">
         <div className="supporting-heading">
           <div>
-            <p className="eyebrow">A little more context</p>
-            <h2 id="supporting-title">What else is happening?</h2>
+            <p className="eyebrow">{copy('moreContext', language)}</p>
+            <h2 id="supporting-title">{copy('happening', language)}</h2>
           </div>
-          <p>Simple summaries to help explain the map and live updates.</p>
+          <p>{copy('contextHint', language)}</p>
         </div>
 
         {/* Main Grid */}
@@ -632,18 +713,18 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
           {/* Seismic Panel */}
           <div className="g-panel">
             <div className="sec-head">
-              <h3>Earthquakes nearby</h3>
+              <h3>{copy('earthquakes', language)}</h3>
               <span className="badge">USGS</span>
             </div>
             <div className="nuke-ok">
               {(sq.maxMagnitude || 0) < 4.5 ? (
-                <>&#9679; No significant earthquakes reported</>
+                <>&#9679; {copy('noEarthquakes', language)}</>
               ) : (
-                <>&#9888; Significant earthquake detected</>
+                <>&#9888; {copy('earthquakeDetected', language)}</>
               )}
             </div>
             {(sq.recent || []).length === 0 && (
-              <div className="font-mono text-[10px] text-dim">No recent events</div>
+              <div className="font-mono text-[10px] text-dim">{copy('noRecent', language)}</div>
             )}
             {(sq.recent || []).slice(0, 6).map((q: Earthquake, i: number) => (
               <div className="site-row" key={i}>
@@ -666,7 +747,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
           {/* Rainfall & Flood Panel */}
           <div className="g-panel">
             <div className="sec-head">
-              <h3>Rain and flood risk</h3>
+              <h3>{copy('rainRisk', language)}</h3>
               <span className="badge">{wx.monsoonSeason ? 'MONSOON' : 'OPEN-METEO'}</span>
             </div>
             {(wx.alerts || []).length > 0 ? (
@@ -682,9 +763,9 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                 </div>
               ))
             ) : (
-              <div className="font-mono text-[10px] text-dim">NO SEVERE WEATHER ALERTS</div>
+              <div className="font-mono text-[10px] text-dim">{copy('noWeather', language)}</div>
             )}
-            <div className="nml-market-subtitle">Where the most rain is expected</div>
+            <div className="nml-market-subtitle">{copy('wettest', language)}</div>
             {[...(wx.stations || [])]
               .sort((a: WeatherStation, b: WeatherStation) => (b.rain5dMm || 0) - (a.rain5dMm || 0))
               .slice(0, 5)
@@ -711,21 +792,21 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
           {/* Wildfire Panel */}
           <div className="g-panel">
             <div className="sec-head">
-              <h3>Wildfire activity</h3>
+              <h3>{copy('wildfire', language)}</h3>
               <span className="badge">NASA FIRMS</span>
             </div>
             {D.fire?.status === 'no_key' ? (
               <div className="font-mono text-[10px] text-dim">
-                Satellite fire data is not connected
+                {copy('fireDisconnected', language)}
               </div>
             ) : (D.fire?.regions || []).length > 0 ? (
               <>
                 <div className="econ-row">
-                  <span className="elabel">Total detections (48h)</span>
+                  <span className="elabel">{copy('fireDetections', language)}</span>
                   <span className="eval text-accent">{formatNumber(totalThermal)}</span>
                 </div>
                 <div className="econ-row">
-                  <span className="elabel">Overnight</span>
+                  <span className="elabel">{copy('overnight', language)}</span>
                   <span className="eval" style={{ color: (D.fire?.nightDetections || 0) > 20 ? 'var(--warn)' : 'var(--accent)' }}>
                     {formatNumber(D.fire?.nightDetections || 0)}
                   </span>
@@ -741,14 +822,14 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                   ))}
               </>
             ) : (
-              <div className="font-mono text-[10px] text-dim">No active fire detections</div>
+              <div className="font-mono text-[10px] text-dim">{copy('noFire', language)}</div>
             )}
           </div>
 
           {/* Air Quality Panel */}
           <div className="g-panel">
             <div className="sec-head">
-              <h3>Air quality</h3>
+              <h3>{copy('airQuality', language)}</h3>
               <span className="badge">PM2.5</span>
             </div>
             {(D.airQuality?.stations || []).length > 0 ? (
@@ -762,7 +843,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                 </div>
               ))
             ) : (
-              <div className="font-mono text-[10px] text-dim">No air quality data</div>
+              <div className="font-mono text-[10px] text-dim">{copy('noAir', language)}</div>
             )}
           </div>
         </div>
@@ -775,7 +856,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
           {/* Hazard Reads */}
           <div className="g-panel right-insights">
             <div className="sec-head">
-              <h3>What the signals suggest</h3>
+              <h3>{copy('insights', language)}</h3>
               <span className="badge">{D.ideasSource === 'llm' ? 'LLM' : 'SYNTHESIZED'}</span>
               </div>
             <div>
@@ -796,7 +877,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                   ))}
                 </ul>
               ) : (
-                <div className="news-empty">Awaiting sweep data.</div>
+                <div className="news-empty">{copy('awaiting', language)}</div>
               )}
             </div>
           </div>
@@ -804,8 +885,8 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
           {/* Signal Core */}
           <div className="g-panel right-core">
             <div className="sec-head">
-              <h3>At a glance</h3>
-              <span className="badge">UPDATED LIVE</span>
+              <h3>{copy('glance', language)}</h3>
+              <span className="badge">{copy('updatedLive', language)}</span>
             </div>
             {signalCoreMetrics.map((sm, i) => (
               <div className="sm" key={i}>
@@ -821,12 +902,12 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
           {/* Active Response */}
           <div className="g-panel">
             <div className="sec-head">
-              <h3>Current response</h3>
+              <h3>{copy('response', language)}</h3>
               <span className="badge">RELIEFWEB</span>
             </div>
             {D.relief?.error ? (
               <div className="font-mono text-[10px] text-dim">
-                Response information is temporarily unavailable
+                {copy('responseUnavailable', language)}
               </div>
             ) : (D.relief?.disasters || []).length > 0 ? (
               (D.relief.disasters || []).slice(0, 5).map((d: ReliefDisaster, i: number) => (
@@ -836,7 +917,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                 </div>
               ))
             ) : (
-              <div className="font-mono text-[10px] text-dim">No active declared disasters</div>
+              <div className="font-mono text-[10px] text-dim">{copy('noDisasters', language)}</div>
             )}
             {(D.relief?.reports || []).slice(0, 4).map((r: ReliefReport, i: number) => (
               <div
@@ -854,7 +935,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
           {/* Source Health */}
           <div className="g-panel right-sources">
             <div className="sec-head">
-              <h3>Data sources</h3>
+              <h3>{copy('sources', language)}</h3>
               <span className="badge">
                 {meta.sourcesOk || 0}/{meta.sourcesQueried || 5}
               </span>
@@ -884,9 +965,9 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
         <div className="glossary-panel">
           <div className="glossary-head">
             <div>
-              <div className="glossary-kicker">Nepal Hazard Dictionary</div>
-              <div className="glossary-title">Atlas Hazard Lexicon</div>
-              <div className="glossary-sub">Guide to natural-hazard triggers and severity thresholds</div>
+              <div className="glossary-kicker">{copy('dictionary', language)}</div>
+              <div className="glossary-title">{copy('lexicon', language)}</div>
+              <div className="glossary-sub">{copy('guide', language)}</div>
             </div>
             <button className="glossary-close" onClick={() => setGlossaryOpen(false)}>
               &times;
@@ -900,20 +981,20 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                   <span className="glossary-tag">{item.category}</span>
                 </div>
                 <div className="glossary-line">
-                  <span className="glossary-label">Meaning</span>
+                  <span className="glossary-label">{copy('meaning', language)}</span>
                   {item.meaning}
                 </div>
                 <div className="glossary-line">
-                  <span className="glossary-label">Why it matters</span>
+                  <span className="glossary-label">{copy('matters', language)}</span>
                   {item.matters}
                 </div>
                 <div className="glossary-line">
-                  <span className="glossary-label">Not proof of</span>
+                  <span className="glossary-label">{copy('notProof', language)}</span>
                   {item.notMeaning}
                 </div>
                 {item.example && (
                   <div className="glossary-line text-[10px] text-[#81d4fa]">
-                    <span className="glossary-label">Example</span>
+                    <span className="glossary-label">{copy('example', language)}</span>
                     {item.example}
                   </div>
                 )}

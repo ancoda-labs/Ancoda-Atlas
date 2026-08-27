@@ -154,6 +154,16 @@ export default function BhotekoshiFloodView() {
   const [news, setNews] = useState<NewsItem[] | null>(null);
   const [qrOpen, setQrOpen] = useState<{ src: string; payee: string } | null>(null);
 
+  useEffect(() => {
+    const saved = localStorage.getItem('atlas_language');
+    if (saved === 'ne' || saved === 'en') setLang(saved);
+  }, []);
+
+  const setLanguage = (next: Lang) => {
+    setLang(next);
+    localStorage.setItem('atlas_language', next);
+  };
+
   const load = useCallback(async () => {
     try {
       const res = await fetch('/api/flood');
@@ -265,8 +275,8 @@ export default function BhotekoshiFloodView() {
           <div className="fl-mast-top">
             <Link href="/">&larr; {t('back', lang)}</Link>
             <div className="fl-lang">
-              <button className={lang === 'en' ? 'on' : ''} onClick={() => setLang('en')}>English</button>
-              <button className={lang === 'ne' ? 'on' : ''} onClick={() => setLang('ne')}>नेपाली</button>
+              <button className={lang === 'en' ? 'on' : ''} onClick={() => setLanguage('en')}>English</button>
+              <button className={lang === 'ne' ? 'on' : ''} onClick={() => setLanguage('ne')}>नेपाली</button>
             </div>
           </div>
           <p className="fl-eyebrow">{site ? L(site, 'kicker') : ''}</p>
