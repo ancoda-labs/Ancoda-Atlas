@@ -2,7 +2,7 @@
 
 # Every path requires review from the maintainers team.
 
-- @ancodalabs
+- @ancoda-labs
 
 # Anything touching licensing, provenance or the relief-fund content needs a
 
@@ -10,8 +10,8 @@
 
 # are giving money during a disaster, and licensing affects every downstream user.
 
-/LICENSE @ancodalabs
-/NOTICE @ancodalabs
-/CONTRIBUTING.md @ancodalabs
-/SECURITY.md @ancodalabs
-/content/ @ancodalabs
+/LICENSE @ancoda-labs
+/NOTICE @ancoda-labs
+/CONTRIBUTING.md @ancoda-labs
+/SECURITY.md @ancoda-labs
+/content/ @ancoda-labs
