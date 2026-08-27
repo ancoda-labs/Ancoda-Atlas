@@ -1,0 +1,17 @@
+# Ancoda Atlas is stewarded by Ancoda Labs.
+
+# Every path requires review from the maintainers team.
+
+- @ancodalabs
+
+# Anything touching licensing, provenance or the relief-fund content needs a
+
+# maintainer specifically: donation links and account numbers reach people who
+
+# are giving money during a disaster, and licensing affects every downstream user.
+
+/LICENSE @ancodalabs
+/NOTICE @ancodalabs
+/CONTRIBUTING.md @ancodalabs
+/SECURITY.md @ancodalabs
+/content/ @ancodalabs

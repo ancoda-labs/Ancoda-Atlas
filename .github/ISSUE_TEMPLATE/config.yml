@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Security report
+    url: mailto:research@ancodalabs.com
+    about: Report security issues privately instead of opening a public issue.
+  - name: Report a problem with a relief fund or helpline
+    url: mailto:research@ancodalabs.com
+    about: Wrong account number, dead donation link, or a fund that should not be listed. Treated as urgent.
+  - name: Contributing guide
+    url: https://github.com/ancodalabs/atlas/blob/main/CONTRIBUTING.md
+    about: Scope rules, how to add a hazard source, and how contributions are licensed.

@@ -1,0 +1,5 @@
+#!/bin/sh
+set -eu
+
+echo "Running TypeScript and production-build checks..."
+npm run verify
