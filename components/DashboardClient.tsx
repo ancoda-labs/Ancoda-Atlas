@@ -512,7 +512,13 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
       {/* Topbar */}
       <div className="topbar">
         <div className="top-left">
-          <span className="brand">ANCODA ATLAS</span>
+          <img
+            className="brand-logo"
+            src={darkTheme ? '/images/atlas-white.png' : '/images/atlas-black.png'}
+            alt="ANCODA ATLAS"
+            width={120}
+            height={43}
+          />
           <span className="regime-chip">
             <span className="blink" />
             {regimeChip === 'BACKGROUND MONITORING' ? 'Routine monitoring' : regimeChip.replace('SIGNIFICANT SEISMIC EVENT', 'Significant earthquake').replace('DISASTER RESPONSE UNDER WAY', 'LIVE').replace('MONSOON HAZARD SEASON', 'Monsoon season').replace('WILDFIRE SEASON', 'Wildfire season')}

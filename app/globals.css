@@ -196,6 +196,13 @@ body {
   text-transform: uppercase;
 }
 
+.brand-logo {
+  display: block;
+  width: 120px;
+  height: auto;
+  object-fit: contain;
+}
+
 .regime-chip {
   display: inline-flex;
   align-items: center;
