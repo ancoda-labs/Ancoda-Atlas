@@ -23,19 +23,6 @@ An open-source project by [Ancoda Labs](https://github.com/ancodalabs).
 [![Signal Wire](https://img.shields.io/badge/Signal%20Wire-%40atlasmonitor-111111?style=for-the-badge&logo=x&logoColor=white)](https://x.com/atlasmonitor)
 [![Ops Room](https://img.shields.io/badge/Ops%20Room-Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/ChVy7SF4)
 
-![Atlas Dashboard](docs/dashboard.png)
-
-<details>
-<summary>More screenshots</summary>
-
-| Nepal Map | Dashboard |
-|:---:|:---:|
-| ![Map](docs/map.png) | ![Dashboard](docs/dashboard.png) |
-
-> Screenshots predate the disaster-only rebuild and still show panels that no longer exist.
-
-</details>
-
 </div>
 
 > [!IMPORTANT]
@@ -110,14 +97,38 @@ Run `npm run diag` if something fails to start; it checks your Node version, imp
 
 ### Docker
 
+Docker is the recommended way to run the production build. Docker Compose
+loads configuration from `.env` and persists sweep data in the local `runs/`
+directory.
+
 ```bash
-git clone https://github.com/ancodalabs/atlas.git
-cd atlas
-cp .env.example .env    # add your API keys
-docker compose up -d
+# From the repository root:
+cp .env.example .env
+# Edit .env and add optional API keys, if available.
+docker compose up --build -d
 ```
 
-Dashboard at `http://localhost:3117`. Sweep data persists in `./runs/` via volume mount.
+The dashboard is available at `http://localhost:3117`. The container exposes
+the port configured by `PORT` in `.env` and persists `runs/latest.json`,
+`runs/dashboard.json`, and sweep memory through the `./runs:/app/runs` volume.
+
+```bash
+# Follow application logs
+docker compose logs -f atlas
+
+# Check container health and status
+docker compose ps
+
+# Stop the service (keeps ./runs/)
+docker compose down
+```
+
+To use another host port, set `PORT` in `.env` before starting Compose. The
+same value is used inside and outside the container.
+
+The image build installs all platform-specific optional dependencies required by
+Next.js and skips local Git hooks, which are only configured on developer
+machines by `npm install`.
 
 ---
 
@@ -209,7 +220,9 @@ Mirrors the Telegram bot with Discord-native slash commands (`/status`, `/sweep`
 
 **Webhook fallback:** set `DISCORD_WEBHOOK_URL` instead of a bot token for one-way alerts with zero extra dependencies.
 
-**Optional dependency:** the full bot needs `discord.js` (`npm install discord.js`). Without it Atlas falls back to webhook-only mode.
+**Optional dependency:** the full bot uses `discord.js`, which is installed
+automatically by `npm install` and in the Docker image. Without it Atlas falls
+back to webhook-only mode.
 
 ### Optional LLM Layer
 
@@ -278,7 +291,7 @@ For Codex, run `npx @openai/codex login` to authenticate via your ChatGPT subscr
 3. Under **Privileged Gateway Intents**, enable **Message Content Intent**
 4. **OAuth2** → **URL Generator** → scopes `bot` + `applications.commands`, permissions `Send Messages` + `Embed Links`
 5. Open the generated URL to invite the bot
-6. `npm install discord.js`
+6. `discord.js` is installed with the project dependencies.
 
 ### Without Any Keys
 
@@ -302,7 +315,6 @@ atlas/
 │
 ├── components/
 │   ├── DashboardClient.tsx    # View switch + the full monitoring terminal
-│   ├── SimpleView.tsx         # Plain-language homepage (the default)
 │   ├── NepalSignalsMap.tsx    # D3 province map, canvas-rendered
 │   ├── BhotekoshiFloodView.tsx # The flood response page
 │   └── FloodDistrictMap.tsx   # Affected-district map with the flood path

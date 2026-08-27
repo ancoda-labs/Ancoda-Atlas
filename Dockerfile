@@ -4,7 +4,8 @@ WORKDIR /app
 
 # Copy package files first for better layer caching
 COPY package*.json ./
-RUN npm ci --omit=optional || npm install --omit=optional
+# Git hooks are for local development, not production images.
+RUN npm ci --ignore-scripts
 
 # Copy source
 COPY . .

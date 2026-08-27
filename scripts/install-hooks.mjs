@@ -8,7 +8,7 @@ try {
   });
   console.log('Git hooks configured: .githooks/');
 } catch (error) {
-  if (error?.status !== 128) {
+  if (error?.code !== 'ENOENT' && error?.status !== 128) {
     throw error;
   }
 }
