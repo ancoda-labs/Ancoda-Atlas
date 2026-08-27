@@ -1,0 +1,27 @@
+{
+  "id": "what-happened",
+  "last_updated": "2026-08-27",
+  "headline_en": "What happened",
+  "headline_ne": "के भयो",
+  "body_en": [
+    "Severe flooding struck the Bhotekoshi river valley and downstream districts in central Nepal in late August 2026, destroying bridges, roads and border infrastructure and displacing thousands of households.",
+    "Early reporting attributes the flood to an ice avalanche or glacial lake outburst on the Tibetan side of the border, which occurred at close to the same time as a magnitude 4.4 earthquake. As of 27 August 2026, officials had not established a definitive cause, and a man-made dam failure had not been confirmed.",
+    "We report the cause only as far as sources currently support it. Follow the linked reporting below for the latest, and treat any claim of a settled cause with caution."
+  ],
+  "body_ne": [
+    "२०२६ अगस्टको अन्त्यतिर मध्य नेपालको भोटेकोशी नदी उपत्यका र तल्लो तटीय जिल्लाहरूमा ठूलो बाढी आयो, जसले पुल, सडक तथा सीमा क्षेत्रका संरचना नष्ट गर्दै हजारौं परिवारलाई विस्थापित बनायो।",
+    "प्रारम्भिक समाचारहरूका अनुसार यो बाढी सीमापारि तिब्बततर्फ गएको हिउँ पहिरो वा हिमताल विस्फोटका कारण भएको हुन सक्ने अनुमान छ, जुन ४.४ म्याग्निच्युडको भूकम्पसँगै लगभग एकैसमयमा भएको थियो। २०२६ अगस्ट २७ सम्म अधिकारीहरूले निश्चित कारण यकिन गरिसकेका थिएनन्, र मानवनिर्मित बाँध भत्किएको पुष्टि भएको छैन।",
+    "हामी स्रोतले पुष्टि गरेसम्मको कुरा मात्र उल्लेख गर्छौं। पछिल्लो जानकारीका लागि तलका समाचार लिंकहरू हेर्नुहोस्, र कारण निश्चित भइसकेको भन्ने दाबीलाई सावधानीपूर्वक लिनुहोस्।"
+  ],
+  "sources": [
+    {
+      "label": "Kathmandu Post — How people can help Nepal's flood-affected communities (27 Aug 2026)",
+      "url": "https://kathmandupost.com/national/2026/08/27/how-people-can-help-nepal-s-flood-affected-communities"
+    },
+    {
+      "label": "ReliefWeb — Nepal situation reports (UN OCHA)",
+      "url": "https://reliefweb.int/"
+    }
+  ],
+  "translation_status": "pending_native_review"
+}

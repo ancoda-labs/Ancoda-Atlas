@@ -1,0 +1,111 @@
+{
+  "id": "bank-accounts",
+  "last_verified": "2026-08-27",
+  "verification": {
+    "fund_names": "verified",
+    "qr_codes": "verified_by_decode",
+    "account_numbers": "unverified_against_primary",
+    "note_en": "Fund names were verified against the Prime Minister's Office appeal (archived copy, 27 Aug 2026). Every QR shown was decoded and confirms a Government of Nepal relief fund as the payee. The account numbers below could NOT be checked against a primary government source — opmcm.gov.np was unreachable and its appeal page does not publish them. Re-verify with the bank or an official notice before relying on a typed account number.",
+    "note_ne": "कोषका नाम प्रधानमन्त्री तथा मन्त्रिपरिषद्को कार्यालयको अपिल (अभिलेख प्रति, २०२६ अगस्ट २७) सँग भिडाइएको हो। देखाइएका सबै QR डिकोड गरी नेपाल सरकारको राहत कोष नै भुक्तानी पाउने पक्ष हो भन्ने पुष्टि गरिएको छ। तर तलका खाता नम्बरहरू सरकारी प्राथमिक स्रोतबाट पुष्टि गर्न सकिएको छैन — opmcm.gov.np पहुँचयोग्य थिएन र अपिल पृष्ठमा ती प्रकाशित छैनन्। खाता नम्बर टाइप गरेर पठाउनुअघि बैंक वा आधिकारिक सूचनाबाट पुनः पुष्टि गर्नुहोस्।",
+    "source_url": "http://web.archive.org/web/20260827071506/https://opmcm.gov.np/content/586/heartfelt-appeal/",
+    "compiled_from": "https://nirajbhusal.github.io/rasuwa-flood-bulletin/"
+  },
+  "funds": [
+    {
+      "id": "disaster-relief",
+      "name_en": "Prime Minister's Disaster Relief Fund",
+      "name_ne": "प्रधानमन्त्री दैवी प्रकोप उद्धार कोष",
+      "banks": [
+        {
+          "id": "rbb",
+          "name_en": "Rastriya Banijya Bank",
+          "name_ne": "राष्ट्रिय वाणिज्य बैंक",
+          "accounts": ["1130100003762001", "1130100000006006"],
+          "swift": "RBBANPKA",
+          "qr": "/qr/qr-rbb-disaster.png",
+          "qr_payee": "PM DAIBI PRAKOP UDDHAR KOSH"
+        },
+        {
+          "id": "nbl",
+          "name_en": "Nepal Bank Limited",
+          "name_ne": "नेपाल बैंक लिमिटेड",
+          "accounts": ["00211600510039000003", "00200100510039000001"],
+          "swift": "NEBLNPKA",
+          "qr": "/qr/qr-nbl-disaster.png",
+          "qr_payee": "PRIME MINISTER DISASTER RELIEF FUND"
+        },
+        {
+          "id": "adbl",
+          "name_en": "Agricultural Development Bank Ltd.",
+          "name_ne": "कृषि विकास बैंक लिमिटेड",
+          "accounts": ["0100201002907014"],
+          "swift": "ADBLNPKA",
+          "qr": null,
+          "qr_note_en": "The published QR image for this bank is truncated and cannot be scanned, so it is not shown. Use the account number or another bank.",
+          "qr_note_ne": "यस बैंकको प्रकाशित QR तस्बिर अपूर्ण भएकाले स्क्यान हुँदैन, त्यसैले देखाइएको छैन। खाता नम्बर वा अर्को बैंक प्रयोग गर्नुहोस्।"
+        },
+        {
+          "id": "ebl",
+          "name_en": "Everest Bank Limited",
+          "name_ne": "एभरेष्ट बैंक लिमिटेड",
+          "accounts": ["00100105200270", "00101102200012"],
+          "swift": "EVBLNPKA",
+          "qr": "/qr/qr-ebl-disaster.png",
+          "qr_payee": "PRIME MINISTERS DISASTER RELIEF FUND"
+        },
+        {
+          "id": "gibl",
+          "name_en": "Global IME Bank Ltd.",
+          "name_ne": "ग्लोबल आइएमई बैंक लिमिटेड",
+          "accounts": ["00401010000057", "00411010000005"],
+          "swift": "GLBBNPKA",
+          "qr": "/qr/qr-gibl-disaster.png",
+          "qr_payee": "PRIME MINISTER DISASTER RELIEF FUND"
+        },
+        {
+          "id": "nabil",
+          "name_en": "Nabil Bank",
+          "name_ne": "नबिल बैंक",
+          "accounts": ["1710017505285"],
+          "swift": "NARBNPKA",
+          "qr": "/qr/qr-nabil-disaster.png",
+          "qr_payee": "PRIME MINISTER DISASTER RELIEF FUND"
+        },
+        {
+          "id": "scb",
+          "name_en": "Standard Chartered Bank Nepal Ltd.",
+          "name_ne": "स्ट्यान्डर्ड चार्टर्ड बैंक नेपाल लिमिटेड",
+          "accounts": ["01013243801", "02013243801"],
+          "swift": "SCBLNPKA",
+          "qr": "/qr/qr-scb-disaster.png",
+          "qr_payee": "DISASTER RELIEF FUND"
+        },
+        {
+          "id": "himalayan",
+          "name_en": "Himalayan Bank Limited",
+          "name_ne": "हिमालयन बैंक लिमिटेड",
+          "accounts": ["01905631210046"],
+          "swift": "HIMANPKA",
+          "currency": "USD",
+          "qr": null
+        }
+      ]
+    },
+    {
+      "id": "pm-relief",
+      "name_en": "Prime Minister's Relief Fund",
+      "name_ne": "प्रधानमन्त्री राहत कोष",
+      "banks": [
+        {
+          "id": "rbb-relief",
+          "name_en": "Rastriya Banijya Bank",
+          "name_ne": "राष्ट्रिय वाणिज्य बैंक",
+          "accounts": ["1430100000025006", "1430100001164001"],
+          "swift": "RBBANPKA",
+          "qr": "/qr/qr-rbb-relief.png",
+          "qr_payee": "PRADHAN-MANTRI RAHAT KOSH"
+        }
+      ]
+    }
+  ]
+}

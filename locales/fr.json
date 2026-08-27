@@ -1,0 +1,115 @@
+{
+  "meta": {
+    "code": "fr",
+    "name": "French",
+    "nativeName": "Français"
+  },
+  "dashboard": {
+    "visuals": "VISUELS",
+    "visualsLite": "ALLÉGÉ",
+    "visualsFull": "COMPLET",
+    "sweep": "BALAYAGE",
+    "sources": "SOURCES",
+    "delta": "DELTA",
+    "worsening": "AGGRAVATION",
+    "easing": "ACCALMIE",
+    "mixed": "MIXTE",
+    "guideBtn": "Signification des signaux",
+    "alertCritical": "CRITIQUE",
+    "alertElevated": "ÉLEVÉ",
+    "alertNominal": "NOMINAL",
+    "terminalActive": "TERMINAL ACTIF"
+  },
+  "regime": {
+    "seismicEvent": "ÉVÉNEMENT SISMIQUE MAJEUR",
+    "monsoon": "SAISON DE LA MOUSSON",
+    "wildfire": "SAISON DES FEUX DE FORÊT",
+    "background": "SURVEILLANCE DE FOND"
+  },
+  "seismic": {
+    "noEvents": "AUCUN ÉVÉNEMENT ENREGISTRÉ",
+    "background": "ACTIVITÉ DE FOND",
+    "significant": "ÉVÉNEMENT SIGNIFICATIF"
+  },
+  "panels": {
+    "seismicWatch": "Veille sismique",
+    "rainFlood": "Veille pluie et crues",
+    "wildfire": "Détection des incendies",
+    "airQuality": "Qualité de l'air",
+    "hazardReads": "Lectures des aléas",
+    "hazardCore": "Noyau des aléas",
+    "activeResponse": "Réponse en cours",
+    "sourceHealth": "État des sources",
+    "liveHazard": "Flux des aléas en direct",
+    "earthquakeNews": "Actualité sismique",
+    "floodNews": "Crues et glissements",
+    "weatherNews": "Alertes météo",
+    "wildfireNews": "Feux de forêt",
+    "airQualityNews": "Qualité de l'air",
+    "climateNews": "Glaciers et aléas climatiques",
+    "reliefNews": "Secours et réponse"
+  },
+  "badges": {
+    "usgs": "USGS",
+    "openMeteo": "OPEN-METEO",
+    "monsoon": "MOUSSON",
+    "firms": "NASA FIRMS",
+    "pm25": "PM2.5",
+    "reliefweb": "RELIEFWEB",
+    "loading": "CHARGEMENT",
+    "offline": "HORS LIGNE",
+    "stale": "OBSOLÈTE",
+    "items": "ÉLÉMENTS",
+    "synthesized": "SYNTHÉTISÉ",
+    "llm": "LLM",
+    "liveMetrics": "MÉTRIQUES EN DIRECT"
+  },
+  "metrics": {
+    "quakes7d": "Séismes (7 j)",
+    "quakes24h": "Séismes (24 h)",
+    "weatherAlerts": "Alertes météo",
+    "peakRain5d": "Pluie max. 5 j (mm)",
+    "fireDetections": "Détections d'incendie",
+    "peakAqi": "IQA max.",
+    "activeDisasters": "Catastrophes actives"
+  },
+  "empty": {
+    "airQuality": "AUCUNE DONNÉE DE QUALITÉ DE L'AIR",
+    "weatherAlerts": "AUCUNE ALERTE MÉTÉO SÉVÈRE",
+    "fireDetections": "AUCUNE DÉTECTION D'INCENDIE ACTIVE",
+    "firmsNoKey": "DÉFINIR FIRMS_MAP_KEY POUR LA DÉTECTION SATELLITE",
+    "activeDisasters": "AUCUNE CATASTROPHE DÉCLARÉE ACTIVE",
+    "reliefwebDown": "RELIEFWEB INDISPONIBLE — DÉFINIR RELIEFWEB_APPNAME"
+  },
+  "map": {
+    "seismic": "Sismique",
+    "flood": "Crue",
+    "landslide": "Glissement",
+    "fire": "Incendie",
+    "weather": "Météo",
+    "cryosphere": "Glacier",
+    "airQuality": "Qualité de l'air",
+    "response": "Réponse",
+    "hazard": "Aléa"
+  },
+  "news": {
+    "loading": "Récupération des flux d'aléas…",
+    "unavailable": "Flux indisponible — nouvelle tentative",
+    "window": "Fenêtre"
+  },
+  "insights": {
+    "waiting": "En attente des données de balayage."
+  },
+  "boot": {
+    "initializing": "INITIALISATION D'ANCODA ATLAS v4.0.0",
+    "connecting": "CONNEXION À {count} SOURCES D'ALÉAS...",
+    "sourceGroup1": "USGS SISMIQUE · OPEN-METEO MÉTÉO",
+    "sourceGroup2": "NASA FIRMS · OPEN-METEO QUALITÉ DE L'AIR",
+    "sourceGroup3": "RELIEFWEB (UN OCHA)",
+    "sweepComplete": "BALAYAGE TERMINÉ — {ok}/{total} SOURCES OK",
+    "seismicLayer": "COUCHE SISMIQUE",
+    "hydroMetLayer": "COUCHE HYDROMÉTÉO",
+    "hazardSynthesis": "SYNTHÈSE DES ALÉAS",
+    "active": "ACTIF"
+  }
+}

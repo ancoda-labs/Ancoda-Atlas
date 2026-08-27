@@ -1,0 +1,115 @@
+{
+  "meta": {
+    "code": "ne",
+    "name": "Nepali",
+    "nativeName": "नेपाली"
+  },
+  "dashboard": {
+    "visuals": "दृश्य",
+    "visualsLite": "हल्का",
+    "visualsFull": "पूर्ण",
+    "sweep": "स्विप",
+    "sources": "स्रोत",
+    "delta": "परिवर्तन",
+    "worsening": "बिग्रँदै",
+    "easing": "सुध्रँदै",
+    "mixed": "मिश्रित",
+    "guideBtn": "सङ्केतको अर्थ",
+    "alertCritical": "गम्भीर",
+    "alertElevated": "उच्च",
+    "alertNominal": "सामान्य",
+    "terminalActive": "टर्मिनल सक्रिय"
+  },
+  "regime": {
+    "seismicEvent": "ठूलो भूकम्पीय घटना",
+    "monsoon": "मनसुन जोखिम मौसम",
+    "wildfire": "डढेलो मौसम",
+    "background": "सामान्य निगरानी"
+  },
+  "seismic": {
+    "noEvents": "कुनै घटना अभिलेख भएको छैन",
+    "background": "सामान्य गतिविधि",
+    "significant": "उल्लेखनीय घटना"
+  },
+  "panels": {
+    "seismicWatch": "भूकम्प निगरानी",
+    "rainFlood": "वर्षा र बाढी निगरानी",
+    "wildfire": "डढेलो पहिचान",
+    "airQuality": "वायु गुणस्तर",
+    "hazardReads": "जोखिम विश्लेषण",
+    "hazardCore": "जोखिम सूचक",
+    "activeResponse": "सक्रिय प्रतिकार्य",
+    "sourceHealth": "स्रोत अवस्था",
+    "liveHazard": "प्रत्यक्ष जोखिम फिड",
+    "earthquakeNews": "भूकम्प समाचार",
+    "floodNews": "बाढी र पहिरो",
+    "weatherNews": "मौसम चेतावनी",
+    "wildfireNews": "डढेलो",
+    "airQualityNews": "वायु गुणस्तर",
+    "climateNews": "हिमनदी र जलवायु जोखिम",
+    "reliefNews": "उद्धार र राहत"
+  },
+  "badges": {
+    "usgs": "USGS",
+    "openMeteo": "OPEN-METEO",
+    "monsoon": "मनसुन",
+    "firms": "NASA FIRMS",
+    "pm25": "PM2.5",
+    "reliefweb": "RELIEFWEB",
+    "loading": "लोड हुँदै",
+    "offline": "बन्द",
+    "stale": "पुरानो",
+    "items": "वस्तु",
+    "synthesized": "संश्लेषित",
+    "llm": "LLM",
+    "liveMetrics": "प्रत्यक्ष सूचक"
+  },
+  "metrics": {
+    "quakes7d": "भूकम्प (७ दिन)",
+    "quakes24h": "भूकम्प (२४ घण्टा)",
+    "weatherAlerts": "मौसम चेतावनी",
+    "peakRain5d": "अधिकतम ५ दिने वर्षा (मि.मि.)",
+    "fireDetections": "आगोको पहिचान",
+    "peakAqi": "अधिकतम AQI",
+    "activeDisasters": "सक्रिय विपद्"
+  },
+  "empty": {
+    "airQuality": "वायु गुणस्तरको तथ्यांक छैन",
+    "weatherAlerts": "कुनै गम्भीर मौसम चेतावनी छैन",
+    "fireDetections": "सक्रिय आगोको पहिचान छैन",
+    "firmsNoKey": "उपग्रह आगो पहिचानका लागि FIRMS_MAP_KEY राख्नुहोस्",
+    "activeDisasters": "कुनै घोषित सक्रिय विपद् छैन",
+    "reliefwebDown": "RELIEFWEB उपलब्ध छैन — RELIEFWEB_APPNAME राख्नुहोस्"
+  },
+  "map": {
+    "seismic": "भूकम्प",
+    "flood": "बाढी",
+    "landslide": "पहिरो",
+    "fire": "डढेलो",
+    "weather": "मौसम",
+    "cryosphere": "हिमनदी",
+    "airQuality": "वायु गुणस्तर",
+    "response": "प्रतिकार्य",
+    "hazard": "जोखिम"
+  },
+  "news": {
+    "loading": "जोखिम फिड ल्याउँदै…",
+    "unavailable": "फिड उपलब्ध छैन — पुनः प्रयास गर्दै",
+    "window": "अवधि"
+  },
+  "insights": {
+    "waiting": "स्विप तथ्यांक पर्खँदै।"
+  },
+  "boot": {
+    "initializing": "ANCODA ATLAS v4.0.0 सुरु हुँदै",
+    "connecting": "{count} नेपाल जोखिम स्रोतमा जोडिँदै...",
+    "sourceGroup1": "USGS भूकम्प · OPEN-METEO मौसम",
+    "sourceGroup2": "NASA FIRMS · OPEN-METEO वायु गुणस्तर",
+    "sourceGroup3": "RELIEFWEB (UN OCHA)",
+    "sweepComplete": "स्विप सम्पन्न — {ok}/{total} स्रोत ठीक",
+    "seismicLayer": "भूकम्प तह",
+    "hydroMetLayer": "जलमौसम तह",
+    "hazardSynthesis": "जोखिम संश्लेषण",
+    "active": "सक्रिय"
+  }
+}

@@ -1,0 +1,115 @@
+{
+  "meta": {
+    "code": "en",
+    "name": "English",
+    "nativeName": "English"
+  },
+  "dashboard": {
+    "visuals": "VISUALS",
+    "visualsLite": "LITE",
+    "visualsFull": "FULL",
+    "sweep": "SWEEP",
+    "sources": "SOURCES",
+    "delta": "DELTA",
+    "worsening": "WORSENING",
+    "easing": "EASING",
+    "mixed": "MIXED",
+    "guideBtn": "What Signals Mean",
+    "alertCritical": "CRITICAL",
+    "alertElevated": "ELEVATED",
+    "alertNominal": "NOMINAL",
+    "terminalActive": "TERMINAL ACTIVE"
+  },
+  "regime": {
+    "seismicEvent": "SIGNIFICANT SEISMIC EVENT",
+    "monsoon": "MONSOON HAZARD SEASON",
+    "wildfire": "WILDFIRE SEASON",
+    "background": "BACKGROUND MONITORING"
+  },
+  "seismic": {
+    "noEvents": "NO RECORDED EVENTS",
+    "background": "BACKGROUND ACTIVITY",
+    "significant": "SIGNIFICANT EVENT"
+  },
+  "panels": {
+    "seismicWatch": "Seismic Watch",
+    "rainFlood": "Rain & Flood Watch",
+    "wildfire": "Wildfire Detection",
+    "airQuality": "Air Quality",
+    "hazardReads": "Hazard Reads",
+    "hazardCore": "Hazard Core",
+    "activeResponse": "Active Response",
+    "sourceHealth": "Source Health",
+    "liveHazard": "Live Hazard Feed",
+    "earthquakeNews": "Seismic Reporting",
+    "floodNews": "Flood & Landslide",
+    "weatherNews": "Weather Warnings",
+    "wildfireNews": "Wildfire",
+    "airQualityNews": "Air Quality",
+    "climateNews": "Glacier & Climate Hazard",
+    "reliefNews": "Relief & Response"
+  },
+  "badges": {
+    "usgs": "USGS",
+    "openMeteo": "OPEN-METEO",
+    "monsoon": "MONSOON",
+    "firms": "NASA FIRMS",
+    "pm25": "PM2.5",
+    "reliefweb": "RELIEFWEB",
+    "loading": "LOADING",
+    "offline": "OFFLINE",
+    "stale": "STALE",
+    "items": "ITEMS",
+    "synthesized": "SYNTHESIZED",
+    "llm": "LLM",
+    "liveMetrics": "LIVE METRICS"
+  },
+  "metrics": {
+    "quakes7d": "Quakes (7d)",
+    "quakes24h": "Quakes (24h)",
+    "weatherAlerts": "Weather Alerts",
+    "peakRain5d": "Peak 5d Rain (mm)",
+    "fireDetections": "Fire Detections",
+    "peakAqi": "Peak AQI",
+    "activeDisasters": "Active Disasters"
+  },
+  "empty": {
+    "airQuality": "NO AIR QUALITY DATA",
+    "weatherAlerts": "NO SEVERE WEATHER ALERTS",
+    "fireDetections": "NO ACTIVE FIRE DETECTIONS",
+    "firmsNoKey": "SET FIRMS_MAP_KEY TO ENABLE SATELLITE FIRE DETECTION",
+    "activeDisasters": "NO ACTIVE DECLARED DISASTERS",
+    "reliefwebDown": "RELIEFWEB UNAVAILABLE — SET RELIEFWEB_APPNAME"
+  },
+  "map": {
+    "seismic": "Seismic",
+    "flood": "Flood",
+    "landslide": "Landslide",
+    "fire": "Wildfire",
+    "weather": "Weather",
+    "cryosphere": "Glacier",
+    "airQuality": "Air Quality",
+    "response": "Response",
+    "hazard": "Hazard"
+  },
+  "news": {
+    "loading": "Fetching hazard feeds…",
+    "unavailable": "Feed unavailable — retrying",
+    "window": "Window"
+  },
+  "insights": {
+    "waiting": "Awaiting sweep data."
+  },
+  "boot": {
+    "initializing": "INITIALIZING ANCODA ATLAS v4.0.0",
+    "connecting": "CONNECTING {count} NEPAL HAZARD SOURCES...",
+    "sourceGroup1": "USGS SEISMIC · OPEN-METEO WEATHER",
+    "sourceGroup2": "NASA FIRMS · OPEN-METEO AIR QUALITY",
+    "sourceGroup3": "RELIEFWEB (UN OCHA)",
+    "sweepComplete": "SWEEP COMPLETE — {ok}/{total} SOURCES OK",
+    "seismicLayer": "SEISMIC LAYER",
+    "hydroMetLayer": "HYDRO-MET LAYER",
+    "hazardSynthesis": "HAZARD SYNTHESIS",
+    "active": "ACTIVE"
+  }
+}
