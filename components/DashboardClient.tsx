@@ -279,11 +279,10 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
 
   // Boot sequence state
   const [booting, setBooting] = useState(true);
-  const [bootProgress, setBootProgress] = useState<string[]>([]);
-  const [bootActive, setBootActive] = useState(false);
 
   // Custom visual quality modes
-  const [lowPerfMode, setLowPerfMode] = useState(false);
+  const [darkTheme, setDarkTheme] = useState(false);
+  const [language, setLanguage] = useState<'en' | 'ne'>('en');
   const [newsWindow, setNewsWindow] = useState('24h');
   const [glossaryOpen, setGlossaryOpen] = useState(false);
 
@@ -295,36 +294,18 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
   // Load configuration from local storage
   useEffect(() => {
     const cachedPerf = localStorage.getItem('atlas_low_perf') === 'true';
-    setLowPerfMode(cachedPerf);
+    const cachedTheme = localStorage.getItem('atlas_theme') === 'dark';
+    setDarkTheme(cachedTheme);
     if (cachedPerf) {
       document.body.classList.add('low-perf');
+    }
+    if (cachedTheme) {
+      document.body.classList.add('dark-theme');
     }
   }, []);
 
   // Run boot sequence logs on mount
   useEffect(() => {
-    const quakes = D.seismic?.events7d || 0;
-    const alerts = D.weather?.totalAlerts || 0;
-
-    const lines = [
-      { text: 'INITIALIZING ANCODA ATLAS v4.0.0', delay: 200 },
-      { text: `CONNECTING ${meta.sourcesQueried || 5} NEPAL HAZARD SOURCES...`, delay: 500 },
-      { text: '├─ USGS SEISMIC · OPEN-METEO WEATHER', delay: 800 },
-      { text: '├─ NASA FIRMS · OPEN-METEO AIR QUALITY', delay: 1100 },
-      { text: '└─ RELIEFWEB (UN OCHA)', delay: 1400 },
-      { text: `SWEEP COMPLETE — ${meta.sourcesOk || 0}/${meta.sourcesQueried || 5} SOURCES OK`, delay: 1800 },
-      { text: `SEISMIC LAYER: ${quakes} EVENTS / 7D`, delay: 2100 },
-      { text: `HYDRO-MET LAYER: ${alerts} ACTIVE ALERT${alerts === 1 ? '' : 'S'}`, delay: 2400 },
-      { text: 'HAZARD SYNTHESIS: ACTIVE', delay: 2800 },
-    ];
-
-    lines.forEach((line) => {
-      setTimeout(() => {
-        setBootProgress((prev) => [...prev, line.text]);
-      }, line.delay);
-    });
-
-    setTimeout(() => setBootActive(true), 3000);
     setTimeout(() => setBooting(false), 3500);
   }, []);
 
@@ -395,15 +376,11 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
     return () => clearInterval(interval);
   }, [newsWindow]);
 
-  const togglePerfMode = () => {
-    const target = !lowPerfMode;
-    setLowPerfMode(target);
-    localStorage.setItem('atlas_low_perf', String(target));
-    if (target) {
-      document.body.classList.add('low-perf');
-    } else {
-      document.body.classList.remove('low-perf');
-    }
+  const toggleTheme = () => {
+    const target = !darkTheme;
+    setDarkTheme(target);
+    localStorage.setItem('atlas_theme', target ? 'dark' : 'light');
+    document.body.classList.toggle('dark-theme', target);
   };
 
   // Rule-based hazard read-out, shown when the LLM layer is off
@@ -508,15 +485,16 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
     : D.fire?.fireSeason ? 'WILDFIRE SEASON'
     : 'BACKGROUND MONITORING';
 
+  const alertLabel =
+    alertLevel === 'CRITICAL' ? 'ACT NOW'
+    : alertLevel === 'ELEVATED' ? 'PAY ATTENTION'
+    : 'NO MAJOR SIGNALS';
+
   const signalCoreMetrics = [
-    { label: 'Quakes (7d)', value: sq.events7d || 0, percent: meterPercent(sq.events7d || 0, 40) },
-    { label: 'Quakes (24h)', value: sq.events24h || 0, percent: meterPercent(sq.events24h || 0, 10) },
-    { label: 'Weather Alerts', value: wx.totalAlerts || 0, percent: meterPercent(wx.totalAlerts || 0, 12) },
-    { label: 'Peak 5d Rain (mm)', value: wettest?.rain5dMm ? Math.round(wettest.rain5dMm) : 0, percent: meterPercent(wettest?.rain5dMm || 0, 400) },
-    { label: 'Fire Detections', value: totalThermal, percent: meterPercent(totalThermal, 3000) },
-    { label: 'Peak AQI', value: worstAqi, percent: meterPercent(worstAqi, 300) },
-    { label: 'Active Disasters', value: activeDisasters, percent: meterPercent(activeDisasters, 6) },
-    { label: 'Impact Reports', value: impact.count, percent: meterPercent(impact.count, 30) },
+    { label: 'Earthquakes today', value: sq.events24h || 0, percent: meterPercent(sq.events24h || 0, 10) },
+    { label: 'Weather alerts', value: wx.totalAlerts || 0, percent: meterPercent(wx.totalAlerts || 0, 12) },
+    { label: 'Rain expected (5 days)', value: wettest?.rain5dMm ? Math.round(wettest.rain5dMm) : 0, percent: meterPercent(wettest?.rain5dMm || 0, 400) },
+    { label: 'Active responses', value: activeDisasters, percent: meterPercent(activeDisasters, 6) },
   ];
 
   if (booting) {
@@ -525,12 +503,6 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
         <div className="logo-ring" suppressHydrationWarning>
           <span className="logo-text">ATLAS</span>
         </div>
-        <div id="bootLines" className="mt-8" suppressHydrationWarning>
-          {bootProgress.map((line, idx) => (
-            <div key={idx}>{line}</div>
-          ))}
-        </div>
-        {bootActive && <div id="bootFinal" className="mt-6" suppressHydrationWarning>TERMINAL ACTIVE</div>}
       </div>
     );
   }
@@ -543,62 +515,129 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
           <span className="brand">ANCODA ATLAS</span>
           <span className="regime-chip">
             <span className="blink" />
-            {regimeChip}
+            {regimeChip === 'BACKGROUND MONITORING' ? 'Routine monitoring' : regimeChip.replace('SIGNIFICANT SEISMIC EVENT', 'Significant earthquake').replace('DISASTER RESPONSE UNDER WAY', 'LIVE').replace('MONSOON HAZARD SEASON', 'Monsoon season').replace('WILDFIRE SEASON', 'Wildfire season')}
           </span>
         </div>
         <div className="top-right">
-          <button className="meta-pill perf-pill" onClick={togglePerfMode}>
-            VISUALS <span className="v">{lowPerfMode ? 'LITE' : 'FULL'}</span>
+          <button
+            className="theme-toggle"
+            onClick={toggleTheme}
+            aria-label={`Switch to ${darkTheme ? 'light' : 'dark'} theme`}
+            aria-pressed={darkTheme}
+          >
+            <span className="theme-toggle-label">{darkTheme ? 'Dark' : 'Light'}</span>
+            <span className="theme-switch" aria-hidden="true">
+              <span className="theme-switch-thumb" />
+            </span>
           </button>
+          <div className="language-toggle" role="group" aria-label="Language">
+            <button className={language === 'en' ? 'active' : ''} onClick={() => setLanguage('en')} aria-pressed={language === 'en'}>EN</button>
+            <button className={language === 'ne' ? 'active' : ''} onClick={() => setLanguage('ne')} aria-pressed={language === 'ne'}>ने</button>
+          </div>
           <span className="meta-pill" suppressHydrationWarning>
-            SWEEP <span className="v">{((meta.totalDurationMs || 0) / 1000).toFixed(1)}s</span>
+            Updated in <span className="v">{((meta.totalDurationMs || 0) / 1000).toFixed(1)}s</span>
           </span>
           <span className="meta-pill" suppressHydrationWarning>
             {formattedDate} <span className="v">{formattedTime}</span>
           </span>
-          <span className="meta-pill" suppressHydrationWarning>
-            SOURCES <span className="v">{meta.sourcesOk}/{meta.sourcesQueried}</span>
-          </span>
-          {D.delta?.summary && (
-            <span className="meta-pill">
-              DELTA{' '}
-              <span className="v">
-                {D.delta.summary.direction === 'risk-off' ? (
-                  <>&#x25B2; WORSENING</>
-                ) : D.delta.summary.direction === 'risk-on' ? (
-                  <>&#x25BC; EASING</>
-                ) : (
-                  <>&#x25C6; MIXED</>
-                )}
-              </span>
-            </span>
-          )}
           <button className="guide-btn" onClick={() => setGlossaryOpen(true)}>
-            What Signals Mean
+            Understand the numbers
           </button>
-          <span className="alert-badge">{alertLevel}</span>
+          <span className="alert-badge">{alertLabel}</span>
         </div>
       </div>
 
-      {/* Main Grid */}
-      <div className="grid-container">
+      <section className="dashboard-intro" aria-labelledby="dashboard-title">
+        <div>
+          <p className="eyebrow">Nepal hazard overview</p>
+          <h1 id="dashboard-title">What needs attention today?</h1>
+          <p className="intro-copy">
+            A plain-language view of earthquakes, rain, fires, air quality, and active response signals.
+          </p>
+        </div>
+        <BhotekoshiFloodButton />
+      </section>
+
+      <section className="map-hero" aria-label="Live geographic view">
+        <div className="map-workspace">
+          <div className="map-workspace-map">
+            <NepalSignalsMap stories={D.news || []} />
+          </div>
+          <div className="live-feed-panel g-panel">
+            <div className="sec-head">
+              <div>
+                <p className="eyebrow">Live updates</p>
+                <h3>Live hazard feed</h3>
+              </div>
+              <span className="badge">
+                {(newsCache['live-hazard']?.items || []).length} ITEMS
+              </span>
+            </div>
+            <div className="news-window-bar">
+              <span>Show updates from</span>
+              {['6h', '24h', '48h', '7d'].map((w) => (
+                <button key={w} className={`win-btn ${w === newsWindow ? 'active' : ''}`} onClick={() => setNewsWindow(w)}>
+                  {w.toUpperCase()}
+                </button>
+              ))}
+            </div>
+            <div className="news-list" suppressHydrationWarning>
+              {(newsCache['live-hazard']?.items || []).length === 0 ? (
+                <div className="news-empty">Fetching the latest hazard updates…</div>
+              ) : (
+                (newsCache['live-hazard']?.items || []).slice(0, 8).map((item, idx) => {
+                  const isClickable = !!item.link;
+                  return (
+                    <div
+                      key={idx}
+                      className={`tk-card ${isClickable ? 'clickable' : ''}`}
+                      onClick={() => {
+                        if (isClickable) window.open(item.link, '_blank', 'noopener');
+                      }}
+                    >
+                      <span className={`tk-src ${srcClass(item.source)}`}>
+                        {(item.source || 'NEWS').substring(0, 14)}
+                      </span>
+                      <span className="tk-time">{getAge(item.pubDate)}</span>
+                      <div className="tk-head">{cleanText(item.title)}</div>
+                      {isClickable && <span className="tk-link">&#8599;</span>}
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="supporting-section" aria-labelledby="supporting-title">
+        <div className="supporting-heading">
+          <div>
+            <p className="eyebrow">A little more context</p>
+            <h2 id="supporting-title">What else is happening?</h2>
+          </div>
+          <p>Simple summaries to help explain the map and live updates.</p>
+        </div>
+
+        {/* Main Grid */}
+        <div className="grid-container">
         {/* Left Column (Rail) */}
         <div className="col">
           {/* Seismic Panel */}
           <div className="g-panel">
             <div className="sec-head">
-              <h3>Seismic Watch</h3>
+              <h3>Earthquakes nearby</h3>
               <span className="badge">USGS</span>
             </div>
             <div className="nuke-ok">
               {(sq.maxMagnitude || 0) < 4.5 ? (
-                <>&#9679; BACKGROUND ACTIVITY</>
+                <>&#9679; No significant earthquakes reported</>
               ) : (
-                <>&#9888; SIGNIFICANT EVENT</>
+                <>&#9888; Significant earthquake detected</>
               )}
             </div>
             {(sq.recent || []).length === 0 && (
-              <div className="font-mono text-[10px] text-dim">NO RECORDED EVENTS</div>
+              <div className="font-mono text-[10px] text-dim">No recent events</div>
             )}
             {(sq.recent || []).slice(0, 6).map((q: Earthquake, i: number) => (
               <div className="site-row" key={i}>
@@ -621,7 +660,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
           {/* Rainfall & Flood Panel */}
           <div className="g-panel">
             <div className="sec-head">
-              <h3>Rain &amp; Flood Watch</h3>
+              <h3>Rain and flood risk</h3>
               <span className="badge">{wx.monsoonSeason ? 'MONSOON' : 'OPEN-METEO'}</span>
             </div>
             {(wx.alerts || []).length > 0 ? (
@@ -639,7 +678,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
             ) : (
               <div className="font-mono text-[10px] text-dim">NO SEVERE WEATHER ALERTS</div>
             )}
-            <div className="nml-market-subtitle">Wettest Stations · 5-Day Forecast</div>
+            <div className="nml-market-subtitle">Where the most rain is expected</div>
             {[...(wx.stations || [])]
               .sort((a: WeatherStation, b: WeatherStation) => (b.rain5dMm || 0) - (a.rain5dMm || 0))
               .slice(0, 5)
@@ -666,12 +705,12 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
           {/* Wildfire Panel */}
           <div className="g-panel">
             <div className="sec-head">
-              <h3>Wildfire Detection</h3>
+              <h3>Wildfire activity</h3>
               <span className="badge">NASA FIRMS</span>
             </div>
             {D.fire?.status === 'no_key' ? (
               <div className="font-mono text-[10px] text-dim">
-                SET FIRMS_MAP_KEY TO ENABLE SATELLITE FIRE DETECTION
+                Satellite fire data is not connected
               </div>
             ) : (D.fire?.regions || []).length > 0 ? (
               <>
@@ -696,14 +735,14 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                   ))}
               </>
             ) : (
-              <div className="font-mono text-[10px] text-dim">NO ACTIVE FIRE DETECTIONS</div>
+              <div className="font-mono text-[10px] text-dim">No active fire detections</div>
             )}
           </div>
 
           {/* Air Quality Panel */}
           <div className="g-panel">
             <div className="sec-head">
-              <h3>Air Quality</h3>
+              <h3>Air quality</h3>
               <span className="badge">PM2.5</span>
             </div>
             {(D.airQuality?.stations || []).length > 0 ? (
@@ -717,92 +756,8 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                 </div>
               ))
             ) : (
-              <div className="font-mono text-[10px] text-dim">NO AIR QUALITY DATA</div>
+              <div className="font-mono text-[10px] text-dim">No air quality data</div>
             )}
-          </div>
-        </div>
-
-        {/* Center Column (Map and news panels) */}
-        <div className="col">
-          <div className="map-region-bar" id="mapRegionBar" style={{ display: 'none' }} />
-          <div className="map-container relative flex flex-col justify-between">
-            <NepalSignalsMap stories={D.news || []} />
-          </div>
-
-          {/* Lower Grid (News feed list) */}
-          <div className="lower">
-            <div className="news-window-bar">
-              Window{' '}
-              {['6h', '24h', '48h', '7d'].map((w) => (
-                <button
-                  key={w}
-                  className={`win-btn ${w === newsWindow ? 'active' : ''}`}
-                  onClick={() => setNewsWindow(w)}
-                >
-                  {w.toUpperCase()}
-                </button>
-              ))}
-            </div>
-
-            {NEWS_PANELS.map((cfg) => {
-              const panelState = newsCache[cfg.id] || { items: [], status: 'loading' };
-              const isLive = cfg.id === 'live-hazard';
-
-              return (
-                <div key={cfg.id} className={`g-panel ${isLive ? 'lp-live' : 'lp-news'} flex flex-col`} suppressHydrationWarning>
-                  <div className="sec-head">
-                    <h3>{cfg.title}</h3>
-                    <span className={`badge ${panelState.status === 'live' ? '' : panelState.status}`}>
-                      {panelState.status === 'loading'
-                        ? 'LOADING'
-                        : panelState.status === 'error'
-                        ? 'OFFLINE'
-                        : panelState.status === 'stale'
-                        ? 'STALE'
-                        : `${panelState.items.length} ITEMS`}
-                    </span>
-                  </div>
-                  <div className="news-list" suppressHydrationWarning>
-                    {panelState.status === 'loading' && panelState.items.length === 0 ? (
-                      <div className="news-empty">Fetching hazard feeds…</div>
-                    ) : panelState.items.length === 0 ? (
-                      <div className="news-empty">
-                        {panelState.status === 'error'
-                          ? 'Feed unavailable — retrying'
-                          : cfg.empty}
-                      </div>
-                    ) : (
-                      panelState.items.slice(0, cfg.maxItems).map((item, idx) => {
-                        const isClickable = !!item.link;
-                        const labelType = priorityLevel(item);
-                        const cleanHead = cleanText(item.title);
-                        const sourceClassText = srcClass(item.source);
-
-                        return (
-                          <div
-                            key={idx}
-                            className={`tk-card ${isClickable ? 'clickable' : ''}`}
-                            onClick={() => {
-                              if (isClickable) window.open(item.link, '_blank', 'noopener');
-                            }}
-                          >
-                            {cfg.priority && (
-                              <span className={`pri-tag ${labelType}`}>{labelType.toUpperCase()}</span>
-                            )}
-                            <span className={`tk-src ${sourceClassText}`}>
-                              {(item.source || 'NEWS').substring(0, 14)}
-                            </span>
-                            <span className="tk-time">{getAge(item.pubDate)}</span>
-                            <div className="tk-head">{cleanHead}</div>
-                            {isClickable && <span className="tk-link">&#8599;</span>}
-                          </div>
-                        );
-                      })
-                    )}
-                  </div>
-                </div>
-              );
-            })}
           </div>
         </div>
 
@@ -814,9 +769,9 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
           {/* Hazard Reads */}
           <div className="g-panel right-insights">
             <div className="sec-head">
-              <h3>Hazard Reads</h3>
+              <h3>What the signals suggest</h3>
               <span className="badge">{D.ideasSource === 'llm' ? 'LLM' : 'SYNTHESIZED'}</span>
-            </div>
+              </div>
             <div>
               {(D.ideas || []).length > 0 ? (
                 <ul className="insights-list">
@@ -843,8 +798,8 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
           {/* Signal Core */}
           <div className="g-panel right-core">
             <div className="sec-head">
-              <h3>Hazard Core</h3>
-              <span className="badge">LIVE METRICS</span>
+              <h3>At a glance</h3>
+              <span className="badge">UPDATED LIVE</span>
             </div>
             {signalCoreMetrics.map((sm, i) => (
               <div className="sm" key={i}>
@@ -860,12 +815,12 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
           {/* Active Response */}
           <div className="g-panel">
             <div className="sec-head">
-              <h3>Active Response</h3>
+              <h3>Current response</h3>
               <span className="badge">RELIEFWEB</span>
             </div>
             {D.relief?.error ? (
               <div className="font-mono text-[10px] text-dim">
-                RELIEFWEB NEEDS AN APPROVED APPNAME — SHOWING HDX HAZARD DATASETS
+                Response information is temporarily unavailable
               </div>
             ) : (D.relief?.disasters || []).length > 0 ? (
               (D.relief.disasters || []).slice(0, 5).map((d: ReliefDisaster, i: number) => (
@@ -875,7 +830,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                 </div>
               ))
             ) : (
-              <div className="font-mono text-[10px] text-dim">NO ACTIVE DECLARED DISASTERS</div>
+              <div className="font-mono text-[10px] text-dim">No active declared disasters</div>
             )}
             {(D.relief?.reports || []).slice(0, 4).map((r: ReliefReport, i: number) => (
               <div
@@ -893,7 +848,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
           {/* Source Health */}
           <div className="g-panel right-sources">
             <div className="sec-head">
-              <h3>Source Health</h3>
+              <h3>Data sources</h3>
               <span className="badge">
                 {meta.sourcesOk || 0}/{meta.sourcesQueried || 5}
               </span>
@@ -916,6 +871,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
           </div>
         </div>
       </div>
+      </section>
 
       {/* Glossary Overlay */}
       <div className={`glossary-overlay ${glossaryOpen ? 'show' : ''}`}>

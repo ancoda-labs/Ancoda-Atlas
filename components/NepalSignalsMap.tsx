@@ -438,13 +438,15 @@ export default function NepalSignalsMap({ stories }: NepalSignalsMapProps) {
       return cnt === 0 ? null : [sx / cnt, sy / cnt];
     };
 
+    const lightTheme = !document.body.classList.contains('dark-theme');
+
     // Draw background
-    ctx.fillStyle = '#08111a';
+    ctx.fillStyle = lightTheme ? '#edf3f1' : '#08111a';
     ctx.fillRect(0, 0, width, height);
 
     // Draw district boundaries
     if (showDistricts) {
-      ctx.strokeStyle = 'rgba(75,95,120,0.26)'; ctx.lineWidth = 0.8;
+      ctx.strokeStyle = lightTheme ? 'rgba(73,103,96,0.28)' : 'rgba(75,95,120,0.26)'; ctx.lineWidth = 0.8;
       for (const d of geoData.districts) strokeOnly(d);
     }
 
@@ -453,8 +455,10 @@ export default function NepalSignalsMap({ stories }: NepalSignalsMapProps) {
       const code = nmlGetProvinceCode(prov);
       const score = provinceScores.get(code) || 0;
       const alpha = nmlClamp(0.14 + score * 0.06, 0.14, 0.62);
-      ctx.fillStyle = score > 0 ? `rgba(47,167,227,${alpha.toFixed(3)})` : 'rgba(21,32,45,0.86)';
-      ctx.strokeStyle = 'rgba(145,167,196,0.68)'; ctx.lineWidth = 1.35;
+      ctx.fillStyle = score > 0
+        ? (lightTheme ? `rgba(43,139,157,${Math.min(0.38, alpha).toFixed(3)})` : `rgba(47,167,227,${alpha.toFixed(3)})`)
+        : (lightTheme ? 'rgba(205,220,216,0.9)' : 'rgba(21,32,45,0.86)');
+      ctx.strokeStyle = lightTheme ? 'rgba(70,104,98,0.72)' : 'rgba(145,167,196,0.68)'; ctx.lineWidth = 1.35;
       fillStroke(prov);
     }
 
@@ -466,7 +470,7 @@ export default function NepalSignalsMap({ stories }: NepalSignalsMapProps) {
         const r = sig.severity === 'high' ? 4.8 : sig.severity === 'elevated' ? 4.1 : 3.3;
         ctx.beginPath(); ctx.fillStyle = pal.ring; ctx.arc(x, y, r + 3.4, 0, Math.PI * 2); ctx.fill();
         ctx.beginPath(); ctx.fillStyle = pal.fill; ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
-        ctx.beginPath(); ctx.strokeStyle = 'rgba(255,255,255,0.6)'; ctx.lineWidth = 0.6; ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.strokeStyle = lightTheme ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.6)'; ctx.lineWidth = 0.6; ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke();
       }
 
       // Draw province badges
@@ -483,14 +487,14 @@ export default function NepalSignalsMap({ stories }: NepalSignalsMapProps) {
         const r = count > 9 ? 11 : 9;
         const isSel = selectedProvince === code;
 
-        ctx.beginPath(); ctx.fillStyle = 'rgba(11,18,27,0.92)'; ctx.arc(bx, by, r, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.fillStyle = lightTheme ? 'rgba(255,255,255,0.94)' : 'rgba(11,18,27,0.92)'; ctx.arc(bx, by, r, 0, Math.PI * 2); ctx.fill();
         ctx.beginPath(); ctx.strokeStyle = isSel ? '#6ad6ff' : 'rgba(84,156,255,0.9)'; ctx.lineWidth = isSel ? 2.2 : 1.4; ctx.arc(bx, by, r, 0, Math.PI * 2); ctx.stroke();
 
         if (isSel) {
           ctx.beginPath(); ctx.strokeStyle = 'rgba(106,214,255,0.28)'; ctx.lineWidth = 5; ctx.arc(bx, by, r + 3, 0, Math.PI * 2); ctx.stroke();
         }
 
-        ctx.fillStyle = '#d9e7fb'; ctx.font = '10px "IBM Plex Mono",monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillStyle = lightTheme ? '#19302d' : '#d9e7fb'; ctx.font = '10px "IBM Plex Mono",monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText(String(count), bx, by);
 
         badgeHitsRef.current.push({ provinceCode: code, count, x: bx, y: by, radius: r + 5 });
@@ -501,7 +505,7 @@ export default function NepalSignalsMap({ stories }: NepalSignalsMapProps) {
     for (const prov of geoData.provinces) {
       const c = getCentroid(prov);
       if (!c) continue;
-      ctx.fillStyle = 'rgba(230,238,250,0.88)'; ctx.font = '10px "IBM Plex Mono",monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = lightTheme ? 'rgba(35,65,60,0.88)' : 'rgba(230,238,250,0.88)'; ctx.font = '10px "IBM Plex Mono",monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillText(prov.name, c[0], c[1]);
     }
   };
@@ -509,6 +513,12 @@ export default function NepalSignalsMap({ stories }: NepalSignalsMapProps) {
   // Re-draw when dependencies change
   useEffect(() => {
     draw();
+  }, [geoData, signals, showDistricts, showSignals, selectedProvince, expanded]);
+
+  useEffect(() => {
+    const observer = new MutationObserver(() => draw());
+    observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
   }, [geoData, signals, showDistricts, showSignals, selectedProvince, expanded]);
 
   // Wheel and drag interactions
@@ -662,25 +672,25 @@ export default function NepalSignalsMap({ stories }: NepalSignalsMapProps) {
     <div ref={containerRef} className={`nml-map-layout-container ${expanded ? 'nml-map-expanded' : ''}`}>
       <div className="nml-map-toolbar">
         <button className="nml-map-toggle" onClick={() => setShowDistricts(prev => !prev)}>
-          Districts: {showDistricts ? 'ON' : 'OFF'}
+          District boundaries: {showDistricts ? 'Shown' : 'Hidden'}
         </button>
         <button className="nml-map-toggle" onClick={() => setShowSignals(prev => !prev)}>
-          Signals: {showSignals ? 'ON' : 'OFF'}
+          Alerts: {showSignals ? 'Shown' : 'Hidden'}
         </button>
         <button className="nml-map-toggle" onClick={() => { zoomRef.current = nmlClamp(zoomRef.current * 1.2, 1, 8); draw(); }}>
-          +
+          Zoom in
         </button>
         <button className="nml-map-toggle" onClick={() => { zoomRef.current = nmlClamp(zoomRef.current / 1.2, 1, 8); if (zoomRef.current <= 1.01) { zoomRef.current = 1; panXRef.current = 0; panYRef.current = 0; } draw(); }}>
-          &minus;
+          Zoom out
         </button>
         <button className="nml-map-toggle" onClick={handleZoomReset}>
-          Reset
+          Reset map
         </button>
         <button className="nml-map-toggle" onClick={() => { setExpanded(prev => !prev); }}>
-          {expanded ? 'COLLAPSE' : 'EXPAND'}
+          {expanded ? 'Close full map' : 'Open full map'}
         </button>
         <div className="nml-map-caption">
-          High {signals.filter(s => s.severity === 'high').length} &bull; Elevated {signals.filter(s => s.severity === 'elevated').length} &bull; Total {signals.length}
+          {signals.filter(s => s.severity === 'high').length} high-priority &bull; {signals.length} total updates
         </div>
       </div>
       <div className="nml-map-layout">
@@ -714,7 +724,7 @@ export default function NepalSignalsMap({ stories }: NepalSignalsMapProps) {
           )}
         </div>
         <div className="nml-map-helper">
-          Click a province circle badge to open local signal stories.
+          Select a province marker to see nearby updates.
         </div>
         <div className="nml-map-legend">
           <span><i className="high"></i>High Alert</span>
