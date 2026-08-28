@@ -1,7 +1,7 @@
 {
   "name": "atlas",
   "version": "4.0.0",
-  "description": "Nepal emergency disaster intelligence \u2014 5 natural-hazard sources, live dashboard, auto-refresh, optional LLM layer.",
+  "description": "Nepal emergency disaster intelligence — 5 natural-hazard sources, live dashboard, auto-refresh, optional LLM layer.",
   "author": "Ancoda Labs",
   "license": "AGPL-3.0-only",
   "homepage": "https://github.com/ancodalabs/atlas#readme",
@@ -20,14 +20,16 @@
     "dev": "next dev",
     "build": "next build",
     "check:no-any": "node scripts/check-no-any.mjs",
-    "verify": "npm run check:no-any && npm run build",
+    "test": "node --experimental-strip-types --test test/*.test.mjs",
+    "verify": "npm run check:no-any && npm test && npm run build",
     "sweep": "node apis/briefing.mjs",
     "synthesize": "node scripts/synthesize.mjs",
     "brief": "node apis/briefing.mjs",
     "brief:save": "node apis/save-briefing.mjs",
     "diag": "node scripts/diag.mjs",
     "clean": "node scripts/clean.mjs",
-    "fresh-start": "npm run clean && npm run build && npm start"
+    "fresh-start": "npm run clean && npm run build && npm start",
+    "db:migrate": "node scripts/migrate.mjs"
   },
   "keywords": [
     "disaster",
@@ -50,7 +52,9 @@
   "dependencies": {
     "@tailwindcss/postcss": "^4.3.3",
     "geist": "^1.7.2",
+    "minio": "^8.0.7",
     "next": "^16.3.3",
+    "pg": "^8.23.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   },
@@ -58,10 +62,12 @@
     "discord.js": "^14.25.1"
   },
   "overrides": {
-    "undici": "^7.24.4"
+    "undici": "^7.24.4",
+    "lodash": "^4.18.1"
   },
   "devDependencies": {
     "@types/node": "^26.4.0",
+    "@types/pg": "^8.23.1",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.5",
     "autoprefixer": "^10.5.4",

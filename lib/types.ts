@@ -177,6 +177,14 @@ export interface NewsItem {
   link: string;
   source: string;
   pubDate: string;
+  /** The outlet's own lead image, as they published it. Never copied by Atlas. */
+  image?: string | null;
+  /**
+   * Same image, as a path on this server. Signed by the API route, because the
+   * signing key is a server secret and must never reach the browser — a client
+   * that could mint these would turn the proxy into an open one.
+   */
+  imageProxy?: string | null;
 }
 
 export interface NewsResponse {
@@ -400,12 +408,438 @@ export interface FloodContent {
     verification?: Bilingual<'note'> & { source_url?: string };
   } | null;
   affectedDistricts: { districts?: Array<Bilingual<'name'>> } | null;
+  districtContacts: {
+    last_verified?: string | null;
+    sources?: SourceRef[];
+    districts?: FloodDistrictContacts[];
+  } | null;
+  sitrep: SitrepContent | null;
   funds: FloodOrg[];
+}
+
+/**
+ * Emergency contacts for one district.
+ *
+ * `verified` gates rendering. An unverified district is not shown at all: a
+ * phone number nobody has checked is worse than no number, because it sends
+ * someone in trouble to a line that does not answer.
+ */
+export interface FloodDistrictContacts extends Bilingual<'name'> {
+  id: string;
+  verified?: boolean;
+  contacts?: Array<Bilingual<'role'> & { number: string; note_en?: string; note_ne?: string }>;
 }
 
 export interface FloodDeskPayload extends FloodContent {
   river: RiverGauges;
+  bulletinRescue?: BulletinRescue | null;
   generatedAt: string;
+}
+
+// ─── Community ground reports ───────────────────────────────────────────────
+
+/**
+ * Where a photo's coordinates came from. Shown to the reader, because the four
+ * are not equally trustworthy: EXIF is where the shutter fired, `device` is
+ * where the sender was standing when they uploaded, and `district` is a whole
+ * district's centre rather than a place.
+ */
+export type PhotoGeoSource = 'exif' | 'device' | 'district' | 'none';
+
+export type PhotoStatus = 'published' | 'removed';
+
+export interface FloodPhoto {
+  id: string;
+  /** Pre-signed and short-lived. Never persisted — see lib/storage.ts. */
+  url: string;
+  width: number | null;
+  height: number | null;
+  /** EXIF orientation 1–8, preserved so a stripped photo still renders upright. */
+  orientation: number;
+  lat: number | null;
+  lon: number | null;
+  geoSource: PhotoGeoSource;
+  district: string | null;
+  placeLabel: string | null;
+  caption: string | null;
+  contributor: string | null;
+  takenAt: string | null;
+  createdAt: string;
+  reportCount: number;
+}
+
+/** The ground-report feed, or the reason there isn't one. */
+export interface FloodPhotoFeed {
+  enabled: boolean;
+  photos: FloodPhoto[];
+  /** Set when `enabled` is false: which piece of infrastructure is missing. */
+  reason?: string;
+}
+
+export interface DigestSource {
+  title: string;
+  url: string;
+  source: string;
+}
+
+export interface NewsDigest {
+  id: string;
+  /** ISO timestamps bounding the ten-minute window this brief covers. */
+  bucketStart: string;
+  bucketEnd: string;
+  lang: 'en' | 'ne';
+  headline: string;
+  summary: string;
+  bullets: string[];
+  sources: DigestSource[];
+  itemCount: number;
+  /** 'llm' when a model wrote the brief, 'extractive' when Atlas listed headlines. */
+  generator: 'llm' | 'extractive';
+  model: string | null;
+}
+
+export interface NewsDigestFeed {
+  enabled: boolean;
+  lang: 'en' | 'ne';
+  digests: NewsDigest[];
+  reason?: string;
+}
+
+// ─── NDRRMA rescue register ─────────────────────────────────────────────────
+
+export interface RescuePlace {
+  id: number;
+  title: string | null;
+  titleNe: string | null;
+  lat: number | null;
+  lon: number | null;
+}
+
+/**
+ * One named person on the government's rescue register.
+ *
+ * Every field is reproduced as NDRRMA publishes it. Nothing here is inferred:
+ * a null is a blank on the official register, not a gap Atlas should fill.
+ */
+export interface RescuedPerson {
+  id: number;
+  name: string | null;
+  nameNe: string | null;
+  age: number | null;
+  gender: string | null;
+  nationality: string | null;
+  rescuedOn: string | null;
+  rescuedAt: RescuePlace | null;
+  stationedAt: RescuePlace | null;
+  status: { id: number; title: string; titleNe: string | null } | null;
+  remarks: string | null;
+}
+
+export interface RescueSummary {
+  total: number;
+  nepali: number;
+  foreign: number;
+  byStatus: Array<{ id: number; title: string; titleNe: string | null; count: number }>;
+}
+
+export interface RescueRegister {
+  persons: RescuedPerson[];
+  summary: RescueSummary | null;
+  locations: { rescued: RescuePlace[]; stationed: RescuePlace[] };
+  error: string | null;
+  source: SourceRef;
+  fetchedAt: string;
+}
+
+// ─── BIPAD incident register ────────────────────────────────────────────────
+
+export interface BipadHazard {
+  id: number;
+  title: string;
+  titleNe: string | null;
+  type: string | null;
+  color: string | null;
+  icon: string | null;
+}
+
+/**
+ * Damage and casualties for one incident.
+ *
+ * `reported` is the field that matters. BIPAD writes an unfilled record as all
+ * zeros, so without this flag "nobody was hurt" and "nobody has entered the
+ * figures yet" are indistinguishable — and on a disaster page they must not be.
+ */
+export interface BipadLoss {
+  id: number;
+  deaths: number;
+  missing: number;
+  injured: number;
+  affected: number;
+  familiesAffected: number;
+  familiesEvacuated: number;
+  familiesRelocated: number;
+  livestockLost: number;
+  housesDestroyed: number;
+  housesAffected: number;
+  roadsDestroyed: number;
+  bridgesDestroyed: number;
+  electricityDestroyed: number;
+  economicLoss: number;
+  reported: boolean;
+}
+
+export interface BipadIncident {
+  id: number;
+  title: string | null;
+  titleNe: string | null;
+  incidentOn: string | null;
+  reportedOn: string | null;
+  streetAddress: string | null;
+  hazard: number | null;
+  lossId: number | null;
+  /** BIPAD's provenance field: 'nepal_police', 'dhm', 'other'. */
+  source: string | null;
+  verified: boolean;
+  lat: number | null;
+  lon: number | null;
+  loss?: BipadLoss | null;
+}
+
+export interface BipadAlert {
+  id: number;
+  title: string | null;
+  titleNe: string | null;
+  description: string | null;
+  source: string | null;
+  startedOn: string | null;
+  expireOn: string | null;
+  referenceType: string | null;
+  public: boolean;
+  verified: boolean;
+  lat: number | null;
+  lon: number | null;
+}
+
+/** Tally of what BIPAD holds for the corridor — never presented as the national toll. */
+export interface CorridorTotals {
+  incidentCount: number;
+  incidentsWithFigures: number;
+  /** Incidents logged with no damage figures entered. Shown, never silently summed as zero. */
+  incidentsAwaitingFigures: number;
+  deaths: number;
+  missing: number;
+  injured: number;
+  affected: number;
+  familiesEvacuated: number;
+  housesDestroyed: number;
+  bridgesDestroyed: number;
+  roadsDestroyed: number;
+  economicLoss: number;
+}
+
+export interface CorridorIncidents {
+  incidents: BipadIncident[];
+  totals: CorridorTotals | null;
+  error: string | null;
+  source: SourceRef;
+  fetchedAt: string;
+}
+
+// ─── Broadcast video ────────────────────────────────────────────────────────
+
+/**
+ * One piece of broadcast coverage. Atlas holds only the identifier and the
+ * metadata YouTube publishes for it — playback happens in YouTube's own player,
+ * so the outlet keeps its audience and Atlas stores no video.
+ */
+export interface FloodVideo {
+  id: string;
+  title: string;
+  channel: string | null;
+  channelUrl: string | null;
+  thumbnail: string;
+  url: string;
+  embedUrl: string;
+  publishedAt: string | null;
+}
+
+export interface VideoFeed {
+  videos: FloodVideo[];
+  live?: FloodVideo[];
+  /** True when a YOUTUBE_API_KEY is configured and cross-channel search is live. */
+  searchEnabled: boolean;
+  error: string | null;
+  fetchedAt: string;
+}
+
+// ─── SitRep figures ─────────────────────────────────────────────────────────
+//
+// The authoritative toll, from Nepal Police district reporting and NDRRMA
+// situation reports. Held as reviewed content rather than fetched, because
+// these numbers are compiled by hand from PDFs and briefings and must not
+// change on the page without someone having looked at them.
+
+export interface SitrepValue extends Bilingual<'label'>, Bilingual<'note'>, Bilingual<'detail'>, Bilingual<'unit'> {
+  value: number;
+  /** Rendered after the number, e.g. the "+" in "13,248+". */
+  suffix?: string;
+  /**
+   * True when this figure sits OUTSIDE its group's total — medical staff who
+   * are not security personnel, helicopters that are not people. The flag is
+   * what stops a reader, or a later edit, from adding it in.
+   */
+  exclusive?: boolean;
+}
+
+export interface SitrepHeadline extends Bilingual<'label'> {
+  id: string;
+  value: number;
+  suffix?: string;
+  tone: 'critical' | 'warning' | 'positive';
+  source: string;
+}
+
+export interface SitrepBreakdown
+  extends Bilingual<'title'>, Bilingual<'caption'>, Bilingual<'do_not_merge'> {
+  id: string;
+  total: number;
+  suffix?: string;
+  tone: 'critical' | 'warning' | 'positive';
+  items: SitrepValue[];
+  /** Figures shown beside the group but deliberately outside its total. */
+  aside?: SitrepValue[];
+  /**
+   * Set when the items overlap rather than partition the total, so the
+   * reconciliation check must not treat a difference as an error.
+   */
+  no_total_check?: boolean;
+}
+
+export interface SitrepNote extends Bilingual<'title'>, Bilingual<'body'> {
+  id: string;
+}
+
+export interface SitrepNameList extends Bilingual<'label'> {
+  id: string;
+  value: number;
+  /** Set when Atlas holds the actual names, so the card can link through. */
+  href?: string;
+}
+
+/** A breakdown whose parts stopped adding up to its stated total. */
+export interface SitrepDiscrepancy {
+  id: string;
+  stated: number;
+  summed: number;
+}
+
+export interface SitrepContent {
+  as_of?: string;
+  as_of_label_en?: string;
+  as_of_label_ne?: string;
+  sources?: SourceRef[];
+  headline?: SitrepHeadline[];
+  breakdowns?: SitrepBreakdown[];
+  infrastructure?: Bilingual<'title'> & { items?: SitrepValue[] };
+  notes?: SitrepNote[];
+  name_lists?: Bilingual<'title'> & Bilingual<'do_not_merge'> & { lists?: SitrepNameList[] };
+  missing_found?: Bilingual<'title'> &
+    Bilingual<'do_not_merge'> & {
+      missing?: SitrepNameList[];
+      found?: SitrepNameList[];
+      found_total?: number;
+    };
+  /**
+   * Filled in at load. Empty when every breakdown reconciles; any entry means
+   * a hand edit broke the arithmetic and the page says so rather than
+   * publishing a total its own parts contradict.
+   */
+  discrepancies?: SitrepDiscrepancy[];
+}
+
+// ─── Community missing-and-found register ───────────────────────────────────
+
+/**
+ * One person on the community register.
+ *
+ * Reproduced as filed, including the contact number — that is the mechanism the
+ * register works by, the line a family left so someone who finds their relative
+ * can reach them. Never merged with the NDRRMA register: the same person may
+ * sit on both under two spellings, and reconciling them silently would either
+ * hide someone still missing or announce a rescue that has not happened.
+ */
+export interface FamilyPerson {
+  id: string;
+  name: string | null;
+  age: string | null;
+  place: string | null;
+  when: string | null;
+  phone: string | null;
+  note: string | null;
+  source: string | null;
+  status: string | null;
+}
+
+export interface FamilyRegister {
+  missing: FamilyPerson[];
+  found: FamilyPerson[];
+  matched: FamilyPerson[];
+  counts: { missing: number; found: number; matched: number };
+  forms: { missing: string | null; found: string | null };
+  sheet: string | null;
+  updatedAt: string | null;
+  error: string | null;
+  source: SourceRef;
+  fetchedAt: string;
+}
+
+// ─── Scheduled refresh ──────────────────────────────────────────────────────
+
+/** How one upstream fared on the last refresh cycle. */
+export interface FeedStatus {
+  /** Source key, e.g. "rescue" or "videos". */
+  key: string;
+  ok: boolean;
+  /** ISO time of the last cycle in which this source answered. */
+  lastSuccess: string | null;
+  lastAttempt: string | null;
+  error: string | null;
+  durationMs: number | null;
+}
+
+export interface BulletinRescue {
+  treat: string[][];
+  shelter: string[][];
+  surya: string[][];
+  nuwakot: string[][];
+  dao: string[][];
+  india: string[][];
+  trishuli1: string[][];
+  stats: {
+    cashTotal: string;
+    goodsTotal: string;
+    fundsTotal: string;
+    aidSubtext: string;
+  };
+  fetchedAt: string;
+  source: SourceRef;
+  error: string | null;
+}
+
+/** The refresher's view of the desk, served to routes instead of a cold fetch. */
+export interface FloodDeskStore {
+  river: RiverGauges | null;
+  corridor: CorridorIncidents | null;
+  alerts: BipadAlert[];
+  rescue: RescueRegister | null;
+  family: FamilyRegister | null;
+  bulletinRescue?: BulletinRescue | null;
+  videos: VideoFeed | null;
+  news: NewsItem[];
+  health: FeedStatus[];
+  lastRunAt: string | null;
+  nextRunAt: string | null;
+  intervalMinutes: number;
 }
 
 // ─── Runtime collaborators ──────────────────────────────────────────────────
@@ -419,6 +853,20 @@ export interface AtlasConfig {
   port: number;
   publicUrl: string | null;
   refreshIntervalMinutes: number;
+  /** Optional. Absent means the flood desk's community sections hide themselves. */
+  database: { url: string | null; ssl: boolean; poolMax: number };
+  storage: {
+    endpoint: string | null;
+    publicEndpoint: string | null;
+    accessKey: string | null;
+    secretKey: string | null;
+    secure: boolean;
+    bucket: string;
+    region: string;
+    presignedExpirySeconds: number;
+  };
+  community: { ipSalt: string | null; adminToken: string | null };
+  floodRefresh: { intervalMinutes: number; token: string | null };
   llm: { provider: string | null; apiKey: string | null; model: string | null; baseUrl: string | null };
   telegram: Record<string, unknown>;
   discord: Record<string, unknown>;

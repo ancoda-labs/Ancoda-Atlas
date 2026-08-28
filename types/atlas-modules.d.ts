@@ -116,3 +116,65 @@ declare module '*/apis/utils/nepal.mjs' {
   export function provinceOf(lat: number, lon: number): string | null;
   export function mentionsNepal(text: string): boolean;
 }
+
+declare module '*/lib/schema.mjs' {
+  /** Idempotent DDL for the flood desk's community tables. */
+  export const SCHEMA_SQL: string;
+}
+
+declare module '*/lib/news-digest.mjs' {
+  import type { LLMProviderLike, NewsItem } from '@/lib/types';
+  export interface DigestDraft {
+    headline: string;
+    summary: string;
+    bullets: string[];
+  }
+  export const BUCKET_MINUTES: number;
+  export function bucketStartFor(date: Date): Date;
+  export function bucketEndFor(start: Date): Date;
+  export function draftDigest(
+    provider: LLMProviderLike | null,
+    items: Array<Pick<NewsItem, 'title' | 'source'> & Partial<NewsItem>>,
+    lang: 'en' | 'ne',
+    windowLabel?: string,
+  ): Promise<{ draft: DigestDraft; generator: 'llm' | 'extractive'; model: string | null }>;
+}
+
+declare module '*/apis/sources/ndrrma.mjs' {
+  import type { RescuePlace, RescuedPerson, RescueRegister, RescueSummary } from '@/lib/types';
+  export function getRescuedPersons(): Promise<RescuedPerson[]>;
+  export function getRescueSummary(): Promise<RescueSummary>;
+  export function getRescueLocations(): Promise<{ rescued: RescuePlace[]; stationed: RescuePlace[] }>;
+  export function getRescueRegister(): Promise<RescueRegister>;
+}
+
+declare module '*/apis/sources/bipad.mjs' {
+  import type { BipadAlert, BipadHazard, BipadIncident, CorridorIncidents } from '@/lib/types';
+  export const HAZARD: { FLOOD: number; LANDSLIDE: number; HEAVY_RAINFALL: number; THUNDERBOLT: number };
+  export const CORRIDOR_BBOX: { minLat: number; maxLat: number; minLon: number; maxLon: number };
+  export function getHazards(): Promise<BipadHazard[]>;
+  export function getIncidents(opts?: { hazard?: number; since?: string; corridorOnly?: boolean }): Promise<BipadIncident[]>;
+  export function getAlerts(opts?: { limit?: number }): Promise<BipadAlert[]>;
+  export function getCorridorIncidents(opts?: { since?: string }): Promise<CorridorIncidents>;
+}
+
+declare module '*/apis/sources/youtube.mjs' {
+  import type { VideoFeed } from '@/lib/types';
+  export const DEFAULT_CHANNELS: Array<{ id: string; name: string }>;
+  export function getFloodVideos(opts?: {
+    channels?: Array<{ id: string; name: string }>;
+    limit?: number;
+    query?: string;
+  }): Promise<VideoFeed>;
+}
+
+declare module '*/apis/sources/family-register.mjs' {
+  import type { FamilyRegister } from '@/lib/types';
+  export function getFamilyRegister(): Promise<FamilyRegister>;
+}
+
+declare module '*/apis/sources/bulletin-rescue.mjs' {
+  import type { BulletinRescue } from '@/lib/types';
+  export function getBulletinRescue(): Promise<BulletinRescue>;
+}
+
