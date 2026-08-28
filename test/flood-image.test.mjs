@@ -10,7 +10,7 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readImageFacts, sniffType, stripMetadata } from '../lib/image.ts';
+import { readImageFacts, sniffType, stripMetadata } from '../src/lib/image.ts';
 
 // ─── Builders: synthesise the containers rather than ship binary fixtures ───
 
