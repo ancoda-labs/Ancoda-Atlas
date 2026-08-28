@@ -42,6 +42,7 @@ function emptyStore(): FloodDeskStore {
     rescue: null,
     family: null,
     bulletinRescue: null,
+    portal: null,
     videos: null,
     news: [],
     health: [],
@@ -219,6 +220,20 @@ export async function runFloodRefresh(): Promise<FloodDeskStore> {
         },
         value => {
           store.bulletinRescue = value;
+        },
+      ),
+
+      refresh(
+        'portal',
+        store,
+        async () => {
+          const { getRescuePortalStats } = await import('@/apis/sources/rescue-portal.mjs');
+          const stats = await getRescuePortalStats();
+          if (stats.error) throw new Error(stats.error);
+          return stats;
+        },
+        value => {
+          store.portal = value;
         },
       ),
 

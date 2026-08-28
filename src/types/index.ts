@@ -433,6 +433,7 @@ export interface FloodDistrictContacts extends Bilingual<'name'> {
 export interface FloodDeskPayload extends FloodContent {
   river: RiverGauges;
   bulletinRescue?: BulletinRescue | null;
+  portal?: RescuePortalStats | null;
   generatedAt: string;
 }
 
@@ -583,6 +584,51 @@ export interface RescueRegister {
   persons: RescuedPerson[];
   summary: RescueSummary | null;
   locations: { rescued: RescuePlace[]; stationed: RescuePlace[] };
+  error: string | null;
+  source: SourceRef;
+  fetchedAt: string;
+}
+
+// ─── OPMCM rescue portal counters ───────────────────────────────────────────
+//
+// The Prime Minister's Office portal at rescue.opmcm.gov.np, where the public
+// files missing persons, requests for help, and offers of help. These counters
+// describe filings, not people — see src/apis/sources/rescue-portal.mjs — and
+// are never merged with the NDRRMA register or the sitrep toll.
+
+/** A counter as the portal published it. Null means it said nothing, not zero. */
+export type PortalCount = number | null;
+
+export interface RescuePortalStats {
+  requests: {
+    total: PortalCount;
+    open: PortalCount;
+    /** A severity flag, not a state: these are also counted under a state. */
+    critical: PortalCount;
+    inProgress: PortalCount;
+    resolved: PortalCount;
+    cancelled: PortalCount;
+  };
+  offers: {
+    total: PortalCount;
+    available: PortalCount;
+    helping: PortalCount;
+    completed: PortalCount;
+    unavailable: PortalCount;
+  };
+  persons: {
+    total: PortalCount;
+    lost: PortalCount;
+    /** Missing reports nobody has closed. Not a count of people still missing. */
+    lostOpen: PortalCount;
+    found: PortalCount;
+    foundOpen: PortalCount;
+    resolved: PortalCount;
+    /** Every person report filed in the past day, missing and found together. */
+    last24h: PortalCount;
+    childrenMissing: PortalCount;
+    elderlyMissing: PortalCount;
+  };
   error: string | null;
   source: SourceRef;
   fetchedAt: string;
@@ -871,6 +917,7 @@ export interface FloodDeskStore {
   rescue: RescueRegister | null;
   family: FamilyRegister | null;
   bulletinRescue?: BulletinRescue | null;
+  portal: RescuePortalStats | null;
   videos: VideoFeed | null;
   news: NewsItem[];
   health: FeedStatus[];

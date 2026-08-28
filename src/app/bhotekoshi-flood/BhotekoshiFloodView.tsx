@@ -256,6 +256,7 @@ export default function BhotekoshiFloodView() {
             sitrep={sitrep}
             lang={lang}
             whatHappened={data?.whatHappened || null}
+            portal={data?.portal || null}
           />
         ) : (
           <p className="fl-empty">{t('loading')}</p>

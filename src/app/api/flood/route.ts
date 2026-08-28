@@ -24,6 +24,7 @@ async function build(): Promise<FloodDeskPayload> {
     ...content,
     river,
     bulletinRescue: store.bulletinRescue,
+    portal: store.portal,
     generatedAt: new Date().toISOString(),
   };
 }

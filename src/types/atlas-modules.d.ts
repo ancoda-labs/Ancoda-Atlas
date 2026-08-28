@@ -176,3 +176,8 @@ declare module '*/apis/sources/bulletin-rescue.mjs' {
   export function getBulletinRescue(): Promise<BulletinRescue>;
 }
 
+declare module '*/apis/sources/rescue-portal.mjs' {
+  import type { RescuePortalStats } from '@/types';
+  export function getRescuePortalStats(): Promise<RescuePortalStats>;
+}
+
