@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createLLMProvider } from '../lib/llm/index.mjs';
+import { createLLMProvider } from '../src/lib/llm/index.mjs';
 
 test('OpenRouterProvider Integration Test', { skip: !process.env.LLM_API_KEY || process.env.LLM_PROVIDER !== 'openrouter' }, async (t) => {
   await t.test('Performs live API call', async () => {

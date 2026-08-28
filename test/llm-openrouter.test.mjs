@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { OpenRouterProvider } from '../lib/llm/openrouter.mjs';
-import { createLLMProvider } from '../lib/llm/index.mjs';
+import { OpenRouterProvider } from '../src/lib/llm/openrouter.mjs';
+import { createLLMProvider } from '../src/lib/llm/index.mjs';
 
 test('OpenRouterProvider Unit Tests', async (t) => {
   await t.test('initializes correctly', () => {
