@@ -14,8 +14,8 @@
 import { randomUUID } from 'crypto';
 import { query } from './db';
 import { bucketStartFor, bucketEndFor, draftDigest } from '@/lib/news-digest.mjs';
-import type { DigestSource, LLMProviderLike, NewsDigest, NewsItem } from './types';
-import { errorMessage } from './types';
+import type { DigestSource, LLMProviderLike, NewsDigest, NewsItem } from '@/types';
+import { errorMessage } from '@/types';
 
 export type DigestLang = 'en' | 'ne';
 

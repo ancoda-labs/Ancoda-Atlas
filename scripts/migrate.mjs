@@ -6,9 +6,9 @@
 // where you want the tables to exist before any traffic arrives, and for
 // checking that DATABASE_URL actually points somewhere.
 
-import '../apis/utils/env.mjs';
+import '../src/apis/utils/env.mjs';
 import pg from 'pg';
-import { SCHEMA_SQL } from '../lib/schema.mjs';
+import { SCHEMA_SQL } from '../src/lib/schema.mjs';
 
 const url = process.env.DATABASE_URL;
 if (!url) {

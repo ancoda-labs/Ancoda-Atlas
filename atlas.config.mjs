@@ -2,8 +2,8 @@
 // Scope: Nepal natural-hazard monitoring (earthquake, flood, landslide,
 // wildfire, hazardous air, and the humanitarian response to them).
 
-import "./apis/utils/env.mjs"; // Load .env first
-import { NEPAL_BBOX, NEPAL_CENTER, NEPAL_ISO } from "./apis/utils/nepal.mjs";
+import "./src/apis/utils/env.mjs"; // Load .env first
+import { NEPAL_BBOX, NEPAL_CENTER, NEPAL_ISO } from "./src/apis/utils/nepal.mjs";
 
 export default {
   // Geographic focus. Every geo-scoped source resolves against

@@ -8,8 +8,8 @@ import type {
   LLMProviderLike,
   MemoryManagerLike,
   SseClient,
-} from './types';
-import { errorMessage } from './types';
+} from '@/types';
+import { errorMessage } from '@/types';
 
 // Global state container key for hot-reloads in Next.js dev mode
 const GLOBAL_SWEEPER_KEY = Symbol.for('atlas.sweeper');

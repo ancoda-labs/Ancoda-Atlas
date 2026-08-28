@@ -8,13 +8,13 @@
 // the UI rather than silently flowing through as `any`.
 
 declare module '*/atlas.config.mjs' {
-  import type { AtlasConfig } from '@/lib/types';
+  import type { AtlasConfig } from '@/types';
   const config: AtlasConfig;
   export default config;
 }
 
 declare module '*/lib/synthesize.mjs' {
-  import type { HazardRead, HazardSnapshot, HazardStory } from '@/lib/types';
+  import type { HazardRead, HazardSnapshot, HazardStory } from '@/types';
 
   export function synthesize(raw: unknown): Promise<HazardSnapshot>;
   export function generateIdeas(snapshot: HazardSnapshot): HazardRead[];
@@ -28,7 +28,7 @@ declare module '*/lib/synthesize.mjs' {
 
 declare module '*/apis/briefing.mjs' {
   export function fullBriefing(): Promise<{
-    atlas: import('@/lib/types').SweepMeta;
+    atlas: import('@/types').SweepMeta;
     sources: Record<string, unknown>;
     errors: Array<{ name: string; error: string }>;
     timing: Record<string, { status: string; ms: number }>;
@@ -41,22 +41,22 @@ declare module '*/apis/briefing.mjs' {
 }
 
 declare module '*/lib/delta/index.mjs' {
-  import type { MemoryManagerLike } from '@/lib/types';
+  import type { MemoryManagerLike } from '@/types';
   export const MemoryManager: new (runsDir: string) => MemoryManagerLike;
   export function computeDelta(
     current: unknown,
     previous: unknown,
     thresholdOverrides?: Record<string, unknown>,
-  ): import('@/lib/types').SweepDelta | null;
+  ): import('@/types').SweepDelta | null;
 }
 
 declare module '*/lib/llm/index.mjs' {
-  import type { AtlasConfig, LLMProviderLike } from '@/lib/types';
+  import type { AtlasConfig, LLMProviderLike } from '@/types';
   export function createLLMProvider(cfg: AtlasConfig['llm']): LLMProviderLike | null;
 }
 
 declare module '*/lib/llm/ideas.mjs' {
-  import type { HazardRead, HazardSnapshot, LLMProviderLike, SweepDelta } from '@/lib/types';
+  import type { HazardRead, HazardSnapshot, LLMProviderLike, SweepDelta } from '@/types';
   export function generateLLMIdeas(
     provider: LLMProviderLike,
     snapshot: HazardSnapshot,
@@ -66,17 +66,17 @@ declare module '*/lib/llm/ideas.mjs' {
 }
 
 declare module '*/lib/alerts/telegram.mjs' {
-  import type { AlerterLike } from '@/lib/types';
+  import type { AlerterLike } from '@/types';
   export const TelegramAlerter: new (cfg: Record<string, unknown>) => AlerterLike;
 }
 
 declare module '*/lib/alerts/discord.mjs' {
-  import type { AlerterLike } from '@/lib/types';
+  import type { AlerterLike } from '@/types';
   export const DiscordAlerter: new (cfg: Record<string, unknown>) => AlerterLike;
 }
 
 declare module '*/apis/sources/nepal-news.mjs' {
-  import type { NewsResponse } from '@/lib/types';
+  import type { NewsResponse } from '@/types';
   export function fetchTopicNews(opts?: {
     topic?: string;
     window?: string;
@@ -123,7 +123,7 @@ declare module '*/lib/schema.mjs' {
 }
 
 declare module '*/lib/news-digest.mjs' {
-  import type { LLMProviderLike, NewsItem } from '@/lib/types';
+  import type { LLMProviderLike, NewsItem } from '@/types';
   export interface DigestDraft {
     headline: string;
     summary: string;
@@ -141,7 +141,7 @@ declare module '*/lib/news-digest.mjs' {
 }
 
 declare module '*/apis/sources/ndrrma.mjs' {
-  import type { RescuePlace, RescuedPerson, RescueRegister, RescueSummary } from '@/lib/types';
+  import type { RescuePlace, RescuedPerson, RescueRegister, RescueSummary } from '@/types';
   export function getRescuedPersons(): Promise<RescuedPerson[]>;
   export function getRescueSummary(): Promise<RescueSummary>;
   export function getRescueLocations(): Promise<{ rescued: RescuePlace[]; stationed: RescuePlace[] }>;
@@ -149,7 +149,7 @@ declare module '*/apis/sources/ndrrma.mjs' {
 }
 
 declare module '*/apis/sources/bipad.mjs' {
-  import type { BipadAlert, BipadHazard, BipadIncident, CorridorIncidents } from '@/lib/types';
+  import type { BipadAlert, BipadHazard, BipadIncident, CorridorIncidents } from '@/types';
   export const HAZARD: { FLOOD: number; LANDSLIDE: number; HEAVY_RAINFALL: number; THUNDERBOLT: number };
   export const CORRIDOR_BBOX: { minLat: number; maxLat: number; minLon: number; maxLon: number };
   export function getHazards(): Promise<BipadHazard[]>;
@@ -159,7 +159,7 @@ declare module '*/apis/sources/bipad.mjs' {
 }
 
 declare module '*/apis/sources/youtube.mjs' {
-  import type { VideoFeed } from '@/lib/types';
+  import type { VideoFeed } from '@/types';
   export const DEFAULT_CHANNELS: Array<{ id: string; name: string }>;
   export function getFloodVideos(opts?: {
     channels?: Array<{ id: string; name: string }>;
@@ -169,12 +169,12 @@ declare module '*/apis/sources/youtube.mjs' {
 }
 
 declare module '*/apis/sources/family-register.mjs' {
-  import type { FamilyRegister } from '@/lib/types';
+  import type { FamilyRegister } from '@/types';
   export function getFamilyRegister(): Promise<FamilyRegister>;
 }
 
 declare module '*/apis/sources/bulletin-rescue.mjs' {
-  import type { BulletinRescue } from '@/lib/types';
+  import type { BulletinRescue } from '@/types';
   export function getBulletinRescue(): Promise<BulletinRescue>;
 }
 

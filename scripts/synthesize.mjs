@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { readFile, writeFile } from 'node:fs/promises';
-import { synthesize } from '../lib/synthesize.mjs';
+import { synthesize } from '../src/lib/synthesize.mjs';
 
 const inputPath = 'runs/latest.json';
 const outputPath = 'runs/dashboard.json';

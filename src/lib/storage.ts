@@ -19,7 +19,7 @@
 // Keys follow:  flood-photos/{yyyy-mm-dd}/{id}.{ext}
 
 import { Client } from 'minio';
-import { errorMessage } from './types';
+import { errorMessage } from '@/types';
 
 interface AtlasStorageGlobal {
   __atlasMinio?: Client;

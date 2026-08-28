@@ -12,8 +12,8 @@ import { randomUUID, createHmac } from 'crypto';
 import { query } from './db';
 import { presignedGetUrl, photoKey, remove as removeObject, upload } from './storage';
 import { EXTENSION, readImageFacts, sniffType, stripMetadata } from './image';
-import type { FloodPhoto, PhotoGeoSource } from './types';
-import { errorMessage } from './types';
+import type { FloodPhoto, PhotoGeoSource } from '@/types';
+import { errorMessage } from '@/types';
 
 export const MAX_UPLOAD_BYTES = 12 * 1024 * 1024;
 export const MAX_CAPTION_CHARS = 280;

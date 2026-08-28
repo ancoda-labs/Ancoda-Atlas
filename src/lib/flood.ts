@@ -23,8 +23,8 @@ import type {
   RiverGauges,
   SitrepContent,
   SitrepDiscrepancy,
-} from './types';
-import { errorMessage } from './types';
+} from '@/types';
+import { errorMessage } from '@/types';
 
 const CONTENT_DIR = join(process.cwd(), 'content', 'bhotekoshi-flood');
 

@@ -21,8 +21,8 @@ import { join } from 'path';
 import { fetchCorridorGauges } from './flood';
 import { proxyUrlFor } from './news-media';
 import { scheduleCatchup } from './news-digest-store';
-import type { FeedStatus, FloodDeskStore, NewsItem } from './types';
-import { errorMessage } from './types';
+import type { FeedStatus, FloodDeskStore, NewsItem } from '@/types';
+import { errorMessage } from '@/types';
 
 const DEFAULT_INTERVAL_MINUTES = 10;
 const STORE_FILE = 'flood-desk.json';

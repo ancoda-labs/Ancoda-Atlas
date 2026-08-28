@@ -10,7 +10,7 @@
 import { Pool } from 'pg';
 import type { PoolClient, QueryResultRow } from 'pg';
 import { SCHEMA_SQL } from '@/lib/schema.mjs';
-import { errorMessage } from './types';
+import { errorMessage } from '@/types';
 
 interface AtlasDbGlobal {
   __atlasPgPool?: Pool;
