@@ -16,5 +16,8 @@
     "lib": "@/lib",
     "hooks": "@/hooks",
     "utils": "@/lib/utils"
+  },
+  "registries": {
+    "@supabase": "https://supabase.com/ui/r/{name}.json"
   }
 }
