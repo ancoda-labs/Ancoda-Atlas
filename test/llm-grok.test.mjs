@@ -3,8 +3,8 @@
 
 import { describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
-import { GrokProvider } from '../lib/llm/grok.mjs';
-import { createLLMProvider } from '../lib/llm/index.mjs';
+import { GrokProvider } from '../src/lib/llm/grok.mjs';
+import { createLLMProvider } from '../src/lib/llm/index.mjs';
 
 // ─── Unit Tests ───
 

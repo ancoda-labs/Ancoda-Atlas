@@ -3,8 +3,8 @@
 
 import { describe, it, mock, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { MiniMaxProvider } from '../lib/llm/minimax.mjs';
-import { createLLMProvider } from '../lib/llm/index.mjs';
+import { MiniMaxProvider } from '../src/lib/llm/minimax.mjs';
+import { createLLMProvider } from '../src/lib/llm/index.mjs';
 
 // ─── Unit Tests ───
 

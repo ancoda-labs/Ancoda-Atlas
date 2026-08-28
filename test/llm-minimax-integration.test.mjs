@@ -4,7 +4,7 @@
 
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { MiniMaxProvider } from '../lib/llm/minimax.mjs';
+import { MiniMaxProvider } from '../src/lib/llm/minimax.mjs';
 
 const API_KEY = process.env.MINIMAX_API_KEY;
 
