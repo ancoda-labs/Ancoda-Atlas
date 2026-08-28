@@ -4,7 +4,7 @@
 
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { MistralProvider } from '../lib/llm/mistral.mjs';
+import { MistralProvider } from '../src/lib/llm/mistral.mjs';
 
 const API_KEY = process.env.MISTRAL_API_KEY;
 

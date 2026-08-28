@@ -3,8 +3,8 @@
 
 import { describe, it, mock, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { MistralProvider } from '../lib/llm/mistral.mjs';
-import { createLLMProvider } from '../lib/llm/index.mjs';
+import { MistralProvider } from '../src/lib/llm/mistral.mjs';
+import { createLLMProvider } from '../src/lib/llm/index.mjs';
 
 // ─── Unit Tests ───
 
