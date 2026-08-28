@@ -136,6 +136,18 @@ declare module '*/lib/news-digest.mjs' {
     /** The language's English name, for codes outside the module's own map. */
     languageName?: string | null,
   ): Promise<{ draft: DigestDraft; generator: 'llm' | 'extractive'; model: string | null }>;
+  /** The brief with no model in it: the strongest headline and the distinct ones under it. */
+  export function extractiveDigest(
+    items: Array<Pick<NewsItem, 'title' | 'source'> & Partial<NewsItem>>,
+    lang: string,
+  ): DigestDraft;
+  /** Carry a finished brief into another language, changing nothing else. */
+  export function translateDigest(
+    provider: LLMProviderLike | null,
+    draft: DigestDraft,
+    lang: string,
+    languageName?: string | null,
+  ): Promise<{ draft: DigestDraft; model: string | null; translated: boolean }>;
 }
 
 declare module '*/apis/sources/ndrrma.mjs' {

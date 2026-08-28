@@ -28,11 +28,12 @@ import {
 
 // What the reporting currently says, beside the map.
 //
-// The panel is deliberately explicit about provenance. Every brief states
-// whether a model wrote it or Atlas merely listed the headlines, and when the
-// reader asked for a language no model writes reliably it says the text came
-// back in Nepali instead. On a page people use to decide whether to move, an
-// unattributed summary is worse than no summary.
+// The panel is deliberately explicit about provenance. No model writes these
+// briefs — Atlas lists what the outlets filed, and the panel says so — and a
+// model is used only to carry that list into the reader's language, which the
+// panel also says. When the language could not be delivered at all it states
+// that the text came back in Nepali instead. On a page people use to decide
+// whether to move, an unattributed summary is worse than no summary.
 
 type Lang = 'en' | 'ne';
 
@@ -63,6 +64,7 @@ const T = {
     ne: 'यो संक्षेप नेपालीमा छ। यसलाई यो भाषामा लेख्न सकिएन:',
   },
   viaNepali: { en: 'via Nepali', ne: 'नेपालीमार्फत' },
+  translated: { en: 'Machine-translated', ne: 'मेसिनद्वारा अनुवादित' },
 };
 
 interface Props {
@@ -203,11 +205,14 @@ export default function FloodAiInsights({ lang }: Props) {
           )}
 
           <div className="fl-insights-foot">
-            {/* A model-written brief carries no label; only the weaker mode,
-                where Atlas listed headlines rather than summarising them, is
-                worth calling out. */}
+            {/* Two separate claims, and the reader needs both: that Atlas
+                listed these headlines rather than summarising them, and
+                whether the words under them are still the outlets' own. */}
             {insight.generator !== 'llm' && (
               <span className="g-list">{t('byList')}</span>
+            )}
+            {insight.translated && (
+              <span className="g-list">{t('translated')}</span>
             )}
             <span>
               {t('basedOn')} {insight.itemCount} {t('reports')} · {ageFrom(insight.generatedAt, lang)}

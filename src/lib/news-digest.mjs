@@ -112,14 +112,93 @@ function extractiveDraft(items, lang) {
   }
 
   const headline = clean(items[0]?.title || (ne ? 'नयाँ समाचार' : 'New reporting'), 80);
-  // No claim about the window's length. The stored digests really are ten
-  // minutes wide, but the live overview brief covers a whole day, and one
-  // wording cannot be true of both — so it states only what is certain.
+  // Two claims withheld on purpose. Nothing about the window's length: the
+  // stored digests really are ten minutes wide, the live overview brief covers
+  // a whole day, and one wording cannot be true of both. And nothing about the
+  // headlines being verbatim, because this draft may be translated downstream
+  // — what stays true either way is that no model wrote it.
   const summary = ne
-    ? `${sources.length} स्रोतबाट ${items.length} समाचार। तलका शीर्षक जस्ताको तस्तै राखिएका छन् — यो सारांश कुनै मोडेलले लेखेको होइन।`
-    : `${items.length} reports from ${sources.length} outlets. The headlines below are reproduced as filed — this brief was assembled without a model.`;
+    ? `${sources.length} स्रोतबाट ${items.length} समाचार, तल सूचीबद्ध। यो संक्षेप कुनै मोडेलले लेखेको होइन।`
+    : `${items.length} reports from ${sources.length} outlets, listed below. No model wrote this brief.`;
 
   return { headline, summary, bullets };
+}
+
+/**
+ * A digest with no model in it, in one of the wire languages.
+ *
+ * This is the whole brief for the overview panel: the desk stopped asking a
+ * model to *write* about a disaster, because a summary that reads well is
+ * indistinguishable from a summary that is right, and neither the reader nor
+ * Atlas can tell them apart from the page. Listing what the outlets filed is
+ * weaker prose and a stronger claim.
+ */
+export function extractiveDigest(items, lang) {
+  if (!items.length) {
+    return {
+      headline: lang === 'ne' ? 'नयाँ समाचार छैन' : 'No new reporting',
+      summary: lang === 'ne'
+        ? 'यस अवधिमा कुनै नयाँ समाचार आएन।'
+        : 'No new reporting arrived in this window.',
+      bullets: [],
+    };
+  }
+  return extractiveDraft(items, lang);
+}
+
+const TRANSLATE_PROMPT = `You are a translator for Ancoda Atlas, a Nepal natural-hazard monitoring desk.
+
+You translate. You do not write, summarise, shorten, expand or comment.
+
+Absolute rules:
+- Translate every field into the target language and nothing else.
+- Keep every number, date, place name and outlet name exactly as given. Do not convert units or numerals.
+- Keep the same number of bullets, in the same order. Never merge, drop or add one.
+- If a phrase has no natural equivalent, transliterate it rather than replacing it with something else.
+
+Return STRICT JSON and nothing else, in the shape you were given:
+{"headline": "...", "summary": "...", "bullets": ["...", "..."]}`;
+
+/**
+ * Translate a finished draft, leaving what it says alone.
+ *
+ * The model is allowed to carry the brief across languages and nothing more.
+ * That is a narrower job than writing one and it fails more visibly: a
+ * translation that drops or invents a bullet is caught here by counting them,
+ * and a failed call leaves the original standing rather than producing
+ * nothing. Callers are told which happened so the page can label a translated
+ * brief as translated — a headline is no longer verbatim once it has been
+ * through a model, and the reader is entitled to know that.
+ *
+ * @returns {Promise<{ draft: object, model: string|null, translated: boolean }>}
+ */
+export async function translateDigest(provider, draft, lang, languageName = null) {
+  if (!provider?.isConfigured) return { draft, model: null, translated: false };
+
+  const target = LANGUAGE_NAME[lang] || languageName || 'English';
+  const user = `Target language: ${target}
+
+Translate this brief into ${target}. Return only the JSON object.
+
+${JSON.stringify(draft)}`;
+
+  try {
+    const { text } = await provider.complete(TRANSLATE_PROMPT, user, { maxTokens: 900, timeout: 45_000 });
+    const parsed = extractJson(text);
+    const headline = clean(parsed?.headline, 80);
+    const summary = clean(parsed?.summary, 600);
+    const bullets = Array.isArray(parsed?.bullets)
+      ? parsed.bullets.map(b => clean(b, 160)).filter(Boolean)
+      : [];
+    // A translation that lost or gained a point is not a translation.
+    if (headline && summary && bullets.length === draft.bullets.length) {
+      return { draft: { headline, summary, bullets }, model: provider.name || null, translated: true };
+    }
+    console.warn('[Digest] Translation did not come back intact; keeping the original');
+  } catch (err) {
+    console.warn('[Digest] Translation failed; keeping the original:', err?.message || err);
+  }
+  return { draft, model: null, translated: false };
 }
 
 /**

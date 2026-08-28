@@ -512,9 +512,19 @@ export interface FloodInsight {
   bullets: string[];
   sources: DigestSource[];
   itemCount: number;
-  /** 'llm' when a model wrote it, 'extractive' when Atlas listed headlines. */
+  /**
+   * 'llm' when a model wrote it, 'extractive' when Atlas listed headlines. The
+   * live insights panel is always extractive: no model writes about the flood.
+   */
   generator: 'llm' | 'extractive';
+  /** The model that translated the brief, when one did. Never an author. */
   model: string | null;
+  /**
+   * True when a model carried this brief into the reader's language. The
+   * headlines under it are then no longer the outlets' own words, and the
+   * panel says so.
+   */
+  translated?: boolean;
   /** The language actually written, which may differ from the one requested. */
   lang: string;
   /**
@@ -528,9 +538,9 @@ export interface FloodInsight {
 export interface FloodInsightFeed {
   insight: FloodInsight | null;
   /**
-   * Whether an LLM is configured. Without one nothing can be translated — the
-   * extractive path reproduces headlines, which arrive only in Nepali and
-   * English — so the picker uses this to mark what it cannot deliver.
+   * Whether an LLM is configured. It only ever translates here, so without one
+   * the brief is limited to the languages the headlines arrive in — Nepali and
+   * English — and the picker uses this to mark what it cannot deliver.
    */
   hasModel: boolean;
   reason?: string;

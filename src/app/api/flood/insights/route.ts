@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { draftDigest } from '@/lib/news-digest.mjs';
+import { extractiveDigest, translateDigest } from '@/lib/news-digest.mjs';
+import type { DigestDraft } from '@/lib/news-digest.mjs';
 import { cacheFor, noStore } from '@/lib/http-cache';
 import { findLanguage, isWireLanguage } from '@/lib/nepal-languages';
 import type { DigestSource, FloodInsight, FloodInsightFeed, LLMProviderLike, NewsItem } from '@/types';
@@ -16,9 +17,17 @@ export const dynamic = 'force-dynamic';
 // neither. So the brief is computed per request, cached in memory, and thrown
 // away — the same shape the videos route uses.
 //
-// Which of the two paths produced the text is carried in the response, because
-// a reader deciding whether to act on a summary is entitled to know whether a
-// machine wrote the sentence or merely selected it.
+// No model writes this brief. The panel lists what the outlets filed and says
+// so: on a page people use to decide whether to move, prose a model composed
+// about a disaster reads exactly as confidently when it is wrong as when it is
+// right, and nothing on the page can tell the reader which it got. Listing
+// headlines is weaker writing and a stronger claim, so that is what it does.
+//
+// The key still earns its keep, on the one job where a model's mistakes are
+// catchable: carrying that brief into the reader's language. A translation can
+// be checked against the original — the bullets are counted, and a call that
+// loses one is discarded — and a brief that has been through a model is
+// labelled as translated, because a headline is no longer verbatim afterwards.
 
 const CACHE_TTL_MS = 10 * 60 * 1000;
 const CACHE_TTL_S = CACHE_TTL_MS / 1000;
@@ -38,6 +47,23 @@ async function loadProvider(): Promise<LLMProviderLike | null> {
   }
 }
 
+/**
+ * Whether the brief still needs carrying into the reader's language.
+ *
+ * Decided on the text, not the language code. The wire is mixed — most of
+ * these headlines are filed in Nepali, a few in English — and the extractive
+ * draft reproduces whatever it was handed, so an English reader can be shown a
+ * page of Devanagari under a label that says English. What the headlines are
+ * actually written in is the only thing that settles it.
+ */
+function needsTranslation(draft: DigestDraft, lang: string): boolean {
+  const body = [draft.headline, ...draft.bullets].join(' ');
+  const hasDevanagari = /[\u0900-\u097F]/.test(body);
+  if (lang === 'ne') return !hasDevanagari;
+  if (lang === 'en') return hasDevanagari;
+  return true;
+}
+
 async function build(langCode: string): Promise<FloodInsightFeed> {
   const requested = findLanguage(langCode);
 
@@ -54,21 +80,27 @@ async function build(langCode: string): Promise<FloodInsightFeed> {
 
   if (!items.length) return { insight: null, hasModel, reason: 'no_reporting' };
 
-  // Every language in the registry is one a model can write, so with a model
-  // configured the request is honoured as asked. Without one there is no
-  // translation at all — the extractive draft reproduces headlines, and those
-  // arrive from the outlets only in Nepali and English — so everything else
-  // lands on Nepali. The response says which language it actually is either
-  // way, so the panel never puts a Maithili label on Nepali prose.
+  // The brief is always written from the headlines themselves, in the language
+  // they arrive in. Anything beyond Nepali and English needs the translator, so
+  // without a key those requests land on Nepali — and the response says which
+  // language it actually is, so the panel never puts a Maithili label on
+  // Nepali prose.
   const writable = hasModel || isWireLanguage(requested.code) ? requested : findLanguage('ne');
   const fellBackFrom = writable.code === requested.code ? undefined : requested.code;
-  const { draft, generator, model } = await draftDigest(
-    provider,
-    items,
-    writable.code,
-    'the last 24 hours',
-    writable.english,
-  );
+
+  // Wire languages are drafted directly; everything else is drafted in Nepali
+  // and carried across. Nepali rather than English because that is the language
+  // most of these headlines are filed in, so it is the shorter journey.
+  const sourceLang = isWireLanguage(writable.code) ? writable.code : 'ne';
+  const drafted = extractiveDigest(items, sourceLang);
+
+  const { draft, model, translated } = needsTranslation(drafted, writable.code)
+    ? await translateDigest(provider, drafted, writable.code, writable.english)
+    : { draft: drafted, model: null, translated: false };
+
+  // A translation that failed leaves Nepali on the page, and saying so is the
+  // same statement the picker already makes about a language it cannot write.
+  const lang = translated || sourceLang === writable.code ? writable.code : sourceLang;
 
   const sources: DigestSource[] = items.slice(0, 8).map(i => ({
     title: i.title,
@@ -80,10 +112,11 @@ async function build(langCode: string): Promise<FloodInsightFeed> {
     ...draft,
     sources,
     itemCount: items.length,
-    generator,
+    generator: 'extractive',
     model,
-    lang: writable.code,
-    fellBackFrom,
+    translated,
+    lang,
+    fellBackFrom: lang === requested.code ? undefined : fellBackFrom ?? requested.code,
     generatedAt: new Date().toISOString(),
   };
   return { insight, hasModel };
@@ -100,8 +133,9 @@ export async function GET(req: NextRequest) {
     return cacheFor(res, { edge: CACHE_TTL_S });
   }
 
-  // One in-flight build per language: the panel polls, and a model call is not
-  // something to start twice because two readers arrived together.
+  // One in-flight build per language: the panel polls, and neither the wire
+  // fetch nor a translation is something to start twice because two readers
+  // arrived together.
   let inflight = pending.get(key);
   if (!inflight) {
     inflight = build(key)
@@ -116,8 +150,8 @@ export async function GET(req: NextRequest) {
   try {
     const data = await inflight;
     const res = NextResponse.json(data);
-    // Only a brief that actually got written is worth reusing. A model call is
-    // the most expensive thing this desk does — around eight seconds cold — so
+    // Only a brief that actually got built is worth reusing. The wire fetch and
+    // any translation together are the most expensive thing this route does, so
     // when one succeeds, let the edge answer with it for the full ten minutes.
     return data.insight ? cacheFor(res, { edge: CACHE_TTL_S }) : noStore(res);
   } catch (err) {
