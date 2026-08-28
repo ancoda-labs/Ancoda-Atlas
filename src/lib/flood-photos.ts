@@ -50,8 +50,9 @@ interface PhotoRow {
   place_label: string | null;
   caption: string | null;
   contributor: string | null;
-  taken_at: Date | null;
-  created_at: Date;
+  // ISO-8601 text, not a native timestamp — see the dialect note in schema.mjs.
+  taken_at: string | null;
+  created_at: string;
   report_count: number;
 }
 
@@ -61,7 +62,7 @@ function asGeoSource(value: string): PhotoGeoSource {
   return GEO_SOURCES.includes(value as PhotoGeoSource) ? (value as PhotoGeoSource) : 'none';
 }
 
-/** pg returns double precision as a string on some driver paths; normalise both. */
+/** libSQL can hand back a real as a number or a string; normalise both. */
 function asNumber(value: string | number | null): number | null {
   if (value == null) return null;
   const n = typeof value === 'number' ? value : Number(value);
@@ -82,8 +83,10 @@ async function toPhoto(row: PhotoRow): Promise<FloodPhoto> {
     placeLabel: row.place_label,
     caption: row.caption,
     contributor: row.contributor,
-    takenAt: row.taken_at ? row.taken_at.toISOString() : null,
-    createdAt: row.created_at.toISOString(),
+    // Stored as ISO-8601 text rather than a native timestamp, so these are
+    // already the shape the API returns.
+    takenAt: row.taken_at || null,
+    createdAt: row.created_at,
     reportCount: row.report_count,
   };
 }
@@ -96,7 +99,7 @@ export async function listPhotos(limit = 60): Promise<FloodPhoto[]> {
     `SELECT ${SELECT_COLUMNS} FROM flood_photos
       WHERE status = 'published'
       ORDER BY created_at DESC
-      LIMIT $1`,
+      LIMIT ?`,
     [Math.min(Math.max(limit, 1), 200)],
   );
   // Signing is one HMAC per row, no round trip, so the fan-out is cheap.
@@ -117,9 +120,9 @@ export function hashIp(ip: string): string {
 /** How many photos this sender has uploaded inside the rate-limit window. */
 export async function recentUploadCount(ipHash: string): Promise<number> {
   const rows = await query<{ count: string }>(
-    `SELECT COUNT(*)::text AS count FROM flood_photos
-      WHERE ip_hash = $1 AND created_at > now() - ($2 || ' minutes')::interval`,
-    [ipHash, String(UPLOAD_LIMIT_WINDOW_MINUTES)],
+    `SELECT CAST(COUNT(*) AS TEXT) AS count FROM flood_photos
+      WHERE ip_hash = ? AND created_at > datetime('now', ?)`,
+    [ipHash, `-${UPLOAD_LIMIT_WINDOW_MINUTES} minutes`],
   );
   return Number(rows[0]?.count || 0);
 }
@@ -187,7 +190,7 @@ export async function createPhoto(input: CreatePhotoInput): Promise<CreatePhotoR
       `INSERT INTO flood_photos
          (id, object_key, content_type, bytes, width, height, orientation,
           lat, lon, geo_source, district, place_label, caption, contributor, ip_hash, taken_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
        RETURNING ${SELECT_COLUMNS}`,
       [
         id, key, type, clean.length, facts.width, facts.height, facts.orientation,
@@ -219,7 +222,7 @@ export interface ReportResult {
 export async function reportPhoto(id: string, reason: string | null, ipHash: string): Promise<ReportResult | null> {
   const inserted = await query<{ id: string }>(
     `INSERT INTO flood_photo_reports (id, photo_id, reason, ip_hash)
-     VALUES ($1, $2, $3, $4)
+     VALUES (?, ?, ?, ?)
      ON CONFLICT (photo_id, ip_hash) DO NOTHING
      RETURNING id`,
     [randomUUID(), id, reason, ipHash],
@@ -227,10 +230,10 @@ export async function reportPhoto(id: string, reason: string | null, ipHash: str
 
   const counts = await query<{ report_count: number; status: string }>(
     `UPDATE flood_photos
-        SET report_count = (SELECT COUNT(*) FROM flood_photo_reports WHERE photo_id = $1)
-      WHERE id = $1
+        SET report_count = (SELECT COUNT(*) FROM flood_photo_reports WHERE photo_id = ?)
+      WHERE id = ?
       RETURNING report_count, status`,
-    [id],
+    [id, id],
   );
   const row = counts[0];
   if (!row) return null;
@@ -239,7 +242,7 @@ export async function reportPhoto(id: string, reason: string | null, ipHash: str
   if (!removed && row.report_count >= REPORT_THRESHOLD) {
     await query(
       `UPDATE flood_photos SET status = 'removed', removed_reason = 'auto: report threshold'
-        WHERE id = $1 AND status = 'published'`,
+        WHERE id = ? AND status = 'published'`,
       [id],
     );
     removed = true;
@@ -256,10 +259,10 @@ export async function reportPhoto(id: string, reason: string | null, ipHash: str
  */
 export async function removePhoto(id: string, reason: string): Promise<boolean> {
   const rows = await query<{ object_key: string }>(
-    `UPDATE flood_photos SET status = 'removed', removed_reason = $2
-      WHERE id = $1 AND status = 'published'
+    `UPDATE flood_photos SET status = 'removed', removed_reason = ?
+      WHERE id = ? AND status = 'published'
       RETURNING object_key`,
-    [id, reason.slice(0, 200)],
+    [reason.slice(0, 200), id],
   );
   const row = rows[0];
   if (!row) return false;

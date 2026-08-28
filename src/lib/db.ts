@@ -1,48 +1,57 @@
-// Postgres connection for the flood desk's community layer.
+// Turso (libSQL) connection for the flood desk's community layer.
 //
 // The database is optional on purpose. Atlas's hazard monitoring — sweeps,
 // gauges, reviewed relief content — is all file- and API-backed and must keep
-// working on a box with no Postgres. Only the two features that need to
-// remember something between requests (ground-report photos, news digests)
-// depend on this module, and each one hides itself when DATABASE_URL is unset
-// rather than failing the page around it.
+// working on a box with no database at all. Only the features that need to
+// remember something between requests (ground-report photos, rescue
+// corrections, news digests) depend on this module, and each one hides itself
+// when the connection is unconfigured rather than failing the page around it.
+//
+// Why libSQL rather than Postgres: this desk deploys to Netlify, where
+// functions are short-lived and a connection pool has nothing to pool. Turso
+// speaks HTTP, so a cold function makes one request and exits, and the same
+// code runs against a local `file:` database with no server to start.
 
-import { Pool } from 'pg';
-import type { PoolClient, QueryResultRow } from 'pg';
-import { SCHEMA_SQL } from '@/lib/schema.mjs';
+import { createClient } from '@libsql/client';
+import type { Client, InArgs } from '@libsql/client';
+import { SCHEMA_STATEMENTS } from '@/lib/schema.mjs';
 import { errorMessage } from '@/types';
 
 interface AtlasDbGlobal {
-  __atlasPgPool?: Pool;
+  __atlasLibsql?: Client;
   __atlasSchemaReady?: Promise<void>;
 }
 
-// Next.js hot-reloads server modules in dev; without a global handle every
-// edit would leak another pool of idle connections.
+// Next.js hot-reloads server modules in dev; without a global handle every edit
+// would leak another client.
 const g = globalThis as unknown as AtlasDbGlobal;
 
-export function isDbConfigured(): boolean {
-  return Boolean(process.env.DATABASE_URL);
+/**
+ * The database URL.
+ *
+ * TURSO_DATABASE_URL is the deployed setting. DATABASE_URL is still read so an
+ * existing environment keeps working, and both accept a `file:` URL, which is
+ * how the test and local paths run without a network.
+ */
+function databaseUrl(): string | null {
+  return process.env.TURSO_DATABASE_URL || process.env.DATABASE_URL || null;
 }
 
-export function getPool(): Pool | null {
-  const url = process.env.DATABASE_URL;
+export function isDbConfigured(): boolean {
+  return Boolean(databaseUrl());
+}
+
+export function getClient(): Client | null {
+  const url = databaseUrl();
   if (!url) return null;
-  if (!g.__atlasPgPool) {
-    g.__atlasPgPool = new Pool({
-      connectionString: url,
-      max: Number(process.env.DATABASE_POOL_MAX) || 8,
-      idleTimeoutMillis: 30_000,
-      connectionTimeoutMillis: 8_000,
-      // Managed Postgres commonly presents a certificate the container has no
-      // root for. Opt in explicitly rather than defaulting to no verification.
-      ssl: process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : undefined,
-    });
-    g.__atlasPgPool.on('error', (err: Error) => {
-      console.error('[DB] Idle client error:', err.message);
+  if (!g.__atlasLibsql) {
+    g.__atlasLibsql = createClient({
+      url,
+      // Only remote Turso needs a token; a local file: URL must not be sent one.
+      authToken: url.startsWith('file:') ? undefined : process.env.TURSO_AUTH_TOKEN,
     });
   }
-  return g.__atlasPgPool;
+  return g.__atlasLibsql;
 }
 
 /**
@@ -52,9 +61,11 @@ export function getPool(): Pool | null {
 export function ensureSchema(): Promise<void> {
   if (!g.__atlasSchemaReady) {
     g.__atlasSchemaReady = (async () => {
-      const pool = getPool();
-      if (!pool) return;
-      await pool.query(SCHEMA_SQL);
+      const client = getClient();
+      if (!client) return;
+      // batch() rather than one multi-statement string: libSQL executes one
+      // statement per call, and a batch is a single round trip either way.
+      await client.batch(SCHEMA_STATEMENTS, 'write');
       console.log('[DB] Schema ready');
     })().catch(err => {
       // Clear the memo so the next request retries rather than inheriting a
@@ -66,31 +77,40 @@ export function ensureSchema(): Promise<void> {
   return g.__atlasSchemaReady;
 }
 
-/** Run a query against the pool, applying the schema first if needed. */
-export async function query<T extends QueryResultRow>(text: string, params: unknown[] = []): Promise<T[]> {
-  const pool = getPool();
-  if (!pool) throw new Error('DATABASE_URL is not set');
+/** Run a query, applying the schema first if needed. */
+export async function query<T>(text: string, params: unknown[] = []): Promise<T[]> {
+  const client = getClient();
+  if (!client) throw new Error('TURSO_DATABASE_URL is not set');
   await ensureSchema();
-  const result = await pool.query<T>(text, params);
-  return result.rows;
+  const result = await client.execute({ sql: text, args: params as InArgs });
+  return result.rows as unknown as T[];
 }
 
-/** Run several statements as one transaction. */
-export async function transaction<T>(fn: (client: PoolClient) => Promise<T>): Promise<T> {
-  const pool = getPool();
-  if (!pool) throw new Error('DATABASE_URL is not set');
+/**
+ * Run several statements atomically.
+ *
+ * The callback receives a `query` of the same shape as the module-level one, so
+ * a caller reads the same whether or not it is in a transaction.
+ */
+export async function transaction<T>(
+  fn: (q: <R>(text: string, params?: unknown[]) => Promise<R[]>) => Promise<T>,
+): Promise<T> {
+  const client = getClient();
+  if (!client) throw new Error('TURSO_DATABASE_URL is not set');
   await ensureSchema();
-  const client = await pool.connect();
+  const tx = await client.transaction('write');
   try {
-    await client.query('BEGIN');
-    const out = await fn(client);
-    await client.query('COMMIT');
+    const out = await fn(async <R,>(text: string, params: unknown[] = []) => {
+      const result = await tx.execute({ sql: text, args: params as InArgs });
+      return result.rows as unknown as R[];
+    });
+    await tx.commit();
     return out;
   } catch (err) {
-    await client.query('ROLLBACK').catch(() => {});
+    await tx.rollback().catch(() => {});
     throw err;
   } finally {
-    client.release();
+    tx.close();
   }
 }
 

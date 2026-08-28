@@ -50,3 +50,7 @@ dashboard/public/vercel.json
 # Next.js build output
 .next/
 *.tsbuildinfo
+
+# Local libSQL database
+atlas.db
+atlas.db-*

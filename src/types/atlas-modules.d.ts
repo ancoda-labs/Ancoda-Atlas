@@ -119,7 +119,7 @@ declare module '*/apis/utils/nepal.mjs' {
 
 declare module '*/lib/schema.mjs' {
   /** Idempotent DDL for the flood desk's community tables. */
-  export const SCHEMA_SQL: string;
+  export const SCHEMA_STATEMENTS: string[];
 }
 
 declare module '*/lib/news-digest.mjs' {

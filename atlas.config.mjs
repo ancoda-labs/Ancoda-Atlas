@@ -35,9 +35,10 @@ export default {
   // optional — each feature hides itself when its backing service is absent,
   // so Atlas still runs as a pure monitoring dashboard with neither set.
   database: {
-    url: process.env.DATABASE_URL || null,
-    ssl: process.env.DATABASE_SSL === 'true',
-    poolMax: parseInt(process.env.DATABASE_POOL_MAX) || 8,
+    // Turso (libSQL). DATABASE_URL is still read so an existing environment
+    // keeps working; a file: URL runs the same code with no server.
+    url: process.env.TURSO_DATABASE_URL || process.env.DATABASE_URL || null,
+    authToken: process.env.TURSO_AUTH_TOKEN || null,
   },
 
   storage: {

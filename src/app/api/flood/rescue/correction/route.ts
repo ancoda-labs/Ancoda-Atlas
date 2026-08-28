@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
   try {
     await query(
       `INSERT INTO rescue_corrections (id, person_id, person_name, kind, message, contact, ip_hash)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [randomUUID(), personId, personName, kind, message, contact, hashIp(clientIp(req))],
     );
     console.warn(`[Rescue] Correction raised (${kind}) for person ${personId ?? personName ?? 'unspecified'}`);

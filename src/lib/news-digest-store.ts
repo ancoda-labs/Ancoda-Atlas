@@ -34,8 +34,9 @@ const g = globalThis as unknown as DigestGlobal;
 
 interface DigestRow {
   id: string;
-  bucket_start: Date;
-  bucket_end: Date;
+  // ISO-8601 text, not native timestamps — see the dialect note in schema.mjs.
+  bucket_start: string;
+  bucket_end: string;
   lang: string;
   headline: string;
   summary: string;
@@ -46,11 +47,30 @@ interface DigestRow {
   model: string | null;
 }
 
-function asStringArray(value: unknown): string[] {
+/**
+ * JSON columns arrive as text.
+ *
+ * Postgres' jsonb type was parsed by the driver; libSQL has no JSON type, so
+ * these columns are stored and returned as strings. Without this the array
+ * checks below would quietly see a string, fail, and return empty — bullets
+ * and sources would vanish rather than error.
+ */
+function parseJsonColumn(value: unknown): unknown {
+  if (typeof value !== 'string') return value;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
+}
+
+function asStringArray(input: unknown): string[] {
+  const value = parseJsonColumn(input);
   return Array.isArray(value) ? value.filter((v): v is string => typeof v === 'string') : [];
 }
 
-function asSources(value: unknown): DigestSource[] {
+function asSources(input: unknown): DigestSource[] {
+  const value = parseJsonColumn(input);
   if (!Array.isArray(value)) return [];
   return value.flatMap((entry): DigestSource[] => {
     if (!entry || typeof entry !== 'object') return [];
@@ -63,8 +83,8 @@ function asSources(value: unknown): DigestSource[] {
 function toDigest(row: DigestRow): NewsDigest {
   return {
     id: row.id,
-    bucketStart: row.bucket_start.toISOString(),
-    bucketEnd: row.bucket_end.toISOString(),
+    bucketStart: row.bucket_start,
+    bucketEnd: row.bucket_end,
     lang: row.lang === 'ne' ? 'ne' : 'en',
     headline: row.headline,
     summary: row.summary,
@@ -81,9 +101,9 @@ export async function getDigests(lang: DigestLang, limit = 12): Promise<NewsDige
     `SELECT id, bucket_start, bucket_end, lang, headline, summary, bullets, sources,
             item_count, generator, model
        FROM news_digests
-      WHERE topic = 'flood' AND lang = $1
+      WHERE topic = 'flood' AND lang = ?
       ORDER BY bucket_start DESC
-      LIMIT $2`,
+      LIMIT ?`,
     [lang, Math.min(Math.max(limit, 1), 48)],
   );
   return rows.map(toDigest);
@@ -91,11 +111,11 @@ export async function getDigests(lang: DigestLang, limit = 12): Promise<NewsDige
 
 /** Bucket starts already written, for either language, within the lookback. */
 async function existingBucketKeys(): Promise<Set<string>> {
-  const rows = await query<{ bucket_start: Date; lang: string }>(
+  const rows = await query<{ bucket_start: string; lang: string }>(
     `SELECT bucket_start, lang FROM news_digests
-      WHERE topic = 'flood' AND bucket_start > now() - interval '6 hours'`,
+      WHERE topic = 'flood' AND bucket_start > datetime('now', '-6 hours')`,
   );
-  return new Set(rows.map(r => `${r.bucket_start.toISOString()}|${r.lang}`));
+  return new Set(rows.map(r => `${r.bucket_start}|${r.lang}`));
 }
 
 async function loadProvider(): Promise<LLMProviderLike | null> {
@@ -123,10 +143,10 @@ async function writeDigest(start: Date, end: Date, lang: DigestLang, items: News
   await query(
     `INSERT INTO news_digests
        (id, topic, bucket_start, bucket_end, lang, headline, summary, bullets, sources, item_count, generator, model)
-     VALUES ($1, 'flood', $2, $3, $4, $5, $6, $7::jsonb, $8::jsonb, $9, $10, $11)
+     VALUES (?, 'flood', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT (topic, bucket_start, lang) DO NOTHING`,
     [
-      randomUUID(), start, end, lang, draft.headline, draft.summary,
+      randomUUID(), start.toISOString(), end.toISOString(), lang, draft.headline, draft.summary,
       JSON.stringify(draft.bullets), JSON.stringify(sources), items.length, generator, model,
     ],
   );

@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import FloodThemeToggle from '@/components/FloodThemeToggle';
+import FloodReportButton from '@/components/FloodReportButton';
 import type { Lang } from '@/hooks/use-flood-lang';
 import type { FloodDeskPayload } from '@/types';
 
@@ -117,7 +118,12 @@ export default function FloodShell({ lang, setLang, kicker, title, standfirst, c
             </div>
           </div>
           <p className="fl-eyebrow">{kicker}</p>
-          <h1>{title}</h1>
+          {/* Title and Report share a row: someone with a photo to send should
+              not have to find a tab first. */}
+          <div className="fl-mast-title">
+            <h1>{title}</h1>
+            <FloodReportButton lang={lang} />
+          </div>
           {standfirst && <p className="fl-dateline">{standfirst}</p>}
         </div>
       </header>

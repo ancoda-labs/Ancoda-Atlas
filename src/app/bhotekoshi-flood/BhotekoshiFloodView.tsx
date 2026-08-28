@@ -6,6 +6,7 @@ import FloodDistrictMap from '@/components/FloodDistrictMap';
 import FloodThemeToggle from '@/components/FloodThemeToggle';
 import type { MapPhoto, MapSelection } from '@/components/FloodDistrictMap';
 import FloodMapDialog from '@/components/FloodMapDialog';
+import FloodReportButton from '@/components/FloodReportButton';
 import FloodAiInsights from '@/app/bhotekoshi-flood/_components/FloodAiInsights';
 import { FloodNav } from '@/components/FloodShell';
 import FloodSummary from '@/app/bhotekoshi-flood/_components/FloodSummary';
@@ -166,7 +167,11 @@ export default function BhotekoshiFloodView() {
             </div>
           </div>
           <p className="fl-eyebrow">{site ? L(site, 'kicker') : ''}</p>
-          <h1>{site ? L(site, 'brand') : t('title')}</h1>
+          {/* Same row as every other page of the desk — see FloodShell. */}
+          <div className="fl-mast-title">
+            <h1>{site ? L(site, 'brand') : t('title')}</h1>
+            <FloodReportButton lang={lang} />
+          </div>
           <p className="fl-dateline">{site ? L(site, 'date_line') : ''}</p>
         </div>
       </header>

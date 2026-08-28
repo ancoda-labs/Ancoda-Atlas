@@ -1907,6 +1907,30 @@ body.low-perf .logo-ring::before, body.low-perf .logo-ring::after, body.low-perf
 
 
 /* --- Section navigation, shared by every desk page --- */
+/* Title and the Report call-to-action share a baseline. The button holds its
+   width so a long Nepali title wraps rather than squeezing it. */
+.fl-mast-title {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.fl-mast-title h1 { margin-bottom: 0; }
+
+.fl-report-cta {
+  flex-shrink: 0;
+  margin-bottom: 6px;
+}
+
+@media (max-width: 620px) {
+  .fl-mast-title {
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .fl-report-cta { margin-bottom: 0; }
+}
+
 .fl-mast-sub { padding-bottom: 0; }
 .fl-nav { display: flex; flex-wrap: wrap; gap: 2px; margin-top: 24px; }
 .fl-nav a {
