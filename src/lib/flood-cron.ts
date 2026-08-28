@@ -60,7 +60,11 @@ const g = globalThis as unknown as CronGlobal;
 
 function runsDir(): string {
   const dir = join(process.cwd(), 'runs');
-  if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+  try {
+    if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+  } catch (err) {
+    console.warn(`[Flood cron] Failed to ensure runs directory exists: ${dir} (filesystem might be read-only)`, errorMessage(err));
+  }
   return dir;
 }
 

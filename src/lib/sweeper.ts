@@ -37,7 +37,11 @@ class SweeperManager {
     const runsDir = join(process.cwd(), 'runs');
     const memoryDir = join(runsDir, 'memory');
     for (const dir of [runsDir, memoryDir, join(memoryDir, 'cold')]) {
-      if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+      try {
+        if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+      } catch (err) {
+        console.warn(`[Sweeper] Failed to ensure directory exists: ${dir} (filesystem might be read-only)`, err instanceof Error ? err.message : err);
+      }
     }
   }
 

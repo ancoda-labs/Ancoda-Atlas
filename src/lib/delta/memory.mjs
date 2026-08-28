@@ -20,7 +20,11 @@ export class MemoryManager {
 
     // Ensure dirs exist
     for (const dir of [this.memoryDir, this.coldDir]) {
-      if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+      try {
+        if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+      } catch (err) {
+        console.warn(`[Memory] Failed to ensure directory exists: ${dir} (filesystem might be read-only)`, err.message);
+      }
     }
 
     // Load hot memory from disk
