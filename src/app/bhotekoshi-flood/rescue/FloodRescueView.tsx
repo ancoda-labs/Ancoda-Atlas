@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import type { SitrepContent, SitrepNameList, RescueRegister, RescuedPerson, BulletinRescue } from '@/types';
 import FloodShell from '@/components/FloodShell';
 import FloodFamilyRegister from '@/app/bhotekoshi-flood/rescue/_components/FloodFamilyRegister';
-import { useFloodLang } from '@/hooks/use-flood-lang';
+import { useFloodLang, type Lang } from '@/hooks/use-flood-lang';
 import { ageFrom } from '@/lib/relative-time';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -111,6 +111,25 @@ function fold(value: string): string {
     .replace(/ee/g, 'i')
     .replace(/oo/g, 'u')
     .replace(/w/g, 'v');
+}
+
+/**
+ * Read a field in the reader's language, falling back to the other script.
+ *
+ * NDRRMA fills these columns unevenly — some rows carry only the Devanagari
+ * name, others only the romanised one, and the same is true of places and
+ * statuses. Showing a blank because the reader's column happens to be empty
+ * would hide a record Atlas holds, so the other script stands in. Nothing is
+ * translated here: whichever reading exists is reproduced as published.
+ */
+function bilingual(
+  lang: Lang,
+  en: string | null | undefined,
+  ne: string | null | undefined,
+): string | null {
+  const preferred = lang === 'ne' ? ne : en;
+  const fallback = lang === 'ne' ? en : ne;
+  return preferred?.trim() || fallback?.trim() || null;
 }
 
 type Filter = 'all' | 'nepali' | 'foreign';
@@ -231,7 +250,7 @@ export default function FloodRescueView() {
       if (filter === 'nepali' && p.nationality !== 'nepali') return false;
       if (filter === 'foreign' && p.nationality === 'nepali') return false;
       if (!needle) return true;
-      const haystack = fold(`${p.name || ''} ${p.nameNe || ''} ${p.rescuedAt?.title || ''} ${p.stationedAt?.title || ''}`);
+      const haystack = fold(`${p.name || ''} ${p.nameNe || ''} ${p.rescuedAt?.title || ''} ${p.rescuedAt?.titleNe || ''} ${p.stationedAt?.title || ''} ${p.stationedAt?.titleNe || ''}`);
       return haystack.includes(needle);
     });
   }, [persons, q, filter]);
@@ -295,7 +314,7 @@ export default function FloodRescueView() {
           {sitrep.name_lists.lists.map((list: SitrepNameList) => (
             <div key={list.id}>
               <dd>{list.value.toLocaleString()}</dd>
-              <dt>{lang === 'ne' ? list.label_ne || list.label_en : list.label_en}</dt>
+              <dt>{bilingual(lang, list.label_en, list.label_ne)}</dt>
             </div>
           ))}
         </div>
@@ -307,7 +326,7 @@ export default function FloodRescueView() {
           {summary.byStatus.filter(s => s.count > 0).map(s => (
             <div key={s.id}>
               <dd>{s.count.toLocaleString()}</dd>
-              <dt>{lang === 'ne' ? s.titleNe || s.title : s.title}</dt>
+              <dt>{bilingual(lang, s.title, s.titleNe)}</dt>
             </div>
           ))}
         </div>
@@ -363,20 +382,20 @@ export default function FloodRescueView() {
                   {paginatedMatches.map(p => (
                     <tr key={p.id} style={{ height: '40px' }}>
                       <th scope="row" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {lang === 'ne' ? p.nameNe || p.name || t('noName') : p.name || t('noName')}
+                        {bilingual(lang, p.name, p.nameNe) || t('noName')}
                         {p.nationality && p.nationality !== 'nepali' && <em>{p.nationality}</em>}
                       </th>
                       <td className="num" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {p.age ?? '—'}
                       </td>
                       <td style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {p.rescuedAt ? (lang === 'ne' ? p.rescuedAt.titleNe || p.rescuedAt.title : p.rescuedAt.title) : '—'}
+                        {bilingual(lang, p.rescuedAt?.title, p.rescuedAt?.titleNe) || '—'}
                       </td>
                       <td style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {p.stationedAt ? (lang === 'ne' ? p.stationedAt.titleNe || p.stationedAt.title : p.stationedAt.title) : '—'}
+                        {bilingual(lang, p.stationedAt?.title, p.stationedAt?.titleNe) || '—'}
                       </td>
                       <td style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {p.status ? (lang === 'ne' ? p.status.titleNe || p.status.title : p.status.title) : <span className="fl-blank">{t('notRecorded')}</span>}
+                        {bilingual(lang, p.status?.title, p.status?.titleNe) || <span className="fl-blank">{t('notRecorded')}</span>}
                       </td>
                       <td className="num" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {p.rescuedOn || '—'}
