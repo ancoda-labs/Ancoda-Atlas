@@ -1,13 +1,14 @@
 # Atlas with its optional community layer.
 #
-# The `atlas` service runs on its own: with no postgres and no minio reachable,
+# The `atlas` service runs on its own: with no database and no minio reachable,
 # the dashboard, sweeps and river gauges all work and the ground-report and
-# digest sections hide themselves. The other two services are here so a single
-# `docker compose up` gives you the whole flood desk, photos included.
+# digest sections hide themselves.
 #
-# In production these usually point at the shared Ancoda storage and database
-# rather than at containers — set DATABASE_URL and MINIO_ENDPOINT in .env and
-# start only the atlas service.
+# The database is Supabase and is therefore not a container — it is the same
+# hosted project in development as in production. Set the Supabase variables in
+# .env; minio is here so that `docker compose up` still gives you photo uploads
+# without a second hosted dependency. In production point MINIO_ENDPOINT at the
+# shared Ancoda storage and start only the atlas service.
 
 services:
   atlas:
@@ -17,7 +18,6 @@ services:
     env_file:
       - .env
     environment:
-      DATABASE_URL: ${DATABASE_URL:-postgresql://atlas:${POSTGRES_PASSWORD:-atlas}@postgres:5432/atlas}
       MINIO_ENDPOINT: ${MINIO_ENDPOINT:-minio:9000}
       MINIO_PUBLIC_ENDPOINT: ${MINIO_PUBLIC_ENDPOINT:-localhost:9000}
       MINIO_SECURE: ${MINIO_SECURE:-false}
@@ -25,26 +25,8 @@ services:
     volumes:
       - ./runs:/app/runs
     depends_on:
-      postgres:
-        condition: service_healthy
       minio:
         condition: service_healthy
-    restart: unless-stopped
-
-  postgres:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB:-atlas}
-      POSTGRES_USER: ${POSTGRES_USER:-atlas}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-atlas}
-    volumes:
-      - pg_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-      start_period: 5s
     restart: unless-stopped
 
   minio:
@@ -66,5 +48,4 @@ services:
     restart: unless-stopped
 
 volumes:
-  pg_data:
   minio_data:

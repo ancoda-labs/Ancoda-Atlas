@@ -1,4 +1,4 @@
-// Turso (libSQL) connection for the flood desk's community layer.
+// Supabase connection for the flood desk's community layer.
 //
 // The database is optional on purpose. Atlas's hazard monitoring — sweeps,
 // gauges, reviewed relief content — is all file- and API-backed and must keep
@@ -7,118 +7,107 @@
 // corrections, news digests) depend on this module, and each one hides itself
 // when the connection is unconfigured rather than failing the page around it.
 //
-// Why libSQL rather than Postgres: this desk deploys to Netlify, where
-// functions are short-lived and a connection pool has nothing to pool. Turso
-// speaks HTTP, so a cold function makes one request and exits, and the same
-// code runs against a local `file:` database with no server to start.
+// Why Supabase over PostgREST rather than a Postgres socket: this desk deploys
+// to Netlify, where functions are short-lived and a connection pool has nothing
+// to pool. PostgREST speaks HTTP, so a cold function makes one request and
+// exits. The cost is that DDL cannot run from here — the schema lives in
+// supabase/migrations/ and is applied once, out of band, rather than lazily on
+// first use. See scripts/migrate.mjs.
 
-import { createClient } from '@libsql/client';
-import type { Client, InArgs } from '@libsql/client';
-import { SCHEMA_STATEMENTS } from '@/lib/schema.mjs';
+import { createClient } from '@supabase/supabase-js';
+import type { PostgrestError, SupabaseClient } from '@supabase/supabase-js';
 import { errorMessage } from '@/types';
 
 interface AtlasDbGlobal {
-  __atlasLibsql?: Client;
-  __atlasSchemaReady?: Promise<void>;
+  __atlasSupabase?: SupabaseClient;
 }
 
 // Next.js hot-reloads server modules in dev; without a global handle every edit
 // would leak another client.
 const g = globalThis as unknown as AtlasDbGlobal;
 
+function projectUrl(): string | null {
+  return process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || null;
+}
+
 /**
- * The database URL.
+ * The secret (service-role) key.
  *
- * TURSO_DATABASE_URL is the deployed setting. DATABASE_URL is still read so an
- * existing environment keeps working, and both accept a `file:` URL, which is
- * how the test and local paths run without a network.
+ * Never the publishable key: every table here has row-level security on with no
+ * policies, so the browser-facing key can read and write none of it. This key
+ * must stay server-side, which is why it carries no NEXT_PUBLIC_ prefix.
+ * SUPABASE_SERVICE_ROLE_KEY is still read so a project on the older key naming
+ * keeps working.
  */
-function databaseUrl(): string | null {
-  return process.env.TURSO_DATABASE_URL || process.env.DATABASE_URL || null;
+function secretKey(): string | null {
+  return process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || null;
 }
 
 export function isDbConfigured(): boolean {
-  return Boolean(databaseUrl());
+  return Boolean(projectUrl() && secretKey());
 }
 
-export function getClient(): Client | null {
-  const url = databaseUrl();
-  if (!url) return null;
-  if (!g.__atlasLibsql) {
-    g.__atlasLibsql = createClient({
-      url,
-      // Only remote Turso needs a token; a local file: URL must not be sent one.
-      authToken: url.startsWith('file:') ? undefined : process.env.TURSO_AUTH_TOKEN,
+export function getDb(): SupabaseClient | null {
+  const url = projectUrl();
+  const key = secretKey();
+  if (!url || !key) return null;
+  if (!g.__atlasSupabase) {
+    g.__atlasSupabase = createClient(url, key, {
+      // A service client has no user session to keep. Left on, the SDK would
+      // try to persist and refresh one from a storage that does not exist in a
+      // serverless function.
+      auth: { persistSession: false, autoRefreshToken: false },
     });
   }
-  return g.__atlasLibsql;
+  return g.__atlasSupabase;
+}
+
+/** The client, or a thrown error — for callers past their own configuration check. */
+export function requireDb(): SupabaseClient {
+  const db = getDb();
+  if (!db) throw new Error('SUPABASE_SECRET_KEY / NEXT_PUBLIC_SUPABASE_URL are not set');
+  return db;
 }
 
 /**
- * Apply the schema. Idempotent, and memoised per process so the dozens of
- * requests that arrive in the first second after a deploy share one round trip.
- */
-export function ensureSchema(): Promise<void> {
-  if (!g.__atlasSchemaReady) {
-    g.__atlasSchemaReady = (async () => {
-      const client = getClient();
-      if (!client) return;
-      // batch() rather than one multi-statement string: libSQL executes one
-      // statement per call, and a batch is a single round trip either way.
-      await client.batch(SCHEMA_STATEMENTS, 'write');
-      console.log('[DB] Schema ready');
-    })().catch(err => {
-      // Clear the memo so the next request retries rather than inheriting a
-      // permanent failure from one bad moment during startup.
-      g.__atlasSchemaReady = undefined;
-      throw err;
-    });
-  }
-  return g.__atlasSchemaReady;
-}
-
-/** Run a query, applying the schema first if needed. */
-export async function query<T>(text: string, params: unknown[] = []): Promise<T[]> {
-  const client = getClient();
-  if (!client) throw new Error('TURSO_DATABASE_URL is not set');
-  await ensureSchema();
-  const result = await client.execute({ sql: text, args: params as InArgs });
-  return result.rows as unknown as T[];
-}
-
-/**
- * Run several statements atomically.
+ * Turn a PostgREST `{ data, error }` pair into a value or a throw.
  *
- * The callback receives a `query` of the same shape as the module-level one, so
- * a caller reads the same whether or not it is in a transaction.
+ * PostgREST reports failures in the body rather than by rejecting, so without
+ * this every call site would have to remember to look — and a missing table or
+ * a violated constraint would read as an empty result instead of an error.
  */
-export async function transaction<T>(
-  fn: (q: <R>(text: string, params?: unknown[]) => Promise<R[]>) => Promise<T>,
-): Promise<T> {
-  const client = getClient();
-  if (!client) throw new Error('TURSO_DATABASE_URL is not set');
-  await ensureSchema();
-  const tx = await client.transaction('write');
-  try {
-    const out = await fn(async <R,>(text: string, params: unknown[] = []) => {
-      const result = await tx.execute({ sql: text, args: params as InArgs });
-      return result.rows as unknown as R[];
-    });
-    await tx.commit();
-    return out;
-  } catch (err) {
-    await tx.rollback().catch(() => {});
-    throw err;
-  } finally {
-    tx.close();
-  }
+export function unwrap<T>(result: { data: T | null; error: PostgrestError | null }): T {
+  if (result.error) throw new Error(result.error.message);
+  if (result.data === null) throw new Error('query returned no data');
+  return result.data;
+}
+
+/**
+ * Normalise a Postgres timestamptz to ISO-8601 with a `Z`.
+ *
+ * PostgREST returns `2026-08-28T09:40:00+00:00`, while everything on the JS
+ * side of the desk produces `Date.toISOString()`. Both are the same instant but
+ * not the same string, so anything that compares or keys on a timestamp has to
+ * put the two through here first.
+ */
+export function isoTimestamp(value: string): string;
+export function isoTimestamp(value: string | null | undefined): string | null;
+export function isoTimestamp(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? value : parsed.toISOString();
 }
 
 /** True when the database is reachable. Used by the desk's capability probe. */
 export async function dbHealthy(): Promise<boolean> {
-  if (!isDbConfigured()) return false;
+  const db = getDb();
+  if (!db) return false;
   try {
-    await query('SELECT 1');
+    // Counts a table the schema owns rather than pinging the project root: an
+    // unapplied migration is a database this desk cannot use, and should read
+    // as unhealthy rather than as configured-and-fine.
+    const { error } = await db.from('flood_photos').select('id', { head: true, count: 'exact' });
+    if (error) throw new Error(error.message);
     return true;
   } catch (err) {
     console.error('[DB] Health check failed:', errorMessage(err));

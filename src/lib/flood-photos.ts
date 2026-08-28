@@ -9,7 +9,7 @@
 // three separate people flag pulled automatically pending an operator's look.
 
 import { randomUUID, createHmac } from 'crypto';
-import { query } from './db';
+import { isoTimestamp, requireDb, unwrap } from './db';
 import { presignedGetUrl, photoKey, remove as removeObject, upload } from './storage';
 import { EXTENSION, readImageFacts, sniffType, stripMetadata } from './image';
 import type { FloodPhoto, PhotoGeoSource } from '@/types';
@@ -43,14 +43,14 @@ interface PhotoRow {
   width: number | null;
   height: number | null;
   orientation: number;
-  lat: string | number | null;
-  lon: string | number | null;
+  lat: number | null;
+  lon: number | null;
   geo_source: string;
   district: string | null;
   place_label: string | null;
   caption: string | null;
   contributor: string | null;
-  // ISO-8601 text, not a native timestamp — see the dialect note in schema.mjs.
+  // timestamptz, which PostgREST renders as `...+00:00` rather than `...Z`.
   taken_at: string | null;
   created_at: string;
   report_count: number;
@@ -62,13 +62,6 @@ function asGeoSource(value: string): PhotoGeoSource {
   return GEO_SOURCES.includes(value as PhotoGeoSource) ? (value as PhotoGeoSource) : 'none';
 }
 
-/** libSQL can hand back a real as a number or a string; normalise both. */
-function asNumber(value: string | number | null): number | null {
-  if (value == null) return null;
-  const n = typeof value === 'number' ? value : Number(value);
-  return Number.isFinite(n) ? n : null;
-}
-
 async function toPhoto(row: PhotoRow): Promise<FloodPhoto> {
   return {
     id: row.id,
@@ -76,31 +69,32 @@ async function toPhoto(row: PhotoRow): Promise<FloodPhoto> {
     width: row.width,
     height: row.height,
     orientation: row.orientation,
-    lat: asNumber(row.lat),
-    lon: asNumber(row.lon),
+    lat: row.lat,
+    lon: row.lon,
     geoSource: asGeoSource(row.geo_source),
     district: row.district,
     placeLabel: row.place_label,
     caption: row.caption,
     contributor: row.contributor,
-    // Stored as ISO-8601 text rather than a native timestamp, so these are
-    // already the shape the API returns.
-    takenAt: row.taken_at || null,
-    createdAt: row.created_at,
+    takenAt: isoTimestamp(row.taken_at),
+    createdAt: isoTimestamp(row.created_at),
     reportCount: row.report_count,
   };
 }
 
-const SELECT_COLUMNS = `id, object_key, width, height, orientation, lat, lon, geo_source,
-                        district, place_label, caption, contributor, taken_at, created_at, report_count`;
+const SELECT_COLUMNS =
+  'id, object_key, width, height, orientation, lat, lon, geo_source, ' +
+  'district, place_label, caption, contributor, taken_at, created_at, report_count';
 
 export async function listPhotos(limit = 60): Promise<FloodPhoto[]> {
-  const rows = await query<PhotoRow>(
-    `SELECT ${SELECT_COLUMNS} FROM flood_photos
-      WHERE status = 'published'
-      ORDER BY created_at DESC
-      LIMIT ?`,
-    [Math.min(Math.max(limit, 1), 200)],
+  const rows = unwrap(
+    await requireDb()
+      .from('flood_photos')
+      .select(SELECT_COLUMNS)
+      .eq('status', 'published')
+      .order('created_at', { ascending: false })
+      .limit(Math.min(Math.max(limit, 1), 200))
+      .returns<PhotoRow[]>(),
   );
   // Signing is one HMAC per row, no round trip, so the fan-out is cheap.
   return Promise.all(rows.map(toPhoto));
@@ -119,12 +113,16 @@ export function hashIp(ip: string): string {
 
 /** How many photos this sender has uploaded inside the rate-limit window. */
 export async function recentUploadCount(ipHash: string): Promise<number> {
-  const rows = await query<{ count: string }>(
-    `SELECT CAST(COUNT(*) AS TEXT) AS count FROM flood_photos
-      WHERE ip_hash = ? AND created_at > datetime('now', ?)`,
-    [ipHash, `-${UPLOAD_LIMIT_WINDOW_MINUTES} minutes`],
-  );
-  return Number(rows[0]?.count || 0);
+  const since = new Date(Date.now() - UPLOAD_LIMIT_WINDOW_MINUTES * 60_000).toISOString();
+  // head:true asks PostgREST for the count header alone, so a sender at the
+  // limit does not drag their own eight rows across the wire to find out.
+  const { count, error } = await requireDb()
+    .from('flood_photos')
+    .select('id', { head: true, count: 'exact' })
+    .eq('ip_hash', ipHash)
+    .gt('created_at', since);
+  if (error) throw new Error(error.message);
+  return count || 0;
 }
 
 export interface CreatePhotoInput {
@@ -186,20 +184,30 @@ export async function createPhoto(input: CreatePhotoInput): Promise<CreatePhotoR
   }
 
   try {
-    const rows = await query<PhotoRow>(
-      `INSERT INTO flood_photos
-         (id, object_key, content_type, bytes, width, height, orientation,
-          lat, lon, geo_source, district, place_label, caption, contributor, ip_hash, taken_at)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
-       RETURNING ${SELECT_COLUMNS}`,
-      [
-        id, key, type, clean.length, facts.width, facts.height, facts.orientation,
-        lat, lon, geoSource, input.district, input.placeLabel,
-        input.caption, input.contributor, input.ipHash, facts.takenAt,
-      ],
+    const row = unwrap(
+      await requireDb()
+        .from('flood_photos')
+        .insert({
+          id,
+          object_key: key,
+          content_type: type,
+          bytes: clean.length,
+          width: facts.width,
+          height: facts.height,
+          orientation: facts.orientation,
+          lat,
+          lon,
+          geo_source: geoSource,
+          district: input.district,
+          place_label: input.placeLabel,
+          caption: input.caption,
+          contributor: input.contributor,
+          ip_hash: input.ipHash,
+          taken_at: facts.takenAt ? facts.takenAt.toISOString() : null,
+        })
+        .select(SELECT_COLUMNS)
+        .single<PhotoRow>(),
     );
-    const row = rows[0];
-    if (!row) throw new Error('insert returned no row');
     return { ok: true, photo: await toPhoto(row) };
   } catch (err) {
     // Don't leave the bytes orphaned in the bucket if the row never landed.
@@ -220,36 +228,42 @@ export interface ReportResult {
  * (photo_id, ip_hash) means a single person cannot reach the threshold alone.
  */
 export async function reportPhoto(id: string, reason: string | null, ipHash: string): Promise<ReportResult | null> {
-  const inserted = await query<{ id: string }>(
-    `INSERT INTO flood_photo_reports (id, photo_id, reason, ip_hash)
-     VALUES (?, ?, ?, ?)
-     ON CONFLICT (photo_id, ip_hash) DO NOTHING
-     RETURNING id`,
-    [randomUUID(), id, reason, ipHash],
+  const db = requireDb();
+
+  // ignoreDuplicates makes this the ON CONFLICT DO NOTHING it reads as: a
+  // second flag from the same sender comes back with no row, which is how the
+  // caller learns their flag was not counted twice.
+  const inserted = unwrap(
+    await db
+      .from('flood_photo_reports')
+      .upsert(
+        { id: randomUUID(), photo_id: id, reason, ip_hash: ipHash },
+        { onConflict: 'photo_id,ip_hash', ignoreDuplicates: true },
+      )
+      .select('id')
+      .returns<Array<{ id: string }>>(),
   );
 
-  const counts = await query<{ report_count: number; status: string }>(
-    `UPDATE flood_photos
-        SET report_count = (SELECT COUNT(*) FROM flood_photo_reports WHERE photo_id = ?)
-      WHERE id = ?
-      RETURNING report_count, status`,
-    [id, id],
-  );
-  const row = counts[0];
+  // The recount and the auto-retire happen inside one statement in Postgres —
+  // see flood_photo_recount in the migration. Doing it as read-then-write from
+  // here would let two flags arriving together each act on the same stale count.
+  const { data, error } = await db.rpc('flood_photo_recount', {
+    p_photo_id: id,
+    p_threshold: REPORT_THRESHOLD,
+  });
+  if (error) throw new Error(error.message);
+
+  const rows = (data || []) as Array<{ report_count: number; status: string; retired: boolean }>;
+  const row = rows[0];
   if (!row) return null;
 
-  let removed = row.status === 'removed';
-  if (!removed && row.report_count >= REPORT_THRESHOLD) {
-    await query(
-      `UPDATE flood_photos SET status = 'removed', removed_reason = 'auto: report threshold'
-        WHERE id = ? AND status = 'published'`,
-      [id],
-    );
-    removed = true;
+  // `retired` is true only on the call that crossed the threshold, so this
+  // warns once rather than on every later flag of an already-retired photo.
+  if (row.retired) {
     console.warn(`[Photos] Auto-retired ${id} after ${row.report_count} reports`);
   }
 
-  return { counted: inserted.length > 0, reportCount: row.report_count, removed };
+  return { counted: inserted.length > 0, reportCount: row.report_count, removed: row.status === 'removed' };
 }
 
 /**
@@ -258,11 +272,14 @@ export async function reportPhoto(id: string, reason: string | null, ipHash: str
  * hidden behind a status column.
  */
 export async function removePhoto(id: string, reason: string): Promise<boolean> {
-  const rows = await query<{ object_key: string }>(
-    `UPDATE flood_photos SET status = 'removed', removed_reason = ?
-      WHERE id = ? AND status = 'published'
-      RETURNING object_key`,
-    [reason.slice(0, 200), id],
+  const rows = unwrap(
+    await requireDb()
+      .from('flood_photos')
+      .update({ status: 'removed', removed_reason: reason.slice(0, 200) })
+      .eq('id', id)
+      .eq('status', 'published')
+      .select('object_key')
+      .returns<Array<{ object_key: string }>>(),
   );
   const row = rows[0];
   if (!row) return false;

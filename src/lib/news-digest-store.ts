@@ -12,7 +12,7 @@
 //   as many model calls as the gap is wide.
 
 import { randomUUID } from 'crypto';
-import { query } from './db';
+import { isoTimestamp, requireDb, unwrap } from './db';
 import { bucketStartFor, bucketEndFor, draftDigest } from '@/lib/news-digest.mjs';
 import type { DigestSource, LLMProviderLike, NewsDigest, NewsItem } from '@/types';
 import { errorMessage } from '@/types';
@@ -34,7 +34,7 @@ const g = globalThis as unknown as DigestGlobal;
 
 interface DigestRow {
   id: string;
-  // ISO-8601 text, not native timestamps — see the dialect note in schema.mjs.
+  // timestamptz, which PostgREST renders as `...+00:00` rather than `...Z`.
   bucket_start: string;
   bucket_end: string;
   lang: string;
@@ -48,12 +48,10 @@ interface DigestRow {
 }
 
 /**
- * JSON columns arrive as text.
- *
- * Postgres' jsonb type was parsed by the driver; libSQL has no JSON type, so
- * these columns are stored and returned as strings. Without this the array
- * checks below would quietly see a string, fail, and return empty — bullets
- * and sources would vanish rather than error.
+ * jsonb columns arrive already parsed, having come back as JSON inside JSON.
+ * The string branch is here for rows written by an older build that stored
+ * these as text: without it the array checks below would quietly see a string,
+ * fail, and return empty — bullets and sources would vanish rather than error.
  */
 function parseJsonColumn(value: unknown): unknown {
   if (typeof value !== 'string') return value;
@@ -83,8 +81,8 @@ function asSources(input: unknown): DigestSource[] {
 function toDigest(row: DigestRow): NewsDigest {
   return {
     id: row.id,
-    bucketStart: row.bucket_start,
-    bucketEnd: row.bucket_end,
+    bucketStart: isoTimestamp(row.bucket_start),
+    bucketEnd: isoTimestamp(row.bucket_end),
     lang: row.lang === 'ne' ? 'ne' : 'en',
     headline: row.headline,
     summary: row.summary,
@@ -97,25 +95,35 @@ function toDigest(row: DigestRow): NewsDigest {
 }
 
 export async function getDigests(lang: DigestLang, limit = 12): Promise<NewsDigest[]> {
-  const rows = await query<DigestRow>(
-    `SELECT id, bucket_start, bucket_end, lang, headline, summary, bullets, sources,
-            item_count, generator, model
-       FROM news_digests
-      WHERE topic = 'flood' AND lang = ?
-      ORDER BY bucket_start DESC
-      LIMIT ?`,
-    [lang, Math.min(Math.max(limit, 1), 48)],
+  const rows = unwrap(
+    await requireDb()
+      .from('news_digests')
+      .select('id, bucket_start, bucket_end, lang, headline, summary, bullets, sources, item_count, generator, model')
+      .eq('topic', 'flood')
+      .eq('lang', lang)
+      .order('bucket_start', { ascending: false })
+      .limit(Math.min(Math.max(limit, 1), 48))
+      .returns<DigestRow[]>(),
   );
   return rows.map(toDigest);
 }
 
 /** Bucket starts already written, for either language, within the lookback. */
 async function existingBucketKeys(): Promise<Set<string>> {
-  const rows = await query<{ bucket_start: string; lang: string }>(
-    `SELECT bucket_start, lang FROM news_digests
-      WHERE topic = 'flood' AND bucket_start > datetime('now', '-6 hours')`,
+  const since = new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString();
+  const rows = unwrap(
+    await requireDb()
+      .from('news_digests')
+      .select('bucket_start, lang')
+      .eq('topic', 'flood')
+      .gt('bucket_start', since)
+      .returns<Array<{ bucket_start: string; lang: string }>>(),
   );
-  return new Set(rows.map(r => `${r.bucket_start}|${r.lang}`));
+  // Keyed on the normalised timestamp, because the caller builds its side of
+  // this comparison from Date.toISOString() and Postgres hands back the same
+  // instant spelled `+00:00`. Unnormalised, no window would ever look written
+  // and every pass would re-draft the whole lookback.
+  return new Set(rows.map(r => `${isoTimestamp(r.bucket_start)}|${r.lang}`));
 }
 
 async function loadProvider(): Promise<LLMProviderLike | null> {
@@ -140,16 +148,31 @@ function windowLabel(start: Date, end: Date): string {
 async function writeDigest(start: Date, end: Date, lang: DigestLang, items: NewsItem[], provider: LLMProviderLike | null) {
   const { draft, generator, model } = await draftDigest(provider, items, lang, windowLabel(start, end));
   const sources: DigestSource[] = items.slice(0, 8).map(i => ({ title: i.title, url: i.link, source: i.source }));
-  await query(
-    `INSERT INTO news_digests
-       (id, topic, bucket_start, bucket_end, lang, headline, summary, bullets, sources, item_count, generator, model)
-     VALUES (?, 'flood', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-     ON CONFLICT (topic, bucket_start, lang) DO NOTHING`,
-    [
-      randomUUID(), start.toISOString(), end.toISOString(), lang, draft.headline, draft.summary,
-      JSON.stringify(draft.bullets), JSON.stringify(sources), items.length, generator, model,
-    ],
-  );
+  const { error } = await requireDb()
+    .from('news_digests')
+    .upsert(
+      {
+        id: randomUUID(),
+        topic: 'flood',
+        bucket_start: start.toISOString(),
+        bucket_end: end.toISOString(),
+        lang,
+        headline: draft.headline,
+        summary: draft.summary,
+        // jsonb columns: pass the values, not JSON.stringify'd text, or they
+        // land as a quoted string that reads back as a string.
+        bullets: draft.bullets,
+        sources,
+        item_count: items.length,
+        generator,
+        model,
+      },
+      // Two readers arriving at once can both decide a window is missing; the
+      // loser of that race should leave the existing brief alone rather than
+      // pay for a second model call's worth of overwrite.
+      { onConflict: 'topic,bucket_start,lang', ignoreDuplicates: true },
+    );
+  if (error) throw new Error(error.message);
 }
 
 async function runCatchup(): Promise<void> {

@@ -30,15 +30,15 @@ export default {
     token: process.env.FLOOD_REFRESH_TOKEN || null,
   },
 
-  // Postgres and MinIO back the community layer on /bhotekoshi-flood: photos
+  // Supabase and MinIO back the community layer on /bhotekoshi-flood: photos
   // sent in from the corridor, and the ten-minute news digests. Both are
   // optional — each feature hides itself when its backing service is absent,
   // so Atlas still runs as a pure monitoring dashboard with neither set.
   database: {
-    // Turso (libSQL). DATABASE_URL is still read so an existing environment
-    // keeps working; a file: URL runs the same code with no server.
-    url: process.env.TURSO_DATABASE_URL || process.env.DATABASE_URL || null,
-    authToken: process.env.TURSO_AUTH_TOKEN || null,
+    url: process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || null,
+    // The secret key, never the publishable one: these tables have row-level
+    // security on with no policies, so the browser-facing key reads nothing.
+    secretKey: process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || null,
   },
 
   storage: {

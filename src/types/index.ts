@@ -891,7 +891,7 @@ export interface AtlasConfig {
   publicUrl: string | null;
   refreshIntervalMinutes: number;
   /** Optional. Absent means the flood desk's community sections hide themselves. */
-  database: { url: string | null; ssl: boolean; poolMax: number };
+  database: { url: string | null; secretKey: string | null };
   storage: {
     endpoint: string | null;
     publicEndpoint: string | null;

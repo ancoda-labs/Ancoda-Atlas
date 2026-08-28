@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { randomUUID } from 'crypto';
-import { isDbConfigured, query } from '@/lib/db';
+import { isDbConfigured, requireDb } from '@/lib/db';
 import { hashIp } from '@/lib/flood-photos';
 import { errorMessage } from '@/types';
 
@@ -42,11 +42,16 @@ export async function POST(req: NextRequest) {
   const contact = typeof payload.contact === 'string' ? payload.contact.trim().slice(0, 200) : null;
 
   try {
-    await query(
-      `INSERT INTO rescue_corrections (id, person_id, person_name, kind, message, contact, ip_hash)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [randomUUID(), personId, personName, kind, message, contact, hashIp(clientIp(req))],
-    );
+    const { error } = await requireDb().from('rescue_corrections').insert({
+      id: randomUUID(),
+      person_id: personId,
+      person_name: personName,
+      kind,
+      message,
+      contact,
+      ip_hash: hashIp(clientIp(req)),
+    });
+    if (error) throw new Error(error.message);
     console.warn(`[Rescue] Correction raised (${kind}) for person ${personId ?? personName ?? 'unspecified'}`);
     return NextResponse.json({ received: true }, { status: 201 });
   } catch (err) {

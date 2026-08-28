@@ -51,6 +51,3 @@ dashboard/public/vercel.json
 .next/
 *.tsbuildinfo
 
-# Local libSQL database
-atlas.db
-atlas.db-*
