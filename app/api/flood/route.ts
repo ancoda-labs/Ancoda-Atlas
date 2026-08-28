@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { loadFloodContent, fetchCorridorGauges } from '@/lib/flood';
+import { getFloodStore } from '@/lib/flood-cron';
 import type { FloodDeskPayload } from '@/lib/types';
 import { errorMessage } from '@/lib/types';
 
@@ -13,10 +14,14 @@ let pending: Promise<FloodDeskPayload> | null = null;
 
 async function build(): Promise<FloodDeskPayload> {
   const content = loadFloodContent();
-  const river = await fetchCorridorGauges();
+  // Gauges come from the ten-minute refresh; the direct fetch is the cold-start
+  // path only, for the first request after a deploy.
+  const store = getFloodStore();
+  const river = store.river ?? (await fetchCorridorGauges());
   return {
     ...content,
     river,
+    bulletinRescue: store.bulletinRescue,
     generatedAt: new Date().toISOString(),
   };
 }
