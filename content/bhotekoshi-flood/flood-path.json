@@ -6,14 +6,120 @@
   "body_en": "The flood entered the Bhotekoshi in Rasuwa from the Tibet side and joined the Trishuli via the Lende Khola. After Galchhi and Gajuri, Armed Police reported it passing Adamghat in Dhading and continuing downstream toward Devghat.",
   "body_ne": "बाढी रसुवामा तिब्बततर्फबाट भोटेकोशीमा प्रवेश गरी लेन्डे खोला हुँदै त्रिशूलीमा मिसिएको हो। गल्छी र गजुरीपछि सशस्त्र प्रहरीका अनुसार धादिङको आदमघाट हुँदै देवघाटतर्फ बग्दै गएको छ।",
   "points": [
-    { "id": "timure", "name_en": "Timure", "name_ne": "टिमुरे", "district_en": "Rasuwa", "district_ne": "रसुवा", "lat": 28.207, "lng": 85.334, "status": "entry", "notes_en": "Border checkpoint area; bridges and infrastructure destroyed.", "notes_ne": "सीमा नाका क्षेत्र; पुल र संरचना नष्ट।" },
-    { "id": "syaphrubesi", "name_en": "Syaphrubesi", "name_ne": "स्याफ्रुबेंसी", "district_en": "Rasuwa", "district_ne": "रसुवा", "lat": 28.161, "lng": 85.336, "status": "confirmed", "notes_en": "Downstream of the entry point on the Bhotekoshi.", "notes_ne": "भोटेकोशीमा प्रवेश बिन्दुभन्दा तल।" },
-    { "id": "bidur", "name_en": "Bidur", "name_ne": "बिदुर", "district_en": "Nuwakot", "district_ne": "नुवाकोट", "lat": 27.918, "lng": 85.145, "status": "confirmed", "notes_en": "Trishuli corridor.", "notes_ne": "त्रिशूली करिडोर।" },
-    { "id": "galchhi", "name_en": "Galchhi", "name_ne": "गल्छी", "district_en": "Dhading", "district_ne": "धादिङ", "lat": 27.833, "lng": 84.983, "status": "confirmed", "notes_en": "Confluence area on the Trishuli.", "notes_ne": "त्रिशूलीको दोभान क्षेत्र।" },
-    { "id": "adamghat", "name_en": "Adamghat", "name_ne": "आदमघाट", "district_en": "Dhading", "district_ne": "धादिङ", "lat": 27.759, "lng": 84.804, "status": "confirmed", "notes_en": "Passage reported by Armed Police.", "notes_ne": "सशस्त्र प्रहरीले बगेको जनाएको स्थान।" },
-    { "id": "devghat", "name_en": "Devghat", "name_ne": "देवघाट", "district_en": "Chitwan", "district_ne": "चितवन", "lat": 27.716, "lng": 84.412, "status": "gauge", "notes_en": "DHM gauge: day's peak 6.57 m at 16:00, flow about 5,850 m³/s.", "notes_ne": "जलविज्ञान मापन केन्द्र: दिनको उच्च बिन्दु ६.५७ मि. १६:०० बजे, बहाव करिब ५,८५० घनमिटर/सेकेन्ड।" }
+    {
+      "id": "timure",
+      "name_en": "Timure",
+      "name_ne": "टिमुरे",
+      "district_en": "Rasuwa",
+      "district_ne": "रसुवा",
+      "lat": 28.207,
+      "lng": 85.334,
+      "status": "entry",
+      "notes_en": "Border checkpoint area; bridges and infrastructure destroyed.",
+      "notes_ne": "सीमा नाका क्षेत्र; पुल र संरचना नष्ट।"
+    },
+    {
+      "id": "syaphrubesi",
+      "name_en": "Syaphrubesi",
+      "name_ne": "स्याफ्रुबेंसी",
+      "district_en": "Rasuwa",
+      "district_ne": "रसुवा",
+      "lat": 28.161,
+      "lng": 85.336,
+      "status": "confirmed",
+      "notes_en": "Downstream of the entry point on the Bhotekoshi.",
+      "notes_ne": "भोटेकोशीमा प्रवेश बिन्दुभन्दा तल।"
+    },
+    {
+      "id": "bidur",
+      "name_en": "Bidur",
+      "name_ne": "बिदुर",
+      "district_en": "Nuwakot",
+      "district_ne": "नुवाकोट",
+      "lat": 27.918,
+      "lng": 85.145,
+      "status": "confirmed",
+      "notes_en": "Trishuli corridor.",
+      "notes_ne": "त्रिशूली करिडोर।"
+    },
+    {
+      "id": "galchhi",
+      "name_en": "Galchhi",
+      "name_ne": "गल्छी",
+      "district_en": "Dhading",
+      "district_ne": "धादिङ",
+      "lat": 27.833,
+      "lng": 84.983,
+      "status": "confirmed",
+      "notes_en": "Confluence area on the Trishuli.",
+      "notes_ne": "त्रिशूलीको दोभान क्षेत्र।"
+    },
+    {
+      "id": "adamghat",
+      "name_en": "Adamghat",
+      "name_ne": "आदमघाट",
+      "district_en": "Dhading",
+      "district_ne": "धादिङ",
+      "lat": 27.759,
+      "lng": 84.804,
+      "status": "confirmed",
+      "notes_en": "Passage reported by Armed Police.",
+      "notes_ne": "सशस्त्र प्रहरीले बगेको जनाएको स्थान।"
+    },
+    {
+      "id": "devghat",
+      "name_en": "Devghat",
+      "name_ne": "देवघाट",
+      "district_en": "Chitwan",
+      "district_ne": "चितवन",
+      "lat": 27.716,
+      "lng": 84.412,
+      "status": "confirmed",
+      "notes_en": "DHM gauge: day's peak 6.57 m at 16:00, flow about 5,850 m³/s.",
+      "notes_ne": "जलविज्ञान मापन केन्द्र: दिनको उच्च बिन्दु ६.५७ मि. १६:०० बजे, बहाव करिब ५,८५० घनमिटर/सेकेन्ड।"
+    },
+    {
+      "id": "narayanghat",
+      "name_en": "Narayanghat",
+      "name_ne": "नारायणघाट",
+      "district_en": "Chitwan",
+      "district_ne": "चितवन",
+      "lat": 27.6866,
+      "lng": 84.4304,
+      "status": "confirmed",
+      "notes_en": "The Narayani carried the flood past Bharatpur. Chitwan has the highest recorded district death toll.",
+      "notes_ne": "नारायणीले बाढी भरतपुरसम्म पुर्‍यायो। जिल्लागत रूपमा सबैभन्दा बढी मृत्यु चितवनमा दर्ता भएको छ।"
+    },
+    {
+      "id": "kawasoti",
+      "name_en": "Kawasoti",
+      "name_ne": "कावासोती",
+      "district_en": "Nawalparasi East",
+      "district_ne": "नवलपरासी पूर्व",
+      "lat": 27.6417,
+      "lng": 84.125,
+      "status": "confirmed",
+      "notes_en": "Nawalparasi East recorded the second-highest district death toll.",
+      "notes_ne": "जिल्लागत रूपमा दोस्रो धेरै मृत्यु नवलपरासी पूर्वमा दर्ता भएको छ।"
+    },
+    {
+      "id": "tribeni",
+      "name_en": "Tribeni · Susta",
+      "name_ne": "त्रिवेणी · सुस्ता",
+      "district_en": "Nawalparasi West",
+      "district_ne": "नवलपरासी पश्चिम",
+      "lat": 27.4333,
+      "lng": 83.8833,
+      "status": "estimated",
+      "notes_en": "Projected downstream reach toward the border. Shown as an estimate, not a confirmed observation.",
+      "notes_ne": "सीमातर्फको अनुमानित तल्लो प्रवाह। यो अनुमान हो, पुष्टि भएको अवलोकन होइन।"
+    }
   ],
   "sources": [
-    { "label": "DHM Flood Forecasting Division situation report (10 Bhadra 2083)", "url": "https://www.dhm.gov.np/" }
-  ]
+    {
+      "label": "DHM Flood Forecasting Division situation report (10 Bhadra 2083)",
+      "url": "https://www.dhm.gov.np/"
+    }
+  ],
+  "_comment_status": "Point `status` drives how the map draws it. 'entry' = where the flood crossed into Nepal. 'confirmed' = the water is confirmed to have reached here. 'estimated' = downstream reach that is projected or at risk, drawn dashed and labelled as an estimate — never as an observation. Downstream 'confirmed' points below Devghat are justified by the Nepal Police district death toll in sitrep.json (Chitwan 178, Nawalparasi East 110), which cannot be true unless the water arrived. Do not promote a point to 'confirmed' without that kind of basis."
 }
