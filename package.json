@@ -1,5 +1,5 @@
 {
-  "name": "atlas",
+  "name": "ancoda-atlas",
   "version": "4.0.0",
   "description": "Nepal emergency disaster intelligence — 5 natural-hazard sources, live dashboard, auto-refresh, optional LLM layer.",
   "author": "Ancoda Labs",
