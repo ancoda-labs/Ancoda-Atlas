@@ -1,13 +1,21 @@
 // Load .env file for API keys
-// Searches: project root .env first, then apis/.env as fallback
+//
+// More than one candidate path on purpose. This module used to live at
+// apis/utils/env.mjs, where the project root was '../..'; moving it to
+// src/apis/utils/ made that resolve to src/ instead, so it loaded nothing —
+// every key absent, every provider silently disabled, no error raised. The
+// working directory goes first because npm scripts and `next` both set it to
+// the project root no matter where this file ends up.
 import { readFileSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const paths = [
-  resolve(__dirname, '..', '..', '.env'), // project root
-  resolve(__dirname, '..', '.env'),        // apis/.env (legacy)
+  resolve(process.cwd(), '.env'),                // project root, however invoked
+  resolve(__dirname, '..', '..', '..', '.env'),  // repo root from src/apis/utils
+  resolve(__dirname, '..', '..', '.env'),        // legacy: apis/utils
+  resolve(__dirname, '..', '.env'),              // legacy: apis/.env
 ];
 
 function loadEnv(filePath) {
