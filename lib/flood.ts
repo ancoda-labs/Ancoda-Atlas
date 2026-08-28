@@ -13,7 +13,17 @@
 
 import { readFileSync, existsSync, readdirSync } from 'fs';
 import { join } from 'path';
-import type { FloodContent, FloodGauge, FloodOrg, GaugeLevel, RiverGauges } from './types';
+import type {
+  AffectedDistrictProps,
+  FloodContent,
+  FloodGauge,
+  FloodOrg,
+  GaugeLevel,
+  GeoCollection,
+  RiverGauges,
+  SitrepContent,
+  SitrepDiscrepancy,
+} from './types';
 import { errorMessage } from './types';
 
 const CONTENT_DIR = join(process.cwd(), 'content', 'bhotekoshi-flood');
@@ -40,6 +50,67 @@ const CORRIDOR_STATIONS: Array<{ match: string; label: string; labelNe: string; 
   { match: 'Narayani at Devghat',            label: 'Narayani at Devghat',       labelNe: 'नारायणी, देवघाट',       district: 'Chitwan', districtNe: 'चितवन' },
   { match: 'Narayani River at Narayanghat',  label: 'Narayani at Narayanghat',   labelNe: 'नारायणी, नारायणघाट',    district: 'Chitwan', districtNe: 'चितवन' },
 ];
+
+// ─── District lookup ────────────────────────────────────────────────────────
+//
+// A gauge's district used to be typed in beside its name in CORRIDOR_STATIONS.
+// Five of the fourteen disagreed with the coordinates BIPAD publishes for the
+// same station, and two were badly wrong — "Trishuli at Bhorle" was labelled
+// Nuwakot while its coordinates sit in Chitwan, about 75 km away. Since the map
+// plots by coordinate and the table printed the label, the two contradicted
+// each other and the pin looked misplaced.
+//
+// So the district is now derived from the position. A hand-typed label can no
+// longer disagree with where the pin lands, because there is only one source
+// for both.
+
+interface DistrictShape {
+  nameEn: string;
+  nameNe: string;
+  rings: Array<Array<[number, number]>>;
+}
+
+let districtShapes: DistrictShape[] | null = null;
+
+function loadDistrictShapes(): DistrictShape[] {
+  if (districtShapes) return districtShapes;
+  districtShapes = [];
+  try {
+    const path = join(process.cwd(), 'public', 'data', 'flood-affected-districts.geojson');
+    if (!existsSync(path)) return districtShapes;
+    const geo = JSON.parse(readFileSync(path, 'utf8')) as GeoCollection<AffectedDistrictProps>;
+    districtShapes = geo.features.map(f => ({
+      nameEn: f.properties.name_en,
+      nameNe: f.properties.name_ne,
+      rings: f.geometry.type === 'Polygon' ? f.geometry.coordinates : f.geometry.coordinates.flat(),
+    }));
+  } catch (err) {
+    console.warn('[Flood] District shapes unavailable:', errorMessage(err));
+  }
+  return districtShapes;
+}
+
+/** Ray casting. `ring` is [lon, lat] pairs, as GeoJSON stores them. */
+function pointInRing(lon: number, lat: number, ring: Array<[number, number]>): boolean {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const [xi, yi] = ring[i];
+    const [xj, yj] = ring[j];
+    if (yi > lat !== yj > lat && lon < ((xj - xi) * (lat - yi)) / (yj - yi) + xi) inside = !inside;
+  }
+  return inside;
+}
+
+/** The district a coordinate falls in, or null if it is outside every shape. */
+function districtAt(lat: number | null, lon: number | null): { en: string; ne: string } | null {
+  if (lat == null || lon == null) return null;
+  for (const shape of loadDistrictShapes()) {
+    for (const ring of shape.rings) {
+      if (pointInRing(lon, lat, ring)) return { en: shape.nameEn, ne: shape.nameNe };
+    }
+  }
+  return null;
+}
 
 function readJson<T>(name: string): T | null {
   const path = join(CONTENT_DIR, name);
@@ -82,8 +153,45 @@ export function loadFloodContent(): FloodContent {
     helplines: readJson<FloodContent['helplines']>('helplines.json'),
     bankAccounts: readJson<FloodContent['bankAccounts']>('bank-accounts.json'),
     affectedDistricts: readJson<FloodContent['affectedDistricts']>('affected-districts.json'),
+    districtContacts: readJson<FloodContent['districtContacts']>('district-contacts.json'),
+    sitrep: loadSitrep(),
     funds,
   };
+}
+
+/**
+ * Load the reviewed SitRep figures, checking that they still add up.
+ *
+ * These numbers are typed in by hand from police briefings and NDRRMA reports,
+ * under time pressure, during an emergency. The commonest way that goes wrong
+ * is a district being updated without its total — leaving a page that says 469
+ * dead above a list of districts summing to 471. Rather than trust the edit,
+ * every breakdown is re-added at load and any that no longer reconciles is
+ * reported to the UI, which shows the discrepancy instead of hiding it.
+ *
+ * Groups whose parts overlap rather than partition the total opt out with
+ * `no_total_check`; for them the arithmetic was never meant to close.
+ */
+function loadSitrep(): SitrepContent | null {
+  const sitrep = readJson<SitrepContent>('sitrep.json');
+  if (!sitrep) return null;
+
+  const discrepancies: SitrepDiscrepancy[] = [];
+  for (const breakdown of sitrep.breakdowns ?? []) {
+    if (breakdown.no_total_check) continue;
+    const summed = (breakdown.items ?? []).reduce((acc, item) => acc + (item.value || 0), 0);
+    if (summed !== breakdown.total) {
+      discrepancies.push({ id: breakdown.id, stated: breakdown.total, summed });
+    }
+  }
+
+  if (discrepancies.length) {
+    console.error(
+      '[Flood] SitRep figures do not reconcile:',
+      discrepancies.map(d => `${d.id} states ${d.stated}, parts sum to ${d.summed}`).join('; '),
+    );
+  }
+  return { ...sitrep, discrepancies };
 }
 
 /** One station as BIPAD publishes it. Only the fields Atlas reads are listed. */
@@ -153,12 +261,17 @@ export async function fetchCorridorGauges(): Promise<RiverGauges> {
           : null;
 
       const coords = station.point?.coordinates;
+      const lat = Array.isArray(coords) ? coords[1] ?? null : null;
+      const lon = Array.isArray(coords) ? coords[0] ?? null : null;
+      // Derived from the coordinate, so the label always agrees with the pin.
+      // The curated value stands in only for a station outside every shape.
+      const place = districtAt(lat, lon);
       gauges.push({
         id: station.id,
         label: spec.label,
         labelNe: spec.labelNe,
-        district: spec.district,
-        districtNe: spec.districtNe,
+        district: place?.en ?? spec.district,
+        districtNe: place?.ne ?? spec.districtNe,
         waterLevel,
         warningLevel,
         dangerLevel,
@@ -168,8 +281,8 @@ export async function fetchCorridorGauges(): Promise<RiverGauges> {
         ageMinutes,
         stale,
         percentOfDanger,
-        lat: Array.isArray(coords) ? (coords[1] ?? null) : null,
-        lon: Array.isArray(coords) ? (coords[0] ?? null) : null,
+        lat,
+        lon,
         photo: station.image ? `/api/flood/station-photo?id=${station.id}` : null,
       });
     }
