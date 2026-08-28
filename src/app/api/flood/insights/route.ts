@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { draftDigest } from '@/lib/news-digest.mjs';
-import { canGenerateIn, findLanguage } from '@/lib/nepal-languages';
+import { findLanguage, isWireLanguage } from '@/lib/nepal-languages';
 import type { DigestSource, FloodInsight, FloodInsightFeed, LLMProviderLike, NewsItem } from '@/types';
 import { errorMessage } from '@/types';
 
@@ -39,8 +39,12 @@ async function loadProvider(): Promise<LLMProviderLike | null> {
 async function build(langCode: string): Promise<FloodInsightFeed> {
   const requested = findLanguage(langCode);
 
+  // Eighteen headlines, not thirty. A wire is mostly syndicated near-duplicates
+  // so the extra twelve add little to a four-bullet brief, and every one of them
+  // is input tokens on a per-minute budget — Groq's free tier allows 8,000 TPM,
+  // which a handful of thirty-headline calls exhausts in seconds.
   const { fetchTopicNews } = await import('@/apis/sources/nepal-news.mjs');
-  const data = await fetchTopicNews({ topic: 'flood', window: '24h', limit: 30, sourceCap: 8 });
+  const data = await fetchTopicNews({ topic: 'flood', window: '24h', limit: 18, sourceCap: 8 });
   const items: NewsItem[] = Array.isArray(data.items) ? data.items : [];
 
   const provider = await loadProvider();
@@ -48,28 +52,20 @@ async function build(langCode: string): Promise<FloodInsightFeed> {
 
   if (!items.length) return { insight: null, hasModel, reason: 'no_reporting' };
 
-  // What can honestly be written, which is narrower than what was asked for in
-  // two different ways:
-  //
-  //   With a model, every language the registry marks generatable is fair game.
-  //   Anything it marks 'minimal' is answered in Nepali instead of letting the
-  //   model improvise a language it does not really know.
-  //
-  //   With no model there is no translation at all — the extractive draft
-  //   reproduces headlines, and those arrive from the outlets in Nepali and
-  //   English. Every other language therefore also lands on Nepali.
-  //
-  // Either way the response says which language it actually is, so the panel
-  // never puts a Maithili label on English prose.
-  const writable = hasModel
-    ? (canGenerateIn(requested) ? requested : findLanguage('ne'))
-    : (requested.code === 'en' ? requested : findLanguage('ne'));
+  // Every language in the registry is one a model can write, so with a model
+  // configured the request is honoured as asked. Without one there is no
+  // translation at all — the extractive draft reproduces headlines, and those
+  // arrive from the outlets only in Nepali and English — so everything else
+  // lands on Nepali. The response says which language it actually is either
+  // way, so the panel never puts a Maithili label on Nepali prose.
+  const writable = hasModel || isWireLanguage(requested.code) ? requested : findLanguage('ne');
   const fellBackFrom = writable.code === requested.code ? undefined : requested.code;
   const { draft, generator, model } = await draftDigest(
     provider,
     items,
     writable.code,
     'the last 24 hours',
+    writable.english,
   );
 
   const sources: DigestSource[] = items.slice(0, 8).map(i => ({

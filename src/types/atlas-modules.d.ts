@@ -138,6 +138,8 @@ declare module '*/lib/news-digest.mjs' {
     /** 'en' or 'ne' for the stored digests; any registry code for live insights. */
     lang: string,
     windowLabel?: string,
+    /** The language's English name, for codes outside the module's own map. */
+    languageName?: string | null,
   ): Promise<{ draft: DigestDraft; generator: 'llm' | 'extractive'; model: string | null }>;
 }
 

@@ -1,16 +1,30 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
+import { Check, ChevronsUpDown } from 'lucide-react';
 import type { FloodInsightFeed } from '@/types';
 import { ageFrom } from '@/lib/relative-time';
-import { NEPAL_LANGUAGES, canGenerateIn, findLanguage } from '@/lib/nepal-languages';
+import { cn } from '@/lib/utils';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  NEPAL_LANGUAGES,
+  WORLD_LANGUAGES,
+  findLanguage,
+  isWireLanguage,
+} from '@/lib/nepal-languages';
+import { Button } from '@/components/ui/button';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 
 // What the reporting currently says, beside the map.
 //
@@ -34,12 +48,14 @@ const T = {
     en: 'Insights are unavailable right now.',
     ne: 'अहिले विश्लेषण उपलब्ध छैन।',
   },
-  byModel: { en: 'Written by', ne: 'लेखेको' },
   byList: { en: 'Headlines only', ne: 'शीर्षक मात्र' },
   basedOn: { en: 'from', ne: 'स्रोत' },
   reports: { en: 'reports', ne: 'समाचार' },
-  sources: { en: 'Sources', ne: 'स्रोतहरू' },
   language: { en: 'Language', ne: 'भाषा' },
+  groupNepal: { en: 'Nepal', ne: 'नेपाल' },
+  groupWorld: { en: 'Worldwide', ne: 'विश्वभर' },
+  searchLanguage: { en: 'Search a language…', ne: 'भाषा खोज्नुहोस्…' },
+  noLanguage: { en: 'No language found.', ne: 'भाषा भेटिएन।' },
   // Covers both reasons a language can be unavailable: no model at all, or no
   // model that writes it reliably. Either way the outcome is what is stated.
   fellBack: {
@@ -55,8 +71,8 @@ interface Props {
 
 export default function FloodAiInsights({ lang }: Props) {
   const [briefLang, setBriefLang] = useState<string>(lang);
+  const [langOpen, setLangOpen] = useState(false);
   const [feed, setFeed] = useState<FloodInsightFeed | null>(null);
-  const [showSources, setShowSources] = useState(false);
   const t = (key: keyof typeof T) => T[key][lang];
 
   // Following the page's own language toggle is the behaviour a reader expects;
@@ -82,6 +98,7 @@ export default function FloodAiInsights({ lang }: Props) {
 
   const insight = feed?.insight ?? null;
   const hasModel = feed?.hasModel ?? false;
+  const selectedLanguage = findLanguage(briefLang);
 
   return (
     <section className="fl-insights" aria-labelledby="flood-insights-title">
@@ -90,29 +107,78 @@ export default function FloodAiInsights({ lang }: Props) {
         <h2 id="flood-insights-title">{t('title')}</h2>
       </div>
 
-      <label className="fl-insights-lang">
-        <span>{t('language')}</span>
-        <Select value={briefLang} onValueChange={setBriefLang}>
-          <SelectTrigger aria-label={t('language')}>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {NEPAL_LANGUAGES.map(l => {
-              // Without a model only the two languages the wire itself arrives
-              // in can be produced; with one, everything the registry marks
-              // generatable. The rest still appear, labelled with what they
-              // will actually return, so the choice is never a surprise.
-              const direct = hasModel ? canGenerateIn(l) : l.code === 'ne' || l.code === 'en';
-              return (
-                <SelectItem key={l.code} value={l.code}>
-                  {l.native} · {l.english}
-                  {!direct && <span className="fl-lang-via"> — {t('viaNepali')}</span>}
-                </SelectItem>
-              );
-            })}
-          </SelectContent>
-        </Select>
-      </label>
+      {/* A combobox rather than a select: 130-odd languages is a scroll nobody
+          should have to do, and someone looking for their own language knows
+          its name. cmdk matches on the value string, so the endonym, the
+          English name and the code are all searchable — a Tamil speaker can
+          type "தமிழ்", "Tamil" or "ta". */}
+      <div className="fl-insights-lang">
+        <span id="brief-lang-label">{t('language')}</span>
+        <Popover open={langOpen} onOpenChange={setLangOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              role="combobox"
+              aria-expanded={langOpen}
+              aria-labelledby="brief-lang-label"
+              className="w-full justify-between font-normal"
+            >
+              <span className="truncate">
+                {selectedLanguage.native} · {selectedLanguage.english}
+              </span>
+              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
+            <Command
+              filter={(value, search) =>
+                value.toLowerCase().includes(search.toLowerCase()) ? 1 : 0
+              }
+            >
+              <CommandInput placeholder={t('searchLanguage')} />
+              <CommandList>
+                <CommandEmpty>{t('noLanguage')}</CommandEmpty>
+                {/* Nepal first: this desk's own readers. Then everyone else,
+                    since Rasuwa is a trekking corridor and a migration source
+                    district. */}
+                {[
+                  { label: t('groupNepal'), items: NEPAL_LANGUAGES },
+                  { label: t('groupWorld'), items: WORLD_LANGUAGES },
+                ].map(group => (
+                  <CommandGroup key={group.label} heading={group.label}>
+                    {group.items.map(l => (
+                      <CommandItem
+                        key={l.code}
+                        value={`${l.native} ${l.english} ${l.code}`}
+                        onSelect={() => {
+                          setBriefLang(l.code);
+                          setLangOpen(false);
+                        }}
+                      >
+                        <Check
+                          className={cn(
+                            'mr-2 h-4 w-4',
+                            briefLang === l.code ? 'opacity-100' : 'opacity-0',
+                          )}
+                        />
+                        <span className="truncate">
+                          {l.native} · {l.english}
+                        </span>
+                        {/* Every listed language is one a model can write, so
+                            the only thing that can force Nepali is having no
+                            model configured at all. */}
+                        {!hasModel && !isWireLanguage(l.code) && (
+                          <span className="fl-lang-via ml-2"> — {t('viaNepali')}</span>
+                        )}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                ))}
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
+      </div>
 
       {feed === null ? (
         <p className="fl-empty">{t('loading')}</p>
@@ -137,38 +203,17 @@ export default function FloodAiInsights({ lang }: Props) {
           )}
 
           <div className="fl-insights-foot">
-            <span className={insight.generator === 'llm' ? 'g-llm' : 'g-list'}>
-              {insight.generator === 'llm'
-                ? `${t('byModel')} ${insight.model || 'LLM'}`
-                : t('byList')}
-            </span>
+            {/* A model-written brief carries no label; only the weaker mode,
+                where Atlas listed headlines rather than summarising them, is
+                worth calling out. */}
+            {insight.generator !== 'llm' && (
+              <span className="g-list">{t('byList')}</span>
+            )}
             <span>
               {t('basedOn')} {insight.itemCount} {t('reports')} · {ageFrom(insight.generatedAt, lang)}
             </span>
           </div>
 
-          {insight.sources.length > 0 && (
-            <>
-              <button
-                type="button"
-                className="fl-insights-toggle"
-                onClick={() => setShowSources(v => !v)}
-                aria-expanded={showSources}
-              >
-                {t('sources')} ({insight.sources.length}) {showSources ? '▴' : '▾'}
-              </button>
-              {showSources && (
-                <ul className="fl-insights-sources">
-                  {insight.sources.map((s, i) => (
-                    <li key={i}>
-                      <a href={s.url} target="_blank" rel="noopener noreferrer">{s.title}</a>
-                      <cite>{s.source}</cite>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </>
-          )}
         </div>
       )}
     </section>

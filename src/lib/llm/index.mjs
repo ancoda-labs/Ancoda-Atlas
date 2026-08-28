@@ -9,6 +9,7 @@ import { MiniMaxProvider } from "./minimax.mjs";
 import { MistralProvider } from "./mistral.mjs";
 import { OllamaProvider } from "./ollama.mjs";
 import { GrokProvider } from "./grok.mjs";
+import { GroqProvider } from "./groq.mjs";
 import { TarkaProvider } from "./tarka.mjs";
 
 export { LLMProvider } from "./provider.mjs";
@@ -21,6 +22,7 @@ export { MiniMaxProvider } from "./minimax.mjs";
 export { MistralProvider } from "./mistral.mjs";
 export { OllamaProvider } from "./ollama.mjs";
 export { GrokProvider } from "./grok.mjs";
+export { GroqProvider } from "./groq.mjs";
 export { TarkaProvider } from "./tarka.mjs";
 
 /**
@@ -52,6 +54,8 @@ export function createLLMProvider(llmConfig) {
       return new OllamaProvider({ model, baseUrl: llmConfig.baseUrl });
     case 'grok':
       return new GrokProvider({ apiKey, model });
+    case 'groq':
+      return new GroqProvider({ apiKey, model, reasoningEffort: llmConfig.reasoningEffort });
     case 'tarka':
       return new TarkaProvider({ apiKey, model, baseUrl: llmConfig.baseUrl });
     default:

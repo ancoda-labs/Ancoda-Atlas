@@ -2060,10 +2060,13 @@ body.low-perf .logo-ring::before, body.low-perf .logo-ring::after, body.low-perf
 
 .fl-insights .fl-sec-head { margin-bottom: 14px; }
 
+/* Stacked, not inline: the combobox trigger takes the full column so long
+   endonyms have room, and the label sits above it. */
 .fl-insights-lang {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 7px;
   margin-bottom: 18px;
 }
 

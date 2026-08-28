@@ -27,13 +27,17 @@ export function bucketEndFor(start) {
 // How each language is named to the model. Kept here rather than imported from
 // the TypeScript registry because this module also runs under bare node in the
 // sweep pipeline, where only plain ESM resolves.
+//
+// Only the codes with a script worth naming are listed. The registry now holds
+// well over a hundred languages and mirroring all of them here would be two
+// lists to keep in step; callers that know the language pass its name directly
+// as the last argument to draftDigest, and this map is the fallback for the
+// stored ten-minute digests, which only ever ask for English or Nepali.
 const LANGUAGE_NAME = {
   en:  'English',
   ne:  'Nepali (Devanagari script)',
   mai: 'Maithili (Devanagari script)',
   bho: 'Bhojpuri (Devanagari script)',
-  ur:  'Urdu (Perso-Arabic script)',
-  hi:  'Hindi (Devanagari script)',
   thr: 'Tharu (Devanagari script)',
   taj: 'Tamang (Devanagari script)',
   new: 'Nepal Bhasa / Newar (Devanagari script)',
@@ -58,14 +62,14 @@ Return STRICT JSON and nothing else, in this shape:
 {"headline": "under 80 characters", "summary": "two or three sentences", "bullets": ["short point", "short point"]}
 Use at most 4 bullets. Each bullet is one clause, under 120 characters.`;
 
-function buildUserPrompt(items, lang, windowLabel) {
+function buildUserPrompt(items, lang, windowLabel, languageName) {
   const lines = items.map((item, i) => `${i + 1}. [${item.source}] ${item.title}`).join('\n');
   return `Window: ${windowLabel}
 Headlines that arrived in this window (${items.length}):
 
 ${lines}
 
-Write the brief in ${LANGUAGE_NAME[lang] || 'English'}. Every field of the JSON must be in that language. Return only the JSON object.`;
+Write the brief in ${LANGUAGE_NAME[lang] || languageName || 'English'}. Every field of the JSON must be in that language. Return only the JSON object.`;
 }
 
 /** Pull the first JSON object out of a model response that may be fenced or prefaced. */
@@ -128,7 +132,7 @@ function extractiveDraft(items, lang) {
  *
  * @returns {Promise<{ draft: { headline: string, summary: string, bullets: string[] }, generator: 'llm'|'extractive', model: string|null }>}
  */
-export async function draftDigest(provider, items, lang, windowLabel = '') {
+export async function draftDigest(provider, items, lang, windowLabel = '', languageName = null) {
   if (!items.length) {
     return {
       draft: {
@@ -145,7 +149,7 @@ export async function draftDigest(provider, items, lang, windowLabel = '') {
 
   if (provider?.isConfigured) {
     try {
-      const { text } = await provider.complete(SYSTEM_PROMPT, buildUserPrompt(items, lang, windowLabel), {
+      const { text } = await provider.complete(SYSTEM_PROMPT, buildUserPrompt(items, lang, windowLabel, languageName), {
         maxTokens: 700,
         timeout: 45_000,
       });

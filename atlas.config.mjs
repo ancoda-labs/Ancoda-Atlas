@@ -57,12 +57,16 @@ export default {
   },
 
   llm: {
-    provider: process.env.LLM_PROVIDER || null, // anthropic | openai | gemini | codex | openrouter | minimax | mistral | ollama | grok | tarka
+    // grok is xAI; groq is api.groq.com. One letter apart, different services.
+    provider: process.env.LLM_PROVIDER || null, // anthropic | openai | gemini | codex | openrouter | minimax | mistral | ollama | grok | groq | tarka
     apiKey: process.env.LLM_API_KEY || null,
     model: process.env.LLM_MODEL || null,
     // LLM_BASE_URL overrides a gateway provider's host (tarka).
     // OLLAMA_BASE_URL stays for the ollama provider's own host.
     baseUrl: process.env.LLM_BASE_URL || process.env.OLLAMA_BASE_URL || null,
+    // 'low' | 'medium' | 'high' for reasoning models. Unset lets the provider
+    // choose; groq defaults gpt-oss to 'low' so the budget reaches the answer.
+    reasoningEffort: process.env.LLM_REASONING_EFFORT || null,
   },
 
   telegram: {
