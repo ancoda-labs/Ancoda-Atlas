@@ -78,6 +78,10 @@ async function build(): Promise<FloodDeskPayload> {
     sitrep: mergeSitrep(content.sitrep, liveSitrep),
     bulletinRescue: store.bulletinRescue,
     portal: store.portal,
+    dailyBulletin: store.dailyBulletin,
+    advisories: store.advisories,
+    govEfforts: store.govEfforts,
+    portalContacts: store.portalContacts,
     generatedAt: new Date().toISOString(),
   };
 }

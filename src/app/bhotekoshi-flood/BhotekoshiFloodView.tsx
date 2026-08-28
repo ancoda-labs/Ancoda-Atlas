@@ -10,6 +10,7 @@ import FloodReportButton from '@/components/FloodReportButton';
 import FloodAiInsights from '@/app/bhotekoshi-flood/_components/FloodAiInsights';
 import { FloodNav } from '@/components/FloodShell';
 import FloodSummary from '@/app/bhotekoshi-flood/_components/FloodSummary';
+import FloodOfficial from '@/app/bhotekoshi-flood/_components/FloodOfficial';
 import { useFloodLang } from '@/hooks/use-flood-lang';
 import type { FloodDeskPayload, FloodPhoto, FloodPhotoFeed } from '@/types';
 
@@ -110,6 +111,12 @@ export default function BhotekoshiFloodView() {
 
   const site = data?.site;
   const safety = site ? L(site, 'safety') : '';
+  // NDRRMA's standing advisory rides in the scrolling ticker, after the safety line.
+  const advisory = data?.advisories?.items?.[0];
+  const advisoryText = advisory
+    ? (lang === 'ne' ? advisory.bodyNe || advisory.body : advisory.body || advisory.bodyNe) || ''
+    : '';
+  const marquee = [safety, advisoryText].filter(Boolean).join(' • ');
   const sitrep = data?.sitrep || null;
 
   const photos: FloodPhoto[] = photoFeed?.photos || [];
@@ -135,7 +142,7 @@ export default function BhotekoshiFloodView() {
     <div className="fl">
       <div className="fl-rail">
         <div className="fl-wrap" style={{ paddingTop: '8px', paddingBottom: '8px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '18px', flexWrap: 'wrap', marginBottom: safety ? '6px' : '0' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '18px', flexWrap: 'wrap', marginBottom: marquee ? '6px' : '0' }}>
             <span className="fl-rail-tag">{lang === 'ne' ? 'आपतकालीन' : 'Emergency'}</span>
             {(data?.helplines?.lines || []).map(line => (
               <a key={line.id} href={`tel:${line.number}`} style={{ color: '#2a0508', textDecoration: 'none', fontSize: '13px', whiteSpace: 'nowrap' }}>
@@ -144,11 +151,11 @@ export default function BhotekoshiFloodView() {
               </a>
             ))}
           </div>
-          {safety && (
+          {marquee && (
             <div style={{ borderTop: '1px solid rgba(42,5,8,0.15)', paddingTop: '6px', overflow: 'hidden', whiteSpace: 'nowrap', width: '100%' }}>
               <div className="fl-marquee-container" style={{ display: 'block', width: '100%', overflow: 'hidden' }}>
                 <span className="fl-marquee-text" style={{ display: 'inline-block', whiteSpace: 'nowrap', animation: 'flMarquee 30s linear infinite', fontSize: '13px', fontWeight: 600, color: '#2a0508' }}>
-                  {safety}
+                  {marquee}
                 </span>
               </div>
             </div>
@@ -261,6 +268,8 @@ export default function BhotekoshiFloodView() {
         ) : (
           <p className="fl-empty">{t('loading')}</p>
         )}
+
+        <FloodOfficial govEfforts={data?.govEfforts} dailyBulletin={data?.dailyBulletin} lang={lang} />
 
         <section className="fl-sec">
           <div className="fl-sec-head">

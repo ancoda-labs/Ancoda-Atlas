@@ -194,7 +194,106 @@ declare module '*/apis/sources/bulletin-sitrep.mjs' {
 }
 
 declare module '*/apis/sources/rescue-portal.mjs' {
-  import type { RescuePortalStats } from '@/types';
+  import type {
+    GovEffort,
+    HelpRequest,
+    PortalContact,
+    RescuePortalStats,
+    SourceRef,
+  } from '@/types';
   export function getRescuePortalStats(): Promise<RescuePortalStats>;
+  export function getGovernmentEfforts(opts?: { limit?: number }): Promise<{
+    items: GovEffort[];
+    error: string | null;
+    source: SourceRef;
+    fetchedAt: string;
+  }>;
+  export function getEmergencyContacts(opts?: { limit?: number }): Promise<{
+    items: PortalContact[];
+    error: string | null;
+    source: SourceRef;
+    fetchedAt: string;
+  }>;
+  /** A person report as the portal published it; `image` is a raw upstream URL. */
+  export interface PortalPersonRaw {
+    id: string | null;
+    type: string;
+    name: string | null;
+    age: string | null;
+    gender: string | null;
+    place: string | null;
+    eventAt: string | null;
+    description: string | null;
+    status: string | null;
+    daoStatus: string | null;
+    daoOffice: string | null;
+    origin: string | null;
+    thumb: string | null;
+    image: string | null;
+  }
+  export function getPersonReports(opts: { type: 'lost' | 'found'; limit?: number }): Promise<{
+    items: PortalPersonRaw[];
+    error: string | null;
+    source: SourceRef;
+    fetchedAt: string;
+  }>;
+  export function getPersonRegister(): Promise<{
+    lost: PortalPersonRaw[];
+    found: PortalPersonRaw[];
+    error: string | null;
+    source: SourceRef;
+    fetchedAt: string;
+  }>;
+  export function getHelpRequestsMap(opts?: { limit?: number }): Promise<{
+    requests: HelpRequest[];
+    error: string | null;
+    source: SourceRef;
+    fetchedAt: string;
+  }>;
+}
+
+declare module '*/apis/sources/ndrrma-bulletin.mjs' {
+  import type { SourceRef } from '@/types';
+  export interface NdrrmaBulletinRaw {
+    id: number;
+    title: string | null;
+    titleNe: string | null;
+    summary: string | null;
+    summaryNe: string | null;
+    date: string | null;
+    pdfUrl: string | null;
+    image: string | null;
+  }
+  export function getDailyBulletins(opts?: { limit?: number }): Promise<{
+    bulletins: NdrrmaBulletinRaw[];
+    error: string | null;
+    source: SourceRef;
+    fetchedAt: string;
+  }>;
+}
+
+declare module '*/apis/sources/ndrrma-notices.mjs' {
+  import type { NationalAdvisory, SourceRef } from '@/types';
+  export interface NdrrmaNoticeRaw {
+    id: number;
+    title: string | null;
+    titleNe: string | null;
+    summary: string | null;
+    summaryNe: string | null;
+    date: string | null;
+    image: string | null;
+  }
+  export function getPressReleases(opts?: { limit?: number }): Promise<{
+    items: NdrrmaNoticeRaw[];
+    error: string | null;
+    source: SourceRef;
+    fetchedAt: string;
+  }>;
+  export function getNationalAdvisories(): Promise<{
+    advisories: NationalAdvisory[];
+    error: string | null;
+    source: SourceRef;
+    fetchedAt: string;
+  }>;
 }
 

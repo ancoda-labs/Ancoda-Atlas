@@ -434,6 +434,10 @@ export interface FloodDeskPayload extends FloodContent {
   river: RiverGauges;
   bulletinRescue?: BulletinRescue | null;
   portal?: RescuePortalStats | null;
+  dailyBulletin?: FloodOfficialFeed<NdrrmaBulletin> | null;
+  advisories?: FloodOfficialFeed<NationalAdvisory> | null;
+  govEfforts?: FloodOfficialFeed<GovEffort> | null;
+  portalContacts?: FloodOfficialFeed<PortalContact> | null;
   generatedAt: string;
 }
 
@@ -639,6 +643,122 @@ export interface RescuePortalStats {
     childrenMissing: PortalCount;
     elderlyMissing: PortalCount;
   };
+  error: string | null;
+  source: SourceRef;
+  fetchedAt: string;
+}
+
+// ─── OPMCM / NDRRMA content feeds ───────────────────────────────────────────
+//
+// The official portals publish more than counters: NDRRMA's national daily
+// bulletin and press notes, and the OPMCM portal's government-effort log,
+// contact directory, missing-and-found register and geolocated help requests.
+// All of it is national or portal-scoped context — shown under its own heading,
+// never folded into the corridor sitrep. See src/apis/sources/ndrrma-*.mjs and
+// src/apis/sources/rescue-portal.mjs.
+
+export interface NdrrmaBulletin {
+  id: number;
+  title: string | null;
+  titleNe: string | null;
+  summary: string | null;
+  summaryNe: string | null;
+  date: string | null;
+  pdfUrl: string | null;
+  /** Signed media-proxy path, or null. */
+  imageProxy: string | null;
+}
+
+export interface NdrrmaNotice {
+  id: number;
+  title: string | null;
+  titleNe: string | null;
+  summary: string | null;
+  summaryNe: string | null;
+  date: string | null;
+  imageProxy: string | null;
+}
+
+export interface NationalAdvisory {
+  id: number;
+  title: string | null;
+  titleNe: string | null;
+  body: string | null;
+  bodyNe: string | null;
+  links: Array<{ name: string | null; link: string | null }>;
+  numbers: Array<{ name: string | null; designation: string | null; number: string | null }>;
+}
+
+export interface GovEffort {
+  id: string | null;
+  title: string | null;
+  titleNe: string | null;
+  bodyEn: string | null;
+  bodyNe: string | null;
+  agency: string | null;
+  district: string | null;
+  province: string | null;
+  link: string | null;
+  createdAt: string | null;
+}
+
+export interface PortalContact {
+  id: string | null;
+  name: string | null;
+  nameNe: string | null;
+  organization: string | null;
+  category: string | null;
+  phones: string[];
+  email: string | null;
+  description: string | null;
+  descriptionNe: string | null;
+  district: string | null;
+  isNationwide: boolean;
+  available24x7: boolean;
+}
+
+export interface OpmcmPersonReport {
+  id: string | null;
+  type: string;
+  name: string | null;
+  age: string | null;
+  gender: string | null;
+  place: string | null;
+  eventAt: string | null;
+  description: string | null;
+  status: string | null;
+  daoStatus: string | null;
+  daoOffice: string | null;
+  origin: string | null;
+  /** Inline base64 data-URI preview, or null. */
+  thumb: string | null;
+  /** Signed media-proxy path for the full image, or null. */
+  imageProxy: string | null;
+}
+
+export interface OpmcmPersonRegister {
+  lost: OpmcmPersonReport[];
+  found: OpmcmPersonReport[];
+  error: string | null;
+  source: SourceRef;
+  fetchedAt: string;
+}
+
+export interface HelpRequest {
+  id: string | null;
+  ref: string | null;
+  title: string | null;
+  problemType: string | null;
+  helpTypes: string[];
+  urgency: string | null;
+  status: string | null;
+  place: string | null;
+  lat: number | null;
+  lon: number | null;
+}
+
+export interface FloodOfficialFeed<T> {
+  items: T[];
   error: string | null;
   source: SourceRef;
   fetchedAt: string;
@@ -949,6 +1069,20 @@ export interface FloodDeskStore {
   sitrep: BulletinSitrep | null;
   videos: VideoFeed | null;
   news: NewsItem[];
+  /** NDRRMA national Daily Disaster Bulletin — newest first. */
+  dailyBulletin: FloodOfficialFeed<NdrrmaBulletin> | null;
+  /** NDRRMA press notes, for the Coverage page. */
+  pressReleases: FloodOfficialFeed<NdrrmaNotice> | null;
+  /** Standing NDRRMA public advisories. */
+  advisories: FloodOfficialFeed<NationalAdvisory> | null;
+  /** OPMCM government-effort log. */
+  govEfforts: FloodOfficialFeed<GovEffort> | null;
+  /** OPMCM emergency-contact directory. */
+  portalContacts: FloodOfficialFeed<PortalContact> | null;
+  /** OPMCM missing-and-found register. */
+  opmcmPersons: OpmcmPersonRegister | null;
+  /** OPMCM geolocated help requests, for the situation map. */
+  helpRequests: FloodOfficialFeed<HelpRequest> | null;
   health: FeedStatus[];
   lastRunAt: string | null;
   nextRunAt: string | null;

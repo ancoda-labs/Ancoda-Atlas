@@ -32,6 +32,26 @@ const T = {
   loading: { en: 'Loading…', ne: 'लोड हुँदै…' },
   verifiedOn: { en: 'Numbers last checked', ne: 'नम्बर अन्तिम जाँचिएको' },
   source: { en: 'Source', ne: 'स्रोत' },
+  portalTitle: { en: 'From the OPMCM rescue portal', ne: 'प्रधानमन्त्री कार्यालयको उद्धार पोर्टलबाट' },
+  portalNote: {
+    en: 'Published on the Office of the Prime Minister’s rescue portal. Atlas reproduces the directory as listed there and has not separately checked each line.',
+    ne: 'प्रधानमन्त्री कार्यालयको उद्धार पोर्टलमा प्रकाशित। एट्लसले त्यहाँ सूचीकृत विवरण जस्ताको तस्तै देखाउँछ र हरेक लाइन छुट्टै जाँचेको छैन।',
+  },
+  nationwide: { en: 'Nationwide', ne: 'देशव्यापी' },
+  around: { en: '24/7', ne: '२४/७' },
+};
+
+const CATEGORY: Record<string, { en: string; ne: string }> = {
+  POLICE: { en: 'Police', ne: 'प्रहरी' },
+  AMBULANCE: { en: 'Ambulance', ne: 'एम्बुलेन्स' },
+  FIRE: { en: 'Fire', ne: 'दमकल' },
+  HOSPITAL: { en: 'Hospitals', ne: 'अस्पताल' },
+  HEALTH: { en: 'Health', ne: 'स्वास्थ्य' },
+  DISASTER: { en: 'Disaster response', ne: 'विपद् प्रतिकार्य' },
+  ARMY: { en: 'Nepal Army', ne: 'नेपाली सेना' },
+  RESCUE: { en: 'Rescue', ne: 'उद्धार' },
+  HELPLINE: { en: 'Helplines', ne: 'हेल्पलाइन' },
+  OTHER: { en: 'Other', ne: 'अन्य' },
 };
 
 function PhoneIcon() {
@@ -154,6 +174,56 @@ export default function FloodContactsView() {
           </p>
         )}
       </section>
+
+      {(() => {
+        const contacts = data?.portalContacts?.items || [];
+        if (!contacts.length) return null;
+        const groups = new Map<string, typeof contacts>();
+        for (const c of contacts) {
+          const key = c.category || 'OTHER';
+          if (!groups.has(key)) groups.set(key, []);
+          groups.get(key)!.push(c);
+        }
+        return (
+          <section className="fl-sec">
+            <div className="fl-sec-head">
+              <span>{lang === 'ne' ? 'पोर्टल' : 'Portal'}</span>
+              <h2>{t('portalTitle')}</h2>
+              <em>{contacts.length}</em>
+            </div>
+            <p className="fl-note fl-pending">{t('portalNote')}</p>
+            {[...groups.entries()].map(([cat, list]) => {
+              const catLabel = CATEGORY[cat] ? CATEGORY[cat][lang] : cat;
+              return (
+                <React.Fragment key={cat}>
+                  <h4 className="fl-minor">{catLabel}</h4>
+                  <div className="fl-calls-more">
+                    {list.flatMap(c =>
+                      c.phones.map(phone => (
+                        <a key={`${c.id}-${phone}`} href={`tel:${phone}`}>
+                          <b>{phone}</b>
+                          <span>
+                            {(lang === 'ne' ? c.nameNe || c.name : c.name) || c.organization}
+                            {c.isNationwide ? ` · ${t('nationwide')}` : ''}
+                            {c.available24x7 ? ` · ${t('around')}` : ''}
+                          </span>
+                        </a>
+                      )),
+                    )}
+                  </div>
+                </React.Fragment>
+              );
+            })}
+            {data?.portalContacts && (
+              <p className="fl-note">
+                <a href={data.portalContacts.source.url} target="_blank" rel="noopener noreferrer">
+                  {data.portalContacts.source.label} &#8599;
+                </a>
+              </p>
+            )}
+          </section>
+        );
+      })()}
     </FloodShell>
   );
 }

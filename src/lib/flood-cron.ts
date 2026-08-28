@@ -21,7 +21,7 @@ import { join } from 'path';
 import { fetchCorridorGauges } from './flood';
 import { proxyUrlFor } from './news-media';
 import { scheduleCatchup } from './news-digest-store';
-import type { FeedStatus, FloodDeskStore, NewsItem } from '@/types';
+import type { FeedStatus, FloodDeskStore, NewsItem, OpmcmPersonRegister, OpmcmPersonReport } from '@/types';
 import { errorMessage } from '@/types';
 
 const DEFAULT_INTERVAL_MINUTES = 10;
@@ -46,6 +46,13 @@ function emptyStore(): FloodDeskStore {
     sitrep: null,
     videos: null,
     news: [],
+    dailyBulletin: null,
+    pressReleases: null,
+    advisories: null,
+    govEfforts: null,
+    portalContacts: null,
+    opmcmPersons: null,
+    helpRequests: null,
     health: [],
     lastRunAt: null,
     nextRunAt: null,
@@ -284,6 +291,133 @@ export async function runFloodRefresh(): Promise<FloodDeskStore> {
         },
         value => {
           store.news = value;
+        },
+      ),
+
+      refresh(
+        'ndrrmaBulletin',
+        store,
+        async () => {
+          const { getDailyBulletins } = await import('@/apis/sources/ndrrma-bulletin.mjs');
+          const feed = await getDailyBulletins({ limit: 5 });
+          if (feed.error && !feed.bulletins.length) throw new Error(feed.error);
+          return {
+            items: feed.bulletins.map(b => ({
+              id: b.id,
+              title: b.title,
+              titleNe: b.titleNe,
+              summary: b.summary,
+              summaryNe: b.summaryNe,
+              date: b.date,
+              pdfUrl: b.pdfUrl,
+              imageProxy: proxyUrlFor(b.image),
+            })),
+            error: feed.error,
+            source: feed.source,
+            fetchedAt: feed.fetchedAt,
+          };
+        },
+        value => {
+          store.dailyBulletin = value;
+        },
+      ),
+
+      refresh(
+        'ndrrmaNotices',
+        store,
+        async () => {
+          const { getPressReleases, getNationalAdvisories } = await import('@/apis/sources/ndrrma-notices.mjs');
+          const [press, adv] = await Promise.all([
+            getPressReleases({ limit: 12 }),
+            getNationalAdvisories(),
+          ]);
+          if (press.error && !press.items.length && adv.error && !adv.advisories.length) {
+            throw new Error(press.error || adv.error);
+          }
+          store.pressReleases = {
+            items: press.items.map(n => ({
+              id: n.id,
+              title: n.title,
+              titleNe: n.titleNe,
+              summary: n.summary,
+              summaryNe: n.summaryNe,
+              date: n.date,
+              imageProxy: proxyUrlFor(n.image),
+            })),
+            error: press.error,
+            source: press.source,
+            fetchedAt: press.fetchedAt,
+          };
+          return { items: adv.advisories, error: adv.error, source: adv.source, fetchedAt: adv.fetchedAt };
+        },
+        value => {
+          store.advisories = value;
+        },
+      ),
+
+      refresh(
+        'govEfforts',
+        store,
+        async () => {
+          const { getGovernmentEfforts } = await import('@/apis/sources/rescue-portal.mjs');
+          const feed = await getGovernmentEfforts({ limit: 20 });
+          if (feed.error && !feed.items.length) throw new Error(feed.error);
+          return feed;
+        },
+        value => {
+          store.govEfforts = value;
+        },
+      ),
+
+      refresh(
+        'portalContacts',
+        store,
+        async () => {
+          const { getEmergencyContacts } = await import('@/apis/sources/rescue-portal.mjs');
+          const feed = await getEmergencyContacts({ limit: 50 });
+          if (feed.error && !feed.items.length) throw new Error(feed.error);
+          return feed;
+        },
+        value => {
+          store.portalContacts = value;
+        },
+      ),
+
+      refresh(
+        'opmcmPersons',
+        store,
+        async () => {
+          const { getPersonRegister } = await import('@/apis/sources/rescue-portal.mjs');
+          const register = await getPersonRegister();
+          if (register.error && !register.lost.length && !register.found.length) {
+            throw new Error(register.error);
+          }
+          const withProxy = (list: typeof register.lost): OpmcmPersonReport[] =>
+            list.map(({ image, ...rest }) => ({ ...rest, imageProxy: proxyUrlFor(image) }));
+          return {
+            lost: withProxy(register.lost),
+            found: withProxy(register.found),
+            error: register.error,
+            source: register.source,
+            fetchedAt: register.fetchedAt,
+          } satisfies OpmcmPersonRegister;
+        },
+        value => {
+          store.opmcmPersons = value;
+        },
+      ),
+
+      refresh(
+        'helpRequests',
+        store,
+        async () => {
+          const { getHelpRequestsMap } = await import('@/apis/sources/rescue-portal.mjs');
+          const feed = await getHelpRequestsMap({ limit: 200 });
+          if (feed.error && !feed.requests.length) throw new Error(feed.error);
+          return { items: feed.requests, error: feed.error, source: feed.source, fetchedAt: feed.fetchedAt };
+        },
+        value => {
+          store.helpRequests = value;
         },
       ),
     ]);

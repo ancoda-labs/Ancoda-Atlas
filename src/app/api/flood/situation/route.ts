@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getFloodStore } from '@/lib/flood-cron';
 import { cacheFor, noStore } from '@/lib/http-cache';
-import type { BipadAlert, CorridorIncidents } from '@/types';
+import type { BipadAlert, CorridorIncidents, FloodOfficialFeed, HelpRequest } from '@/types';
 import { errorMessage } from '@/types';
 
 export const dynamic = 'force-dynamic';
@@ -21,6 +21,7 @@ const CACHE_TTL_S = CACHE_TTL_MS / 1000;
 interface SituationPayload {
   corridor: CorridorIncidents;
   alerts: BipadAlert[];
+  helpRequests: FloodOfficialFeed<HelpRequest> | null;
   generatedAt: string;
 }
 
@@ -29,11 +30,16 @@ let pending: Promise<SituationPayload> | null = null;
 
 async function build(since: string): Promise<SituationPayload> {
   const { getCorridorIncidents, getAlerts } = await import('@/apis/sources/bipad.mjs');
-  const [corridor, alerts] = await Promise.all([
+  const { getHelpRequestsMap } = await import('@/apis/sources/rescue-portal.mjs');
+  const [corridor, alerts, helpFeed] = await Promise.all([
     getCorridorIncidents({ since }),
     getAlerts({ limit: 40 }).catch(() => []),
+    getHelpRequestsMap({ limit: 200 }).catch(() => null),
   ]);
-  return { corridor, alerts, generatedAt: new Date().toISOString() };
+  const helpRequests = helpFeed
+    ? { items: helpFeed.requests, error: helpFeed.error, source: helpFeed.source, fetchedAt: helpFeed.fetchedAt }
+    : null;
+  return { corridor, alerts, helpRequests, generatedAt: new Date().toISOString() };
 }
 
 export async function GET(req: NextRequest) {
@@ -45,6 +51,7 @@ export async function GET(req: NextRequest) {
     const res = NextResponse.json({
       corridor: store.corridor,
       alerts: store.alerts,
+      helpRequests: store.helpRequests,
       generatedAt: store.lastRunAt || new Date().toISOString(),
     });
     res.headers.set('X-Atlas-Cache', 'cron');
@@ -86,6 +93,7 @@ export async function GET(req: NextRequest) {
           fetchedAt: new Date().toISOString(),
         },
         alerts: [],
+        helpRequests: null,
         generatedAt: new Date().toISOString(),
       },
       { status: 200 },

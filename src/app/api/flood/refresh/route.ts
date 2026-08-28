@@ -38,6 +38,13 @@ export async function GET() {
       found: store.family?.counts.found ?? 0,
       videos: store.videos?.videos.length ?? 0,
       news: store.news.length,
+      dailyBulletin: store.dailyBulletin?.items.length ?? 0,
+      pressReleases: store.pressReleases?.items.length ?? 0,
+      advisories: store.advisories?.items.length ?? 0,
+      govEfforts: store.govEfforts?.items.length ?? 0,
+      portalContacts: store.portalContacts?.items.length ?? 0,
+      opmcmPersons: (store.opmcmPersons?.lost.length ?? 0) + (store.opmcmPersons?.found.length ?? 0),
+      helpRequests: store.helpRequests?.items.length ?? 0,
     },
   });
 }

@@ -21,7 +21,7 @@ export class MemoryManager {
     // Ensure dirs exist
     for (const dir of [this.memoryDir, this.coldDir]) {
       try {
-        if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+        if (!existsSync(/*turbopackIgnore: true*/ dir)) mkdirSync(/*turbopackIgnore: true*/ dir, { recursive: true });
       } catch (err) {
         console.warn(`[Memory] Failed to ensure directory exists: ${dir} (filesystem might be read-only)`, err.message);
       }
@@ -35,7 +35,7 @@ export class MemoryManager {
     // Try primary file first, then backup
     for (const path of [this.hotPath, this.hotPath + '.bak']) {
       try {
-        const raw = readFileSync(path, 'utf8');
+        const raw = readFileSync(/*turbopackIgnore: true*/ path, 'utf8');
         const data = JSON.parse(raw);
         // Validate structure
         if (data && Array.isArray(data.runs) && typeof data.alertedSignals === 'object') {
@@ -56,22 +56,22 @@ export class MemoryManager {
     const bakPath = this.hotPath + '.bak';
     try {
       // 1. Write to temp file (if this crashes, original is untouched)
-      writeFileSync(tmpPath, JSON.stringify(this.hot, null, 2));
+      writeFileSync(/*turbopackIgnore: true*/ tmpPath, JSON.stringify(this.hot, null, 2));
 
       // 2. Back up current file (if it exists)
       try {
-        if (existsSync(this.hotPath)) {
+        if (existsSync(/*turbopackIgnore: true*/ this.hotPath)) {
           // Copy current → .bak (overwrite previous backup)
-          renameSync(this.hotPath, bakPath);
+          renameSync(/*turbopackIgnore: true*/ this.hotPath, bakPath);
         }
       } catch { /* backup failure is non-fatal */ }
 
       // 3. Atomic rename: .tmp → hot.json
-      renameSync(tmpPath, this.hotPath);
+      renameSync(/*turbopackIgnore: true*/ tmpPath, this.hotPath);
     } catch (err) {
       console.error('[Memory] Failed to save hot memory:', err.message);
       // Clean up tmp if it exists
-      try { unlinkSync(tmpPath); } catch { }
+      try { unlinkSync(/*turbopackIgnore: true*/ tmpPath); } catch { }
     }
   }
 
@@ -234,17 +234,17 @@ export class MemoryManager {
     const coldPath = join(this.coldDir, `${dateKey}.json`);
 
     let existing = [];
-    try { existing = JSON.parse(readFileSync(coldPath, 'utf8')); } catch { }
+    try { existing = JSON.parse(readFileSync(/*turbopackIgnore: true*/ coldPath, 'utf8')); } catch { }
 
     existing.push(...runs);
     // Use atomic write for cold storage too
     const tmpPath = coldPath + '.tmp';
     try {
-      writeFileSync(tmpPath, JSON.stringify(existing, null, 2));
-      renameSync(tmpPath, coldPath);
+      writeFileSync(/*turbopackIgnore: true*/ tmpPath, JSON.stringify(existing, null, 2));
+      renameSync(/*turbopackIgnore: true*/ tmpPath, coldPath);
     } catch (err) {
       console.error('[Memory] Failed to archive to cold storage:', err.message);
-      try { unlinkSync(tmpPath); } catch { }
+      try { unlinkSync(/*turbopackIgnore: true*/ tmpPath); } catch { }
     }
   }
 }

@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import FloodShell from '@/components/FloodShell';
 import { useFloodLang } from '@/hooks/use-flood-lang';
 import { ageFrom } from '@/lib/relative-time';
-import type { FloodVideo, NewsItem, VideoFeed } from '@/types';
+import type { FloodOfficialFeed, FloodVideo, NdrrmaNotice, NewsItem, VideoFeed } from '@/types';
 
 // Coverage: what the Nepali press and broadcasters are reporting.
 //
@@ -21,6 +21,11 @@ const T = {
   standfirst: {
     en: 'Reporting from Nepali newsrooms and broadcasters. Atlas links to it and hosts none of it.',
     ne: 'नेपाली सञ्चारगृह र प्रसारकहरूको रिपोर्टिङ। एट्लसले लिंक मात्र दिन्छ, कुनै सामग्री राख्दैन।',
+  },
+  officialTitle: { en: 'Official — NDRRMA', ne: 'आधिकारिक — एनडीआरआरएमए' },
+  officialHint: {
+    en: 'Press notes from the National Disaster Risk Reduction and Management Authority, in its own words.',
+    ne: 'राष्ट्रिय विपद् जोखिम न्यूनीकरण तथा व्यवस्थापन प्राधिकरणका आफ्नै शब्दमा प्रेस विज्ञप्ति।',
   },
   press: { en: 'In print and online', ne: 'छापा र अनलाइन' },
   broadcast: { en: 'On television', ne: 'टेलिभिजनमा' },
@@ -42,6 +47,7 @@ const T = {
 export default function FloodMediaView() {
   const [lang, setLang] = useFloodLang();
   const [news, setNews] = useState<NewsItem[] | null>(null);
+  const [official, setOfficial] = useState<FloodOfficialFeed<NdrrmaNotice> | null>(null);
   const [videoFeed, setVideoFeed] = useState<VideoFeed | null>(null);
   const [playing, setPlaying] = useState<FloodVideo | null>(null);
   const [visibleNewsCount, setVisibleNewsCount] = useState(9);
@@ -65,6 +71,12 @@ export default function FloodMediaView() {
         if (res.ok && !cancelled) setVideoFeed(await res.json());
       } catch {
         /* the press section stands on its own */
+      }
+      try {
+        const res = await fetch('/api/flood/press');
+        if (res.ok && !cancelled) setOfficial(await res.json());
+      } catch {
+        /* the official band is optional */
       }
     };
     load();
@@ -128,6 +140,41 @@ export default function FloodMediaView() {
           </div>
         )}
       </section>
+
+      {official && official.items.length > 0 && (
+        <section className="fl-sec">
+          <div className="fl-sec-head">
+            <span>{lang === 'ne' ? 'आधिकारिक' : 'Official'}</span>
+            <h2>{t('officialTitle')}</h2>
+            <em>{official.items.length}</em>
+          </div>
+          <p className="fl-note">{t('officialHint')}</p>
+          <div className="fl-media-grid">
+            {official.items.map(item => {
+              const title = (lang === 'ne' ? item.titleNe || item.title : item.title || item.titleNe) || '';
+              return (
+                <a
+                  key={item.id}
+                  href="https://ndrrma.gov.np/np"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {item.imageProxy && (
+                    <img src={item.imageProxy} alt="" loading="lazy" referrerPolicy="no-referrer" />
+                  )}
+                  <div>
+                    <p>{title}</p>
+                    <span className="fl-report-meta">
+                      <b>NDRRMA</b>
+                      {item.date && <time>{item.date}</time>}
+                    </span>
+                  </div>
+                </a>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       <section className="fl-sec">
         <div className="fl-sec-head">
