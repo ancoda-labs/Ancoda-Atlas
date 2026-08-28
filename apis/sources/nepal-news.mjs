@@ -41,6 +41,22 @@ function googleQuery(query, locale = { hl: 'en-US', gl: 'US', ceid: 'US:en' }) {
   return `https://news.google.com/rss/search?q=${q}&hl=${hl}&gl=${gl}&ceid=${ceid}`;
 }
 
+// The national dailies, read directly rather than through a search wrapper.
+//
+// A Google News query returns a redirect stub and a truncated title; the
+// outlet's own feed returns the headline as filed, the publication time, and
+// usually a photograph. For district-level flood reporting — which is most of
+// what matters here and much of which never reaches an English wire — that
+// difference is the whole story.
+const NEPALI_PORTALS = [
+  { name: 'Onlinekhabar', url: 'https://www.onlinekhabar.com/feed' },
+  { name: 'Ratopati', url: 'https://www.ratopati.com/feed' },
+  { name: 'Nagarik News', url: 'https://nagariknews.nagariknetwork.com/feed' },
+  { name: 'Setopati', url: 'https://www.setopati.com/feed' },
+  { name: 'Himal Khabar', url: 'https://www.himalkhabar.com/feed' },
+  { name: 'Onlinekhabar English', url: 'https://english.onlinekhabar.com/feed' },
+];
+
 // Nepali dailies carry district hazard reporting that never reaches the
 // English wires, so every topic pairs an English query with a Nepali one.
 const NEPAL_SOURCES = {
@@ -48,6 +64,7 @@ const NEPAL_SOURCES = {
     { name: 'The Rising Nepal', url: 'https://risingnepaldaily.com/rss' },
     { name: 'Nepal News', url: 'https://www.nepalnews.com/feed/' },
     { name: 'Kathmandu Post', url: 'https://kathmandupost.com/rss' },
+    ...NEPALI_PORTALS,
     { name: 'Google Nepal Disaster', url: googleQuery('(Nepal earthquake OR landslide Nepal OR flood Nepal OR monsoon Nepal OR avalanche Nepal OR "disaster Nepal" OR NDRRMA) when:7d') },
     { name: 'Google Nepal Disaster Nepali', url: googleQuery('(विपद् OR भूकम्प OR पहिरो OR बाढी OR उद्धार OR राहत) नेपाल when:7d', { hl: 'ne', gl: 'NP', ceid: 'NP:ne' }) },
   ],
@@ -58,6 +75,10 @@ const NEPAL_SOURCES = {
   ],
   flood: [
     { name: 'The Rising Nepal', url: 'https://risingnepaldaily.com/rss' },
+    ...NEPALI_PORTALS,
+    // Kantipur publishes no working RSS of its own — ekantipur.com/rss serves
+    // an HTML page — so its reporting is reached through a site-scoped query.
+    { name: 'Kantipur', url: googleQuery('site:ekantipur.com (बाढी OR पहिरो OR रसुवा OR भोटेकोशी OR त्रिशूली) when:14d', { hl: 'ne', gl: 'NP', ceid: 'NP:ne' }) },
     { name: 'Google Nepal Flood', url: googleQuery('(flood Nepal OR landslide Nepal OR inundation Terai OR "Koshi river" OR "Karnali river" OR embankment Nepal OR flash flood Nepal) when:14d') },
     { name: 'Google Nepal Flood Nepali', url: googleQuery('(बाढी OR पहिरो OR डुबान OR कटान OR तटबन्ध) नेपाल when:14d', { hl: 'ne', gl: 'NP', ceid: 'NP:ne' }) },
   ],
@@ -81,6 +102,7 @@ const NEPAL_SOURCES = {
   ],
   relief: [
     { name: 'Nepal News', url: 'https://www.nepalnews.com/feed/' },
+    ...NEPALI_PORTALS,
     { name: 'Google Nepal Relief', url: googleQuery('(NDRRMA OR "disaster relief" Nepal OR "Nepal Red Cross" OR rescue operation Nepal OR displaced Nepal OR relief distribution Nepal OR evacuation Nepal) when:14d') },
     { name: 'Google Nepal Relief Nepali', url: googleQuery('(उद्धार OR राहत OR विस्थापित OR क्षतिपूर्ति OR विपद् व्यवस्थापन) नेपाल when:14d', { hl: 'ne', gl: 'NP', ceid: 'NP:ne' }) },
   ],
@@ -171,6 +193,38 @@ function extractTag(block, tagName) {
   return match ? decodeXml(match[1]) : '';
 }
 
+/**
+ * The lead photograph for an item, if the feed offers one.
+ *
+ * Outlets advertise it four different ways and no two of the Nepali portals
+ * agree: Ratopati uses media:thumbnail, Nagarik embeds an <img> in the body,
+ * others use media:content or an enclosure. All four are tried in order of how
+ * likely they are to be the article's actual lead image rather than a logo.
+ *
+ * The URL is returned as published. Atlas never copies the file — it is served
+ * through the signed proxy in lib/news-media.ts at request time, so the outlet
+ * keeps its bytes and its referer.
+ */
+function extractImage(block) {
+  const patterns = [
+    /<media:thumbnail[^>]*\burl=["']([^"']+)["']/i,
+    /<media:content[^>]*\burl=["']([^"']+)["']/i,
+    /<enclosure[^>]*\burl=["']([^"']+)["'][^>]*type=["']image\//i,
+    /<enclosure[^>]*type=["']image\/[^"']*["'][^>]*\burl=["']([^"']+)["']/i,
+    /<img[^>]*\bsrc=["']([^"']+)["']/i,
+  ];
+  for (const re of patterns) {
+    const match = block.match(re);
+    if (!match) continue;
+    const url = decodeXml(match[1]);
+    // Feed furniture: tracking pixels and the outlet's own logo are not the story.
+    if (!/^https?:\/\//i.test(url)) continue;
+    if (/\b(logo|icon|avatar|pixel|blank|spacer)\b/i.test(url)) continue;
+    return url;
+  }
+  return null;
+}
+
 function extractItemBlocks(xml) {
   const matches = xml.match(/<item\b[\s\S]*?<\/item>/gi);
   return matches || [];
@@ -193,7 +247,7 @@ function parseRssItems(xml, fallbackSource) {
     const source = extractTag(block, 'source') || fallbackSource;
     const pubDate = parseDate(extractTag(block, 'pubDate') || extractTag(block, 'dc:date') || extractTag(block, 'updated'));
 
-    items.push({ title, link, source, pubDate });
+    items.push({ title, link, source, pubDate, image: extractImage(block) });
   }
 
   if (items.length > 0) return items;
@@ -208,7 +262,7 @@ function parseRssItems(xml, fallbackSource) {
     const source = extractTag(block, 'source') || fallbackSource;
     const pubDate = parseDate(extractTag(block, 'published') || extractTag(block, 'updated') || extractTag(block, 'dc:date'));
 
-    items.push({ title, link, source, pubDate });
+    items.push({ title, link, source, pubDate, image: extractImage(block) });
   }
 
   return items;
@@ -549,6 +603,7 @@ function compactItem(item) {
     link: item.link,
     source: item.source,
     pubDate: new Date(item.pubDate).toISOString(),
+    image: item.image || null,
   };
 }
 
