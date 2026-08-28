@@ -85,11 +85,15 @@ export async function getBulletinRescue() {
 
   try {
     const html = await safeFetch(`${BASE}/?t=${Date.now()}`, {
+      as: 'text',
       timeout: 20_000,
       retries: 1,
       headers: { Accept: 'text/html', 'User-Agent': UA },
     });
-    if (typeof html !== 'string') throw new Error('Failed to fetch HTML');
+    // safeFetch resolves rather than throws, so a failure arrives as an object
+    // carrying the reason. Pass that reason on instead of flattening every
+    // cause — DNS, timeout, 503 — into one indistinguishable message.
+    if (typeof html !== 'string') throw new Error(html?.error || 'Failed to fetch HTML');
 
     const data = {
       treat: parseTable(html, 'treat-body'),

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { isDbConfigured } from '@/lib/db';
+import { cacheFor, noStore } from '@/lib/http-cache';
 import { isStorageConfigured } from '@/lib/storage';
 import {
   MAX_CAPTION_CHARS,
@@ -41,21 +42,25 @@ function disabledReason(): string | null {
   return null;
 }
 
+// Each photo carries a short-lived signed URL, so the feed cannot be held for
+// longer than those stay valid.
+const CACHE_TTL_S = 60;
+
 export async function GET() {
   const reason = disabledReason();
   if (reason) {
     const payload: FloodPhotoFeed = { enabled: false, photos: [], reason };
-    return NextResponse.json(payload);
+    return noStore(NextResponse.json(payload));
   }
   try {
     const payload: FloodPhotoFeed = { enabled: true, photos: await listPhotos(60) };
-    return NextResponse.json(payload);
+    return cacheFor(NextResponse.json(payload), { edge: CACHE_TTL_S });
   } catch (err) {
     console.error('[Photos API] List failed:', errorMessage(err));
     // The rest of the flood desk does not depend on this feed, so a database
     // blip should empty one section rather than break the page.
     const payload: FloodPhotoFeed = { enabled: false, photos: [], reason: 'unavailable' };
-    return NextResponse.json(payload, { status: 200 });
+    return noStore(NextResponse.json(payload, { status: 200 }));
   }
 }
 

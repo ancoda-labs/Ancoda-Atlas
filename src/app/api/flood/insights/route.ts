@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { draftDigest } from '@/lib/news-digest.mjs';
+import { cacheFor, noStore } from '@/lib/http-cache';
 import { findLanguage, isWireLanguage } from '@/lib/nepal-languages';
 import type { DigestSource, FloodInsight, FloodInsightFeed, LLMProviderLike, NewsItem } from '@/types';
 import { errorMessage } from '@/types';
@@ -20,6 +21,7 @@ export const dynamic = 'force-dynamic';
 // machine wrote the sentence or merely selected it.
 
 const CACHE_TTL_MS = 10 * 60 * 1000;
+const CACHE_TTL_S = CACHE_TTL_MS / 1000;
 const cache = new Map<string, { data: FloodInsightFeed; at: number }>();
 const pending = new Map<string, Promise<FloodInsightFeed>>();
 
@@ -95,7 +97,7 @@ export async function GET(req: NextRequest) {
   if (hit && Date.now() - hit.at < CACHE_TTL_MS) {
     const res = NextResponse.json(hit.data);
     res.headers.set('X-Atlas-Cache', 'hit');
-    return res;
+    return cacheFor(res, { edge: CACHE_TTL_S });
   }
 
   // One in-flight build per language: the panel polls, and a model call is not
@@ -112,9 +114,14 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    return NextResponse.json(await inflight);
+    const data = await inflight;
+    const res = NextResponse.json(data);
+    // Only a brief that actually got written is worth reusing. A model call is
+    // the most expensive thing this desk does — around eight seconds cold — so
+    // when one succeeds, let the edge answer with it for the full ten minutes.
+    return data.insight ? cacheFor(res, { edge: CACHE_TTL_S }) : noStore(res);
   } catch (err) {
     console.error('[Insights API] Failed:', errorMessage(err));
-    return NextResponse.json({ insight: null, hasModel: false, reason: 'unavailable' } satisfies FloodInsightFeed);
+    return noStore(NextResponse.json({ insight: null, hasModel: false, reason: 'unavailable' } satisfies FloodInsightFeed));
   }
 }

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getFloodStore } from '@/lib/flood-cron';
+import { cacheFor, noStore } from '@/lib/http-cache';
 import type { RescueRegister } from '@/types';
 import { errorMessage } from '@/types';
 
@@ -16,6 +17,7 @@ export const dynamic = 'force-dynamic';
 // deploy, before the first cycle has landed.
 
 const CACHE_TTL_MS = 2 * 60 * 1000;
+const CACHE_TTL_S = CACHE_TTL_MS / 1000;
 let cache: { data: RescueRegister; at: number } | null = null;
 let pending: Promise<RescueRegister> | null = null;
 
@@ -27,13 +29,13 @@ export async function GET() {
       bulletinRescue: store.bulletinRescue,
     });
     res.headers.set('X-Atlas-Cache', 'cron');
-    return res;
+    return cacheFor(res, { edge: CACHE_TTL_S });
   }
 
   if (cache && Date.now() - cache.at < CACHE_TTL_MS) {
     const res = NextResponse.json(cache.data);
     res.headers.set('X-Atlas-Cache', 'hit');
-    return res;
+    return cacheFor(res, { edge: CACHE_TTL_S });
   }
 
   if (!pending) {
@@ -65,11 +67,13 @@ export async function GET() {
     const data = await pending;
     const res = NextResponse.json(data);
     res.headers.set('X-Atlas-Cache', 'miss');
-    return res;
+    // Same rule the in-memory cache follows above: a register that did not
+    // arrive is not something to keep serving.
+    return data.error ? noStore(res) : cacheFor(res, { edge: CACHE_TTL_S });
   } catch (err) {
     const message = errorMessage(err);
     console.error('[Rescue API] Failed:', message);
-    return NextResponse.json(
+    return noStore(NextResponse.json(
       {
         persons: [],
         summary: null,
@@ -79,6 +83,6 @@ export async function GET() {
         fetchedAt: new Date().toISOString(),
       } satisfies RescueRegister,
       { status: 200 },
-    );
+    ));
   }
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getFloodStore } from '@/lib/flood-cron';
+import { cacheFor, noStore } from '@/lib/http-cache';
 import type { BipadAlert, CorridorIncidents } from '@/types';
 import { errorMessage } from '@/types';
 
@@ -15,6 +16,7 @@ export const dynamic = 'force-dynamic';
 // authoritative toll lives in reviewed content, sourced to NDRRMA and Police.
 
 const CACHE_TTL_MS = 3 * 60 * 1000;
+const CACHE_TTL_S = CACHE_TTL_MS / 1000;
 
 interface SituationPayload {
   corridor: CorridorIncidents;
@@ -46,13 +48,13 @@ export async function GET(req: NextRequest) {
       generatedAt: store.lastRunAt || new Date().toISOString(),
     });
     res.headers.set('X-Atlas-Cache', 'cron');
-    return res;
+    return cacheFor(res, { edge: CACHE_TTL_S });
   }
 
   if (cache && Date.now() - cache.at < CACHE_TTL_MS) {
     const res = NextResponse.json(cache.data);
     res.headers.set('X-Atlas-Cache', 'hit');
-    return res;
+    return cacheFor(res, { edge: CACHE_TTL_S });
   }
 
   if (!pending) {
@@ -70,11 +72,11 @@ export async function GET(req: NextRequest) {
     const data = await pending;
     const res = NextResponse.json(data);
     res.headers.set('X-Atlas-Cache', 'miss');
-    return res;
+    return data.corridor.error ? noStore(res) : cacheFor(res, { edge: CACHE_TTL_S });
   } catch (err) {
     const message = errorMessage(err);
     console.error('[Situation API] Failed:', message);
-    return NextResponse.json(
+    return noStore(NextResponse.json(
       {
         corridor: {
           incidents: [],
@@ -87,6 +89,6 @@ export async function GET(req: NextRequest) {
         generatedAt: new Date().toISOString(),
       },
       { status: 200 },
-    );
+    ));
   }
 }

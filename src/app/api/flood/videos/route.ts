@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getFloodStore } from '@/lib/flood-cron';
+import { cacheFor, noStore } from '@/lib/http-cache';
 import type { VideoFeed } from '@/types';
 import { errorMessage } from '@/types';
 
@@ -13,6 +14,7 @@ export const dynamic = 'force-dynamic';
 // player.
 
 const CACHE_TTL_MS = 10 * 60 * 1000;
+const CACHE_TTL_S = CACHE_TTL_MS / 1000;
 let cache: { data: VideoFeed; at: number } | null = null;
 let pending: Promise<VideoFeed> | null = null;
 
@@ -21,13 +23,13 @@ export async function GET() {
   if (store.videos?.videos.length && store.videos?.live?.length) {
     const res = NextResponse.json(store.videos);
     res.headers.set('X-Atlas-Cache', 'cron');
-    return res;
+    return cacheFor(res, { edge: CACHE_TTL_S });
   }
 
   if (cache && Date.now() - cache.at < CACHE_TTL_MS && cache.data.live?.length) {
     const res = NextResponse.json(cache.data);
     res.headers.set('X-Atlas-Cache', 'hit');
-    return res;
+    return cacheFor(res, { edge: CACHE_TTL_S });
   }
 
   if (!pending) {
@@ -45,13 +47,15 @@ export async function GET() {
   }
 
   try {
-    return NextResponse.json(await pending);
+    const data = await pending;
+    const res = NextResponse.json(data);
+    return data.videos.length ? cacheFor(res, { edge: CACHE_TTL_S }) : noStore(res);
   } catch (err) {
     const message = errorMessage(err);
     console.error('[Videos API] Failed:', message);
-    return NextResponse.json(
+    return noStore(NextResponse.json(
       { videos: [], searchEnabled: false, error: message, fetchedAt: new Date().toISOString() } satisfies VideoFeed,
       { status: 200 },
-    );
+    ));
   }
 }

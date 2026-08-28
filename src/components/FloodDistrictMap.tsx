@@ -139,7 +139,7 @@ export default function FloodDistrictMap({ points = [], photos = [], gauges = []
 
   useEffect(() => {
     let cancelled = false;
-    fetch('/data/flood-affected-districts.geojson')
+    fetch('/data/flood-affected-districts.json')
       .then(r => (r.ok ? r.json() : null))
       .then((d: GeoCollection<AffectedDistrictProps> | null) => {
         if (!cancelled) setGeo(d);

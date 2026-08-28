@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { cacheFor, noStore } from '@/lib/http-cache';
 import { proxyUrlFor } from '@/lib/news-media';
 import type { NewsItem, NewsResponse } from '@/types';
 import { errorMessage } from '@/types';
@@ -22,6 +23,7 @@ function withSignedImages(data: NewsResponse): NewsResponse {
 export const dynamic = 'force-dynamic';
 
 const NEWS_CACHE_TTL_MS = 4 * 60 * 1000;
+const NEWS_CACHE_TTL_S = NEWS_CACHE_TTL_MS / 1000;
 const newsCache = new Map<string, { data?: NewsResponse; pending?: Promise<NewsResponse>; at: number }>();
 
 export async function GET(req: NextRequest) {
@@ -38,18 +40,18 @@ export async function GET(req: NextRequest) {
     if (hit && Date.now() - hit.at < NEWS_CACHE_TTL_MS && hit.data) {
       const response = NextResponse.json(withSignedImages(hit.data));
       response.headers.set('X-Atlas-Cache', 'hit');
-      return response;
+      return cacheFor(response, { edge: NEWS_CACHE_TTL_S });
     }
 
     if (hit?.pending) {
       try {
         const data = await hit.pending;
-        return NextResponse.json(withSignedImages(data));
+        return cacheFor(NextResponse.json(withSignedImages(data)), { edge: NEWS_CACHE_TTL_S });
       } catch {
-        return NextResponse.json(
+        return noStore(NextResponse.json(
           { error: 'News aggregation failed', topic, items: [] },
           { status: 502 }
-        );
+        ));
       }
     }
 
@@ -62,15 +64,18 @@ export async function GET(req: NextRequest) {
 
     const response = NextResponse.json(withSignedImages(data));
     response.headers.set('X-Atlas-Cache', 'miss');
-    return response;
+    // The expensive one: fifteen feeds fanned out, nine seconds on a cold
+    // isolate. Four minutes at the edge is the difference between paying that
+    // once and paying it for every reader who opens the dashboard.
+    return cacheFor(response, { edge: NEWS_CACHE_TTL_S });
   } catch (err) {
     const { searchParams } = new URL(req.url);
     const topic = (searchParams.get('topic') || 'all').toLowerCase();
     newsCache.delete(`${topic}|${searchParams.get('window') || '24h'}|${searchParams.get('limit') || 30}|${searchParams.get('sourceCap') || 10}`);
     console.error('[Next.js News API] Failed:', errorMessage(err));
-    return NextResponse.json(
+    return noStore(NextResponse.json(
       { error: 'News aggregation failed', topic: topic, items: [], count: 0 },
       { status: 502 }
-    );
+    ));
   }
 }

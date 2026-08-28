@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { isDbConfigured } from '@/lib/db';
+import { cacheFor, noStore } from '@/lib/http-cache';
 import { getDigests, scheduleCatchup } from '@/lib/news-digest-store';
 import type { DigestLang } from '@/lib/news-digest-store';
 import type { NewsDigestFeed } from '@/types';
@@ -22,7 +23,7 @@ export async function GET(req: NextRequest) {
 
   if (!isDbConfigured()) {
     const payload: NewsDigestFeed = { enabled: false, lang, digests: [], reason: 'database_not_configured' };
-    return NextResponse.json(payload);
+    return noStore(NextResponse.json(payload));
   }
 
   const limit = Number(req.nextUrl.searchParams.get('limit')) || 12;
@@ -31,10 +32,12 @@ export async function GET(req: NextRequest) {
     const digests = await getDigests(lang, limit);
     scheduleCatchup();
     const payload: NewsDigestFeed = { enabled: true, lang, digests };
-    return NextResponse.json(payload);
+    // Briefs are written on a ten-minute cycle; a minute at the edge cannot
+    // hide one for meaningfully longer than it would have waited anyway.
+    return cacheFor(NextResponse.json(payload), { edge: 60 });
   } catch (err) {
     console.error('[Digest API] Failed:', errorMessage(err));
     const payload: NewsDigestFeed = { enabled: false, lang, digests: [], reason: 'unavailable' };
-    return NextResponse.json(payload, { status: 200 });
+    return noStore(NextResponse.json(payload, { status: 200 }));
   }
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { loadFloodContent, fetchCorridorGauges } from '@/lib/flood';
 import { getFloodStore } from '@/lib/flood-cron';
+import { cacheFor, noStore } from '@/lib/http-cache';
 import type { FloodDeskPayload } from '@/types';
 import { errorMessage } from '@/types';
 
@@ -9,6 +10,7 @@ export const dynamic = 'force-dynamic';
 // River gauges report roughly every 10 minutes, so a 2-minute cache keeps the
 // panel current without hammering BIPAD on every dashboard open.
 const CACHE_TTL_MS = 2 * 60 * 1000;
+const CACHE_TTL_S = CACHE_TTL_MS / 1000;
 let cache: { data: FloodDeskPayload; at: number } | null = null;
 let pending: Promise<FloodDeskPayload> | null = null;
 
@@ -30,7 +32,7 @@ export async function GET() {
   if (cache && Date.now() - cache.at < CACHE_TTL_MS) {
     const res = NextResponse.json(cache.data);
     res.headers.set('X-Atlas-Cache', 'hit');
-    return res;
+    return cacheFor(res, { edge: CACHE_TTL_S });
   }
 
   // Collapse concurrent misses onto one upstream fan-out.
@@ -49,14 +51,16 @@ export async function GET() {
     const data = await pending;
     const res = NextResponse.json(data);
     res.headers.set('X-Atlas-Cache', 'miss');
-    return res;
+    return cacheFor(res, { edge: CACHE_TTL_S });
   } catch (err) {
     const message = errorMessage(err);
     console.error('[Flood API] Failed:', message);
-    // The reviewed content is on local disk, so serve it even if BIPAD is down.
-    return NextResponse.json(
+    // The reviewed content is bundled, so serve it even if BIPAD is down.
+    // Not cached: this response has no gauges in it, and the next reader should
+    // get a fresh attempt rather than inherit this one's bad minute.
+    return noStore(NextResponse.json(
       { ...loadFloodContent(), river: { gauges: [], error: message, fetchedAt: new Date().toISOString() }, generatedAt: new Date().toISOString() },
       { status: 200 }
-    );
+    ));
   }
 }

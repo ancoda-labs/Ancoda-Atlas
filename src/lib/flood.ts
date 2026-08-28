@@ -11,8 +11,6 @@
 //   warning and danger thresholds. Published automatically, always stamped
 //   with the time the reading was actually taken.
 
-import { readFileSync, existsSync, readdirSync } from 'fs';
-import { join } from 'path';
 import type {
   AffectedDistrictProps,
   FloodContent,
@@ -26,7 +24,59 @@ import type {
 } from '@/types';
 import { errorMessage } from '@/types';
 
-const CONTENT_DIR = join(process.cwd(), 'content', 'bhotekoshi-flood');
+// ─── Reviewed content ───────────────────────────────────────────────────────
+//
+// Imported, not read from disk at request time.
+//
+// Atlas is served from Cloudflare Workers, where there is no filesystem behind
+// process.cwd(). Every readFileSync here returned nothing in production, which
+// is not a crash — readJson simply answered null — so the pages rendered their
+// empty states and the helpline page went out with no phone numbers on it.
+// A static import is resolved at build time and travels inside the bundle, so
+// it behaves the same on Workers as it does under `next dev`.
+//
+// The cost is that the set of files is now fixed at build time. Adding a relief
+// fund means adding it to RELIEF_FUNDS below — dropping a JSON file into the
+// directory no longer picks it up on its own.
+import siteJson from '../../content/bhotekoshi-flood/site.json';
+import keyFiguresJson from '../../content/bhotekoshi-flood/key-figures.json';
+import whatHappenedJson from '../../content/bhotekoshi-flood/what-happened.json';
+import alertsJson from '../../content/bhotekoshi-flood/alerts.json';
+import floodPathJson from '../../content/bhotekoshi-flood/flood-path.json';
+import helplinesJson from '../../content/bhotekoshi-flood/helplines.json';
+import bankAccountsJson from '../../content/bhotekoshi-flood/bank-accounts.json';
+import affectedDistrictsJson from '../../content/bhotekoshi-flood/affected-districts.json';
+import districtContactsJson from '../../content/bhotekoshi-flood/district-contacts.json';
+import sitrepJson from '../../content/bhotekoshi-flood/sitrep.json';
+import districtGeoJson from '../../public/data/flood-affected-districts.json';
+
+import careNepalFund from '../../content/bhotekoshi-flood/relief-funds/care-nepal.json';
+import directReliefFund from '../../content/bhotekoshi-flood/relief-funds/direct-relief.json';
+import globalGivingFund from '../../content/bhotekoshi-flood/relief-funds/globalgiving-nepal-flood-relief.json';
+import ifrcFund from '../../content/bhotekoshi-flood/relief-funds/ifrc.json';
+import nrcsFund from '../../content/bhotekoshi-flood/relief-funds/nrcs.json';
+import pmoFund from '../../content/bhotekoshi-flood/relief-funds/pmo-disaster-relief-fund.json';
+
+const RELIEF_FUNDS: readonly unknown[] = [
+  careNepalFund,
+  directReliefFund,
+  globalGivingFund,
+  ifrcFund,
+  nrcsFund,
+  pmoFund,
+];
+
+/**
+ * Read a bundled content file as the shape the page expects.
+ *
+ * The JSON modules arrive with their literal shape inferred by the compiler,
+ * which is narrower and structurally unrelated to the reviewed-content types.
+ * The types in @/types are the contract the components are written against, so
+ * they win here — exactly as they did when this went through JSON.parse.
+ */
+function content<T>(json: unknown): T {
+  return json as T;
+}
 
 const BIPAD_RIVER_URL = 'https://bipadportal.gov.np/api/v1/river-stations/?limit=500';
 const BIPAD_TIMEOUT_MS = 20_000;
@@ -76,9 +126,7 @@ function loadDistrictShapes(): DistrictShape[] {
   if (districtShapes) return districtShapes;
   districtShapes = [];
   try {
-    const path = join(process.cwd(), 'public', 'data', 'flood-affected-districts.geojson');
-    if (!existsSync(path)) return districtShapes;
-    const geo = JSON.parse(readFileSync(path, 'utf8')) as GeoCollection<AffectedDistrictProps>;
+    const geo = content<GeoCollection<AffectedDistrictProps>>(districtGeoJson);
     districtShapes = geo.features.map(f => ({
       nameEn: f.properties.name_en,
       nameNe: f.properties.name_ne,
@@ -112,48 +160,24 @@ function districtAt(lat: number | null, lon: number | null): { en: string; ne: s
   return null;
 }
 
-function readJson<T>(name: string): T | null {
-  const path = join(CONTENT_DIR, name);
-  if (!existsSync(path)) return null;
-  try {
-    return JSON.parse(readFileSync(path, 'utf8')) as T;
-  } catch (err) {
-    console.error(`[Flood] Failed to parse ${name}:`, errorMessage(err));
-    return null;
-  }
-}
-
 export function loadFloodContent(): FloodContent {
-  const fundsDir = join(CONTENT_DIR, 'relief-funds');
-  let funds: FloodOrg[] = [];
-  if (existsSync(fundsDir)) {
-    funds = readdirSync(fundsDir)
-      .filter(f => f.endsWith('.json'))
-      .map((f): FloodOrg | null => {
-        try {
-          return JSON.parse(readFileSync(join(fundsDir, f), 'utf8')) as FloodOrg;
-        } catch {
-          return null;
-        }
-      })
-      .filter((f): f is FloodOrg => f !== null)
-      // Tier 3 is community-submitted. Nothing ships at tier 3 today, but the
-      // gate exists so an unreviewed donation link can never reach the page.
-      .filter(f => f.tier !== 3 || f.moderation === 'approved')
-      .filter(f => f.status !== 'inactive')
-      .sort((a, b) => (a.tier || 9) - (b.tier || 9));
-  }
+  const funds = RELIEF_FUNDS.map(f => content<FloodOrg>(f))
+    // Tier 3 is community-submitted. Nothing ships at tier 3 today, but the
+    // gate exists so an unreviewed donation link can never reach the page.
+    .filter(f => f.tier !== 3 || f.moderation === 'approved')
+    .filter(f => f.status !== 'inactive')
+    .sort((a, b) => (a.tier || 9) - (b.tier || 9));
 
   return {
-    site: readJson<FloodContent['site']>('site.json'),
-    keyFigures: readJson<FloodContent['keyFigures']>('key-figures.json'),
-    whatHappened: readJson<FloodContent['whatHappened']>('what-happened.json'),
-    alerts: readJson<FloodContent['alerts']>('alerts.json'),
-    floodPath: readJson<FloodContent['floodPath']>('flood-path.json'),
-    helplines: readJson<FloodContent['helplines']>('helplines.json'),
-    bankAccounts: readJson<FloodContent['bankAccounts']>('bank-accounts.json'),
-    affectedDistricts: readJson<FloodContent['affectedDistricts']>('affected-districts.json'),
-    districtContacts: readJson<FloodContent['districtContacts']>('district-contacts.json'),
+    site: content<FloodContent['site']>(siteJson),
+    keyFigures: content<FloodContent['keyFigures']>(keyFiguresJson),
+    whatHappened: content<FloodContent['whatHappened']>(whatHappenedJson),
+    alerts: content<FloodContent['alerts']>(alertsJson),
+    floodPath: content<FloodContent['floodPath']>(floodPathJson),
+    helplines: content<FloodContent['helplines']>(helplinesJson),
+    bankAccounts: content<FloodContent['bankAccounts']>(bankAccountsJson),
+    affectedDistricts: content<FloodContent['affectedDistricts']>(affectedDistrictsJson),
+    districtContacts: content<FloodContent['districtContacts']>(districtContactsJson),
     sitrep: loadSitrep(),
     funds,
   };
@@ -172,9 +196,8 @@ export function loadFloodContent(): FloodContent {
  * Groups whose parts overlap rather than partition the total opt out with
  * `no_total_check`; for them the arithmetic was never meant to close.
  */
-function loadSitrep(): SitrepContent | null {
-  const sitrep = readJson<SitrepContent>('sitrep.json');
-  if (!sitrep) return null;
+function loadSitrep(): SitrepContent {
+  const sitrep = content<SitrepContent>(sitrepJson);
 
   const discrepancies: SitrepDiscrepancy[] = [];
   for (const breakdown of sitrep.breakdowns ?? []) {
