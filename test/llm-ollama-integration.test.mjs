@@ -4,7 +4,7 @@
 
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { OllamaProvider } from '../lib/llm/ollama.mjs';
+import { OllamaProvider } from '../src/lib/llm/ollama.mjs';
 
 const BASE_URL = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
 const MODEL = process.env.OLLAMA_MODEL || 'llama3.1:8b';

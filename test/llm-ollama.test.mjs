@@ -3,8 +3,8 @@
 
 import { describe, it, mock, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { OllamaProvider } from '../lib/llm/ollama.mjs';
-import { createLLMProvider } from '../lib/llm/index.mjs';
+import { OllamaProvider } from '../src/lib/llm/ollama.mjs';
+import { createLLMProvider } from '../src/lib/llm/index.mjs';
 
 // ─── Unit Tests ───
 
