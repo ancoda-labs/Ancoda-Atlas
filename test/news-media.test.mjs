@@ -8,7 +8,7 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { isSignableImageUrl, proxyUrlFor, resolveSignedUrl } from '../lib/news-media.ts';
+import { isSignableImageUrl, proxyUrlFor, resolveSignedUrl } from '../src/lib/news-media.ts';
 
 /** Pull the u and s parameters back out of a generated proxy path. */
 function partsOf(proxyPath) {
