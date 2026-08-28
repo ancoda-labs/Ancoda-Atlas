@@ -50,7 +50,7 @@ Atlas covers **natural hazards in Nepal, and nothing else**:
 
 Out of scope, deliberately: politics, elections, conflict, markets, trade, finance, diplomacy, aviation tracking and general news. India and China appear only through cross-boundary hazards — upstream river discharge, transboundary smoke, and ruptures on shared fault segments.
 
-Every geographic boundary, province and city lives in [`apis/utils/nepal.mjs`](apis/utils/nepal.mjs). Edit that file to adjust coverage; nothing else hardcodes geography.
+Every geographic boundary, province and city lives in [`src/apis/utils/nepal.mjs`](src/apis/utils/nepal.mjs). Edit that file to adjust coverage; nothing else hardcodes geography.
 
 ---
 
@@ -304,59 +304,70 @@ Atlas works with zero API keys. Three of the five hazard sources need no authent
 
 ```
 atlas/
-├── app/                       # Next.js App Router
-│   ├── page.tsx               # SSR entry — hydrates DashboardClient
-│   ├── layout.tsx
-│   ├── bhotekoshi-flood/      # Public flood response page
-│   ├── events/route.ts        # SSE stream for live push updates
-│   └── api/
-│       ├── data/route.ts      # Current synthesized hazard data (JSON)
-│       ├── news/route.ts      # Disaster-filtered news, 4-minute server cache
-│       └── flood/             # Flood content + live BIPAD gauges + photo proxy
-│
-├── components/
-│   ├── DashboardClient.tsx    # View switch + the full monitoring terminal
-│   ├── NepalSignalsMap.tsx    # D3 province map, canvas-rendered
-│   ├── BhotekoshiFloodView.tsx # The flood response page
-│   └── FloodDistrictMap.tsx   # Affected-district map with the flood path
+├── src/
+│   ├── app/                   # Next.js App Router — routes and the views they render
+│   │   ├── page.tsx           # SSR entry — hydrates DashboardClient
+│   │   ├── layout.tsx
+│   │   ├── DashboardClient.tsx    # View switch + the full monitoring terminal
+│   │   ├── _components/       # Pieces used only by the dashboard route
+│   │   ├── bhotekoshi-flood/  # Public flood response page
+│   │   │   ├── BhotekoshiFloodView.tsx
+│   │   │   ├── _components/   # Shared across the flood desk's own routes
+│   │   │   └── <route>/       # Each sub-route keeps its view + _components beside it
+│   │   ├── events/route.ts    # SSE stream for live push updates
+│   │   └── api/
+│   │       ├── data/route.ts  # Current synthesized hazard data (JSON)
+│   │       ├── news/route.ts  # Disaster-filtered news, 4-minute server cache
+│   │       └── flood/         # Flood content + live BIPAD gauges + photo proxy
+│   │
+│   ├── components/            # Reusable across routes — nothing route-specific
+│   │   ├── ui/                # shadcn/ui primitives (Button, Input, Select, …)
+│   │   ├── FloodShell.tsx     # Chrome shared by every flood desk page
+│   │   ├── NepalSignalsMap.tsx    # D3 province map, canvas-rendered
+│   │   └── FloodDistrictMap.tsx   # Affected-district map with the flood path
+│   │
+│   ├── hooks/                 # use-atlas-theme, use-flood-lang
+│   ├── types/                 # Shared domain types + .mjs module declarations
+│   ├── styles/globals.css     # Tailwind entry, shadcn token map, Atlas design system
+│   │
+│   ├── apis/
+│   │   ├── briefing.mjs       # Master orchestrator — runs all 5 sources in parallel
+│   │   ├── save-briefing.mjs  # CLI: save timestamped + latest.json
+│   │   ├── BRIEFING_PROMPT.md # Disaster briefing protocol
+│   │   ├── BRIEFING_TEMPLATE.md   # Briefing output structure
+│   │   ├── utils/
+│   │   │   ├── fetch.mjs      # safeFetch() — timeout, retries, abort, auto-JSON
+│   │   │   ├── nepal.mjs      # Geography: bbox, provinces, cities, seismic box
+│   │   │   └── env.mjs        # .env loader (no dotenv dependency)
+│   │   └── sources/
+│   │       ├── seismic.mjs    # USGS — each exports briefing() → structured data
+│   │       ├── weather.mjs    # Open-Meteo, monsoon-aware thresholds
+│   │       ├── firms.mjs      # NASA FIRMS satellite fire detection
+│   │       ├── airquality.mjs # PM2.5, PM10 and US AQI across 10 cities
+│   │       ├── reliefweb.mjs  # UN OCHA, HDX fallback
+│   │       └── nepal-news.mjs # Hazard news aggregator behind /api/news
+│   │
+│   └── lib/
+│       ├── utils.ts           # cn() — the shadcn class merger
+│       ├── sweeper.ts         # Background sweep loop, SSE broadcast, alert dispatch
+│       ├── llm/               # LLM abstraction (8 providers, raw fetch, no SDKs)
+│       │   ├── provider.mjs   # Base class
+│       │   ├── ideas.mjs      # LLM-powered hazard reads
+│       │   └── index.mjs      # Factory: createLLMProvider()
+│       ├── delta/
+│       │   ├── engine.mjs     # Hazard delta computation, configurable thresholds
+│       │   ├── memory.mjs     # Hot memory (3 runs, atomic writes) + cold archives
+│       │   └── index.mjs      # Re-exports
+│       └── alerts/
+│           ├── telegram.mjs   # Multi-tier alerts + two-way bot commands
+│           └── discord.mjs    # Slash commands, rich embeds, webhook fallback
 │
 ├── content/
 │   └── bhotekoshi-flood/      # Reviewed relief funds, helplines, figures
 │
-├── apis/
-│   ├── briefing.mjs           # Master orchestrator — runs all 5 sources in parallel
-│   ├── save-briefing.mjs      # CLI: save timestamped + latest.json
-│   ├── BRIEFING_PROMPT.md     # Disaster briefing protocol
-│   ├── BRIEFING_TEMPLATE.md   # Briefing output structure
-│   ├── utils/
-│   │   ├── fetch.mjs          # safeFetch() — timeout, retries, abort, auto-JSON
-│   │   ├── nepal.mjs          # Geography: bbox, provinces, cities, seismic box
-│   │   └── env.mjs            # .env loader (no dotenv dependency)
-│   └── sources/
-│       ├── seismic.mjs        # USGS — each exports briefing() → structured data
-│       ├── weather.mjs        # Open-Meteo, monsoon-aware thresholds
-│       ├── firms.mjs          # NASA FIRMS satellite fire detection
-│       ├── airquality.mjs     # PM2.5, PM10 and US AQI across 10 cities
-│       ├── reliefweb.mjs      # UN OCHA, HDX fallback
-│       └── nepal-news.mjs     # Hazard news aggregator behind /api/news
-│
 ├── scripts/
 │   ├── diag.mjs               # Runtime and module diagnostics
 │   └── synthesize.mjs         # CLI wrapper for dashboard synthesis
-│
-├── lib/
-│   ├── sweeper.ts             # Background sweep loop, SSE broadcast, alert dispatch
-│   ├── llm/                   # LLM abstraction (8 providers, raw fetch, no SDKs)
-│   │   ├── provider.mjs       # Base class
-│   │   ├── ideas.mjs          # LLM-powered hazard reads
-│   │   └── index.mjs          # Factory: createLLMProvider()
-│   ├── delta/
-│   │   ├── engine.mjs         # Hazard delta computation, configurable thresholds
-│   │   ├── memory.mjs         # Hot memory (3 runs, atomic writes) + cold archives
-│   │   └── index.mjs          # Re-exports
-│   └── alerts/
-│       ├── telegram.mjs       # Multi-tier alerts + two-way bot commands
-│       └── discord.mjs        # Slash commands, rich embeds, webhook fallback
 │
 ├── public/
 │   ├── qr/                    # Government relief-fund payment QR codes
@@ -374,7 +385,7 @@ atlas/
 - **Minimal dependencies** — Next.js and React at runtime. `discord.js` is optional. LLM providers use raw `fetch()`, no SDKs.
 - **Parallel execution** — `Promise.allSettled()` fires all five sources simultaneously, each with its own timeout
 - **Graceful degradation** — missing keys produce structured errors, not crashes. A source running on a fallback feed reports as degraded rather than healthy.
-- **Each source is standalone** — run `node apis/sources/seismic.mjs` to test any source independently
+- **Each source is standalone** — run `node src/apis/sources/seismic.mjs` to test any source independently
 - **Seasonality is context, not noise** — thresholds move with the monsoon and fire calendars
 
 ---
@@ -393,7 +404,7 @@ Five hazard sources in the sweep. Three need no key.
 
 ### Live hazard news aggregator
 
-Separate from the sweep, `apis/sources/nepal-news.mjs` powers the `/api/news`
+Separate from the sweep, `src/apis/sources/nepal-news.mjs` powers the `/api/news`
 route and every news panel.
 
 | Topic | Panel |
@@ -424,9 +435,9 @@ route and every news panel.
 | `npm run dev` | `next dev` | Start the dashboard with auto-refresh |
 | `npm run build` | `next build` | Production build |
 | `npm start` | `next start` | Serve the production build |
-| `npm run sweep` | `node apis/briefing.mjs` | Run a single sweep, output JSON to stdout |
+| `npm run sweep` | `node src/apis/briefing.mjs` | Run a single sweep, output JSON to stdout |
 | `npm run synthesize` | `node scripts/synthesize.mjs` | Synthesize `runs/latest.json` into dashboard shape |
-| `npm run brief:save` | `node apis/save-briefing.mjs` | Run sweep + save timestamped JSON |
+| `npm run brief:save` | `node src/apis/save-briefing.mjs` | Run sweep + save timestamped JSON |
 | `npm run diag` | `node scripts/diag.mjs` | Run diagnostics (Node version, imports, port check) |
 | `npm run clean` | `node scripts/clean.mjs` | Clear runtime data in `runs/` |
 
@@ -454,7 +465,7 @@ route and every news panel.
 
 Delta engine thresholds live in `atlas.config.mjs` under `delta.thresholds`. They are tuned for Nepal: any new earthquake or flood alert clears the bar on its own, while fire detection counts need a swing of a couple hundred before they mean anything.
 
-Geographic coverage lives in `apis/utils/nepal.mjs` — the national bounding box, the widened seismic box that catches ruptures just across the border, the seven provinces, the ten monitored cities, and the keyword set used to filter text feeds down to Nepal.
+Geographic coverage lives in `src/apis/utils/nepal.mjs` — the national bounding box, the widened seismic box that catches ruptures just across the border, the seven provinces, the ten monitored cities, and the keyword set used to filter text feeds down to Nepal.
 
 ---
 
@@ -507,7 +518,7 @@ Make sure both `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` are set. The bot only
 
 ## Contributing
 
-Found a bug? Want to add a hazard source? PRs welcome. Each source is a standalone module in `apis/sources/` — export a `briefing()` function returning structured data and add it to the orchestrator in `apis/briefing.mjs`.
+Found a bug? Want to add a hazard source? PRs welcome. Each source is a standalone module in `src/apis/sources/` — export a `briefing()` function returning structured data and add it to the orchestrator in `src/apis/briefing.mjs`.
 
 Source additions must be natural-hazard sources. Political, market, conflict and general-news feeds are out of scope for this build by design.
 

@@ -61,8 +61,8 @@ Open an issue before writing code if your change would:
 ## Development Baseline
 
 - Node.js 22+
-- Pure ESM for the `apis/`, `lib/` and `dashboard/` modules; TypeScript in `app/`
-  and `components/`
+- Pure ESM for the `src/apis/` and `src/lib/` modules; TypeScript in `src/app/`
+  and `src/components/`
 - Keep the near-zero-dependency approach unless there is a strong reason not to
 - Do not commit secrets, `.env` files, or generated runtime data under `runs/`
 - `npm run verify` must pass before committing. It rejects explicit TypeScript
@@ -72,9 +72,12 @@ Open an issue before writing code if your change would:
 
 ### Repository layout and commits
 
-Application routes belong in `app/`, reusable UI in `components/`, shared
-TypeScript domain types and server logic in `lib/`, source integrations in
-`apis/`, operational scripts in `scripts/`, and tests in `test/`. Runtime data
+Application routes belong in `src/app/`, alongside the views and `_components/`
+they render. Only genuinely cross-route UI belongs in `src/components/`
+(`src/components/ui/` holds the shadcn primitives). Shared
+TypeScript domain types live in `src/types/`, server logic in `src/lib/`,
+source integrations in
+`src/apis/`, operational scripts in `scripts/`, and tests in `test/`. Runtime data
 belongs in the gitignored `runs/` directory.
 
 Commit subjects must use the conventional format
@@ -85,13 +88,13 @@ Commit subjects must use the conventional format
 
 ## Adding a New Source
 
-Each source should be a standalone module in `apis/sources/` and integrate
-cleanly with `apis/briefing.mjs`.
+Each source should be a standalone module in `src/apis/sources/` and integrate
+cleanly with `src/apis/briefing.mjs`.
 
 A source should:
 
 - export a `briefing()` function returning structured data
-- run standalone: `node apis/sources/yoursource.mjs`
+- run standalone: `node src/apis/sources/yoursource.mjs`
 - handle upstream errors and rate limits cleanly
 - return a structured error rather than throwing, so one bad feed does not break
   the sweep
@@ -105,8 +108,8 @@ Your PR should:
 - state which hazard type it covers and how it degrades when its upstream is down
 - note any API key, rate limit, or paid tier it introduces
 
-If your source also affects the dashboard, wire it through `lib/synthesize.mjs`
-into the synthesized shape, and add its metrics to `lib/delta/engine.mjs` so
+If your source also affects the dashboard, wire it through `src/lib/synthesize.mjs`
+into the synthesized shape, and add its metrics to `src/lib/delta/engine.mjs` so
 changes between sweeps are tracked.
 
 ## Content Changes
