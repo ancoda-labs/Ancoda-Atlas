@@ -1,20 +1,14 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import NepalSignalsMap from './NepalSignalsMap';
 import BhotekoshiFloodButton from './BhotekoshiFloodButton';
 import type {
   HazardSnapshot,
   NewsItem,
-  SourceHealth,
-  Earthquake,
   WeatherAlert,
-  WeatherStation,
-  FireRegion,
-  AirQualityStation,
-  HazardRead,
-  ReliefDisaster,
-  ReliefReport,
+  FloodVideo,
+  VideoFeed,
 } from '@/lib/types';
 import { errorMessage } from '@/lib/types';
 
@@ -137,33 +131,24 @@ const DASHBOARD_COPY = {
   showUpdates: { en: 'Show updates from', ne: 'अपडेटको समय' },
   moreContext: { en: 'A little more context', ne: 'थप जानकारी' },
   happening: { en: 'What else is happening?', ne: 'अरू के भइरहेको छ?' },
-  contextHint: { en: 'Simple summaries to help explain the map and live updates.', ne: 'नक्सा र प्रत्यक्ष अपडेट बुझ्न सहयोग गर्ने सरल सारांश।' },
-  earthquakes: { en: 'Earthquakes nearby', ne: 'नजिकका भूकम्प' },
-  noEarthquakes: { en: 'No significant earthquakes reported', ne: 'महत्त्वपूर्ण भूकम्पको सूचना छैन' },
-  earthquakeDetected: { en: 'Significant earthquake detected', ne: 'महत्त्वपूर्ण भूकम्प भेटियो' },
-  noRecent: { en: 'No recent events', ne: 'हालैका घटना छैनन्' },
-  rainRisk: { en: 'Rain and flood risk', ne: 'वर्षा र बाढीको जोखिम' },
-  noWeather: { en: 'No severe weather alerts', ne: 'गम्भीर मौसम चेतावनी छैन' },
-  wettest: { en: 'Where the most rain is expected', ne: 'सबैभन्दा बढी वर्षा हुने ठाउँ' },
-  wildfire: { en: 'Wildfire activity', ne: 'डढेलो गतिविधि' },
-  fireDisconnected: { en: 'Satellite fire data is not connected', ne: 'स्याटेलाइट आगलागी तथ्यांक जोडिएको छैन' },
-  fireDetections: { en: 'Total detections (48h)', ne: 'कुल पहिचान (४८ घण्टा)' },
-  overnight: { en: 'Overnight', ne: 'रातभरि' },
-  noFire: { en: 'No active fire detections', ne: 'सक्रिय आगलागी पहिचान छैन' },
-  airQuality: { en: 'Air quality', ne: 'वायु गुणस्तर' },
-  noAir: { en: 'No air quality data', ne: 'वायु गुणस्तरको तथ्यांक छैन' },
-  insights: { en: 'What the signals suggest', ne: 'संकेतहरूले के देखाउँछन्' },
-  awaiting: { en: 'Awaiting sweep data.', ne: 'तथ्यांकको प्रतीक्षा हुँदैछ।' },
-  glance: { en: 'At a glance', ne: 'एक नजरमा' },
-  response: { en: 'Current response', ne: 'हालको उद्धार' },
-  noDisasters: { en: 'No active declared disasters', ne: 'सक्रिय घोषित विपद् छैन' },
-  sources: { en: 'Data sources', ne: 'तथ्यांकका स्रोत' },
-  responseUnavailable: { en: 'Response information is temporarily unavailable', ne: 'उद्धारसम्बन्धी जानकारी अहिले उपलब्ध छैन' },
-  updatedLive: { en: 'UPDATED LIVE', ne: 'प्रत्यक्ष अपडेट' },
-  earthquakesToday: { en: 'Earthquakes today', ne: 'आजका भूकम्प' },
-  weatherAlerts: { en: 'Weather alerts', ne: 'मौसम चेतावनी' },
-  rainExpected: { en: 'Rain expected (5 days)', ne: 'अपेक्षित वर्षा (५ दिन)' },
-  activeResponses: { en: 'Active responses', ne: 'सक्रिय उद्धार' },
+  contextHint: { en: 'Pictures and broadcast clips from the newsrooms covering it.', ne: 'समाचार कक्षहरूले पठाएका तस्बिर र प्रसारण क्लिपहरू।' },
+  newsPhotos: { en: 'Pictures from the news', ne: 'समाचारका तस्बिर' },
+  newsPhotosHint: {
+    en: 'Lead photographs as the outlets published them. Atlas links back and stores none of them.',
+    ne: 'सञ्चारगृहहरूले प्रकाशित गरेका मुख्य तस्बिर। एट्लसले लिंक मात्र दिन्छ, कुनै तस्बिर राख्दैन।',
+  },
+  newsVideos: { en: 'News videos', ne: 'समाचार भिडियो' },
+  newsVideosHint: {
+    en: 'Broadcast coverage on YouTube. It plays in the channel’s own player, so the channel keeps the view.',
+    ne: 'युट्युबमा रहेको प्रसारण सामग्री। च्यानलकै प्लेयरमा चल्छ, त्यसैले दृश्य गणना च्यानलकै हुन्छ।',
+  },
+  loadingMedia: { en: 'Loading the latest coverage…', ne: 'पछिल्लो सामग्री लोड हुँदै…' },
+  noPhotos: { en: 'No pictures in the current news window.', ne: 'हालको समाचार अवधिमा तस्बिर छैन।' },
+  noVideos: { en: 'No broadcast coverage found right now.', ne: 'अहिले प्रसारण सामग्री भेटिएन।' },
+  scrollBack: { en: 'Scroll back', ne: 'पछाडि सार्नुहोस्' },
+  scrollForward: { en: 'Scroll forward', ne: 'अगाडि सार्नुहोस्' },
+  watchOnYouTube: { en: 'Watch on YouTube', ne: 'युट्युबमा हेर्नुहोस्' },
+  close: { en: 'Close', ne: 'बन्द' },
   fetching: { en: 'Fetching the latest hazard updates…', ne: 'पछिल्ला विपद् अपडेट ल्याइँदैछ…' },
   dictionary: { en: 'Nepal Hazard Dictionary', ne: 'नेपाल विपद् शब्दकोश' },
   lexicon: { en: 'Atlas Hazard Lexicon', ne: 'एट्लस विपद् शब्दावली' },
@@ -313,18 +298,6 @@ function srcClass(sourceName: string) {
   return 'other';
 }
 
-function formatNumber(val: number | null | undefined, decimals = 0) {
-  if (val == null || !Number.isFinite(val)) return '--';
-  return val.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
-}
-
-// Bar width for the Signal Core meters: each metric gets its own ceiling so a
-// count of 3 earthquakes and 3,000 fire detections do not render identically.
-function meterPercent(value: number, ceiling: number) {
-  if (!Number.isFinite(value) || value <= 0) return 2;
-  return Math.max(4, Math.min(100, Math.round((value / ceiling) * 100)));
-}
-
 function copy(key: keyof typeof DASHBOARD_COPY, language: 'en' | 'ne') {
   return DASHBOARD_COPY[key][language];
 }
@@ -346,6 +319,13 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
   const [newsCache, setNewsCache] = useState<Record<string, PanelState>>(() =>
     Object.fromEntries(NEWS_PANELS.map(p => [p.id, { items: [], status: 'loading' as const }])),
   );
+
+  // Broadcast coverage for the video rail, and the clip currently playing.
+  const [videoFeed, setVideoFeed] = useState<VideoFeed | null>(null);
+  const [playing, setPlaying] = useState<FloodVideo | null>(null);
+
+  const photoRailRef = useRef<HTMLDivElement | null>(null);
+  const videoRailRef = useRef<HTMLDivElement | null>(null);
 
   // Load configuration from local storage
   useEffect(() => {
@@ -434,6 +414,41 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
     return () => clearInterval(interval);
   }, [newsWindow]);
 
+  // Broadcast clips. Same cadence as the news sweep; the route caches hard, so
+  // a poll costs one request and usually answers from memory.
+  useEffect(() => {
+    let cancelled = false;
+    const loadVideos = async () => {
+      try {
+        const res = await fetch('/api/flood/videos');
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const feed = (await res.json()) as VideoFeed;
+        if (!cancelled) setVideoFeed(feed);
+      } catch (err) {
+        console.error('[Video load failed]:', errorMessage(err));
+        if (!cancelled) {
+          setVideoFeed({ videos: [], live: [], searchEnabled: false, error: 'unavailable', fetchedAt: new Date().toISOString() });
+        }
+      }
+    };
+    loadVideos();
+    const interval = setInterval(loadVideos, 5 * 60 * 1000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, []);
+
+  // Escape closes the player.
+  useEffect(() => {
+    if (!playing) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setPlaying(null);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [playing]);
+
   const toggleTheme = () => {
     const target = !darkTheme;
     setDarkTheme(target);
@@ -446,77 +461,49 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
     localStorage.setItem('atlas_language', next);
   };
 
-  // Rule-based hazard read-out, shown when the LLM layer is off
-  const buildInsights = () => {
-    const lines: Array<{ tone: string; text: string }> = [];
-    const sq = D.seismic || {};
-    const wx = D.weather || {};
-    const aqiWorst: AirQualityStation | null = D.airQuality?.worst ?? null;
-    const impactSummary = D.impact || { count: 0, topRegions: [] };
-    const wettest = [...(wx.stations || [])].sort((a: WeatherStation, b: WeatherStation) => (b.rain5dMm || 0) - (a.rain5dMm || 0))[0];
-
-    if (sq.maxMagnitude != null && sq.totalEvents) {
-      const strongest = sq.strongest;
-      lines.push({
-        tone: sq.maxMagnitude >= 5 ? 'warn' : 'base',
-        text: `Seismic: ${sq.events7d || 0} events in 7d, strongest M${sq.maxMagnitude}${strongest?.place ? ` near ${strongest.place.replace(/^\d+\s*km\s*/, '')}` : ''}${strongest?.depthKm != null ? ` at ${strongest.depthKm.toFixed(0)}km depth` : ''}.`,
-      });
+  // The two media rails.
+  //
+  // Photographs come out of the news sweep that is already running — every
+  // panel's items are pooled, deduplicated by link, and only the ones the
+  // outlet published a lead image for make the rail. The image itself is
+  // streamed through the signed proxy the API route mints (lib/news-media.ts),
+  // never copied here.
+  const newsPhotos = useMemo(() => {
+    const seen = new Set<string>();
+    const pooled: NewsItem[] = [];
+    for (const panel of NEWS_PANELS) {
+      for (const item of newsCache[panel.id]?.items || []) {
+        if (!item.imageProxy || !item.link || seen.has(item.link)) continue;
+        seen.add(item.link);
+        pooled.push(item);
+      }
     }
+    return pooled
+      .sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime())
+      .slice(0, 24);
+  }, [newsCache]);
 
-    if (wx.totalAlerts) {
-      lines.push({
-        tone: 'warn',
-        text: `${wx.totalAlerts} weather alert${wx.totalAlerts > 1 ? 's' : ''} active${wx.monsoonSeason ? ' during monsoon — flood and landslide exposure is at its seasonal peak' : ''}.`,
-      });
-    } else if (wx.monsoonSeason) {
-      lines.push({
-        tone: 'base',
-        text: 'Monsoon season active with no severe alerts in the current window.',
-      });
-    }
+  const newsLoading = NEWS_PANELS.some(panel => newsCache[panel.id]?.status === 'loading');
 
-    if (wettest?.rain5dMm > 100) {
-      lines.push({
-        tone: wettest.rain5dMm > 200 ? 'warn' : 'base',
-        text: `${wettest.rain5dMm}mm forecast over 5 days at ${wettest.city} — slopes fail on cumulative saturation, not single-day totals.`,
-      });
-    }
+  // Live channels lead, then the recorded clips. Deduplicated because a
+  // stream can appear in both lists.
+  const newsVideos = useMemo(() => {
+    const seen = new Set<string>();
+    return [...(videoFeed?.live || []), ...(videoFeed?.videos || [])]
+      .filter(v => {
+        if (!v?.id || seen.has(v.id)) return false;
+        seen.add(v.id);
+        return true;
+      })
+      .slice(0, 24);
+  }, [videoFeed]);
 
-    if (D.fire?.totalDetections) {
-      lines.push({
-        tone: D.fire.totalDetections > 500 ? 'warn' : 'base',
-        text: `${formatNumber(D.fire.totalDetections)} fire detections nationwide${D.fire.nightDetections > 20 ? `, ${D.fire.nightDetections} overnight — burning unchecked past dark` : ''}.`,
-      });
-    }
-
-    if (aqiWorst?.aqi != null) {
-      lines.push({
-        tone: aqiWorst.aqi > 150 ? 'warn' : 'base',
-        text: `Air quality peaks at AQI ${aqiWorst.aqi} (${aqiWorst.band}) in ${aqiWorst.location}.`,
-      });
-    }
-
-    if (impactSummary.count >= 5) {
-      const where = (impactSummary.topRegions || []).map((r) => `${r.region} (${r.count})`).join(', ');
-      lines.push({
-        tone: 'warn',
-        text: `${impactSummary.count} headlines report casualties, missing persons, displacement or active rescue${where ? ` — concentrated in ${where}` : ''}.`,
-      });
-    }
-
-    if (D.relief?.disasters?.length) {
-      lines.push({
-        tone: 'warn',
-        text: `${D.relief.disasters.length} disaster${D.relief.disasters.length > 1 ? 's' : ''} listed as active for Nepal on ReliefWeb — cluster coordination already standing.`,
-      });
-    }
-
-    const lead = newsCache['live-hazard']?.items?.[0];
-    if (lead) {
-      lines.push({ tone: 'lead', text: `Leading headline: ${lead.title}` });
-    }
-
-    return lines;
+  // Carousel paging: one viewport-width step, which keeps the gesture the same
+  // whether the rail is showing four cards or one.
+  const scrollRail = (ref: React.RefObject<HTMLDivElement | null>, direction: 1 | -1) => {
+    const track = ref.current;
+    if (!track) return;
+    track.scrollBy({ left: direction * Math.max(240, track.clientWidth * 0.85), behavior: 'smooth' });
   };
 
   const ts = new Date(meta.timestamp || new Date());
@@ -526,12 +513,10 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
   const sq = D.seismic || {};
   const wx = D.weather || {};
   const worstAqi = D.airQuality?.worst?.aqi || 0;
-  const totalThermal = D.fire?.totalDetections || 0;
   const activeDisasters = D.relief?.disasters?.length || 0;
   const extremeAlerts = (wx.alerts || []).filter((a: WeatherAlert) => a.severity === 'extreme').length;
   const floodTickerItems = (newsCache['flood-news']?.items || []).slice(0, 8);
   const impact = D.impact || { count: 0, topRegions: [] };
-  const wettest = [...(wx.stations || [])].sort((a: WeatherStation, b: WeatherStation) => (b.rain5dMm || 0) - (a.rain5dMm || 0))[0];
 
   // Headline posture. Ordered by consequence: a damaging quake outranks
   // everything, then extreme weather, then the slower-moving hazards.
@@ -553,13 +538,6 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
     alertLevel === 'CRITICAL' ? 'ACT NOW'
     : alertLevel === 'ELEVATED' ? 'PAY ATTENTION'
     : 'NO MAJOR SIGNALS';
-
-  const signalCoreMetrics = [
-    { label: copy('earthquakesToday', language), value: sq.events24h || 0, percent: meterPercent(sq.events24h || 0, 10) },
-    { label: copy('weatherAlerts', language), value: wx.totalAlerts || 0, percent: meterPercent(wx.totalAlerts || 0, 12) },
-    { label: copy('rainExpected', language), value: wettest?.rain5dMm ? Math.round(wettest.rain5dMm) : 0, percent: meterPercent(wettest?.rain5dMm || 0, 400) },
-    { label: copy('activeResponses', language), value: activeDisasters, percent: meterPercent(activeDisasters, 6) },
-  ];
 
   if (booting) {
     return (
@@ -706,259 +684,146 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
           <p>{copy('contextHint', language)}</p>
         </div>
 
-        {/* Main Grid */}
-        <div className="grid-container">
-        {/* Left Column (Rail) */}
-        <div className="col">
-          {/* Seismic Panel */}
-          <div className="g-panel">
-            <div className="sec-head">
-              <h3>{copy('earthquakes', language)}</h3>
-              <span className="badge">USGS</span>
-            </div>
-            <div className="nuke-ok">
-              {(sq.maxMagnitude || 0) < 4.5 ? (
-                <>&#9679; {copy('noEarthquakes', language)}</>
-              ) : (
-                <>&#9888; {copy('earthquakeDetected', language)}</>
-              )}
-            </div>
-            {(sq.recent || []).length === 0 && (
-              <div className="font-mono text-[10px] text-dim">{copy('noRecent', language)}</div>
-            )}
-            {(sq.recent || []).slice(0, 6).map((q: Earthquake, i: number) => (
-              <div className="site-row" key={i}>
-                <span>
-                  M{q.mag?.toFixed(1)} &middot;{' '}
-                  {(q.place || '').replace(/^\d+\s*km\s*/, '').substring(0, 26)}
-                </span>
-                <span className="site-val">{q.depthKm != null ? `${q.depthKm.toFixed(0)} km` : '--'}</span>
-              </div>
-            ))}
-            {(sq.signals || []).length > 0 && (
-              <div className="sig-info-box" suppressHydrationWarning>
-                {sq.signals.slice(0, 2).map((s: string, idx: number) => (
-                  <div key={idx}>{s}</div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Rainfall & Flood Panel */}
-          <div className="g-panel">
-            <div className="sec-head">
-              <h3>{copy('rainRisk', language)}</h3>
-              <span className="badge">{wx.monsoonSeason ? 'MONSOON' : 'OPEN-METEO'}</span>
-            </div>
-            {(wx.alerts || []).length > 0 ? (
-              (wx.alerts || []).slice(0, 5).map((a: WeatherAlert, i: number) => (
-                <div className="site-row" key={i}>
-                  <span>{a.event}</span>
-                  <span
-                    className="site-val"
-                    style={{ color: a.severity === 'extreme' ? 'var(--warn)' : a.severity === 'severe' ? 'var(--accent2)' : 'var(--accent)' }}
-                  >
-                    {(a.severity || '').toUpperCase()}
-                  </span>
-                </div>
-              ))
-            ) : (
-              <div className="font-mono text-[10px] text-dim">{copy('noWeather', language)}</div>
-            )}
-            <div className="nml-market-subtitle">{copy('wettest', language)}</div>
-            {[...(wx.stations || [])]
-              .sort((a: WeatherStation, b: WeatherStation) => (b.rain5dMm || 0) - (a.rain5dMm || 0))
-              .slice(0, 5)
-              .map((st: WeatherStation, i: number) => (
-                <div className="econ-row" key={i}>
-                  <span className="elabel">{st.city}</span>
-                  <span
-                    className="eval"
-                    style={{ color: (st.rain5dMm || 0) > 200 ? 'var(--warn)' : (st.rain5dMm || 0) > 100 ? 'var(--accent2)' : 'var(--accent)' }}
-                  >
-                    {st.rain5dMm != null ? `${st.rain5dMm} mm` : '--'}
-                  </span>
-                </div>
-              ))}
-            {(wx.signals || []).length > 0 && (
-              <div className="sig-info-box" suppressHydrationWarning>
-                {wx.signals.slice(0, 2).map((s: string, idx: number) => (
-                  <div key={idx}>{s}</div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Wildfire Panel */}
-          <div className="g-panel">
-            <div className="sec-head">
-              <h3>{copy('wildfire', language)}</h3>
-              <span className="badge">NASA FIRMS</span>
-            </div>
-            {D.fire?.status === 'no_key' ? (
-              <div className="font-mono text-[10px] text-dim">
-                {copy('fireDisconnected', language)}
-              </div>
-            ) : (D.fire?.regions || []).length > 0 ? (
-              <>
-                <div className="econ-row">
-                  <span className="elabel">{copy('fireDetections', language)}</span>
-                  <span className="eval text-accent">{formatNumber(totalThermal)}</span>
-                </div>
-                <div className="econ-row">
-                  <span className="elabel">{copy('overnight', language)}</span>
-                  <span className="eval" style={{ color: (D.fire?.nightDetections || 0) > 20 ? 'var(--warn)' : 'var(--accent)' }}>
-                    {formatNumber(D.fire?.nightDetections || 0)}
-                  </span>
-                </div>
-                {[...(D.fire.regions || [])]
-                  .sort((a: FireRegion, b: FireRegion) => (b.det || 0) - (a.det || 0))
-                  .slice(0, 5)
-                  .map((r: FireRegion, i: number) => (
-                    <div className="site-row" key={i}>
-                      <span>{r.region}</span>
-                      <span className="site-val">{formatNumber(r.det)}</span>
-                    </div>
-                  ))}
-              </>
-            ) : (
-              <div className="font-mono text-[10px] text-dim">{copy('noFire', language)}</div>
-            )}
-          </div>
-
-          {/* Air Quality Panel */}
-          <div className="g-panel">
-            <div className="sec-head">
-              <h3>{copy('airQuality', language)}</h3>
-              <span className="badge">PM2.5</span>
-            </div>
-            {(D.airQuality?.stations || []).length > 0 ? (
-              (D.airQuality.stations || []).slice(0, 7).map((st: AirQualityStation, i: number) => (
-                <div className="econ-row" key={i}>
-                  <span className="elabel">{st.location}</span>
-                  <span className="eval" style={{ color: (st.aqi ?? 0) > 150 ? 'var(--warn)' : (st.aqi ?? 0) > 100 ? 'var(--accent2)' : 'var(--accent)' }}>
-                    {st.aqi ?? '--'}{' '}
-                    <span className="text-[9px] text-dim font-normal">{st.band || ''}</span>
-                  </span>
-                </div>
-              ))
-            ) : (
-              <div className="font-mono text-[10px] text-dim">{copy('noAir', language)}</div>
-            )}
-          </div>
-        </div>
-
-        {/* Right Column (Reads, Core, Response, Source health) */}
-        <div className="col">
-          {/* Active-event desk — opens the dedicated /bhotekoshi-flood page */}
-          <BhotekoshiFloodButton />
-
-          {/* Hazard Reads */}
-          <div className="g-panel right-insights">
-            <div className="sec-head">
-              <h3>{copy('insights', language)}</h3>
-              <span className="badge">{D.ideasSource === 'llm' ? 'LLM' : 'SYNTHESIZED'}</span>
-              </div>
+        {/* Pictures the outlets published with their own reporting. */}
+        <div className="media-rail" aria-labelledby="news-photo-rail">
+          <div className="media-rail-head">
             <div>
-              {(D.ideas || []).length > 0 ? (
-                <ul className="insights-list">
-                  {(D.ideas || []).slice(0, 6).map((idea: HazardRead, idx: number) => (
-                    <li key={idx} className={/RESPOND|respond/.test(idea.type || '') ? 'ins-warn' : 'ins-base'}>
-                      <strong>{cleanText(idea.title)}</strong>
-                      {' — '}
-                      {cleanText(idea.rationale || idea.text || '')}
-                    </li>
-                  ))}
-                </ul>
-              ) : buildInsights().length > 0 ? (
-                <ul className="insights-list">
-                  {buildInsights().slice(0, 8).map((line, idx) => (
-                    <li key={idx} className={`ins-${line.tone}`}>{cleanText(line.text)}</li>
-                  ))}
-                </ul>
-              ) : (
-                <div className="news-empty">{copy('awaiting', language)}</div>
-              )}
+              <h3 id="news-photo-rail">{copy('newsPhotos', language)}</h3>
+              <p>{copy('newsPhotosHint', language)}</p>
             </div>
-          </div>
-
-          {/* Signal Core */}
-          <div className="g-panel right-core">
-            <div className="sec-head">
-              <h3>{copy('glance', language)}</h3>
-              <span className="badge">{copy('updatedLive', language)}</span>
-            </div>
-            {signalCoreMetrics.map((sm, i) => (
-              <div className="sm" key={i}>
-                <span className="sml">{sm.label}</span>
-                <div className="smb">
-                  <span style={{ width: `${sm.percent}%` }} />
-                </div>
-                <span className="smv">{formatNumber(sm.value)}</span>
-              </div>
-            ))}
-          </div>
-
-          {/* Active Response */}
-          <div className="g-panel">
-            <div className="sec-head">
-              <h3>{copy('response', language)}</h3>
-              <span className="badge">RELIEFWEB</span>
-            </div>
-            {D.relief?.error ? (
-              <div className="font-mono text-[10px] text-dim">
-                {copy('responseUnavailable', language)}
-              </div>
-            ) : (D.relief?.disasters || []).length > 0 ? (
-              (D.relief.disasters || []).slice(0, 5).map((d: ReliefDisaster, i: number) => (
-                <div className="site-row" key={i}>
-                  <span>{(d.name || '').substring(0, 34)}</span>
-                  <span className="site-val">{(d.type || []).join('/').substring(0, 12) || '--'}</span>
-                </div>
-              ))
-            ) : (
-              <div className="font-mono text-[10px] text-dim">{copy('noDisasters', language)}</div>
-            )}
-            {(D.relief?.reports || []).slice(0, 4).map((r: ReliefReport, i: number) => (
-              <div
-                key={`rep-${i}`}
-                className={`tk-card ${r.url ? 'clickable' : ''}`}
-                onClick={() => { if (r.url) window.open(r.url, '_blank', 'noopener'); }}
+            <div className="media-rail-nav">
+              {newsPhotos.length > 0 && <span className="badge">{newsPhotos.length}</span>}
+              <button
+                type="button"
+                onClick={() => scrollRail(photoRailRef, -1)}
+                aria-label={copy('scrollBack', language)}
               >
-                <span className="tk-src other">{D.relief?.error ? 'HDX' : 'OCHA'}</span>
-                <div className="tk-head">{cleanText(r.title || '').substring(0, 90)}</div>
-                {r.url && <span className="tk-link">&#8599;</span>}
-              </div>
-            ))}
+                &#8249;
+              </button>
+              <button
+                type="button"
+                onClick={() => scrollRail(photoRailRef, 1)}
+                aria-label={copy('scrollForward', language)}
+              >
+                &#8250;
+              </button>
+            </div>
           </div>
 
-          {/* Source Health */}
-          <div className="g-panel right-sources">
-            <div className="sec-head">
-              <h3>{copy('sources', language)}</h3>
-              <span className="badge">
-                {meta.sourcesOk || 0}/{meta.sourcesQueried || 5}
-              </span>
+          {newsPhotos.length === 0 ? (
+            <div className="media-rail-empty">
+              {newsLoading ? copy('loadingMedia', language) : copy('noPhotos', language)}
             </div>
-            <div className="src-grid">
-              {(D.health || []).map((s: SourceHealth, idx: number) => (
-                <div
-                  className="src-item"
-                  key={idx}
-                  title={s.err ? 'Error' : s.stale ? 'Degraded — running on a fallback feed' : 'Operational'}
+          ) : (
+            <div className="media-rail-track" ref={photoRailRef}>
+              {newsPhotos.map((item) => (
+                <a
+                  className="media-card"
+                  key={item.link}
+                  href={item.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
                 >
-                  <div
-                    className={`sd ${s.err ? 'err' : 'ok'}`}
-                    style={s.stale && !s.err ? { background: 'var(--accent2)' } : undefined}
-                  />
-                  <span>{s.n}</span>
-                </div>
+                  {/* Signed server-side by /api/news; the client never mints one. */}
+                  <img src={item.imageProxy as string} alt="" loading="lazy" referrerPolicy="no-referrer" />
+                  <div className="media-card-body">
+                    <p>{cleanText(item.title)}</p>
+                    <span className="media-card-meta">
+                      <b>{item.source}</b>
+                      <time>{getAge(item.pubDate)}</time>
+                    </span>
+                  </div>
+                </a>
               ))}
             </div>
+          )}
+        </div>
+
+        {/* Broadcast clips, played in YouTube's own embed so the channel keeps the view. */}
+        <div className="media-rail" aria-labelledby="news-video-rail">
+          <div className="media-rail-head">
+            <div>
+              <h3 id="news-video-rail">{copy('newsVideos', language)}</h3>
+              <p>{copy('newsVideosHint', language)}</p>
+            </div>
+            <div className="media-rail-nav">
+              {newsVideos.length > 0 && <span className="badge">{newsVideos.length}</span>}
+              <button
+                type="button"
+                onClick={() => scrollRail(videoRailRef, -1)}
+                aria-label={copy('scrollBack', language)}
+              >
+                &#8249;
+              </button>
+              <button
+                type="button"
+                onClick={() => scrollRail(videoRailRef, 1)}
+                aria-label={copy('scrollForward', language)}
+              >
+                &#8250;
+              </button>
+            </div>
+          </div>
+
+          {newsVideos.length === 0 ? (
+            <div className="media-rail-empty">
+              {videoFeed === null ? copy('loadingMedia', language) : copy('noVideos', language)}
+            </div>
+          ) : (
+            <div className="media-rail-track" ref={videoRailRef}>
+              {newsVideos.map((v) => (
+                <figure className="media-card media-card-video" key={v.id}>
+                  <button
+                    type="button"
+                    onClick={() => setPlaying(v)}
+                    aria-label={`${copy('watchOnYouTube', language)}: ${v.title}`}
+                  >
+                    <img src={v.thumbnail} alt="" loading="lazy" referrerPolicy="no-referrer" />
+                    <i className="media-play" aria-hidden="true" />
+                  </button>
+                  <figcaption className="media-card-body">
+                    <p>{cleanText(v.title)}</p>
+                    <span className="media-card-meta">
+                      <b>{v.channel || 'YouTube'}</b>
+                      {v.publishedAt && <time>{getAge(v.publishedAt)}</time>}
+                    </span>
+                  </figcaption>
+                </figure>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Video player. YouTube's own embed — Atlas hosts no video. */}
+      {playing && (
+        <div
+          className="video-lightbox"
+          onClick={() => setPlaying(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-label={playing.title}
+        >
+          <div onClick={e => e.stopPropagation()}>
+            <div className="video-embed">
+              <iframe
+                src={`${playing.embedUrl}?autoplay=1&rel=0`}
+                title={playing.title}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                referrerPolicy="strict-origin-when-cross-origin"
+              />
+            </div>
+            <p className="video-lightbox-title">{cleanText(playing.title)}</p>
+            <p className="video-lightbox-meta">
+              <a href={playing.url} target="_blank" rel="noopener noreferrer">
+                {copy('watchOnYouTube', language)} &#8599;
+              </a>
+            </p>
+            <button onClick={() => setPlaying(null)}>{copy('close', language)}</button>
           </div>
         </div>
-      </div>
-      </section>
+      )}
 
       {/* Glossary Overlay */}
       <div className={`glossary-overlay ${glossaryOpen ? 'show' : ''}`}>
