@@ -43,22 +43,26 @@ function parseTable(html, bodyId) {
   return rows;
 }
 
+/**
+ * The three headline aid figures from the bulletin's hero strip.
+ *
+ * Every one of these can come back null, and that matters more here than
+ * anywhere else in Atlas: these are donation figures. The bulletin is a
+ * hand-built page whose markup moves, and an earlier version of this parser
+ * fell back to the numbers that were true the day it was written — so a
+ * renamed element would have left the donate page quoting a months-old relief
+ * total as today's, with nothing to say it had stopped reading the source.
+ * A figure that cannot be read is null, and the page says so instead.
+ */
 function parseStats(html) {
-  const stats = {
-    cashTotal: '३९.३३',
-    goodsTotal: '४७.५',
-    fundsTotal: '१.२',
-    aidSubtext: 'भारत दुई उडान · IFRC रेडक्रस · पठाइएको'
-  };
+  const stats = { cashTotal: null, goodsTotal: null, fundsTotal: null, aidSubtext: null };
 
   const cashIdx = html.indexOf('id="hero-cash"');
   if (cashIdx !== -1) {
     const cashEnd = html.indexOf('</a>', cashIdx);
     const cashBlock = html.slice(cashIdx, cashEnd);
     const numMatch = cashBlock.match(/<strong[^>]*>([\s\S]*?)<\/strong>/i);
-    if (numMatch) {
-      stats.cashTotal = cleanHtml(numMatch[1]);
-    }
+    if (numMatch) stats.cashTotal = cleanHtml(numMatch[1]) || null;
   }
 
   const aidIdx = html.indexOf('id="hero-aid"');
@@ -67,13 +71,11 @@ function parseStats(html) {
     const aidBlock = html.slice(aidIdx, aidEnd);
     const numMatches = [...aidBlock.matchAll(/<strong[^>]*>([\s\S]*?)<\/strong>/gi)];
     if (numMatches.length >= 2) {
-      stats.goodsTotal = cleanHtml(numMatches[0][1]);
-      stats.fundsTotal = cleanHtml(numMatches[1][1]);
+      stats.goodsTotal = cleanHtml(numMatches[0][1]) || null;
+      stats.fundsTotal = cleanHtml(numMatches[1][1]) || null;
     }
     const subMatch = aidBlock.match(/<span class="cash-sub"[^>]*>([\s\S]*?)<\/span>/i);
-    if (subMatch) {
-      stats.aidSubtext = cleanHtml(subMatch[1]);
-    }
+    if (subMatch) stats.aidSubtext = cleanHtml(subMatch[1]) || null;
   }
 
   return stats;
@@ -120,12 +122,7 @@ export async function getBulletinRescue() {
       dao: [],
       india: [],
       trishuli1: [],
-      stats: {
-        cashTotal: '३९.३३',
-        goodsTotal: '४७.५',
-        fundsTotal: '१.२',
-        aidSubtext: 'भारत दुई उडान · IFRC रेडक्रस · पठाइएको'
-      },
+      stats: { cashTotal: null, goodsTotal: null, fundsTotal: null, aidSubtext: null },
       fetchedAt,
       source,
       error: err.message

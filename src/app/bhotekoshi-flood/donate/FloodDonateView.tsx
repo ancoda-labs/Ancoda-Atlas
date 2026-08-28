@@ -40,7 +40,55 @@ const T = {
     ne: 'स्क्यान गरेपछि भुक्तानी पाउने पक्षको नाम माथिको नामसँग मिल्छ कि मिल्दैन जाँच्नुहोस्।',
   },
   loading: { en: 'Loading…', ne: 'लोड हुँदै…' },
+  cashTotal: { en: 'Relief cash total', ne: 'राहत रकम जम्मा' },
+  foreignAid: { en: 'Foreign aid', ne: 'वैदेशिक सहयोग' },
+  reliefGoods: { en: 'Relief goods', ne: 'राहत सामग्री' },
+  aidFunds: { en: 'Funds', ne: 'कोष' },
+  notPublished: { en: 'Not published', ne: 'प्रकाशित छैन' },
 };
+
+// The bulletin's aid figures, made readable without being restated.
+//
+// The source publishes these in Devanagari, sometimes as a bare number the
+// page's own markup gives a unit to ("४७.५" plus a "टन" label), sometimes as a
+// whole phrase carrying its own scale words ("रु. ४ अर्ब २४ करोड"). A unit
+// appended to the second kind produced "रु. 4 अर्ब 24 करोड crore rupees" for
+// English readers, so the unit is now added only to a figure that is a bare
+// number, and scale words are transliterated rather than re-scaled — nothing
+// here converts arba into crore or rupees into anything else.
+
+const DEVA_DIGITS = ['०', '१', '२', '३', '४', '५', '६', '७', '८', '९'];
+
+const SCALE_WORDS: Array<[RegExp, string]> = [
+  [/रु\./g, 'Rs'],
+  [/अर्ब/g, 'arba'],
+  [/करोड/g, 'crore'],
+  [/लाख/g, 'lakh'],
+  [/हजार/g, 'thousand'],
+  [/टन/g, 'tonnes'],
+  [/मिलियन/g, 'million'],
+];
+
+const toEnDigits = (str: string) => str.replace(/[०-९]/g, d => String(DEVA_DIGITS.indexOf(d)));
+const toNeDigits = (str: string) => str.replace(/[0-9]/g, d => DEVA_DIGITS[Number(d)]);
+
+/** True when the value is only a number, so the caller's unit belongs on it. */
+const isBareNumber = (value: string) => /^[\d०-९][\d०-९.,\s]*$/.test(value.trim());
+
+function aidFigure(
+  value: string | null | undefined,
+  lang: Lang,
+  suffix?: { en: string; ne: string },
+): string | null {
+  if (!value) return null;
+  const bare = isBareNumber(value);
+  if (lang === 'ne') {
+    const ne = toNeDigits(value);
+    return bare && suffix ? `${ne} ${suffix.ne}` : ne;
+  }
+  const en = SCALE_WORDS.reduce((acc, [word, word_en]) => acc.replace(word, word_en), toEnDigits(value)).replace(/\s+/g, ' ').trim();
+  return bare && suffix ? `${en} ${suffix.en}` : en;
+}
 
 function CopyableAccount({ value, lang }: { value: string; lang: Lang }) {
   const [done, setDone] = useState(false);
@@ -132,63 +180,38 @@ export default function FloodDonateView() {
       <section className="fl-sec">
         <p className="fl-warn">{t('warn')}</p>
 
+        {/* The bulletin's headline aid figures, and only as far as it published
+            them. A figure it stopped publishing reads "Not published" rather
+            than falling back to the last number anyone hardcoded — on a page
+            about money, a stale total is worse than an absent one. */}
         <div className="fl-donate-stats">
           {(() => {
             const stats = data?.bulletinRescue?.stats;
-            const toEnDigits = (str: string) => {
-              const DEVA_DIGITS = ['०', '१', '२', '३', '४', '५', '६', '७', '८', '९'];
-              return str.replace(/[०-९]/g, d => String(DEVA_DIGITS.indexOf(d)));
-            };
-            const toNeDigits = (str: string) => {
-              const DEVA_DIGITS = ['०', '१', '२', '३', '४', '५', '६', '७', '८', '९'];
-              return str.replace(/[0-9]/g, d => DEVA_DIGITS[Number(d)]);
-            };
-            const formatDevaValue = (val: string, suffixEn: string, suffixNe: string) => {
-              const enVal = toEnDigits(val);
-              const neVal = toNeDigits(enVal);
-              return lang === 'ne' ? `${neVal} ${suffixNe}` : `${enVal} ${suffixEn}`;
-            };
+            const cash = aidFigure(stats?.cashTotal, lang);
+            const goods = aidFigure(stats?.goodsTotal, lang, { en: 'tonnes', ne: 'टन' });
+            const funds = aidFigure(stats?.fundsTotal, lang, { en: 'million USD', ne: 'मिलियन USD' });
+            // Published as free Nepali text. Shown as written rather than
+            // paired with a translation of whatever it used to say.
+            const sub = stats?.aidSubtext || null;
 
             return (
               <>
                 <div className="fl-stat-card">
-                  <div className="fl-stat-card-title">
-                    {lang === 'ne' ? 'राहत रकम जम्मा' : 'Relief cash total'}
-                  </div>
-                  <div className="fl-stat-card-value">
-                    {stats
-                      ? formatDevaValue(stats.cashTotal, 'crore rupees', 'करोड रुपैयाँ')
-                      : (lang === 'ne' ? '३९.३३ करोड रुपैयाँ' : '39.33 crore rupees')}
-                  </div>
+                  <div className="fl-stat-card-title">{t('cashTotal')}</div>
+                  <div className="fl-stat-card-value">{cash ?? t('notPublished')}</div>
                 </div>
 
                 <div className="fl-stat-card aid-card">
-                  <div className="fl-stat-card-title">
-                    {lang === 'ne' ? 'वैदेशिक सहयोग' : 'Foreign aid'}
+                  <div className="fl-stat-card-title">{t('foreignAid')}</div>
+                  <div className="fl-stat-card-pair">
+                    <span>{t('reliefGoods')}</span>
+                    <strong>{goods ?? t('notPublished')}</strong>
                   </div>
                   <div className="fl-stat-card-pair">
-                    <span>{lang === 'ne' ? 'राहत सामग्री' : 'Relief goods'}</span>
-                    <strong>
-                      {stats
-                        ? formatDevaValue(stats.goodsTotal, 'tonnes', 'टन')
-                        : (lang === 'ne' ? '४७.५ टन' : '47.5 tonnes')}
-                    </strong>
+                    <span>{t('aidFunds')}</span>
+                    <strong>{funds ?? t('notPublished')}</strong>
                   </div>
-                  <div className="fl-stat-card-pair">
-                    <span>{lang === 'ne' ? 'कोष' : 'Funds'}</span>
-                    <strong>
-                      {stats
-                        ? formatDevaValue(stats.fundsTotal, 'million USD', 'मिलियन USD')
-                        : (lang === 'ne' ? '१.२ मिलियन USD' : '1.2 million USD')}
-                    </strong>
-                  </div>
-                  <div className="fl-stat-card-sub">
-                    {stats
-                      ? (lang === 'ne' ? stats.aidSubtext : 'India two flights · IFRC Red Cross · sent')
-                      : (lang === 'ne'
-                        ? 'भारत दुई उडान · IFRC रेडक्रस · पठाइएको'
-                        : 'India two flights · IFRC Red Cross · sent')}
-                  </div>
+                  {sub && <div className="fl-stat-card-sub">{sub}</div>}
                 </div>
               </>
             );

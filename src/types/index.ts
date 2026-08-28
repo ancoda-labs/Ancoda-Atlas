@@ -898,11 +898,12 @@ export interface BulletinRescue {
   dao: string[][];
   india: string[][];
   trishuli1: string[][];
+  /** Null where the bulletin's markup moved and the figure could not be read. */
   stats: {
-    cashTotal: string;
-    goodsTotal: string;
-    fundsTotal: string;
-    aidSubtext: string;
+    cashTotal: string | null;
+    goodsTotal: string | null;
+    fundsTotal: string | null;
+    aidSubtext: string | null;
   };
   fetchedAt: string;
   source: SourceRef;
