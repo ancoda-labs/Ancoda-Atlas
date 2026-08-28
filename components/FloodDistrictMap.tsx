@@ -1,35 +1,141 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import type { AffectedDistrictProps, GeoCollection, Geometry } from '@/lib/types';
+import type { AffectedDistrictProps, FloodGauge, GeoCollection, Geometry, PhotoGeoSource } from '@/lib/types';
 
-// Affected-district map for the Rasuwa–Bhotekoshi flood.
+// The flood corridor map.
 //
-// Canvas rather than SVG: seven district polygons at full coordinate precision
-// is ~5,700 points, which is a lot of DOM nodes for something that never
-// animates. Equirectangular projection, scaled to the district bbox — over
-// two degrees of Nepal the distortion is not visible.
+// Canvas rather than SVG or a tile map: seven district polygons at full
+// coordinate precision is ~5,700 points, which is a lot of DOM nodes for
+// something that never animates, and the page carries no basemap dependency it
+// would have to survive an outage of. Equirectangular projection, scaled to the
+// district bbox — over two degrees of Nepal the distortion is not visible.
+//
+// The map draws four things, and the distinction between the first two is the
+// one that matters most:
+//
+//   Confirmed path — solid. The water is known to have reached these places.
+//   Estimated reach — dashed, in a different colour, labelled as an estimate.
+//     Drawing a projection in the same ink as an observation would tell a
+//     reader downstream that something has happened when it has not.
+//   DHM gauges — live, each coloured against its own danger mark.
+//   Ground reports — photographs the public sent in.
+//
+// Everything on it is clickable; the parent opens a dialog for whatever was hit.
 
-interface Props {
-  /** Flood path points, drawn over the districts upstream → downstream. */
-  points?: Array<{ id: string; name_en: string; name_ne: string; lat: number; lng: number; status: string }>;
-  lang: 'en' | 'ne';
+export interface MapPhoto {
+  id: string;
+  lat: number;
+  lon: number;
+  geoSource: PhotoGeoSource;
+  label: string;
 }
 
-/** Flatten Polygon and MultiPolygon into a single list of rings. */
-function ringsOf(geometry: Geometry): Array<Array<[number, number]>> {
-  return geometry.type === 'Polygon' ? geometry.coordinates : geometry.coordinates.flat();
+export interface MapPathPoint {
+  id: string;
+  name_en: string;
+  name_ne: string;
+  lat: number;
+  lng: number;
+  /** 'entry' | 'confirmed' | 'estimated'. Anything else is treated as confirmed. */
+  status: string;
+}
+
+/** What the reader clicked. The parent decides what to show for it. */
+export type MapSelection =
+  | { kind: 'point'; id: string }
+  | { kind: 'gauge'; id: number }
+  | { kind: 'photo'; id: string };
+
+interface Props {
+  points?: MapPathPoint[];
+  photos?: MapPhoto[];
+  gauges?: FloodGauge[];
+  onSelect?: (selection: MapSelection) => void;
+  /** Kept for the ground-reports page, which only cares about photographs. */
+  onPhotoSelect?: (id: string) => void;
+  lang: 'en' | 'ne';
 }
 
 const SEVERE = '#ff4d5c';
 const AFFECTED = '#ffb020';
+const CONFIRMED = '#ff4d5c';
+const ESTIMATED = '#ffb020';
+const PHOTO = '#7ce0b4';
+const ENTRY = '#6ec8ff';
 
-export default function FloodDistrictMap({ points = [], lang }: Props) {
+const GAUGE_COLOUR: Record<string, string> = {
+  danger: '#ff4d5c',
+  warning: '#ffb020',
+  normal: '#45c97c',
+  unknown: '#7b8794',
+};
+
+function ringsOf(geometry: Geometry): Array<Array<[number, number]>> {
+  return geometry.type === 'Polygon' ? geometry.coordinates : geometry.coordinates.flat();
+}
+
+/** Points whose reach is projected rather than observed. */
+function isEstimated(status: string): boolean {
+  return status === 'estimated' || status === 'at-risk' || status === 'at_risk';
+}
+
+/**
+ * Nudge a marker off any already-placed marker it would sit on top of.
+ *
+ * Several of these points are genuinely within a few kilometres of each other —
+ * Devghat and Narayanghat are about three, and Betrawati and Syaphrubesi each
+ * carry two gauges — which at this scale is a couple of pixels. Drawn honestly
+ * they merge into one blob, and a reader cannot tell two stations from one.
+ *
+ * The displacement is a tight outward spiral, capped, and it moves the hit
+ * target with the drawn marker so clicking still selects what you see. It is a
+ * legibility device, not a change to the data: nothing moves more than a few
+ * pixels, and only when it would otherwise be hidden.
+ */
+function deOverlap(
+  x: number,
+  y: number,
+  placed: Array<{ x: number; y: number }>,
+  minGap: number,
+): { x: number; y: number } {
+  const collides = (px: number, py: number) =>
+    placed.some(p => Math.hypot(p.x - px, p.y - py) < minGap);
+  if (!collides(x, y)) return { x, y };
+
+  for (let step = 1; step <= 12; step++) {
+    const angle = step * 2.4;              // golden-ish turn, avoids clustering
+    const radius = minGap * (0.8 + step * 0.22);
+    const nx = x + Math.cos(angle) * radius;
+    const ny = y + Math.sin(angle) * radius;
+    if (!collides(nx, ny)) return { x: nx, y: ny };
+  }
+  return { x, y };
+}
+
+interface Hover {
+  title: string;
+  sub: string;
+  x: number;
+  y: number;
+}
+
+interface Hit {
+  selection: MapSelection;
+  title: string;
+  sub: string;
+  x: number;
+  y: number;
+  r: number;
+}
+
+export default function FloodDistrictMap({ points = [], photos = [], gauges = [], onSelect, onPhotoSelect, lang }: Props) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const [geo, setGeo] = useState<GeoCollection<AffectedDistrictProps> | null>(null);
-  const [hover, setHover] = useState<{ name: string; status: string; x: number; y: number } | null>(null);
-  const hitRef = useRef<Array<{ name: string; status: string; path: Path2D }>>([]);
+  const [hover, setHover] = useState<Hover | null>(null);
+  const districtHitRef = useRef<Array<{ name: string; status: string; path: Path2D }>>([]);
+  const hitRef = useRef<Hit[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -48,11 +154,12 @@ export default function FloodDistrictMap({ points = [], lang }: Props) {
     const canvas = canvasRef.current;
     const wrap = wrapRef.current;
     if (!canvas || !wrap || !geo) return;
+    const ne = lang === 'ne';
 
     const draw = () => {
       const dpr = window.devicePixelRatio || 1;
       const w = wrap.clientWidth;
-      const h = Math.max(300, Math.round(w * 0.72));
+      const h = Math.max(340, Math.round(w * 0.72));
       canvas.width = w * dpr;
       canvas.height = h * dpr;
       canvas.style.width = `${w}px`;
@@ -63,21 +170,22 @@ export default function FloodDistrictMap({ points = [], lang }: Props) {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, w, h);
 
-      // Fit the district bbox into the canvas with a small margin.
+      // Fit the districts and everything plotted on them into the canvas.
       let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+      const stretch = (x: number, y: number) => {
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+      };
       for (const f of geo.features) {
-        for (const ring of ringsOf(f.geometry)) {
-          for (const [x, y] of ring) {
-            if (x < minX) minX = x;
-            if (x > maxX) maxX = x;
-            if (y < minY) minY = y;
-            if (y > maxY) maxY = y;
-          }
-        }
+        for (const ring of ringsOf(f.geometry)) for (const [x, y] of ring) stretch(x, y);
       }
-      const pad = 18;
-      // Latitude degrees are longer than longitude degrees at 28°N; correcting
-      // for it keeps the districts from looking horizontally stretched.
+      // The corridor now runs past the district polygons, so the downstream
+      // points have to widen the frame or they fall off the edge.
+      for (const p of points) stretch(p.lng, p.lat);
+
+      const pad = 20;
       const lonScale = Math.cos((((minY + maxY) / 2) * Math.PI) / 180);
       const spanX = (maxX - minX) * lonScale;
       const spanY = maxY - minY;
@@ -89,8 +197,8 @@ export default function FloodDistrictMap({ points = [], lang }: Props) {
         offY + (maxY - lat) * scale,
       ];
 
-      const hits: Array<{ name: string; status: string; path: Path2D }> = [];
-
+      // ── Districts ──
+      const districtHits: Array<{ name: string; status: string; path: Path2D }> = [];
       for (const f of geo.features) {
         const severe = f.properties.status === 'severe';
         const path = new Path2D();
@@ -107,94 +215,268 @@ export default function FloodDistrictMap({ points = [], lang }: Props) {
         ctx.strokeStyle = severe ? SEVERE : AFFECTED;
         ctx.lineWidth = severe ? 1.6 : 1.1;
         ctx.stroke(path);
-
-        hits.push({
-          name: lang === 'ne' ? f.properties.name_ne : f.properties.name_en,
+        districtHits.push({
+          name: ne ? f.properties.name_ne : f.properties.name_en,
           status: f.properties.status,
           path,
         });
 
-        // District label at the polygon centroid.
         let cx = 0, cy = 0, n = 0;
         for (const ring of ringsOf(f.geometry)) {
           for (const [lon, lat] of ring) {
             const [x, y] = project(lon, lat);
-            cx += x;
-            cy += y;
-            n++;
+            cx += x; cy += y; n++;
           }
         }
         if (n) {
           ctx.fillStyle = severe ? '#ffd9dd' : '#ffe6bf';
           ctx.font = `${severe ? '600 ' : ''}11px "Geist Pixel"`;
           ctx.textAlign = 'center';
-          ctx.fillText(lang === 'ne' ? f.properties.name_ne : f.properties.name_en, cx / n, cy / n);
+          ctx.fillText(ne ? f.properties.name_ne : f.properties.name_en, cx / n, cy / n);
         }
       }
-      hitRef.current = hits;
+      districtHitRef.current = districtHits;
 
-      // Flood path: a line downstream, with a marker at each reported point.
+      const hits: Hit[] = [];
+      // Every marker already drawn, so later ones can step aside from them.
+      const placed: Array<{ x: number; y: number }> = [];
+
+      // ── The path: confirmed solid, estimated dashed ──
       if (points.length) {
-        ctx.beginPath();
-        points.forEach((p, i) => {
-          const [x, y] = project(p.lng, p.lat);
-          if (i === 0) ctx.moveTo(x, y);
-          else ctx.lineTo(x, y);
-        });
-        ctx.strokeStyle = 'rgba(110, 200, 255, 0.85)';
-        ctx.lineWidth = 2;
-        ctx.setLineDash([5, 4]);
-        ctx.stroke();
-        ctx.setLineDash([]);
+        const firstEstimated = points.findIndex(p => isEstimated(p.status));
+        const confirmed = firstEstimated === -1 ? points : points.slice(0, firstEstimated);
+        // The estimated leg starts at the last confirmed point so the line joins up.
+        const estimated = firstEstimated === -1 ? [] : points.slice(Math.max(0, firstEstimated - 1));
 
-        points.forEach((p, i) => {
-          const [x, y] = project(p.lng, p.lat);
+        const stroke = (list: MapPathPoint[], colour: string, dash: number[]) => {
+          if (list.length < 2) return;
           ctx.beginPath();
-          ctx.arc(x, y, i === 0 ? 6 : 4, 0, Math.PI * 2);
-          ctx.fillStyle = i === 0 ? '#6ec8ff' : '#0e141c';
-          ctx.strokeStyle = '#6ec8ff';
-          ctx.lineWidth = 2;
+          list.forEach((p, i) => {
+            const [x, y] = project(p.lng, p.lat);
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          });
+          ctx.strokeStyle = colour;
+          ctx.lineWidth = 3;
+          ctx.lineJoin = 'round';
+          ctx.setLineDash(dash);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        };
+        stroke(confirmed, CONFIRMED, []);
+        stroke(estimated, ESTIMATED, [8, 7]);
+
+        points.forEach(p => {
+          const [tx, ty] = project(p.lng, p.lat);
+          const entry = p.status === 'entry';
+          const est = isEstimated(p.status);
+          const colour = entry ? ENTRY : est ? ESTIMATED : CONFIRMED;
+          const r = entry ? 7 : 5.5;
+          const { x, y } = deOverlap(tx, ty, placed, r * 2 + 3);
+          placed.push({ x, y });
+          // A displaced marker gets a hairline back to its true position, so a
+          // nudge for legibility never reads as a claim about where it is.
+          if (Math.hypot(x - tx, y - ty) > 1) {
+            ctx.beginPath();
+            ctx.moveTo(tx, ty);
+            ctx.lineTo(x, y);
+            ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+          }
+
+          ctx.beginPath();
+          ctx.arc(x, y, r, 0, Math.PI * 2);
+          ctx.fillStyle = est ? '#0e141c' : colour;
+          ctx.strokeStyle = colour;
+          ctx.lineWidth = 2.4;
+          if (est) ctx.setLineDash([3, 2]);
           ctx.fill();
           ctx.stroke();
+          ctx.setLineDash([]);
+
+          hits.push({
+            selection: { kind: 'point', id: p.id },
+            title: ne ? p.name_ne || p.name_en : p.name_en,
+            sub: entry
+              ? ne ? 'बाढी छिरेको बिन्दु' : 'Where the flood entered'
+              : est
+              ? ne ? 'अनुमानित प्रवाह — पुष्टि भएको होइन' : 'Estimated reach — not confirmed'
+              : ne ? 'पानी पुगेको पुष्टि' : 'Water confirmed to have reached here',
+            x, y, r: r + 5,
+          });
         });
       }
+
+      // ── DHM gauges ──
+      for (const g of gauges) {
+        if (g.lat == null || g.lon == null) continue;
+        const [gtx, gty] = project(g.lon, g.lat);
+        const colour = GAUGE_COLOUR[g.level] || GAUGE_COLOUR.unknown;
+        // Square, so a gauge is never mistaken for a place on the path.
+        const s = 5;
+        const { x, y } = deOverlap(gtx, gty, placed, s * 2 + 4);
+        placed.push({ x, y });
+        if (Math.hypot(x - gtx, y - gty) > 1) {
+          ctx.beginPath();
+          ctx.moveTo(gtx, gty);
+          ctx.lineTo(x, y);
+          ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        }
+        ctx.beginPath();
+        ctx.rect(x - s, y - s, s * 2, s * 2);
+        ctx.fillStyle = g.stale ? '#0e141c' : colour;
+        ctx.strokeStyle = colour;
+        ctx.lineWidth = 2;
+        ctx.fill();
+        ctx.stroke();
+
+        hits.push({
+          selection: { kind: 'gauge', id: g.id },
+          title: ne ? g.labelNe : g.label,
+          sub: g.stale
+            ? ne ? 'हालको तथ्यांक छैन' : 'No current reading'
+            : `${g.waterLevel != null ? `${g.waterLevel.toFixed(2)} m` : '—'} · ${ne ? 'मापन केन्द्र' : 'DHM gauge'}`,
+          x, y, r: s + 6,
+        });
+      }
+
+      // ── Ground reports ──
+      for (const photo of photos) {
+        const [ptx, pty] = project(photo.lon, photo.lat);
+        const approximate = photo.geoSource === 'district';
+        // The approximate halo is drawn at the true centre; only the pin moves.
+        const { x, y } = deOverlap(ptx, pty, placed, approximate ? 10 : 13);
+        placed.push({ x, y });
+        if (approximate) {
+          ctx.beginPath();
+          ctx.arc(ptx, pty, 15, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(124, 224, 180, 0.16)';
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(124, 224, 180, 0.45)';
+          ctx.lineWidth = 1;
+          ctx.setLineDash([3, 3]);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+        ctx.beginPath();
+        ctx.arc(x, y, approximate ? 3.5 : 5.5, 0, Math.PI * 2);
+        ctx.fillStyle = PHOTO;
+        ctx.strokeStyle = '#08120e';
+        ctx.lineWidth = 1.5;
+        ctx.fill();
+        ctx.stroke();
+
+        hits.push({
+          selection: { kind: 'photo', id: photo.id },
+          title: photo.label,
+          sub: approximate
+            ? ne ? 'जिल्ला अनुसार अनुमानित स्थान' : 'Approximate — district only'
+            : ne ? 'जनताको तस्बिर — खोल्न थिच्नुहोस्' : 'Ground report — click to open',
+          x, y, r: approximate ? 15 : 9,
+        });
+      }
+
+      hitRef.current = hits;
     };
 
     draw();
     const ro = new ResizeObserver(draw);
     ro.observe(wrap);
     return () => ro.disconnect();
-  }, [geo, points, lang]);
+  }, [geo, points, photos, gauges, lang]);
+
+  const positionOf = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+  };
+
+  /** Nearest marker under the pointer. Photos and gauges sit above the path. */
+  const hitAt = (x: number, y: number): Hit | undefined => {
+    let best: Hit | undefined;
+    let bestDistance = Infinity;
+    for (const hit of hitRef.current) {
+      const distance = Math.hypot(hit.x - x, hit.y - y);
+      if (distance <= hit.r && distance < bestDistance) {
+        best = hit;
+        bestDistance = distance;
+      }
+    }
+    return best;
+  };
 
   const onMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const hit = hitRef.current.find(h => ctx.isPointInPath(h.path, x * (window.devicePixelRatio || 1), y * (window.devicePixelRatio || 1)));
-    setHover(hit ? { name: hit.name, status: hit.status, x, y } : null);
+    const { x, y } = positionOf(e);
+
+    const hit = hitAt(x, y);
+    if (hit) {
+      setHover({ title: hit.title, sub: hit.sub, x, y });
+      canvas.style.cursor = 'pointer';
+      return;
+    }
+    canvas.style.cursor = 'crosshair';
+
+    const dpr = window.devicePixelRatio || 1;
+    const district = districtHitRef.current.find(d => ctx.isPointInPath(d.path, x * dpr, y * dpr));
+    setHover(
+      district
+        ? {
+            title: district.name,
+            sub:
+              district.status === 'severe'
+                ? lang === 'ne' ? 'गम्भीर प्रभावित' : 'Severely affected'
+                : lang === 'ne' ? 'प्रभावित' : 'Affected',
+            x, y,
+          }
+        : null,
+    );
   };
+
+  const onClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const { x, y } = positionOf(e);
+    const hit = hitAt(x, y);
+    if (!hit) return;
+    if (hit.selection.kind === 'photo' && onPhotoSelect) onPhotoSelect(hit.selection.id);
+    onSelect?.(hit.selection);
+  };
+
+  const ne = lang === 'ne';
 
   return (
     <div className="flood-map" ref={wrapRef}>
-      <canvas ref={canvasRef} onMouseMove={onMove} onMouseLeave={() => setHover(null)} />
+      <canvas ref={canvasRef} onMouseMove={onMove} onMouseLeave={() => setHover(null)} onClick={onClick} />
       {hover && (
         <div className="flood-map-tip" style={{ left: hover.x + 12, top: hover.y + 12 }}>
-          <strong>{hover.name}</strong>
-          <span>
-            {hover.status === 'severe'
-              ? lang === 'ne' ? 'गम्भीर प्रभावित' : 'Severely affected'
-              : lang === 'ne' ? 'प्रभावित' : 'Affected'}
-          </span>
+          <strong>{hover.title}</strong>
+          <span>{hover.sub}</span>
         </div>
       )}
       <div className="flood-map-key">
-        <span><i style={{ background: SEVERE }} />{lang === 'ne' ? 'गम्भीर' : 'Severe'}</span>
-        <span><i style={{ background: AFFECTED }} />{lang === 'ne' ? 'प्रभावित' : 'Affected'}</span>
-        <span><i className="line" />{lang === 'ne' ? 'बाढीको बाटो' : 'Flood path'}</span>
+        <span><i style={{ background: SEVERE }} />{ne ? 'गम्भीर' : 'Severe'}</span>
+        <span><i style={{ background: AFFECTED }} />{ne ? 'प्रभावित' : 'Affected'}</span>
+        {points.length > 0 && (
+          <>
+            <span><i className="line" />{ne ? 'पुष्टि भएको बाटो' : 'Confirmed path'}</span>
+            {points.some(p => isEstimated(p.status)) && (
+              <span><i className="line est" />{ne ? 'अनुमानित / जोखिममा' : 'Estimated / at risk'}</span>
+            )}
+            {points.some(p => p.status === 'entry') && (
+              <span><i style={{ background: ENTRY, borderRadius: '50%' }} />{ne ? 'प्रवेश बिन्दु' : 'Entry'}</span>
+            )}
+            <span><i style={{ background: CONFIRMED, borderRadius: '50%' }} />{ne ? 'पुगेको' : 'Reached'}</span>
+            {points.some(p => isEstimated(p.status)) && (
+              <span><i className="hollow" style={{ borderColor: ESTIMATED }} />{ne ? 'अनुमानित' : 'Estimated'}</span>
+            )}
+          </>
+        )}
+        {gauges.length > 0 && <span><i className="sq" style={{ background: GAUGE_COLOUR.normal }} />{ne ? 'डीएचएम मापन केन्द्र' : 'DHM gauge'}</span>}
+        {photos.length > 0 && <span><i style={{ background: PHOTO, borderRadius: '50%' }} />{ne ? 'जनताका तस्बिर' : 'Ground reports'}</span>}
       </div>
     </div>
   );
