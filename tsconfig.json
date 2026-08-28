@@ -27,9 +27,8 @@
       }
     ],
     "paths": {
-      "@/*": [
-        "./*"
-      ]
+      "@/atlas.config.mjs": ["./atlas.config.mjs"],
+      "@/*": ["./src/*"]
     }
   },
   "include": [
