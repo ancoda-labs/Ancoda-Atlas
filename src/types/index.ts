@@ -826,6 +826,23 @@ export interface SitrepDiscrepancy {
   summed: number;
 }
 
+/**
+ * The headline figures as the Rasuwa flood bulletin currently states them.
+ *
+ * Same shape as the reviewed breakdowns it stands in for, so the overview
+ * renders either without knowing which it got. Empty with an error set means
+ * the scrape failed and the reviewed figures should stay on the page.
+ */
+export interface BulletinSitrep {
+  breakdowns: SitrepBreakdown[];
+  /** The bulletin's own dateline, e.g. "12 Bhadra". */
+  asOfLabelEn: string | null;
+  asOfLabelNe: string | null;
+  error: string | null;
+  source: SourceRef;
+  fetchedAt: string;
+}
+
 export interface SitrepContent {
   as_of?: string;
   as_of_label_en?: string;
@@ -929,6 +946,7 @@ export interface FloodDeskStore {
   family: FamilyRegister | null;
   bulletinRescue?: BulletinRescue | null;
   portal: RescuePortalStats | null;
+  sitrep: BulletinSitrep | null;
   videos: VideoFeed | null;
   news: NewsItem[];
   health: FeedStatus[];

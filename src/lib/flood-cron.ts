@@ -43,6 +43,7 @@ function emptyStore(): FloodDeskStore {
     family: null,
     bulletinRescue: null,
     portal: null,
+    sitrep: null,
     videos: null,
     news: [],
     health: [],
@@ -220,6 +221,22 @@ export async function runFloodRefresh(): Promise<FloodDeskStore> {
         },
         value => {
           store.bulletinRescue = value;
+        },
+      ),
+
+      refresh(
+        'sitrep',
+        store,
+        async () => {
+          const { getBulletinSitrep } = await import('@/apis/sources/bulletin-sitrep.mjs');
+          const live = await getBulletinSitrep();
+          // No figures with an error is a failed read, not an emptied toll —
+          // fail so the reviewed figures stay on the page.
+          if (live.error || !live.breakdowns.length) throw new Error(live.error || 'no figures');
+          return live;
+        },
+        value => {
+          store.sitrep = value;
         },
       ),
 
