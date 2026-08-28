@@ -24,7 +24,24 @@ export function bucketEndFor(start) {
   return new Date(start.getTime() + BUCKET_MINUTES * 60 * 1000);
 }
 
-const LANGUAGE_NAME = { en: 'English', ne: 'Nepali (Devanagari script)' };
+// How each language is named to the model. Kept here rather than imported from
+// the TypeScript registry because this module also runs under bare node in the
+// sweep pipeline, where only plain ESM resolves.
+const LANGUAGE_NAME = {
+  en:  'English',
+  ne:  'Nepali (Devanagari script)',
+  mai: 'Maithili (Devanagari script)',
+  bho: 'Bhojpuri (Devanagari script)',
+  ur:  'Urdu (Perso-Arabic script)',
+  hi:  'Hindi (Devanagari script)',
+  thr: 'Tharu (Devanagari script)',
+  taj: 'Tamang (Devanagari script)',
+  new: 'Nepal Bhasa / Newar (Devanagari script)',
+  bjj: 'Bajjika (Devanagari script)',
+  mag: 'Magar Dhut (Devanagari script)',
+  awa: 'Awadhi (Devanagari script)',
+  dty: 'Doteli (Devanagari script)',
+};
 
 const SYSTEM_PROMPT = `You are the wire editor for Ancoda Atlas, a Nepal natural-hazard monitoring desk, writing a short brief on the Rasuwa-Bhotekoshi flood.
 
@@ -91,9 +108,12 @@ function extractiveDraft(items, lang) {
   }
 
   const headline = clean(items[0]?.title || (ne ? 'नयाँ समाचार' : 'New reporting'), 80);
+  // No claim about the window's length. The stored digests really are ten
+  // minutes wide, but the live overview brief covers a whole day, and one
+  // wording cannot be true of both — so it states only what is certain.
   const summary = ne
-    ? `यस दस-मिनेटे अवधिमा ${sources.length} स्रोतबाट ${items.length} समाचार आए। तलका शीर्षक जस्ताको तस्तै राखिएका छन् — यो सारांश कुनै मोडेलले लेखेको होइन।`
-    : `${items.length} reports from ${sources.length} outlets arrived in this ten-minute window. The headlines below are reproduced as filed — this brief was assembled without a model.`;
+    ? `${sources.length} स्रोतबाट ${items.length} समाचार। तलका शीर्षक जस्ताको तस्तै राखिएका छन् — यो सारांश कुनै मोडेलले लेखेको होइन।`
+    : `${items.length} reports from ${sources.length} outlets. The headlines below are reproduced as filed — this brief was assembled without a model.`;
 
   return { headline, summary, bullets };
 }

@@ -498,6 +498,43 @@ export interface NewsDigest {
   model: string | null;
 }
 
+/**
+ * One live brief over the current flood reporting, for the overview panel.
+ *
+ * Distinct from NewsDigest: that one is a stored ten-minute window, this one is
+ * computed on demand and never persisted, so it works on a deployment with no
+ * database.
+ */
+export interface FloodInsight {
+  headline: string;
+  summary: string;
+  bullets: string[];
+  sources: DigestSource[];
+  itemCount: number;
+  /** 'llm' when a model wrote it, 'extractive' when Atlas listed headlines. */
+  generator: 'llm' | 'extractive';
+  model: string | null;
+  /** The language actually written, which may differ from the one requested. */
+  lang: string;
+  /**
+   * Set when the requested language could not be written and Nepali was used
+   * instead, so the panel can say so rather than mislabelling the text.
+   */
+  fellBackFrom?: string;
+  generatedAt: string;
+}
+
+export interface FloodInsightFeed {
+  insight: FloodInsight | null;
+  /**
+   * Whether an LLM is configured. Without one nothing can be translated — the
+   * extractive path reproduces headlines, which arrive only in Nepali and
+   * English — so the picker uses this to mark what it cannot deliver.
+   */
+  hasModel: boolean;
+  reason?: string;
+}
+
 export interface NewsDigestFeed {
   enabled: boolean;
   lang: 'en' | 'ne';

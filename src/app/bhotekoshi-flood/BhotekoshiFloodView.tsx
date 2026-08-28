@@ -6,6 +6,7 @@ import FloodDistrictMap from '@/components/FloodDistrictMap';
 import FloodThemeToggle from '@/components/FloodThemeToggle';
 import type { MapPhoto, MapSelection } from '@/components/FloodDistrictMap';
 import FloodMapDialog from '@/components/FloodMapDialog';
+import FloodAiInsights from '@/app/bhotekoshi-flood/_components/FloodAiInsights';
 import { FloodNav } from '@/components/FloodShell';
 import FloodSummary from '@/app/bhotekoshi-flood/_components/FloodSummary';
 import { useFloodLang } from '@/hooks/use-flood-lang';
@@ -180,8 +181,11 @@ export default function BhotekoshiFloodView() {
       </div>
 
       <main className="fl-wrap">
-        {/* The map leads: "where" is the first thing anyone asks. */}
-        <section className="fl-sec fl-sec-map">
+        {/* The map leads: "where" is the first thing anyone asks. The brief sits
+            beside it rather than below, so "where" and "what is happening" are
+            one glance instead of two. */}
+        <section className="fl-sec fl-sec-map fl-overview-split">
+          <div className="fl-overview-map">
           <div className="fl-sec-head">
             <span>{lang === 'ne' ? 'क्षेत्र' : 'Where'}</span>
           </div>
@@ -200,6 +204,11 @@ export default function BhotekoshiFloodView() {
             lang={lang}
           />
           <p className="fl-note">{t('mapHint')}</p>
+          </div>
+
+          <div className="fl-overview-aside">
+            <FloodAiInsights lang={lang} />
+          </div>
         </section>
 
         {safety && (

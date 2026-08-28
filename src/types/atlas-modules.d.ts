@@ -135,7 +135,8 @@ declare module '*/lib/news-digest.mjs' {
   export function draftDigest(
     provider: LLMProviderLike | null,
     items: Array<Pick<NewsItem, 'title' | 'source'> & Partial<NewsItem>>,
-    lang: 'en' | 'ne',
+    /** 'en' or 'ne' for the stored digests; any registry code for live insights. */
+    lang: string,
     windowLabel?: string,
   ): Promise<{ draft: DigestDraft; generator: 'llm' | 'extractive'; model: string | null }>;
 }

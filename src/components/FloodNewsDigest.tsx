@@ -34,7 +34,7 @@ const T = {
     ne: 'यो सर्भरमा दस-मिनेटे संक्षेप सक्रिय गरिएको छैन।',
   },
   byModel: { en: 'Written by', ne: 'लेखेको' },
-  byList: { en: 'Headlines only — no model configured', ne: 'शीर्षक मात्र — कुनै मोडेल सेट गरिएको छैन' },
+  byList: { en: 'Headlines only', ne: 'शीर्षक मात्र' },
   sources: { en: 'Reports in this window', ne: 'यस अवधिका समाचार' },
   reports: { en: 'reports', ne: 'समाचार' },
 };
