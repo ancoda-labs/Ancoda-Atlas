@@ -106,6 +106,11 @@ function runsDir(): string {
   return dir;
 }
 
+/** True while a refresh cycle is in flight. */
+export function isFloodRefreshRunning(): boolean {
+  return Boolean(g.__atlasFloodRunning);
+}
+
 /** The last cycle's results. Never null — an unwarmed store is simply empty. */
 export function getFloodStore(): FloodDeskStore {
   if (!g.__atlasFloodStore) {

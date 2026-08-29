@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { DESK_POLL_MS } from '@/hooks/use-desk-refresh';
 import {
   Select,
   SelectContent,
@@ -176,7 +177,7 @@ export default function FloodRescueView() {
         .catch(() => {});
     };
     load();
-    const id = setInterval(load, 3 * 60 * 1000);
+    const id = setInterval(load, DESK_POLL_MS);
     return () => {
       cancelled = true;
       clearInterval(id);

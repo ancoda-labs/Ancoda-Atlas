@@ -4138,3 +4138,16 @@ body.dark-theme .fl {
   .fl-scroll-pane { max-height: 360px; }
   .fl-table-tall { max-height: 420px; }
 }
+
+/* How old the figures are, under the masthead on every desk page. */
+.fl-freshness {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  margin: 10px 0 0; font-family: var(--mono); font-size: 11px;
+  letter-spacing: 0.06em; color: var(--ink-3);
+}
+.fl-freshness i {
+  width: 6px; height: 6px; border-radius: 50%; background: var(--green);
+  flex: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--green) 18%, transparent);
+}
+.fl-freshness b { font-weight: 700; color: var(--ink-2); }
+.fl-freshness span { color: var(--ink-3); }

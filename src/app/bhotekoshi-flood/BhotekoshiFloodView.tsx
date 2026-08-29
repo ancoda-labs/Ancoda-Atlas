@@ -14,6 +14,7 @@ import FloodOfficial from '@/app/bhotekoshi-flood/_components/FloodOfficial';
 import { useFloodLang } from '@/hooks/use-flood-lang';
 import { ageFrom } from '@/lib/relative-time';
 import type { FloodDeskPayload, FloodPhoto, FloodPhotoFeed } from '@/types';
+import { DESK_POLL_MS } from '@/hooks/use-desk-refresh';
 
 // The overview of the Rasuwa–Bhotekoshi flood desk.
 //
@@ -97,7 +98,7 @@ export default function BhotekoshiFloodView() {
       }
     };
     load();
-    const id = setInterval(load, 5 * 60 * 1000);
+    const id = setInterval(load, DESK_POLL_MS);
     return () => {
       cancelled = true;
       clearInterval(id);

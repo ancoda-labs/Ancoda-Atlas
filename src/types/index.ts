@@ -446,6 +446,10 @@ export interface FloodDeskPayload extends FloodContent {
   govEfforts?: FloodOfficialFeed<GovEffort> | null;
   portalContacts?: FloodOfficialFeed<PortalContact> | null;
   popups?: FloodOfficialFeed<NdrrmaPopup> | null;
+  /** When the ten-minute cycle last finished, and when the next one is due. */
+  refreshedAt?: string | null;
+  nextRefreshAt?: string | null;
+  refreshIntervalMinutes?: number;
   generatedAt: string;
 }
 

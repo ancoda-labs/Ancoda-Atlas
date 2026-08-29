@@ -5,6 +5,7 @@ import FloodShell from '@/components/FloodShell';
 import { useFloodLang } from '@/hooks/use-flood-lang';
 import { ageFrom } from '@/lib/relative-time';
 import type { BipadDistrictContacts, FloodDeskPayload, FloodDistrictContacts, FloodOfficialFeed } from '@/types';
+import { useDeskRefresh } from '@/hooks/use-desk-refresh';
 
 // Every number a person in trouble might need, on one page.
 //
@@ -81,24 +82,23 @@ export default function FloodContactsView() {
   const [official, setOfficial] = useState<FloodOfficialFeed<BipadDistrictContacts> | null>(null);
   const t = (key: keyof typeof T) => T[key][lang];
 
-  useEffect(() => {
-    let cancelled = false;
-    fetch('/api/flood')
-      .then(r => (r.ok ? r.json() : null))
-      .then(d => {
-        if (!cancelled && d) setData(d);
-      })
-      .catch(() => {});
-    fetch('/api/flood/contacts')
-      .then(r => (r.ok ? r.json() : null))
-      .then(d => {
-        if (!cancelled && d) setOfficial(d);
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  // Emergency numbers are the last thing that should go stale on an open tab.
+  useDeskRefresh(
+    React.useCallback(() => {
+      fetch('/api/flood')
+        .then(r => (r.ok ? r.json() : null))
+        .then(d => {
+          if (d) setData(d);
+        })
+        .catch(() => {});
+      fetch('/api/flood/contacts')
+        .then(r => (r.ok ? r.json() : null))
+        .then(d => {
+          if (d) setOfficial(d);
+        })
+        .catch(() => {});
+    }, []),
+  );
 
   const lines = data?.helplines?.lines || [];
   const primary = lines.filter(l => l.primary);

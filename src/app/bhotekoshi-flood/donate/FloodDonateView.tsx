@@ -6,6 +6,7 @@ import { useFloodLang } from '@/hooks/use-flood-lang';
 import type { Lang } from '@/hooks/use-flood-lang';
 import type { FloodBank, FloodDeskPayload, FloodOfficialFeed, PortalDonationChannel } from '@/types';
 import { ageFrom } from '@/lib/relative-time';
+import { useDeskRefresh } from '@/hooks/use-desk-refresh';
 
 // Giving, on its own page.
 //
@@ -91,33 +92,31 @@ export default function FloodDonateView() {
   const [portal, setPortal] = useState<FloodOfficialFeed<PortalDonationChannel> | null>(null);
   const t = (key: keyof typeof T) => T[key][lang];
 
-  useEffect(() => {
-    let cancelled = false;
-    fetch('/api/flood')
-      .then(r => (r.ok ? r.json() : null))
-      .then(d => {
-        if (!cancelled && d) setData(d);
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  // This page used to fetch once and never again, so a reader who left it open
+  // kept whatever the portal was publishing when they arrived.
+  useDeskRefresh(
+    React.useCallback(() => {
+      fetch('/api/flood')
+        .then(r => (r.ok ? r.json() : null))
+        .then(d => {
+          if (d) setData(d);
+        })
+        .catch(() => {});
+    }, []),
+  );
 
   // The portal's own channels ride on their own route: the QR codes arrive as
   // inline images and would otherwise bloat the payload every desk page loads.
-  useEffect(() => {
-    let cancelled = false;
-    fetch('/api/flood/donations')
-      .then(r => (r.ok ? r.json() : null))
-      .then(d => {
-        if (!cancelled && d) setPortal(d);
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  useDeskRefresh(
+    React.useCallback(() => {
+      fetch('/api/flood/donations')
+        .then(r => (r.ok ? r.json() : null))
+        .then(d => {
+          if (d) setPortal(d);
+        })
+        .catch(() => {});
+    }, []),
+  );
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

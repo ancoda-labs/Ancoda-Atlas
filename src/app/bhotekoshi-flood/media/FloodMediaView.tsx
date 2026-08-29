@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import FloodShell from '@/components/FloodShell';
 import { useFloodLang } from '@/hooks/use-flood-lang';
 import { ageFrom } from '@/lib/relative-time';
+import { DESK_POLL_MS } from '@/hooks/use-desk-refresh';
 import type {
   FloodOfficialFeed,
   FloodVideo,
@@ -97,7 +98,7 @@ export default function FloodMediaView() {
       }
     };
     load();
-    const id = setInterval(load, 5 * 60 * 1000);
+    const id = setInterval(load, DESK_POLL_MS);
     return () => {
       cancelled = true;
       clearInterval(id);
