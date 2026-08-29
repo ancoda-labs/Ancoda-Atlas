@@ -395,3 +395,234 @@ export async function getHelpRequestsMap({ limit = 200 } = {}) {
     return { requests: [], error: err.message, source, fetchedAt };
   }
 }
+
+// ─── The portal's own front page: media, ledger and activity ───────────────
+//
+// Four more endpoints the portal's home page reads. Two carry pictures, one
+// carries the donation channels the Prime Minister's Office publishes, and one
+// is the running list of what has just been filed.
+//
+// One rule is added here that the sections above did not need. The filing
+// endpoints carry the filer's name and phone number, because the portal's own
+// staff work those filings. Atlas is not the portal and cannot take a filing
+// off the internet on request, so no personal name or phone number from a
+// public filing is carried through — what a reader needs from this feed is
+// what was asked for, how urgent it is, and where, all of which survive.
+
+/** A number as published, or null. Shared by the ledger and the activity feed. */
+function order(value) {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
+}
+
+/**
+ * The photographs the portal runs on its home page.
+ *
+ * The portal serves these from its own API path rather than a file URL, so the
+ * address is made absolute and the caller signs it through the media proxy —
+ * Atlas never copies the image.
+ *
+ * @returns {Promise<{items: object[], error: string|null,
+ *   source: {label: string, url: string}, fetchedAt: string}>}
+ */
+export async function getCarousel() {
+  const fetchedAt = new Date().toISOString();
+  const source = { label: 'OPMCM rescue portal — photographs', url: `${BASE}/` };
+  try {
+    return await cachedContent('carousel', async () => {
+      const data = await getPortalJson('/api/carousel');
+      const rows = Array.isArray(data.items) ? data.items : [];
+      const items = rows
+        .filter(r => r.isActive !== false)
+        .map(r => ({
+          id: text(r._id),
+          // The portal writes a real caption in both languages. It is the only
+          // description these photographs have, so it is carried as written.
+          altEn: text(r.altEn),
+          altNe: text(r.altNe),
+          order: order(r.order),
+          createdAt: text(r.createdAt),
+          // Raw absolute URL — the caller signs it through the media proxy.
+          image: absolute(r.imageUrl),
+        }))
+        .filter(i => i.image)
+        .sort((a, b) => (a.order ?? 1e9) - (b.order ?? 1e9));
+      if (!items.length) throw new Error('no carousel photographs in the response');
+      return { items, error: null, source, fetchedAt };
+    });
+  } catch (err) {
+    console.error('[Rescue portal carousel] Unavailable:', err.message);
+    return { items: [], error: err.message, source, fetchedAt };
+  }
+}
+
+/**
+ * The donation channels the Office of the Prime Minister publishes.
+ *
+ * These are government relief-fund details, read from the government's own
+ * portal — but they arrive live, and the giving page keeps its reviewed
+ * accounts separate from them for that reason. Every field is passed through as
+ * published; an account the portal leaves blank stays blank rather than being
+ * filled in from anywhere else.
+ *
+ * The QR arrives as an inline base64 image. It is kept as a data URI when that
+ * is what the portal sent, and left for the media proxy when it sent a URL.
+ *
+ * @returns {Promise<{items: object[], error: string|null,
+ *   source: {label: string, url: string}, fetchedAt: string}>}
+ */
+export async function getDonationChannels({ limit = 12 } = {}) {
+  const fetchedAt = new Date().toISOString();
+  const source = { label: 'OPMCM rescue portal — donations', url: `${BASE}/donations` };
+  try {
+    return await cachedContent(`donations:${limit}`, async () => {
+      const data = await getPortalJson(`/api/donations?limit=${Math.max(1, limit)}`);
+      const rows = Array.isArray(data.items) ? data.items : [];
+      const items = rows
+        .filter(r => r.isActive !== false)
+        .map(r => {
+          const qr = text(r.qrImage);
+          return {
+            id: text(r._id),
+            title: text(r.title),
+            organization: text(r.organization),
+            description: text(r.description),
+            bankName: text(r.bankName),
+            accountName: text(r.accountName),
+            accountNumber: text(r.accountNumber),
+            branch: text(r.branch),
+            swiftCode: text(r.swiftCode),
+            walletName: text(r.walletName),
+            walletId: text(r.walletId),
+            /** Inline base64 QR, usable as an <img> src verbatim. */
+            qrData: dataThumb(qr),
+            /** Raw absolute URL — the caller signs it through the media proxy. */
+            qrImage: qr && !qr.startsWith('data:') ? absolute(qr) : null,
+            priority: order(r.priority),
+          };
+        })
+        // A channel with nothing to pay into is not a channel.
+        .filter(c => c.accountNumber || c.walletId || c.qrData || c.qrImage)
+        .sort((a, b) => (a.priority ?? 1e9) - (b.priority ?? 1e9));
+      if (!items.length) throw new Error('no donation channels in the response');
+      return { items, error: null, source, fetchedAt };
+    });
+  } catch (err) {
+    console.error('[Rescue portal donations] Unavailable:', err.message);
+    return { items: [], error: err.message, source, fetchedAt };
+  }
+}
+
+/**
+ * What has just been filed on the portal — requests for help, and offers of it.
+ *
+ * The filer's name and telephone number are deliberately dropped (see the note
+ * at the top of this section). The inline base64 thumbnail is dropped too: this
+ * is a ticker of what is being asked for, and a dozen full photographs on every
+ * refresh would cost far more than they tell a reader.
+ *
+ * @returns {Promise<{requests: object[], offers: object[], error: string|null,
+ *   source: {label: string, url: string}, fetchedAt: string}>}
+ */
+export async function getLatestActivity({ limit = 6 } = {}) {
+  const fetchedAt = new Date().toISOString();
+  const source = { label: 'OPMCM rescue portal — latest filings', url: `${BASE}/` };
+  try {
+    return await cachedContent(`latest:${limit}`, async () => {
+      const data = await getPortalJson(`/api/latest?limit=${Math.max(1, limit)}`);
+      const coords = node => {
+        const c = Array.isArray(node?.location?.coordinates) ? node.location.coordinates : [];
+        return {
+          lon: typeof c[0] === 'number' ? c[0] : null,
+          lat: typeof c[1] === 'number' ? c[1] : null,
+        };
+      };
+      const requests = (Array.isArray(data.requests) ? data.requests : []).map(r => ({
+        id: text(r._id),
+        ref: text(r.referenceId),
+        title: text(r.title),
+        description: text(r.description),
+        problemType: text(r.problemType),
+        helpTypes: Array.isArray(r.helpTypes) ? r.helpTypes.map(text).filter(Boolean) : [],
+        affectedCount: count(r.affectedCount),
+        urgency: text(r.urgency),
+        status: text(r.status),
+        district: text(r.district),
+        place: text(r.placeName),
+        createdAt: text(r.createdAt),
+        ...coords(r),
+      }));
+      const offers = (Array.isArray(data.offers) ? data.offers : []).map(r => ({
+        id: text(r._id),
+        ref: text(r.referenceId),
+        title: text(r.title),
+        description: text(r.description),
+        // An organisation's name is published as the offer itself; an
+        // individual volunteer's is not carried.
+        providerType: text(r.providerType),
+        providerName: text(r.providerType) === 'INDIVIDUAL' ? null : text(r.providerName),
+        resourceTypes: Array.isArray(r.resourceTypes) ? r.resourceTypes.map(text).filter(Boolean) : [],
+        quantity: count(r.quantity),
+        capacity: text(r.capacity),
+        status: text(r.status),
+        district: text(r.district),
+        place: text(r.placeName),
+        createdAt: text(r.createdAt),
+        ...coords(r),
+      }));
+      if (!requests.length && !offers.length) throw new Error('no recent filings in the response');
+      return { requests, offers, error: null, source, fetchedAt };
+    });
+  } catch (err) {
+    console.error('[Rescue portal latest] Unavailable:', err.message);
+    return { requests: [], offers: [], error: err.message, source, fetchedAt };
+  }
+}
+
+/**
+ * The missing-and-found register as map points.
+ *
+ * `fields=map` is a narrower projection of the same register `getPersonReports`
+ * reads: name, age, gender, when, and a coordinate. The full register's
+ * coordinates are not trustworthy — sample rows geolocate to other countries —
+ * so every point is checked against Nepal's bounding box and a point outside it
+ * is dropped rather than plotted.
+ *
+ * The photograph is dropped: a face pinned to a map is a different act from a
+ * face in a list a relative is searching, and this feed exists to show where
+ * people are being reported from.
+ *
+ * @returns {Promise<{points: object[], error: string|null,
+ *   source: {label: string, url: string}, fetchedAt: string}>}
+ */
+export async function getPersonMapPoints({ limit = 200 } = {}) {
+  const fetchedAt = new Date().toISOString();
+  const source = { label: 'OPMCM rescue portal — person reports', url: `${BASE}/` };
+  const inNepal = (lat, lon) =>
+    typeof lat === 'number' && typeof lon === 'number' &&
+    lat >= 26.3 && lat <= 30.6 && lon >= 79.9 && lon <= 88.3;
+  try {
+    return await cachedContent(`personmap:${limit}`, async () => {
+      const data = await getPortalJson(`/api/person-reports?limit=${Math.max(1, limit)}&fields=map`);
+      const rows = Array.isArray(data.items) ? data.items : [];
+      const points = rows
+        .map(r => {
+          const c = Array.isArray(r.location?.coordinates) ? r.location.coordinates : [];
+          return {
+            id: text(r._id),
+            type: text(r.type) || null,
+            name: text(r.fullName),
+            age: text(r.approximateAge),
+            gender: text(r.gender),
+            eventAt: text(r.eventAt) || text(r.createdAt),
+            lon: typeof c[0] === 'number' ? c[0] : null,
+            lat: typeof c[1] === 'number' ? c[1] : null,
+          };
+        })
+        .filter(p => inNepal(p.lat, p.lon));
+      return { points, error: null, source, fetchedAt };
+    });
+  } catch (err) {
+    console.error('[Rescue portal person map] Unavailable:', err.message);
+    return { points: [], error: err.message, source, fetchedAt };
+  }
+}

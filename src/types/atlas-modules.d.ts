@@ -211,7 +211,11 @@ declare module '*/apis/sources/rescue-portal.mjs' {
     source: SourceRef;
     fetchedAt: string;
   }>;
-  /** A person report as the portal published it; `image` is a raw upstream URL. */
+  /**
+   * A person report as the portal published it; `image` is a raw upstream URL.
+   * The portal's inline base64 thumbnail is dropped at the source — at eight
+   * thousand rows those data URIs are tens of megabytes.
+   */
   export interface PortalPersonRaw {
     id: string | null;
     type: string;
@@ -243,6 +247,57 @@ declare module '*/apis/sources/rescue-portal.mjs' {
   }>;
   export function getHelpRequestsMap(opts?: { limit?: number }): Promise<{
     requests: HelpRequest[];
+    error: string | null;
+    source: SourceRef;
+    fetchedAt: string;
+  }>;
+  /** A carousel photograph; `image` is a raw upstream URL for the media proxy. */
+  export interface PortalCarouselRaw {
+    id: string | null;
+    altEn: string | null;
+    altNe: string | null;
+    order: number | null;
+    createdAt: string | null;
+    image: string | null;
+  }
+  export function getCarousel(): Promise<{
+    items: PortalCarouselRaw[];
+    error: string | null;
+    source: SourceRef;
+    fetchedAt: string;
+  }>;
+  /** A donation channel; `qrImage` is a raw upstream URL, `qrData` a data URI. */
+  export interface PortalDonationRaw {
+    id: string | null;
+    title: string | null;
+    organization: string | null;
+    description: string | null;
+    bankName: string | null;
+    accountName: string | null;
+    accountNumber: string | null;
+    branch: string | null;
+    swiftCode: string | null;
+    walletName: string | null;
+    walletId: string | null;
+    qrData: string | null;
+    qrImage: string | null;
+    priority: number | null;
+  }
+  export function getDonationChannels(opts?: { limit?: number }): Promise<{
+    items: PortalDonationRaw[];
+    error: string | null;
+    source: SourceRef;
+    fetchedAt: string;
+  }>;
+  export function getLatestActivity(opts?: { limit?: number }): Promise<{
+    requests: PortalHelpFiling[];
+    offers: PortalOfferFiling[];
+    error: string | null;
+    source: SourceRef;
+    fetchedAt: string;
+  }>;
+  export function getPersonMapPoints(opts?: { limit?: number }): Promise<{
+    points: PersonMapPoint[];
     error: string | null;
     source: SourceRef;
     fetchedAt: string;
@@ -288,6 +343,36 @@ declare module '*/apis/sources/ndrrma-notices.mjs' {
   }>;
   export function getNationalAdvisories(): Promise<{
     advisories: NationalAdvisory[];
+    error: string | null;
+    source: SourceRef;
+    fetchedAt: string;
+  }>;
+  /** A featured photograph; `image` is a raw upstream URL for the media proxy. */
+  export interface NdrrmaPhotoRaw {
+    id: number;
+    title: string | null;
+    titleNe: string | null;
+    description: string | null;
+    descriptionNe: string | null;
+    image: string | null;
+  }
+  export function getFeaturedPhotos(opts?: { limit?: number }): Promise<{
+    items: NdrrmaPhotoRaw[];
+    error: string | null;
+    source: SourceRef;
+    fetchedAt: string;
+  }>;
+  export interface NdrrmaPopupRaw {
+    id: string;
+    title: string | null;
+    titleNe: string | null;
+    body: string | null;
+    bodyNe: string | null;
+    pdfUrl: string | null;
+    image: string | null;
+  }
+  export function getWebsitePopups(): Promise<{
+    items: NdrrmaPopupRaw[];
     error: string | null;
     source: SourceRef;
     fetchedAt: string;

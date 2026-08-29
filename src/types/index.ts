@@ -755,6 +755,150 @@ export interface HelpRequest {
   lon: number | null;
 }
 
+/** A photograph NDRRMA features on its own site, with its bilingual caption. */
+export interface NdrrmaPhoto {
+  id: number;
+  title: string | null;
+  titleNe: string | null;
+  description: string | null;
+  descriptionNe: string | null;
+  /** Signed media-proxy path, or null. */
+  imageProxy: string | null;
+}
+
+/**
+ * A notice NDRRMA raises over its own site — its current "read this first",
+ * usually with the document it is pointing at.
+ */
+export interface NdrrmaPopup {
+  id: string;
+  title: string | null;
+  titleNe: string | null;
+  body: string | null;
+  bodyNe: string | null;
+  pdfUrl: string | null;
+  imageProxy: string | null;
+}
+
+/** A photograph from the OPMCM portal's own home-page gallery. */
+export interface PortalCarouselPhoto {
+  id: string | null;
+  altEn: string | null;
+  altNe: string | null;
+  order: number | null;
+  createdAt: string | null;
+  /** Signed media-proxy path, or null. */
+  imageProxy: string | null;
+}
+
+/**
+ * A donation channel as the OPMCM portal publishes it.
+ *
+ * Live, and therefore kept apart from the reviewed accounts on the giving page:
+ * these are shown under the portal's name with a link back to it, never merged
+ * into the hand-checked fund table.
+ */
+export interface PortalDonationChannel {
+  id: string | null;
+  title: string | null;
+  organization: string | null;
+  description: string | null;
+  bankName: string | null;
+  accountName: string | null;
+  accountNumber: string | null;
+  branch: string | null;
+  swiftCode: string | null;
+  walletName: string | null;
+  walletId: string | null;
+  /** Inline base64 QR, usable as an <img> src verbatim. */
+  qrData: string | null;
+  /** Signed media-proxy path, when the portal published a URL instead. */
+  qrProxy: string | null;
+  priority: number | null;
+}
+
+/** A request for help filed on the portal. No filer name or number is carried. */
+export interface PortalHelpFiling {
+  id: string | null;
+  ref: string | null;
+  title: string | null;
+  description: string | null;
+  problemType: string | null;
+  helpTypes: string[];
+  affectedCount: number | null;
+  urgency: string | null;
+  status: string | null;
+  district: string | null;
+  place: string | null;
+  createdAt: string | null;
+  lat: number | null;
+  lon: number | null;
+}
+
+/** An offer of help filed on the portal. Individual volunteers stay anonymous. */
+export interface PortalOfferFiling {
+  id: string | null;
+  ref: string | null;
+  title: string | null;
+  description: string | null;
+  providerType: string | null;
+  providerName: string | null;
+  resourceTypes: string[];
+  quantity: number | null;
+  capacity: string | null;
+  status: string | null;
+  district: string | null;
+  place: string | null;
+  createdAt: string | null;
+  lat: number | null;
+  lon: number | null;
+}
+
+/** What has just been filed on the portal: asked for, and offered. */
+export interface PortalActivity {
+  requests: PortalHelpFiling[];
+  offers: PortalOfferFiling[];
+  error: string | null;
+  source: SourceRef;
+  fetchedAt: string;
+}
+
+/**
+ * One missing-or-found report reduced to a map point.
+ *
+ * Only points inside Nepal survive the source module — the register's
+ * coordinates are unreliable — and no photograph is carried.
+ */
+export interface PersonMapPoint {
+  id: string | null;
+  type: string | null;
+  name: string | null;
+  age: string | null;
+  gender: string | null;
+  eventAt: string | null;
+  lat: number | null;
+  lon: number | null;
+}
+
+/** One official the local government lists as reachable, per BIPAD. */
+export interface BipadContact {
+  id: number;
+  name: string | null;
+  position: string | null;
+  phone: string | null;
+  email: string | null;
+  /** BIPAD's own flag for the district's disaster focal person. */
+  drrFocal: boolean;
+}
+
+/** One affected district's live contact list, as BIPAD holds it. */
+export interface BipadDistrictContacts {
+  id: number;
+  name: string;
+  nameNe: string;
+  contacts: BipadContact[];
+}
+
 export interface FloodOfficialFeed<T> {
   items: T[];
   error: string | null;
