@@ -301,6 +301,9 @@ const PERSON_PAGE = 500;
 /** Enough pages for four times the current register, and a stop either way. */
 const PERSON_MAX_PAGES = 60;
 
+/** Breathing room between register pages, so a sweep is not rate-limited. */
+const PERSON_PAGE_PAUSE_MS = 250;
+
 /** One person report, as the portal published it. */
 function personRow(row, fallbackType) {
   return {
@@ -337,6 +340,12 @@ async function collectPersons(query) {
   const items = [];
   let total = null;
   for (let page = 1; page <= PERSON_MAX_PAGES; page++) {
+    // A short pause between pages. Seventeen requests fired back to back is
+    // enough to earn a 429 from this portal — "Too many requests. Please slow
+    // down." — which costs the whole register for that cycle. Four seconds
+    // spread across a ten-minute cycle is nothing to us and a great deal
+    // gentler on a government service everyone else is also reading.
+    if (page > 1) await new Promise(r => setTimeout(r, PERSON_PAGE_PAUSE_MS));
     const data = await getPortalJson(`/api/person-reports?${query}&page=${page}&limit=${PERSON_PAGE}`);
     const rows = Array.isArray(data.items) ? data.items : [];
     items.push(...rows);
