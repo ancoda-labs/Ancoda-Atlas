@@ -14,6 +14,7 @@ export const dynamic = 'force-dynamic';
 const CACHE_TTL_S = 60;
 
 export async function GET() {
+  sweeper.ensureStarted();
   const data = sweeper.currentData;
   if (!data) {
     return noStore(

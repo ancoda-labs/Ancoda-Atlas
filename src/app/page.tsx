@@ -8,6 +8,11 @@ import DashboardClient from '@/app/DashboardClient';
 export const dynamic = 'force-dynamic';
 
 async function getInitialData(): Promise<HazardSnapshot> {
+  // Kick the scheduler if nothing has started it. On a host where
+  // instrumentation.ts does not run, this is what gets the first sweep going;
+  // it returns immediately and the result reaches the open page over SSE.
+  sweeper.ensureStarted();
+
   // Try memory cache first
   if (sweeper.currentData) {
     return sweeper.currentData;

@@ -3,6 +3,10 @@ import { sweeper } from '@/lib/sweeper';
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
+  // A subscriber is by definition waiting for sweep results, so make sure
+  // something is producing them.
+  sweeper.ensureStarted();
+
   const stream = new ReadableStream({
     start(controller) {
       const client = {

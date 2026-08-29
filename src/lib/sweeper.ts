@@ -19,6 +19,8 @@ class SweeperManager {
   public lastSweepTime: string | null = null;
   public sweepStartedAt: string | null = null;
   public sweepInProgress = false;
+  /** Guards ensureStarted() against a burst of concurrent first requests. */
+  private starting = false;
   public startTime = Date.now();
   public sseClients = new Set<SseClient>();
   private intervalId: NodeJS.Timeout | null = null;
@@ -60,7 +62,39 @@ class SweeperManager {
     }
   }
 
+  /**
+   * Start the cycle if it is not already running, from a request path.
+   *
+   * The scheduler is supposed to be started once by instrumentation.ts. On the
+   * deployed host it was not: /api/data served the empty skeleton and the flood
+   * desk reported lastRunAt: null, while every request-driven route worked
+   * perfectly — so the process was alive and holding memory, and register()
+   * simply never reached this method.
+   *
+   * Rather than depend on that hook firing, any request that needs swept data
+   * can call this. It is idempotent, returns immediately, and the sweep it
+   * kicks off reaches the open SSE clients when it lands, so the first visitor
+   * gets a live page a few seconds after opening it rather than never.
+   */
+  public ensureStarted(): void {
+    this.start().catch(err => console.error('[Sweeper] Lazy start failed:', errorMessage(err)));
+  }
+
   public async start() {
+    // Both guards are needed. `intervalId` is only set at the very end, after
+    // several dynamic imports have been awaited, so concurrent callers — the
+    // instrumentation hook and the first request racing it — would otherwise
+    // both get past a check on it alone and initialise the engine twice.
+    if (this.intervalId || this.starting) return;
+    this.starting = true;
+    try {
+      await this.startOnce();
+    } finally {
+      this.starting = false;
+    }
+  }
+
+  private async startOnce() {
     if (this.intervalId) return; // already running
 
     console.log('[Sweeper] Initializing background sweeping engine...');
@@ -202,19 +236,27 @@ class SweeperManager {
   }
 }
 
-// Retrieve or initialize the singleton
-let sweeper: SweeperManager;
-if (process.env.NODE_ENV === 'production') {
-  sweeper = new SweeperManager();
-} else {
-  // Next.js dev mode re-evaluates modules on hot reload; the sweeper must not
-  // restart its interval each time, so it is pinned to a global.
-  const globalStore = globalThis as typeof globalThis & Record<symbol, SweeperManager>;
-  if (!globalStore[GLOBAL_SWEEPER_KEY]) {
-    globalStore[GLOBAL_SWEEPER_KEY] = new SweeperManager();
-  }
-  sweeper = globalStore[GLOBAL_SWEEPER_KEY];
+/**
+ * One sweeper per process, pinned to a global — in production too.
+ *
+ * This used to construct a fresh SweeperManager whenever NODE_ENV was
+ * production, on the reasoning that only dev's hot reload re-evaluates a
+ * module. That is not the only thing that does. Next bundles route handlers
+ * separately, so /api/data, /events and the page render can each evaluate this
+ * module and each get their own manager — their own interval, and their own
+ * currentData.
+ *
+ * The effect on the deployed desk was that the landing map was permanently
+ * empty: the instance instrumentation started swept happily into its own
+ * memory, while the instance rendering the page had never swept and reported
+ * currentData as null. Locally it was masked, because runs/dashboard.json
+ * existed and every instance could read the last good sweep off disk.
+ */
+const globalStore = globalThis as typeof globalThis & Record<symbol, SweeperManager>;
+if (!globalStore[GLOBAL_SWEEPER_KEY]) {
+  globalStore[GLOBAL_SWEEPER_KEY] = new SweeperManager();
 }
+const sweeper: SweeperManager = globalStore[GLOBAL_SWEEPER_KEY];
 
 export { sweeper };
 export default sweeper;

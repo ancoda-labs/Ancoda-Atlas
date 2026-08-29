@@ -111,6 +111,11 @@ export function getFloodStore(): FloodDeskStore {
   if (!g.__atlasFloodStore) {
     g.__atlasFloodStore = loadFromDisk() ?? emptyStore();
   }
+  // The schedule is supposed to be started by instrumentation.ts. On the
+  // deployed host it was not — every desk route answered while lastRunAt
+  // stayed null — so the first read of the store starts it too. Idempotent,
+  // and it returns before the cycle it kicks off finishes.
+  startFloodCron();
   return g.__atlasFloodStore;
 }
 
@@ -560,15 +565,19 @@ export function startFloodCron(): void {
   const minutes = intervalMinutes();
   console.log(`[Flood cron] Starting — refreshing every ${minutes} minutes`);
 
-  // Warm immediately, then settle into the interval.
-  runFloodRefresh().catch(err => console.error('[Flood cron] Initial cycle failed:', errorMessage(err)));
-
+  // The interval is armed BEFORE the first warm, and the order matters: the
+  // warm calls getFloodStore(), which calls back into this function, and until
+  // the timer exists the guard above lets that call straight through. Warming
+  // first therefore recurses — it logged this line 1868 times before the
+  // ordering was fixed.
   g.__atlasFloodTimer = setInterval(() => {
     runFloodRefresh().catch(err => console.error('[Flood cron] Cycle failed:', errorMessage(err)));
   }, minutes * 60 * 1000);
 
   // Do not hold the process open on this timer alone.
   g.__atlasFloodTimer.unref?.();
+
+  runFloodRefresh().catch(err => console.error('[Flood cron] Initial cycle failed:', errorMessage(err)));
 }
 
 export function stopFloodCron(): void {
