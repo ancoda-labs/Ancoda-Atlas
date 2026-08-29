@@ -15,6 +15,8 @@ export interface SweepMeta {
   sourcesQueried?: number;
   sourcesOk?: number;
   sourcesFailed?: number;
+  /** How often the sweep repeats, in minutes. */
+  refreshIntervalMinutes?: number;
 }
 
 export interface SourceHealth {

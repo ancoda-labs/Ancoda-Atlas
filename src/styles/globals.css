@@ -4151,3 +4151,11 @@ body.dark-theme .fl {
 }
 .fl-freshness b { font-weight: 700; color: var(--ink-2); }
 .fl-freshness span { color: var(--ink-3); }
+
+/* Freshness pill in the dashboard masthead. */
+.meta-pill.fresh-pill { display: inline-flex; align-items: center; gap: 7px; }
+.meta-pill.fresh-pill i {
+  width: 6px; height: 6px; border-radius: 50%; background: var(--green); flex: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--green) 18%, transparent);
+}
+.meta-pill.fresh-pill em { font-style: normal; opacity: 0.72; }

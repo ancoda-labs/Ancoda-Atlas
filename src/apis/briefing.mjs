@@ -69,6 +69,9 @@ export async function fullBriefing() {
       sourcesQueried: sources.length,
       sourcesOk: sources.filter(s => s.status === 'ok').length,
       sourcesFailed: sources.filter(s => s.status !== 'ok').length,
+      // How often this sweep repeats, so a reader can be told not just how old
+      // the figures are but when they next move.
+      refreshIntervalMinutes: parseInt(process.env.REFRESH_INTERVAL_MINUTES) || 15,
     },
     sources: Object.fromEntries(
       sources.filter(s => s.status === 'ok').map(s => [s.name, s.data])

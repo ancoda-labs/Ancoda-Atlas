@@ -14,7 +14,7 @@ import FloodOfficial from '@/app/bhotekoshi-flood/_components/FloodOfficial';
 import { useFloodLang } from '@/hooks/use-flood-lang';
 import { ageFrom } from '@/lib/relative-time';
 import type { FloodDeskPayload, FloodPhoto, FloodPhotoFeed } from '@/types';
-import { DESK_POLL_MS } from '@/hooks/use-desk-refresh';
+import { DESK_POLL_MS, useTick } from '@/hooks/use-desk-refresh';
 
 // The overview of the Rasuwa–Bhotekoshi flood desk.
 //
@@ -70,6 +70,7 @@ export default function BhotekoshiFloodView() {
   const [data, setData] = useState<FloodDeskPayload | null>(null);
   const [photoFeed, setPhotoFeed] = useState<FloodPhotoFeed | null>(null);
   const [selection, setSelection] = useState<MapSelection | null>(null);
+  useTick();
 
   const t = (key: keyof typeof T) => T[key][lang];
 
@@ -191,6 +192,30 @@ export default function BhotekoshiFloodView() {
             <FloodReportButton lang={lang} />
           </div>
           <p className="fl-dateline">{site ? L(site, 'date_line') : ''}</p>
+          {/* The same freshness line the other desk pages get from FloodShell.
+              This page builds its own masthead, so it carries its own copy. */}
+          <p className="fl-freshness">
+            <i aria-hidden="true" />
+            {data?.refreshedAt ? (
+              <>
+                {lang === 'ne' ? 'तथ्यांक अद्यावधिक' : 'Data updated'}{' '}
+                <b>{ageFrom(data.refreshedAt, lang)}</b>
+                {data.refreshIntervalMinutes ? (
+                  <span>
+                    {lang === 'ne'
+                      ? ` · हरेक ${data.refreshIntervalMinutes} मिनेटमा ताजा हुन्छ`
+                      : ` · refreshes every ${data.refreshIntervalMinutes} minutes`}
+                  </span>
+                ) : null}
+              </>
+            ) : (
+              <span>
+                {lang === 'ne'
+                  ? 'तथ्यांक ताजा गरिँदै — केही क्षणमा देखिनेछ'
+                  : 'Fetching the latest figures — they will appear shortly'}
+              </span>
+            )}
+          </p>
         </div>
       </header>
 
