@@ -35,7 +35,21 @@ const g = globalThis as unknown as MediaGlobal;
  */
 function secret(): string {
   if (process.env.ATLAS_MEDIA_SECRET) return process.env.ATLAS_MEDIA_SECRET;
-  if (!g.__atlasMediaSecret) g.__atlasMediaSecret = randomBytes(32).toString('hex');
+  if (!g.__atlasMediaSecret) {
+    g.__atlasMediaSecret = randomBytes(32).toString('hex');
+    // Harmless in development, silently destructive in production: behind more
+    // than one replica the signatures this process mints are rejected by every
+    // other one, and roughly half of all images fail with nothing in the logs
+    // to say why. Say it once, loudly, rather than let it be discovered from
+    // the outside.
+    if (process.env.NODE_ENV === 'production') {
+      console.warn(
+        '[Media proxy] ATLAS_MEDIA_SECRET is not set. A per-process key is in use, ' +
+          'so image links break on restart and fail across replicas. Set the same ' +
+          'value on every instance.',
+      );
+    }
+  }
   return g.__atlasMediaSecret;
 }
 
