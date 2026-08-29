@@ -27,6 +27,31 @@ import { errorMessage } from '@/types';
 const DEFAULT_INTERVAL_MINUTES = 10;
 const STORE_FILE = 'flood-desk.json';
 
+/**
+ * The shape of the persisted store.
+ *
+ * Bump this whenever a field in FloodDeskStore changes shape — a renamed key,
+ * a new required sub-field, a list that gains a third bucket.
+ *
+ * Without it the restore below is a trap. It merges whatever is on disk over
+ * the empty store, so a file written by an older build silently supplies an
+ * older shape for a key the new code assumes it owns, and the first component
+ * to read a field that did not exist then crashes the page. That is exactly how
+ * the rescue page went down for a reader after the OPMCM register grew its
+ * third list: the previous build's `{lost, found}` restored cleanly over a
+ * shape that now also expects `other`.
+ *
+ * A mismatched file is discarded rather than migrated. The only cost is one
+ * cold cycle after a deploy; the alternative is a page that throws — or, more
+ * quietly, one that renders a field the restored rows simply do not have.
+ *
+ * v3 added `country` to the NDRRMA rescued-persons rows. A v2 store restores
+ * cleanly without it, and the rescue table then prints "FOREIGN" beside a
+ * hundred Indian nationals with no country against any of them — no error, no
+ * warning, just a column that is silently blank.
+ */
+const STORE_VERSION = 3;
+
 function intervalMinutes(): number {
   const raw = Number(process.env.FLOOD_REFRESH_INTERVAL_MINUTES);
   // Below a couple of minutes this would hammer government portals during the
@@ -93,7 +118,14 @@ function loadFromDisk(): FloodDeskStore | null {
   try {
     const path = join(runsDir(), STORE_FILE);
     if (!existsSync(path)) return null;
-    const parsed = JSON.parse(readFileSync(path, 'utf8')) as FloodDeskStore;
+    const parsed = JSON.parse(readFileSync(path, 'utf8')) as FloodDeskStore & { version?: number };
+    if (parsed.version !== STORE_VERSION) {
+      console.log(
+        `[Flood cron] Ignoring desk store written for shape v${parsed.version ?? 'unversioned'} ` +
+          `(this build expects v${STORE_VERSION}) — starting cold`,
+      );
+      return null;
+    }
     console.log('[Flood cron] Restored desk store from disk');
     return { ...emptyStore(), ...parsed };
   } catch (err) {
@@ -104,7 +136,7 @@ function loadFromDisk(): FloodDeskStore | null {
 
 function persist(store: FloodDeskStore): void {
   try {
-    writeFileSync(join(runsDir(), STORE_FILE), JSON.stringify(store));
+    writeFileSync(join(runsDir(), STORE_FILE), JSON.stringify({ ...store, version: STORE_VERSION }));
   } catch (err) {
     // Losing the on-disk copy costs a cold start, not correctness.
     console.warn('[Flood cron] Could not persist store:', errorMessage(err));
