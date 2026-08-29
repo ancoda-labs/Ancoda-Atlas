@@ -128,13 +128,18 @@ export async function getHazards() {
 /** Incidents of one hazard since a date, newest first, corridor-filtered. */
 export async function getIncidents({ hazard = HAZARD.FLOOD, since = '2026-08-25', corridorOnly = true } = {}) {
   return cached(`incidents:${hazard}:${since}:${corridorOnly}`, async () => {
+    // `expand=loss` returns the loss record inline. Without it every incident
+    // needed a second request to loss/{id}/, which during a live response meant
+    // a few hundred extra calls against a portal already under load.
     const rows = await collect(
-      `incident/?hazard=${hazard}&incident_on__gt=${encodeURIComponent(since)}&ordering=-incident_on`,
+      `incident/?hazard=${hazard}&incident_on__gt=${encodeURIComponent(since)}&expand=loss&ordering=-incident_on`,
       5,
     );
     return rows
       .map(r => {
         const { lat, lon } = coordsOf(r);
+        // Expanded, `loss` is the record itself; unexpanded it is just its id.
+        const expanded = r.loss && typeof r.loss === 'object' ? normaliseLoss(r.loss) : null;
         return {
           id: r.id,
           title: r.title || null,
@@ -143,7 +148,8 @@ export async function getIncidents({ hazard = HAZARD.FLOOD, since = '2026-08-25'
           reportedOn: r.reportedOn || null,
           streetAddress: r.streetAddress || null,
           hazard: r.hazard ?? null,
-          lossId: r.loss ?? null,
+          lossId: expanded?.id ?? (typeof r.loss === 'number' ? r.loss : null),
+          loss: expanded,
           // `source` is BIPAD's provenance field: 'nepal_police', 'dhm', 'other'.
           source: r.source || null,
           verified: Boolean(r.verified),
@@ -210,9 +216,12 @@ export async function getCorridorIncidents({ since = '2026-08-25' } = {}) {
       String(b.incidentOn || '').localeCompare(String(a.incidentOn || '')),
     );
 
-    const losses = await getLosses(incidents.map(i => i.lossId));
-    for (const incident of incidents) {
-      incident.loss = incident.lossId != null ? losses.get(incident.lossId) ?? null : null;
+    // Most incidents already carry their loss record from `expand=loss`; only
+    // the stragglers are fetched one by one.
+    const missing = incidents.filter(i => !i.loss && i.lossId != null);
+    const losses = await getLosses(missing.map(i => i.lossId));
+    for (const incident of missing) {
+      incident.loss = losses.get(incident.lossId) ?? null;
     }
 
     const withFigures = incidents.filter(i => i.loss?.reported);
