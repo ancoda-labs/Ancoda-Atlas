@@ -16,6 +16,7 @@ An open-source project by [Ancoda Labs](https://github.com/ancodalabs).
 [![Hazard sources](https://img.shields.io/badge/hazard%20sources-5-cyan)](#data-sources)
 [![Focus](https://img.shields.io/badge/focus-Nepal%20%F0%9F%87%B3%F0%9F%87%B5-dc143c)](#scope)
 [![Docker](https://img.shields.io/badge/docker-ready-blue?logo=docker)](#docker)
+[![CI](https://github.com/ancodalabs/atlas/actions/workflows/ci.yml/badge.svg)](https://github.com/ancodalabs/atlas/actions/workflows/ci.yml)
 
 **Follow Ancoda Labs**
 
@@ -31,9 +32,16 @@ An open-source project by [Ancoda Labs](https://github.com/ancodalabs).
 
 Atlas pulls earthquake activity, monsoon and flood forecasts, satellite fire detection, air quality and humanitarian response reporting from five open hazard feeds — all scoped to Nepal, in parallel, every 15 minutes — plus a disaster-filtered live news layer from Nepali dailies, and renders everything on a single self-contained dashboard.
 
-Hook it up to an LLM and it becomes a **two-way emergency assistant** — pushing multi-tier alerts to Telegram and Discord when hazard conditions change, responding to `/brief` and `/sweep` from your phone, and producing actionable reads grounded in real cross-layer hazard data.
+Hook it up to an LLM and it becomes a **two-way emergency assistant** — pushing multi-tier alerts to Telegram and Discord when hazard conditions change, responding to `/brief` and `/sweep` from your phone, producing actionable reads grounded in real cross-layer hazard data, and carrying the flood desk's news brief into any of ~130 languages for families reading from outside Nepal.
 
 No cloud. No telemetry. No subscriptions.
+
+Live at **[atlas.ancodalabs.com](https://atlas.ancodalabs.com)**.
+
+<!-- TODO(maintainers): add three screenshots here before announcing —
+     simple view, detailed dashboard, and the flood desk. For a visual
+     dashboard this is the single highest-value addition to this file.
+     docs/screenshots/{simple,detailed,flood-desk}.png -->
 
 ---
 
@@ -148,13 +156,51 @@ When a disaster is under way it gets its own public page — currently
 `/bhotekoshi-flood` for the Rasuwa–Bhotekoshi flood. These are built for
 affected families, volunteers and donors rather than analysts: emergency numbers
 as tap-to-call buttons, plain safety guidance, an affected-district map, live
-river gauges from the NDRRMA BIPAD Portal, and **human-verified** donation
-routes. Bilingual English / नेपाली throughout.
+river gauges from the NDRRMA BIPAD Portal, a searchable rescue register,
+crowdsourced ground photos, and **human-verified** donation routes. Bilingual
+English / नेपाली throughout, with the news brief available in ~130 languages.
 
 Donation links are curated, never scraped. Disaster fundraising scams peak in the
 first 48–72 hours, so an aggregator that auto-surfaces unverified fundraisers is
 worse than none at all. Every fund is a reviewed JSON record under
 `content/bhotekoshi-flood/` with its own source and verification date.
+
+### Multilingual news briefs
+
+Rasuwa is a trekking corridor and a labour-migration source district, so a large
+share of the people refreshing the flood desk are reading from outside Nepal —
+relatives abroad, embassies, responding agencies. And the communities downstream
+of the Bhotekoshi are disproportionately Tamang, Tharu and Maithili speakers. A
+relief notice someone cannot read is a notice that did not reach them.
+
+The **AI Insights** panel therefore offers its brief in ~130 languages, listed in
+[`src/lib/nepal-languages.ts`](src/lib/nepal-languages.ts) in two groups: Nepal's
+own languages first, then the rest of the world.
+
+Two things about how this works are deliberate and worth stating plainly:
+
+**No model writes the brief.** Atlas lists what the outlets actually filed —
+headline, outlet, no synthesis. On a page people use to decide whether to move,
+prose a model composed about a disaster reads exactly as confidently when it is
+wrong as when it is right, and nothing on the page can tell the reader which it
+got. Listing headlines is weaker writing and a stronger claim.
+
+**A model is used only to translate that list**, which is the one job where its
+mistakes are catchable. The translation is validated against the original —
+bullets are counted, and a response that lost or gained one is discarded — and a
+brief that has been through a model is labelled as translated, because a headline
+is no longer verbatim afterwards. When a translation cannot be delivered, the
+panel says so and shows Nepali rather than substituting silently.
+
+> [!NOTE]
+> **Language coverage depends entirely on which LLM provider you configure.**
+> Frontier models handle most of the list. Open-weight models are faster and
+> cheaper but are materially weaker on low-resource languages — including
+> several of Nepal's own. See [Multilingual briefs](#multilingual-briefs-1) under
+> API Keys Setup for how to check what your provider actually delivers.
+
+Without any LLM key, briefs are available in Nepali and English only — the two
+languages the wire itself arrives in.
 
 ### Detailed dashboard
 
@@ -201,6 +247,9 @@ The server runs a sweep cycle every 15 minutes (configurable). Each cycle:
 5. Evaluates alerts — multi-tier (FLASH / PRIORITY / ROUTINE) with semantic dedup, sent to Telegram and/or Discord if configured
 6. Pushes the update to all connected browsers via SSE
 
+The flood desk runs its own faster cycle (10 minutes by default) so a government
+portal falling over degrades to slightly older figures rather than an empty page.
+
 ### Telegram Bot (Two-Way)
 
 | Command | What It Does |
@@ -225,13 +274,25 @@ Mirrors the Telegram bot with Discord-native slash commands (`/status`, `/sweep`
 automatically by `npm install` and in the Docker image. Without it Atlas falls
 back to webhook-only mode.
 
+### Optional community layer (Supabase + MinIO)
+
+Two features on the flood desk need somewhere to put state: **crowdsourced
+photos** sent in from the corridor, and the **stored ten-minute news digests**
+that show how an event developed rather than a wall of near-duplicate headlines.
+
+Both are optional and each hides itself when its backing service is absent, so
+Atlas still runs as a pure monitoring dashboard with neither configured. Supabase
+holds the records, MinIO holds the image objects. Run `npm run db:migrate` to
+apply the schema in `supabase/migrations/`.
+
 ### Optional LLM Layer
 
-Connect any of 8 providers for enhanced analysis:
+Connect any of **11 providers** for enhanced analysis:
 
 - **Hazard reads** — an emergency management analyst producing 5-8 reads citing specific data, aware of monsoon and fire seasonality, typed `PREPARE` / `RESPOND` / `WATCH` / `STAND-DOWN`
 - **Smarter alert evaluation** — LLM classifies signals into FLASH/PRIORITY/ROUTINE with cross-layer correlation and confidence scoring
-- Providers: Anthropic Claude, OpenAI, Google Gemini, OpenRouter, OpenAI Codex, MiniMax, Mistral, Grok
+- **Multilingual briefs** — carries the flood desk's news brief into the reader's language (see above)
+- Providers: Anthropic Claude, OpenAI, Google Gemini, OpenRouter, OpenAI Codex, MiniMax, Mistral, Ollama, Grok (xAI), Groq, Tarka
 - Graceful fallback — when the LLM is unavailable a rule-based hazard engine takes over. LLM failures never crash the sweep.
 
 ---
@@ -253,7 +314,13 @@ Nepal's highest-consequence feeds — USGS seismic, Open-Meteo weather and Open-
 
 ### LLM Provider (optional)
 
-Set `LLM_PROVIDER` to one of: `anthropic`, `openai`, `gemini`, `codex`, `openrouter`, `minimax`, `mistral`, `grok`
+Set `LLM_PROVIDER` to one of: `anthropic`, `openai`, `gemini`, `codex`,
+`openrouter`, `minimax`, `mistral`, `ollama`, `grok`, `groq`, `tarka`
+
+> [!WARNING]
+> `grok` is **xAI's model**. `groq` is the **inference host** at api.groq.com.
+> They are one letter apart, take different keys, and the mix-up costs an
+> afternoon. Groq keys begin `gsk_`; xAI keys begin `xai-`.
 
 | Provider | Key Required | Default Model |
 |----------|-------------|---------------|
@@ -264,9 +331,69 @@ Set `LLM_PROVIDER` to one of: `anthropic`, `openai`, `gemini`, `codex`, `openrou
 | `codex` | None (uses `~/.codex/auth.json`) | gpt-5.3-codex |
 | `minimax` | `LLM_API_KEY` | MiniMax-M2.5 |
 | `mistral` | `LLM_API_KEY` | mistral-large-latest |
+| `ollama` | None (local) — `OLLAMA_BASE_URL` to move the host | llama3.1:8b |
 | `grok` | `LLM_API_KEY` | grok-4-latest |
+| `groq` | `LLM_API_KEY` | openai/gpt-oss-120b |
+| `tarka` | `LLM_API_KEY` + `LLM_BASE_URL` | set explicitly |
 
 For Codex, run `npx @openai/codex login` to authenticate via your ChatGPT subscription.
+
+**Reasoning models.** Some models spend part of their token budget on hidden
+reasoning before emitting anything, so a budget sized for the answer alone comes
+back empty. `LLM_REASONING_EFFORT` (`low` | `medium` | `high`) controls this.
+Leave it unset to let the provider choose; Groq defaults the gpt-oss family to
+`low`. If briefs come back blank rather than wrong, this is the first setting to
+change.
+
+#### Multilingual briefs
+
+**Which provider you pick determines how many of the ~130 languages actually
+work.** Frontier models (Anthropic, Gemini, OpenAI) handle most of the list.
+Open-weight models served on Groq are fast and cheap but are materially weaker on
+low-resource languages — including nine of the ten Nepal languages the picker
+exists to serve: Maithili, Bhojpuri, Tharu, Tamang, Newar, Bajjika, Magar Dhut,
+Awadhi and Doteli.
+
+When a translation fails validation, Atlas keeps the Nepali original and the
+panel says so. That is the correct behaviour — a confident-sounding malformed
+brief on a page people use to decide whether to move is worse than Nepali they
+can partly read — but to a user it looks like translation is broken.
+
+To find out what your provider actually delivers, watch the logs:
+
+```
+[Digest] Keeping the original; Maithili could not be delivered
+```
+
+Each line names a language your model could not write. If that list is long, the
+provider is the cause, not the code. Options, in order of effort:
+
+1. Use a frontier provider for the flood desk.
+2. On Groq, try a larger or more multilingual model. Check what your key can
+   reach with `GET https://api.groq.com/openai/v1/models`.
+3. Raise `LLM_REASONING_EFFORT` if briefs come back *empty* rather than wrong.
+4. Trim `src/lib/nepal-languages.ts` to the languages you can actually serve.
+   Offering 130 and delivering 40 is exactly what that file's design note was
+   written to prevent.
+
+Groq's free tier is metered per minute. Atlas retries a `429` honouring
+`Retry-After`, but a burst of language switches on a busy page can still exhaust
+it — a paid tier is worth it if the multilingual panel matters to you.
+
+### Community layer (optional)
+
+| Key | How to Get |
+|-----|------------|
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project → Settings → API |
+| `SUPABASE_SECRET_KEY` | Supabase → API keys. **The secret key, never the publishable one** — these tables have row-level security on with no policies, so the browser-facing key reads nothing |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase → API keys, for browser-side reads |
+| `MINIO_ENDPOINT` / `MINIO_ROOT_USER` / `MINIO_ROOT_PASSWORD` | Your MinIO or S3-compatible object store |
+| `MINIO_BUCKET` | Bucket for uploaded photos (default `atlas`) |
+| `ATLAS_IP_SALT` | Random string. Salts hashed uploader IPs for rate limiting — set it, or the hashes are not worth much |
+| `ATLAS_MEDIA_SECRET` | Signs media proxy URLs |
+| `FLOOD_ADMIN_TOKEN` | Bearer token for the photo moderation endpoints |
+| `FLOOD_REFRESH_TOKEN` | Bearer token to trigger `/api/flood/refresh` externally |
+| `YOUTUBE_API_KEY` | *(Optional)* Enriches the flood desk's video panel |
 
 ### Telegram Bot + Alerts (optional)
 
@@ -296,7 +423,7 @@ For Codex, run `npx @openai/codex login` to authenticate via your ChatGPT subscr
 
 ### Without Any Keys
 
-Atlas works with zero API keys. Three of the five hazard sources need no authentication, including seismic and weather — the two highest-consequence layers. FIRMS reports `no_key` and the wildfire panel says so; ReliefWeb falls back to hazard-filtered HDX datasets. The rest of the sweep continues normally.
+Atlas works with zero API keys. Three of the five hazard sources need no authentication, including seismic and weather — the two highest-consequence layers. FIRMS reports `no_key` and the wildfire panel says so; ReliefWeb falls back to hazard-filtered HDX datasets. The community photo layer and the stored digests hide themselves. Briefs are available in Nepali and English. The rest of the sweep continues normally.
 
 ---
 
@@ -313,15 +440,16 @@ atlas/
 │   │   ├── bhotekoshi-flood/  # Public flood response page
 │   │   │   ├── BhotekoshiFloodView.tsx
 │   │   │   ├── _components/   # Shared across the flood desk's own routes
-│   │   │   └── <route>/       # Each sub-route keeps its view + _components beside it
+│   │   │   └── <route>/       # rescue, donate, report, media, situation, contacts
 │   │   ├── events/route.ts    # SSE stream for live push updates
 │   │   └── api/
 │   │       ├── data/route.ts  # Current synthesized hazard data (JSON)
 │   │       ├── news/route.ts  # Disaster-filtered news, 4-minute server cache
-│   │       └── flood/         # Flood content + live BIPAD gauges + photo proxy
+│   │       ├── bipad/route.ts # NDRRMA BIPAD Portal telemetry
+│   │       └── flood/         # Flood content, gauges, photos, digests, insights
 │   │
 │   ├── components/            # Reusable across routes — nothing route-specific
-│   │   ├── ui/                # shadcn/ui primitives (Button, Input, Select, …)
+│   │   ├── ui/                # shadcn/ui primitives (Button, Command, Popover, …)
 │   │   ├── FloodShell.tsx     # Chrome shared by every flood desk page
 │   │   ├── NepalSignalsMap.tsx    # D3 province map, canvas-rendered
 │   │   └── FloodDistrictMap.tsx   # Affected-district map with the flood path
@@ -338,6 +466,7 @@ atlas/
 │   │   ├── utils/
 │   │   │   ├── fetch.mjs      # safeFetch() — timeout, retries, abort, auto-JSON
 │   │   │   ├── nepal.mjs      # Geography: bbox, provinces, cities, seismic box
+│   │   │   ├── flood-scope.mjs
 │   │   │   └── env.mjs        # .env loader (no dotenv dependency)
 │   │   └── sources/
 │   │       ├── seismic.mjs    # USGS — each exports briefing() → structured data
@@ -345,12 +474,21 @@ atlas/
 │   │       ├── firms.mjs      # NASA FIRMS satellite fire detection
 │   │       ├── airquality.mjs # PM2.5, PM10 and US AQI across 10 cities
 │   │       ├── reliefweb.mjs  # UN OCHA, HDX fallback
+│   │       ├── bipad.mjs      # NDRRMA BIPAD Portal river gauges
+│   │       ├── ndrrma*.mjs    # NDRRMA bulletins and notices
+│   │       ├── rescue-portal.mjs  # OPMCM rescue register
+│   │       ├── youtube.mjs    # Flood desk video panel
 │   │       └── nepal-news.mjs # Hazard news aggregator behind /api/news
 │   │
 │   └── lib/
 │       ├── utils.ts           # cn() — the shadcn class merger
 │       ├── sweeper.ts         # Background sweep loop, SSE broadcast, alert dispatch
-│       ├── llm/               # LLM abstraction (8 providers, raw fetch, no SDKs)
+│       ├── flood-cron.ts      # The flood desk's own faster refresh cycle
+│       ├── news-digest.mjs    # Extractive briefs + the translation layer
+│       ├── news-digest-store.ts   # Stored ten-minute digests (Supabase)
+│       ├── nepal-languages.ts # The ~130 languages briefs are offered in
+│       ├── db.ts / storage.ts / supabase/   # Optional community layer
+│       ├── llm/               # LLM abstraction (11 providers, raw fetch, no SDKs)
 │       │   ├── provider.mjs   # Base class
 │       │   ├── ideas.mjs      # LLM-powered hazard reads
 │       │   └── index.mjs      # Factory: createLLMProvider()
@@ -365,8 +503,14 @@ atlas/
 ├── content/
 │   └── bhotekoshi-flood/      # Reviewed relief funds, helplines, figures
 │
+├── locales/                   # en, ne, fr UI strings
+├── supabase/migrations/       # Community layer schema
+├── test/                      # node:test suites (npm test)
+│
 ├── scripts/
 │   ├── diag.mjs               # Runtime and module diagnostics
+│   ├── migrate.mjs            # Apply Supabase migrations
+│   ├── check-no-any.mjs       # Fails the build on implicit `any`
 │   └── synthesize.mjs         # CLI wrapper for dashboard synthesis
 │
 ├── public/
@@ -387,6 +531,7 @@ atlas/
 - **Graceful degradation** — missing keys produce structured errors, not crashes. A source running on a fallback feed reports as degraded rather than healthy.
 - **Each source is standalone** — run `node src/apis/sources/seismic.mjs` to test any source independently
 - **Seasonality is context, not noise** — thresholds move with the monsoon and fire calendars
+- **Provenance over polish** — every panel says where its text came from and whether a model touched it. A summary that reads well is indistinguishable from a summary that is right, and the reader cannot tell them apart from the page.
 
 ---
 
@@ -401,6 +546,9 @@ Five hazard sources in the sweep. Three need no key.
 | **Open-Meteo Air Quality** | PM2.5, PM10 and US AQI across 10 Nepali cities | None |
 | **NASA FIRMS** | Satellite fire detection across all seven provinces, with fire-season and overnight-burn awareness | Free key |
 | **ReliefWeb** | UN OCHA declared disasters and situation reports for Nepal, hazard-filtered HDX fallback | Appname |
+
+The flood desk additionally reads the **NDRRMA BIPAD Portal** (river gauges,
+bulletins, notices) and the **OPMCM rescue portal**.
 
 ### Live hazard news aggregator
 
@@ -425,6 +573,9 @@ route and every news panel.
 - **Weather alerts are model output, not warnings.** Open-Meteo forecasts drive the flood and landslide thresholds. They are a reason to check DHM, never a substitute for it.
 - **FIRMS needs a free key.** Without `FIRMS_MAP_KEY` the wildfire layer reports `no_key` and stays empty.
 - **Hazard news panels go quiet out of season.** An empty wildfire panel in August is correct behaviour, not a failure — Nepal's fire season runs March to May.
+- **Language coverage is provider-dependent.** The picker offers ~130 languages; how many arrive translated depends on the model you configure, and low-resource languages fail most often. Atlas falls back to Nepali and says so rather than substituting silently.
+- **The stored ten-minute digests are English and Nepali only.** The ~130-language brief is the live AI Insights panel; the digest timeline and the page-level toggle are bilingual.
+- **The insights cache is in-process.** Fine on a single container. Behind multiple replicas each instance translates independently, which multiplies rate-limit pressure.
 
 ---
 
@@ -435,11 +586,16 @@ route and every news panel.
 | `npm run dev` | `next dev` | Start the dashboard with auto-refresh |
 | `npm run build` | `next build` | Production build |
 | `npm start` | `next start` | Serve the production build |
+| `npm test` | `node --test test/*.test.mjs` | Run the test suite |
+| `npm run verify` | — | No-any check + tests + build. **Run this before opening a PR.** |
+| `npm run check:no-any` | `node scripts/check-no-any.mjs` | Fail on implicit `any` |
 | `npm run sweep` | `node src/apis/briefing.mjs` | Run a single sweep, output JSON to stdout |
 | `npm run synthesize` | `node scripts/synthesize.mjs` | Synthesize `runs/latest.json` into dashboard shape |
 | `npm run brief:save` | `node src/apis/save-briefing.mjs` | Run sweep + save timestamped JSON |
+| `npm run db:migrate` | `node scripts/migrate.mjs` | Apply Supabase migrations |
 | `npm run diag` | `node scripts/diag.mjs` | Run diagnostics (Node version, imports, port check) |
 | `npm run clean` | `node scripts/clean.mjs` | Clear runtime data in `runs/` |
+| `npm run fresh-start` | — | Clean, build, and start |
 
 ---
 
@@ -448,12 +604,27 @@ route and every news panel.
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `PORT` | `3117` | Dashboard server port |
-| `REFRESH_INTERVAL_MINUTES` | `15` | Auto-refresh interval |
+| `PUBLIC_URL` | — | Public base URL, for absolute links in alerts |
+| `REFRESH_INTERVAL_MINUTES` | `15` | Sweep interval |
+| `FLOOD_REFRESH_INTERVAL_MINUTES` | `10` | Flood desk refresh interval (minimum 2) |
+| `FLOOD_REFRESH_TOKEN` | — | Bearer token for `POST /api/flood/refresh` |
 | `FIRMS_MAP_KEY` | disabled | NASA FIRMS satellite fire detection |
 | `RELIEFWEB_APPNAME` | `atlas` | Approved ReliefWeb appname |
-| `LLM_PROVIDER` | disabled | `anthropic`, `openai`, `gemini`, `codex`, `openrouter`, `minimax`, `mistral`, or `grok` |
-| `LLM_API_KEY` | — | API key (not needed for codex) |
+| `LLM_PROVIDER` | disabled | `anthropic`, `openai`, `gemini`, `codex`, `openrouter`, `minimax`, `mistral`, `ollama`, `grok`, `groq`, `tarka` |
+| `LLM_API_KEY` | — | API key (not needed for codex or ollama) |
 | `LLM_MODEL` | per-provider default | Override model selection |
+| `LLM_REASONING_EFFORT` | provider default | `low` / `medium` / `high` for reasoning models |
+| `LLM_BASE_URL` | — | Override a gateway provider's host (tarka) |
+| `OLLAMA_BASE_URL` | `http://localhost:11434` | Ollama host |
+| `NEXT_PUBLIC_SUPABASE_URL` | disabled | Community layer database |
+| `SUPABASE_SECRET_KEY` | — | Supabase secret key (**not** the publishable one) |
+| `MINIO_ENDPOINT` | disabled | Object store for uploaded photos |
+| `MINIO_BUCKET` | `atlas` | Bucket name |
+| `MINIO_PRESIGNED_EXPIRY_SECONDS` | `3600` | Presigned URL lifetime |
+| `ATLAS_IP_SALT` | — | Salt for hashed uploader IPs |
+| `ATLAS_MEDIA_SECRET` | — | Signs media proxy URLs |
+| `FLOOD_ADMIN_TOKEN` | — | Bearer token for photo moderation |
+| `YOUTUBE_API_KEY` | disabled | Enriches the flood desk video panel |
 | `TELEGRAM_BOT_TOKEN` | disabled | For Telegram alerts + bot commands |
 | `TELEGRAM_CHAT_ID` | — | Your Telegram chat ID |
 | `TELEGRAM_CHANNELS` | — | Extra channel IDs to broadcast to (comma-separated) |
@@ -477,8 +648,18 @@ Geographic coverage lives in `src/apis/utils/nepal.mjs` — the national boundin
 | `GET /bhotekoshi-flood` | Public flood response page |
 | `GET /api/data` | Current synthesized hazard data (JSON) |
 | `GET /api/news` | Disaster-filtered news (JSON). Params: `topic`, `window` (`1h\|6h\|24h\|48h\|7d\|all`), `limit`, `sourceCap` |
+| `GET /api/bipad` | NDRRMA BIPAD Portal telemetry |
 | `GET /api/flood` | Flood content plus live BIPAD river gauges (JSON, 2-minute cache) |
+| `GET /api/flood/insights?lang=` | Live news brief in any of ~130 languages (10-minute cache) |
+| `GET /api/flood/digest?lang=&limit=` | Stored ten-minute digest timeline (`en` / `ne`; needs Supabase) |
+| `GET /api/flood/situation` | Situation report and river gauge detail |
+| `GET /api/flood/persons` | Searchable rescue register |
+| `GET /api/flood/contacts` | District contacts and helplines |
+| `GET /api/flood/donations` | Human-verified relief funds and bank details |
+| `GET /api/flood/photos` | Crowdsourced ground photos (needs Supabase + MinIO) |
+| `GET /api/flood/gallery` · `/videos` · `/press` | Media panels |
 | `GET /api/flood/station-photo?id=` | HTTPS proxy for DHM gauge-station photos |
+| `POST /api/flood/refresh` | Trigger a flood desk refresh (`FLOOD_REFRESH_TOKEN`) |
 | `GET /events` | SSE stream for live push updates |
 
 ---
@@ -501,6 +682,35 @@ Expected. Sources needing keys return structured errors and the rest of the swee
 
 Check the season before assuming a bug. Wildfire is quiet outside March–May, air quality outside the winter inversion, and glacier hazard reporting is sparse year-round. The panels never relax the hazard or Nepal gates to fill themselves.
 
+### The brief says "It could not be written in \<language\>"
+
+That is the fallback working, not a crash. Atlas asked your model to translate,
+the response failed validation, and it kept the Nepali original rather than
+publishing something it could not vouch for. Check the logs for
+`[Digest] Keeping the original; <language> could not be delivered`.
+
+Common causes, in order:
+
+1. **No LLM configured.** Without a key only Nepali and English are possible.
+2. **The model cannot write that language.** Most likely with open-weight models
+   on low-resource languages. See [Multilingual briefs](#multilingual-briefs-1).
+3. **Rate limited.** Groq's free tier is metered per minute. Look for
+   `[Groq] 429 on attempt …` in the logs.
+4. **Empty responses on a reasoning model.** Look for `returned no content — the
+   … budget went to reasoning`. Lower `LLM_REASONING_EFFORT`.
+
+### The digest timeline is empty or always English
+
+The stored ten-minute digests need Supabase. Without it, `/api/flood/digest`
+returns `enabled: false` with `reason: "database_not_configured"` and the panel
+hides itself. The digest route is bilingual by design — the ~130-language brief
+is the AI Insights panel, not this one.
+
+### Photo uploads fail
+
+Both Supabase **and** MinIO must be configured. Check `ATLAS_MEDIA_SECRET` and
+`ATLAS_IP_SALT` are set, and that `npm run db:migrate` has been run.
+
 ### Telegram bot not responding to commands
 
 Make sure both `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` are set. The bot only responds to the configured chat ID. Verify your token with `curl https://api.telegram.org/bot<YOUR_TOKEN>/getMe`.
@@ -520,11 +730,17 @@ Make sure both `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` are set. The bot only
 
 Found a bug? Want to add a hazard source? PRs welcome. Each source is a standalone module in `src/apis/sources/` — export a `briefing()` function returning structured data and add it to the orchestrator in `src/apis/briefing.mjs`.
 
+Run `npm run verify` before opening a PR; CI runs the same thing.
+
 Source additions must be natural-hazard sources. Political, market, conflict and general-news feeds are out of scope for this build by design.
 
-Nepali-language review is especially welcome: much of the UI copy and the flood content is marked `pending_native_review`.
+**Where help is most useful right now:**
 
-Contributions are licensed under the AGPL-3.0. See [CONTRIBUTING.md](CONTRIBUTING.md) for scope rules and review expectations, and [SECURITY.md](SECURITY.md) for security reports or corrections to a relief fund or helpline.
+- **Nepali and other native-language review.** Much of the UI copy and the flood content is marked `pending_native_review`. This is the highest-value contribution to the project and needs no JavaScript at all.
+- **Language coverage testing.** If you speak one of the languages in `src/lib/nepal-languages.ts`, checking whether the brief actually reads correctly in it — and opening an issue when it doesn't — directly improves whether that language stays offered.
+- **Relief-fund and helpline verification.** Every record in `content/` carries a source and a verification date. Stale ones matter.
+
+Contributions are licensed under the AGPL-3.0. See [CONTRIBUTING.md](CONTRIBUTING.md) for scope rules and review expectations, [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) for community standards, and [SECURITY.md](SECURITY.md) for security reports or corrections to a relief fund or helpline.
 
 ## Contact
 
@@ -533,7 +749,7 @@ Ancoda Atlas is built and maintained by **Ancoda Labs**.
 For partnerships, integrations, security reports, or corrections to a relief fund
 or helpline: `research@ancodalabs.com`.
 
-For bugs and feature requests, please use GitHub Issues.
+For bugs and feature requests, please use [GitHub Issues](https://github.com/ancodalabs/atlas/issues).
 
 ---
 
