@@ -133,8 +133,8 @@ export default function FloodMediaView() {
         </div>
         <p className="fl-note">
           {lang === 'ne'
-            ? 'युट्युबबाट नेपालका र प्रमुख अन्तर्राष्ट्रिय समाचार च्यानलहरूको प्रत्यक्ष प्रसारण।'
-            : 'Live broadcast of leading Nepali and international news channels streamed directly from YouTube.'}
+            ? 'नेपाली समाचार च्यानलहरूको प्रत्यक्ष प्रसारण, युट्युबबाट सिधै।'
+            : 'Live broadcast from Nepali news channels, streamed directly from YouTube.'}
         </p>
 
         {!videoFeed ? (

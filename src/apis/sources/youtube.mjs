@@ -179,13 +179,21 @@ export async function getFloodVideos({ channels = DEFAULT_CHANNELS, limit = 24, 
   const fetchedAt = new Date().toISOString();
   const errors = [];
 
+  // Nepali broadcasters only.
+  //
+  // The list used to carry Al Jazeera, DW, Republic World and India Global
+  // Review. A rolling international channel is almost never on this flood when
+  // a reader opens it — it is on whatever the world is covering that hour — so
+  // it took space from the broadcasters actually reporting from the corridor
+  // and lent a foreign anchor the authority of appearing on a Nepal flood desk.
+  //
+  // Every id here is one of DEFAULT_CHANNELS above, already verified. A channel
+  // that is not streaming simply returns nothing.
   const liveChannels = [
     { id: 'UC3yDoaqQzOd1bNP74ZrGPTA', name: 'Kantipur TV HD Live', channelName: 'Kantipur TV' },
     { id: 'UCjG2HX7jfwqIjzTlaF1CPGA', name: 'News24 Nepal Live', channelName: 'News24' },
-    { id: 'UCNye-w-v_C-fjh7W023RypQ', name: 'Al Jazeera English Live', channelName: 'Al Jazeera' },
-    { id: 'UCknLrEdhRCp1gqcb7cyYA_Q', name: 'DW News Live', channelName: 'DW News' },
-    { id: 'UCwqusr8YDwM-3mEYTDeJHzw', name: 'Republic World Live', channelName: 'Republic World' },
-    { id: 'UC83iGbaOhZR8AWNYYNzSNjg', name: 'India Global Review Live', channelName: 'India Global Review' }
+    { id: 'UCo4cuctdb-1YdZNgWEVZGwA', name: 'Onlinekhabar Live', channelName: 'Onlinekhabar' },
+    { id: 'UCg04d_B2CR0Di1rs7mSu6JQ', name: 'Nepal News Live', channelName: 'Nepal News' },
   ];
 
   const [apiResults, channelIdLists, liveStreamsResults] = await Promise.all([
