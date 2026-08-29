@@ -12,6 +12,7 @@ import { FloodNav } from '@/components/FloodShell';
 import FloodSummary from '@/app/bhotekoshi-flood/_components/FloodSummary';
 import FloodOfficial from '@/app/bhotekoshi-flood/_components/FloodOfficial';
 import { useFloodLang } from '@/hooks/use-flood-lang';
+import { ageFrom } from '@/lib/relative-time';
 import type { FloodDeskPayload, FloodPhoto, FloodPhotoFeed } from '@/types';
 
 // The overview of the Rasuwa–Bhotekoshi flood desk.
@@ -37,8 +38,16 @@ const T = {
     ne: 'रसुवा, नुवाकोट र धादिङमा सबैभन्दा बढी क्षति भयो। धर्के रेखाले पानी बगेको बाटो देखाउँछ।',
   },
   whatHappened: { en: 'What happened', ne: 'के भयो' },
-  alertsTitle: { en: 'Warnings in force', ne: 'लागू रहेका चेतावनी' },
   source: { en: 'Source', ne: 'स्रोत' },
+  mapLayerPath: { en: 'Districts and the water’s course', ne: 'जिल्ला र पानीको बाटो' },
+  mapLayerGauges: { en: 'River gauges', ne: 'नदी मापन केन्द्र' },
+  mapLayerPhotos: { en: 'Ground reports', ne: 'जनताका तस्बिर' },
+  mapPhotoSource: {
+    en: 'Photographs sent in by the public, placed where each was taken',
+    ne: 'जनताले पठाएका तस्बिर, खिचिएकै स्थानमा राखिएको',
+  },
+  mapReviewed: { en: 'reviewed', ne: 'जाँचिएको' },
+  mapRead: { en: 'read', ne: 'पढिएको' },
   loading: { en: 'Loading…', ne: 'लोड हुँदै…' },
   moreTitle: { en: 'The rest of the desk', ne: 'डेस्कका अन्य खण्ड' },
   donate: { en: 'Give safely', ne: 'सुरक्षित सहयोग' },
@@ -118,6 +127,7 @@ export default function BhotekoshiFloodView() {
     : '';
   const marquee = [safety, advisoryText].filter(Boolean).join(' • ');
   const sitrep = data?.sitrep || null;
+
 
   const photos: FloodPhoto[] = photoFeed?.photos || [];
   const mapPhotos: MapPhoto[] = photos
@@ -216,6 +226,44 @@ export default function BhotekoshiFloodView() {
             lang={lang}
           />
           <p className="fl-note">{t('mapHint')}</p>
+
+          {/* Where each layer of pins comes from.
+              The three do not share a provenance and must not look as though
+              they do: the course of the water is a reviewed reading of a DHM
+              situation report, the gauges are live off BIPAD every few minutes,
+              and the green dots are photographs the public sent us. A reader
+              deciding whether to trust a pin needs to know which of those it
+              is. */}
+          <div className="fl-map-sources">
+            <p className="fl-note">
+              <b>{t('mapLayerPath')}</b>{' — '}
+              {(data?.floodPath?.sources || []).map((src, i) => (
+                <a key={i} href={src.url} target="_blank" rel="noopener noreferrer">
+                  {src.label} &#8599;
+                </a>
+              ))}
+              {data?.floodPath?.last_updated && (
+                <span className="fl-blank">
+                  {t('mapReviewed')} {data.floodPath.last_updated}
+                </span>
+              )}
+            </p>
+            <p className="fl-note">
+              <b>{t('mapLayerGauges')}</b>{' — '}
+              <a href="https://bipadportal.gov.np/" target="_blank" rel="noopener noreferrer">
+                {lang === 'ne' ? 'जल तथा मौसम विज्ञान विभाग · बिपद् पोर्टल' : 'DHM · BIPAD Portal'} &#8599;
+              </a>
+              <span className="fl-blank">
+                {t('mapRead')} {ageFrom(data?.river?.fetchedAt, lang)}
+              </span>
+            </p>
+            {mapPhotos.length > 0 && (
+              <p className="fl-note">
+                <b>{t('mapLayerPhotos')}</b>{' — '}
+                <span className="fl-blank">{t('mapPhotoSource')}</span>
+              </p>
+            )}
+          </div>
           </div>
 
           <div className="fl-overview-aside">
@@ -237,26 +285,6 @@ export default function BhotekoshiFloodView() {
           </aside>
         )}
 
-        {/* Warnings still in force, before the retrospective figures. */}
-        {(data?.alerts?.alerts || []).length > 0 && (
-          <section className="fl-sec">
-            <div className="fl-sec-head">
-              <span>{lang === 'ne' ? 'चेतावनी' : 'Warnings'}</span>
-              <h2>{t('alertsTitle')}</h2>
-            </div>
-            {(data?.alerts?.alerts || []).map(a => (
-              <aside key={a.id} className={`fl-alert s-${a.severity}`}>
-                <strong>{L(a, 'title')}</strong>
-                <p>{L(a, 'body')}</p>
-                <a href={a.source_url} target="_blank" rel="noopener noreferrer">
-                  {a.source} &#8599;
-                </a>
-              </aside>
-            ))}
-            {data?.alerts && <p className="fl-note">{L(data.alerts, 'note')}</p>}
-          </section>
-        )}
-
         {/* The summary of everything. */}
         {sitrep ? (
           <FloodSummary
@@ -264,6 +292,9 @@ export default function BhotekoshiFloodView() {
             lang={lang}
             whatHappened={data?.whatHappened || null}
             portal={data?.portal || null}
+            corridor={data?.corridor || null}
+            rescueSummary={data?.rescueSummary || null}
+            rescueFetchedAt={data?.rescueFetchedAt || null}
           />
         ) : (
           <p className="fl-empty">{t('loading')}</p>

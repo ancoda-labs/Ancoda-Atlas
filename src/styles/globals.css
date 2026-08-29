@@ -1745,8 +1745,20 @@ body.low-perf .logo-ring::before, body.low-perf .logo-ring::after, body.low-perf
   position: fixed; inset: 0; z-index: 1400; background: rgba(4,6,10,0.94);
   display: flex; align-items: center; justify-content: center; padding: 24px;
 }
-.fl-lightbox > div { background: #fff; padding: 24px; max-width: 370px; width: 100%; }
-.fl-lightbox img { width: 100%; height: auto; display: block; }
+/* The dialog exists to be scanned from, so the code gets as much of the
+   viewport as it can have while leaving room for the payee name, the
+   check-the-name warning and the close button underneath. Capped against the
+   short side of the screen so a landscape phone or a laptop cannot push the
+   button off the bottom. */
+.fl-lightbox > div {
+  background: #fff; padding: 26px;
+  max-width: min(620px, 92vw); width: 100%;
+  max-height: 92vh; overflow-y: auto;
+}
+.fl-lightbox img {
+  width: 100%; height: auto; display: block;
+  max-height: 62vh; object-fit: contain; margin: 0 auto;
+}
 .fl-payee {
   margin: 15px 0 0; font-family: var(--mono); font-size: 12.5px;
   font-weight: 700; letter-spacing: 0.04em; color: #10171f; word-break: break-word;
@@ -1954,6 +1966,7 @@ body.low-perf .logo-ring::before, body.low-perf .logo-ring::after, body.low-perf
 }
 .fl-tiles .t-critical dd { color: var(--red); }
 .fl-tiles .t-warning dd { color: #b06f00; }
+.fl-tiles .t-positive dd { color: var(--green); }
 .fl-tiles dt {
   margin: 9px 0 0; font-family: var(--mono); font-size: 9.5px;
   letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3); line-height: 1.45;
@@ -1996,6 +2009,8 @@ body.low-perf .logo-ring::before, body.low-perf .logo-ring::after, body.low-perf
   font-size: 9.5px; letter-spacing: 0.12em; text-transform: uppercase;
   color: var(--ink-3); margin-top: 3px;
 }
+/* A country name inside the badge keeps its own case — "FOREIGN (India)". */
+.fl-register tbody th em span { text-transform: none; letter-spacing: 0.04em; }
 .fl-register td { padding: 13px 16px 13px 0; vertical-align: top; font-size: 14px; color: var(--ink-2); }
 .fl-register td:last-child { padding-right: 0; }
 .fl-register td.num { text-align: right; font-family: var(--mono); font-size: 12px; color: var(--ink-3); white-space: nowrap; }
@@ -3835,4 +3850,42 @@ body.dark-theme .fl {
   line-height: 1.4;
 }
 
+/* ── Overview: full-width portal band, and the paired official panes ──────── */
+
+/* The portal counters sit on their own row now, so the cards can use the
+   whole measure instead of a half-width column. */
+.fl-portal-wide { margin-top: 0; padding-top: 0; border-top: 0; }
+.fl-portal-wide .fl-figs { grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
+
+/* Two official feeds, equal height, each scrolling inside itself rather than
+   letting the longer one set the height of the row. */
+/* Equal columns here, unlike the 1.25fr/1fr split the rest of the desk uses —
+   neither feed is the subordinate one. */
+.fl-official-pair { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: stretch; }
+.fl-official-pane { display: flex; flex-direction: column; min-width: 0; }
+.fl-official-scroll {
+  flex: 1 1 auto;
+  max-height: 420px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--rule-2) transparent;
+  /* Room for the scrollbar so text never sits under it. */
+  padding-right: 10px;
+}
+.fl-official-scroll::-webkit-scrollbar { width: 6px; }
+.fl-official-scroll::-webkit-scrollbar-thumb { background: var(--rule-2); border-radius: 3px; }
+.fl-official-scroll .fl-alerts { margin-top: 0; }
+
+/* On one column the panes stack, and a capped height helps less than it hurts. */
+@media (max-width: 860px) {
+  .fl-official-scroll { max-height: 320px; }
+}
+
+/* Per-layer provenance under the overview map. Tighter than a normal note
+   stack: three short lines that read as one block, not three paragraphs. */
+.fl-map-sources { margin-top: 10px; padding-top: 12px; border-top: 1px solid var(--rule); }
+.fl-map-sources .fl-note { margin: 0 0 5px; font-size: 12px; }
+.fl-map-sources .fl-note:last-child { margin-bottom: 0; }
+.fl-map-sources b { color: var(--ink-2); font-weight: 600; }
+.fl-map-sources .fl-blank { color: var(--ink-3); }
 

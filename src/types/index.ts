@@ -381,6 +381,10 @@ export interface FloodOrg extends Bilingual<'description'> {
   url: string;
   status?: string;
   moderation?: string;
+  /** Where the desk checked that this organisation is running an appeal. */
+  source_verification_url?: string;
+  /** The date it was last checked against that source. */
+  last_verified?: string;
 }
 
 export interface SourceRef {

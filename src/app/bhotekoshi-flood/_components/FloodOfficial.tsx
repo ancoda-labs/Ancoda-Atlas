@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import type { Lang } from '@/hooks/use-flood-lang';
 import { ageFrom } from '@/lib/relative-time';
 import type { FloodOfficialFeed, GovEffort, NdrrmaBulletin } from '@/types';
@@ -26,7 +26,6 @@ const T = {
     ne: 'एनडीआरआरएमएको दैनिक विपद् बुलेटिनले यो बाढी मात्र होइन, सिंगो देशलाई समेट्छ। करिडोरका तथ्यांकसँग जोडेर होइन, छेउछाउ राखेर पढ्नुहोस्।',
   },
   openPdf: { en: 'Open the full bulletin (PDF)', ne: 'पूरा बुलेटिन खोल्नुहोस् (PDF)' },
-  more: { en: 'Show more', ne: 'थप देखाउनुहोस्' },
   read: { en: 'Read', ne: 'पढिएको' },
 };
 
@@ -44,94 +43,96 @@ export default function FloodOfficial({
   lang: Lang;
 }) {
   const t = (key: keyof typeof T) => T[key][lang];
-  const [expanded, setExpanded] = useState(false);
 
   const efforts = govEfforts?.items || [];
   const bulletin = dailyBulletin?.items?.[0] || null;
-  const shown = expanded ? efforts : efforts.slice(0, 4);
 
   if (!efforts.length && !bulletin) return null;
 
   return (
     <section className="fl-sec">
-      {bulletin && (
-        <>
-          <div className="fl-sec-head">
-            <span>{t('eyebrow')}</span>
-            <h2>{t('bulletinTitle')}</h2>
-          </div>
-          <p className="fl-note">{t('bulletinIntro')}</p>
-          <div className="fl-place-note">
-            <h3>{pick(lang, bulletin.title, bulletin.titleNe) || bulletin.date}</h3>
-            <p>{pick(lang, bulletin.summary, bulletin.summaryNe)}</p>
-            {bulletin.pdfUrl && (
+      {/* The two official feeds run side by side rather than stacked. Both are
+          open-ended — the effort log grows all day — so each pane is capped and
+          scrolls inside itself, which keeps the pair the same height and stops
+          one of them pushing the rest of the page down. */}
+      <div className="fl-split fl-official-pair">
+        {bulletin && (
+          <div className="fl-official-pane">
+            <div className="fl-sec-head">
+              <span>{t('eyebrow')}</span>
+              <h2>{t('bulletinTitle')}</h2>
+            </div>
+            <p className="fl-note">{t('bulletinIntro')}</p>
+            <div className="fl-official-scroll">
+              <div className="fl-place-note">
+                <h3>{pick(lang, bulletin.title, bulletin.titleNe) || bulletin.date}</h3>
+                <p>{pick(lang, bulletin.summary, bulletin.summaryNe)}</p>
+                {bulletin.pdfUrl && (
+                  <p className="fl-note">
+                    <a href={bulletin.pdfUrl} target="_blank" rel="noopener noreferrer">
+                      {t('openPdf')} &#8599;
+                    </a>
+                  </p>
+                )}
+              </div>
+            </div>
+            {dailyBulletin && (
               <p className="fl-note">
-                <a href={bulletin.pdfUrl} target="_blank" rel="noopener noreferrer">
-                  {t('openPdf')} &#8599;
+                {t('read')} {ageFrom(dailyBulletin.fetchedAt, lang)}
+                {' · '}
+                <a href={dailyBulletin.source.url} target="_blank" rel="noopener noreferrer">
+                  {dailyBulletin.source.label} &#8599;
                 </a>
               </p>
             )}
           </div>
-          {dailyBulletin && (
-            <p className="fl-note">
-              {t('read')} {ageFrom(dailyBulletin.fetchedAt, lang)}
-              {' · '}
-              <a href={dailyBulletin.source.url} target="_blank" rel="noopener noreferrer">
-                {dailyBulletin.source.label} &#8599;
-              </a>
-            </p>
-          )}
-        </>
-      )}
+        )}
 
-      {efforts.length > 0 && (
-        <>
-          <div className="fl-sec-head" style={{ marginTop: bulletin ? '32px' : 0 }}>
-            <span>{t('eyebrow')}</span>
-            <h2>{t('govTitle')}</h2>
-            <em>{efforts.length}</em>
+        {efforts.length > 0 && (
+          <div className="fl-official-pane">
+            <div className="fl-sec-head">
+              <span>{t('eyebrow')}</span>
+              <h2>{t('govTitle')}</h2>
+              <em>{efforts.length}</em>
+            </div>
+            <p className="fl-note">{t('govIntro')}</p>
+            {/* Every entry, not the first four: the pane scrolls, so there is
+                nothing for a "show more" button to reveal. */}
+            <div className="fl-official-scroll">
+              <ul className="fl-alerts">
+                {efforts.map(e => {
+                  const body = pick(lang, e.bodyEn, e.bodyNe);
+                  return (
+                    <li key={e.id}>
+                      <h3>{pick(lang, e.title, e.titleNe)}</h3>
+                      {body && <p style={{ whiteSpace: 'pre-line' }}>{body}</p>}
+                      <span className="fl-report-meta">
+                        {e.agency && <b>{e.agency}</b>}
+                        {e.district && <span>{e.district}</span>}
+                        <time>{ageFrom(e.createdAt, lang)}</time>
+                        {e.link && (
+                          <a href={e.link} target="_blank" rel="noopener noreferrer">
+                            &#8599;
+                          </a>
+                        )}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+            {govEfforts && (
+              <p className="fl-note">
+                {t('read')} {ageFrom(govEfforts.fetchedAt, lang)}
+                {' · '}
+                <a href={govEfforts.source.url} target="_blank" rel="noopener noreferrer">
+                  {govEfforts.source.label} &#8599;
+                </a>
+              </p>
+            )}
           </div>
-          <p className="fl-note">{t('govIntro')}</p>
-          <ul className="fl-alerts">
-            {shown.map(e => {
-              const body = pick(lang, e.bodyEn, e.bodyNe);
-              return (
-                <li key={e.id}>
-                  <h3>{pick(lang, e.title, e.titleNe)}</h3>
-                  {body && <p style={{ whiteSpace: 'pre-line' }}>{body}</p>}
-                  <span className="fl-report-meta">
-                    {e.agency && <b>{e.agency}</b>}
-                    {e.district && <span>{e.district}</span>}
-                    <time>{ageFrom(e.createdAt, lang)}</time>
-                    {e.link && (
-                      <a href={e.link} target="_blank" rel="noopener noreferrer">
-                        &#8599;
-                      </a>
-                    )}
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
-          {efforts.length > 4 && !expanded && (
-            <button
-              onClick={() => setExpanded(true)}
-              className="mx-auto mt-4 block rounded border border-border bg-background px-6 py-2.5 text-[15px] font-semibold text-foreground hover:border-border-bright"
-            >
-              {t('more')}
-            </button>
-          )}
-          {govEfforts && (
-            <p className="fl-note">
-              {t('read')} {ageFrom(govEfforts.fetchedAt, lang)}
-              {' · '}
-              <a href={govEfforts.source.url} target="_blank" rel="noopener noreferrer">
-                {govEfforts.source.label} &#8599;
-              </a>
-            </p>
-          )}
-        </>
-      )}
+        )}
+      </div>
     </section>
   );
 }
