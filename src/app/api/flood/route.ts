@@ -51,7 +51,14 @@ export async function GET() {
   if (!pending) {
     pending = build()
       .then(data => {
-        cache = { data, at: Date.now() };
+        // Only a payload built from a warmed store is worth keeping. On a cold
+        // instance the first request arrives while the refresh cycle is still
+        // running, so the build captures nulls — and caching that pinned the
+        // overview's live band, the official feeds and the portal counters to
+        // empty for two minutes after every deploy, long after the figures
+        // themselves had landed. An unwarmed build is served once and rebuilt
+        // on the next request instead.
+        if (getFloodStore().lastRunAt) cache = { data, at: Date.now() };
         return data;
       })
       .finally(() => {
@@ -61,9 +68,11 @@ export async function GET() {
 
   try {
     const data = await pending;
+    const warm = Boolean(getFloodStore().lastRunAt);
     const res = NextResponse.json(data);
-    res.headers.set('X-Atlas-Cache', 'miss');
-    return cacheFor(res, { edge: CACHE_TTL_S });
+    res.headers.set('X-Atlas-Cache', warm ? 'miss' : 'cold');
+    // Not cached at the edge either, for the same reason.
+    return warm ? cacheFor(res, { edge: CACHE_TTL_S }) : noStore(res);
   } catch (err) {
     const message = errorMessage(err);
     console.error('[Flood API] Failed:', message);
