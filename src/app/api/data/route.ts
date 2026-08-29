@@ -21,5 +21,9 @@ export async function GET() {
       NextResponse.json({ meta: { sourcesOk: 0, sourcesQueried: 0, totalDurationMs: 0 } }),
     );
   }
-  return cacheFor(NextResponse.json(data), { edge: CACHE_TTL_S });
+  // `sweeping` rides on the meta rather than the snapshot, so a page can say
+  // "updating now" instead of reporting the last sweep as overdue while the
+  // next one is still running.
+  const withState = { ...data, meta: { ...data.meta, sweeping: sweeper.sweepInProgress } };
+  return cacheFor(NextResponse.json(withState), { edge: CACHE_TTL_S });
 }

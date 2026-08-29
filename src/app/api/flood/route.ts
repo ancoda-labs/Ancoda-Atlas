@@ -62,6 +62,7 @@ async function build(): Promise<FloodDeskPayload> {
     refreshedAt: store.lastRunAt,
     nextRefreshAt: store.nextRunAt,
     refreshIntervalMinutes: store.intervalMinutes,
+    refreshing: isFloodRefreshRunning(),
     generatedAt: new Date().toISOString(),
   };
 }

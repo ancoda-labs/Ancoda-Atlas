@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import NepalSignalsMap from '@/components/NepalSignalsMap';
-import { useTick } from '@/hooks/use-desk-refresh';
+import { nextUpdateLabel, useDeskRefresh, useTick } from '@/hooks/use-desk-refresh';
 import { ageFrom } from '@/lib/relative-time';
 import BhotekoshiFloodButton from '@/app/_components/BhotekoshiFloodButton';
 import type {
@@ -394,6 +394,25 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
     };
   }, []);
 
+  // A polling fallback beside the stream.
+  //
+  // The dashboard used to depend on SSE alone: if the stream never delivered —
+  // a proxy that buffers event-streams, a dropped connection the browser does
+  // not retry, an instance that has not swept yet — the page kept whatever it
+  // was rendered with and never moved again, with nothing on screen to say so.
+  // Polling the same snapshot on a short cycle makes that unnoticeable rather
+  // than terminal, and costs one cached response every couple of minutes.
+  useDeskRefresh(
+    React.useCallback(() => {
+      fetch('/api/data')
+        .then(r => (r.ok ? r.json() : null))
+        .then(d => {
+          if (d?.meta) setD(d);
+        })
+        .catch(() => {});
+    }, []),
+  );
+
   // Fetch live hazard news on load & newsWindow changes
   const fetchAllNews = async () => {
     NEWS_PANELS.forEach(async (cfg) => {
@@ -529,6 +548,12 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
   };
 
   const ts = new Date(meta.timestamp || new Date());
+  // The sweep states when it ran and how often it repeats, not when it next
+  // runs; the countdown beside the age is derived from the two.
+  const nextSweepAt =
+    meta.timestamp && meta.refreshIntervalMinutes
+      ? new Date(new Date(meta.timestamp).getTime() + meta.refreshIntervalMinutes * 60_000).toISOString()
+      : null;
   const formattedDate = ts.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase();
   const formattedTime = ts.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
 
@@ -615,8 +640,8 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
           <span className="meta-pill fresh-pill" suppressHydrationWarning>
             <i aria-hidden="true" />
             Data updated <span className="v">{ageFrom(meta.timestamp, 'en')}</span>
-            {meta.refreshIntervalMinutes ? (
-              <em> · every {meta.refreshIntervalMinutes}m</em>
+            {nextSweepAt && nextUpdateLabel(nextSweepAt, 'en', meta.sweeping) ? (
+              <em> · {nextUpdateLabel(nextSweepAt, 'en', meta.sweeping)}</em>
             ) : null}
           </span>
           <span className="meta-pill" suppressHydrationWarning>

@@ -304,6 +304,22 @@ const PERSON_MAX_PAGES = 60;
 /** Breathing room between register pages, so a sweep is not rate-limited. */
 const PERSON_PAGE_PAUSE_MS = 250;
 
+/**
+ * How long the whole register sweep may take before it settles for what it has.
+ *
+ * Seventeen pages, each able to spend 20s on a timeout and retry once, is a
+ * worst case of roughly twelve minutes — longer than the refresh interval
+ * itself. A cycle stuck in that state never finishes, so the desk's timestamp
+ * stops moving and every page reports figures that look increasingly overdue
+ * while the schedule quietly skips tick after tick with "cycle already in
+ * progress".
+ *
+ * A partial register is far better than a stalled desk: the caller reports how
+ * many rows it actually read against the total the portal states, and the page
+ * says so. Ninety seconds is comfortably more than a healthy sweep needs.
+ */
+const PERSON_SWEEP_BUDGET_MS = 90_000;
+
 /** One person report, as the portal published it. */
 function personRow(row, fallbackType) {
   return {
@@ -339,7 +355,15 @@ function personRow(row, fallbackType) {
 async function collectPersons(query) {
   const items = [];
   let total = null;
+  const deadline = Date.now() + PERSON_SWEEP_BUDGET_MS;
   for (let page = 1; page <= PERSON_MAX_PAGES; page++) {
+    if (Date.now() > deadline) {
+      console.warn(
+        `[Rescue portal register] Budget spent after ${items.length} of ${total ?? '?'} rows — ` +
+          'returning a partial register rather than holding up the cycle',
+      );
+      break;
+    }
     // A short pause between pages. Seventeen requests fired back to back is
     // enough to earn a 429 from this portal — "Too many requests. Please slow
     // down." — which costs the whole register for that cycle. Four seconds

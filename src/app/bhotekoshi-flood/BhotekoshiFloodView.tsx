@@ -14,7 +14,7 @@ import FloodOfficial from '@/app/bhotekoshi-flood/_components/FloodOfficial';
 import { useFloodLang } from '@/hooks/use-flood-lang';
 import { ageFrom } from '@/lib/relative-time';
 import type { FloodDeskPayload, FloodPhoto, FloodPhotoFeed } from '@/types';
-import { DESK_POLL_MS, useTick } from '@/hooks/use-desk-refresh';
+import { DESK_POLL_MS, nextUpdateLabel, useTick } from '@/hooks/use-desk-refresh';
 
 // The overview of the Rasuwa–Bhotekoshi flood desk.
 //
@@ -200,13 +200,9 @@ export default function BhotekoshiFloodView() {
               <>
                 {lang === 'ne' ? 'तथ्यांक अद्यावधिक' : 'Data updated'}{' '}
                 <b>{ageFrom(data.refreshedAt, lang)}</b>
-                {data.refreshIntervalMinutes ? (
-                  <span>
-                    {lang === 'ne'
-                      ? ` · हरेक ${data.refreshIntervalMinutes} मिनेटमा ताजा हुन्छ`
-                      : ` · refreshes every ${data.refreshIntervalMinutes} minutes`}
-                  </span>
-                ) : null}
+                {nextUpdateLabel(data.nextRefreshAt, lang, data.refreshing) && (
+                  <span> · {nextUpdateLabel(data.nextRefreshAt, lang, data.refreshing)}</span>
+                )}
               </>
             ) : (
               <span>

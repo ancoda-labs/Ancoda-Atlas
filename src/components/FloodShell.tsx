@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useDeskRefresh, useTick } from '@/hooks/use-desk-refresh';
+import { nextUpdateLabel, useDeskRefresh, useTick } from '@/hooks/use-desk-refresh';
 import { ageFrom } from '@/lib/relative-time';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -144,13 +144,9 @@ export default function FloodShell({ lang, setLang, kicker, title, standfirst, c
               <>
                 {lang === 'ne' ? 'तथ्यांक अद्यावधिक' : 'Data updated'}{' '}
                 <b>{ageFrom(desk.refreshedAt, lang)}</b>
-                {desk.refreshIntervalMinutes ? (
-                  <span>
-                    {lang === 'ne'
-                      ? ` · हरेक ${desk.refreshIntervalMinutes} मिनेटमा ताजा हुन्छ`
-                      : ` · refreshes every ${desk.refreshIntervalMinutes} minutes`}
-                  </span>
-                ) : null}
+                {nextUpdateLabel(desk.nextRefreshAt, lang, desk.refreshing) && (
+                  <span> · {nextUpdateLabel(desk.nextRefreshAt, lang, desk.refreshing)}</span>
+                )}
               </>
             ) : (
               <span>
