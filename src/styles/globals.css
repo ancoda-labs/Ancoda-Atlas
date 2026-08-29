@@ -3850,6 +3850,32 @@ body.dark-theme .fl {
   line-height: 1.4;
 }
 
+/* ── The portal's own donation channels ──────────────────────────────────
+   After de-duplication this table is usually the single QR-only channel the
+   portal publishes, so it is laid out as one clear payee and one scannable
+   code rather than as another row in a bank list: the name reads at heading
+   size, and the QR is large enough to scan off the screen and centred in its
+   column so it does not sit hard against the page edge. */
+.fl-portal-banks th[scope='row'] {
+  width: 46%;
+  font-size: 19px;
+  font-weight: 600;
+  line-height: 1.35;
+  padding-top: 22px;
+  padding-bottom: 22px;
+  vertical-align: middle;
+}
+.fl-portal-banks td { vertical-align: middle; }
+.fl-portal-banks .fl-qr-cell { width: 260px; text-align: center; }
+.fl-portal-banks .fl-qr-cell button { padding: 10px; margin: 0 auto; }
+.fl-portal-banks .fl-qr-cell button img { width: 230px; height: 230px; }
+
+@media (max-width: 700px) {
+  .fl-portal-banks th[scope='row'] { font-size: 17px; }
+  .fl-portal-banks .fl-qr-cell { width: 180px; }
+  .fl-portal-banks .fl-qr-cell button img { width: 160px; height: 160px; }
+}
+
 /* ── Situation tab: capped, scrollable panes ─────────────────────────────
    Three lists on this page are open-ended — live alerts, portal filings and
    the incident register all grow through the day. Capping each one and letting
