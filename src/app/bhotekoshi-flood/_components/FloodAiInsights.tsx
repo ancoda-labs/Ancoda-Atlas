@@ -12,6 +12,7 @@ import {
   isWireLanguage,
 } from '@/lib/nepal-languages';
 import { Button } from '@/components/ui/button';
+import { DESK_POLL_MS } from '@/hooks/use-desk-refresh';
 import {
   Command,
   CommandEmpty,
@@ -93,7 +94,7 @@ export default function FloodAiInsights({ lang }: Props) {
   useEffect(() => {
     setFeed(null);
     load(briefLang);
-    const id = setInterval(() => load(briefLang), 10 * 60 * 1000);
+    const id = setInterval(() => load(briefLang), DESK_POLL_MS);
     return () => clearInterval(id);
   }, [briefLang, load]);
 

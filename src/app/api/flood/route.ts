@@ -29,6 +29,11 @@ const COLD_TTL_MS = 10 * 1000;
 let cache: { data: FloodDeskPayload; at: number; warm: boolean } | null = null;
 let pending: Promise<FloodDeskPayload> | null = null;
 
+/** The cycle's live state, laid over a payload that may have been cached. */
+function withLiveState(data: FloodDeskPayload): FloodDeskPayload {
+  return { ...data, refreshing: isFloodRefreshRunning() };
+}
+
 async function build(): Promise<FloodDeskPayload> {
   const content = loadFloodContent();
   // Gauges come from the ten-minute refresh; the direct fetch is the cold-start
@@ -75,9 +80,17 @@ export async function GET() {
   // was cold was suddenly judged with the full two-minute window and served
   // with refreshedAt still null — the exact staleness this exists to prevent.
   if (cache && Date.now() - cache.at < (cache.warm ? CACHE_TTL_MS : COLD_TTL_MS)) {
-    const res = NextResponse.json(cache.data);
+    // Everything in a cached payload describes the last cycle and is still
+    // true. Whether one is running right now is not — it is a fact about this
+    // instant, and served from a two-minute cache it would be stale for most
+    // of the cycle it is meant to report. The page uses it to explain why the
+    // figures are older than the interval ("updating now" rather than a bare
+    // eleven minutes), so it is answered fresh on every request.
+    const res = NextResponse.json(withLiveState(cache.data));
     res.headers.set('X-Atlas-Cache', 'hit');
-    return cacheFor(res, { edge: CACHE_TTL_S });
+    // A response whose refreshing flag is only true for a moment must not be
+    // held by a shared cache for two minutes.
+    return isFloodRefreshRunning() ? noStore(res) : cacheFor(res, { edge: CACHE_TTL_S });
   }
 
   // Collapse concurrent misses onto one upstream fan-out.
@@ -102,7 +115,7 @@ export async function GET() {
   try {
     const data = await pending;
     const warm = Boolean(getFloodStore().lastRunAt);
-    const res = NextResponse.json(data);
+    const res = NextResponse.json(withLiveState(data));
     res.headers.set('X-Atlas-Cache', warm ? 'miss' : 'cold');
     // Not cached at the edge either, for the same reason.
     return warm ? cacheFor(res, { edge: CACHE_TTL_S }) : noStore(res);
