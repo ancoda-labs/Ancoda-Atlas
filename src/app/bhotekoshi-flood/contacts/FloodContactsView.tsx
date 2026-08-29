@@ -3,7 +3,8 @@
 import React, { useEffect, useState } from 'react';
 import FloodShell from '@/components/FloodShell';
 import { useFloodLang } from '@/hooks/use-flood-lang';
-import type { FloodDeskPayload, FloodDistrictContacts } from '@/types';
+import { ageFrom } from '@/lib/relative-time';
+import type { BipadDistrictContacts, FloodDeskPayload, FloodDistrictContacts, FloodOfficialFeed } from '@/types';
 
 // Every number a person in trouble might need, on one page.
 //
@@ -39,6 +40,13 @@ const T = {
   },
   nationwide: { en: 'Nationwide', ne: 'देशव्यापी' },
   around: { en: '24/7', ne: '२४/७' },
+  bipadTitle: { en: 'District offices, from the BIPAD Portal', ne: 'जिल्ला कार्यालय, बिपद् पोर्टलबाट' },
+  bipadNote: {
+    en: 'The local government’s own register on the Government of Nepal BIPAD Portal, re-read every few minutes. These are officials whose job is this response — chief district officers, disaster focal persons, municipal police. Atlas has not rung them, so treat them as the portal’s listing rather than a checked line, and use the verified national numbers above first.',
+    ne: 'नेपाल सरकारको बिपद् पोर्टलमा रहेको स्थानीय सरकारकै नामावली, हरेक केही मिनेटमा पुनः पढिने। यी यही प्रतिकार्यमा खटिएका अधिकारी हुन् — प्रमुख जिल्ला अधिकारी, विपद् सम्पर्क अधिकृत, नगर प्रहरी। एट्लसले यी नम्बरमा फोन गरेर जाँचेको छैन, त्यसैले यसलाई पोर्टलको सूची मान्नुहोस्, र पहिले माथिका प्रमाणित राष्ट्रिय नम्बर प्रयोग गर्नुहोस्।',
+  },
+  drrFocal: { en: 'Disaster focal person', ne: 'विपद् सम्पर्क अधिकृत' },
+  read: { en: 'Read', ne: 'पढिएको' },
 };
 
 const CATEGORY: Record<string, { en: string; ne: string }> = {
@@ -68,6 +76,9 @@ function PhoneIcon() {
 export default function FloodContactsView() {
   const [lang, setLang] = useFloodLang();
   const [data, setData] = useState<FloodDeskPayload | null>(null);
+  // Three hundred rows, and only this page wants them, so they ride their own
+  // route rather than the desk payload every page loads.
+  const [official, setOfficial] = useState<FloodOfficialFeed<BipadDistrictContacts> | null>(null);
   const t = (key: keyof typeof T) => T[key][lang];
 
   useEffect(() => {
@@ -76,6 +87,12 @@ export default function FloodContactsView() {
       .then(r => (r.ok ? r.json() : null))
       .then(d => {
         if (!cancelled && d) setData(d);
+      })
+      .catch(() => {});
+    fetch('/api/flood/contacts')
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => {
+        if (!cancelled && d) setOfficial(d);
       })
       .catch(() => {});
     return () => {
@@ -174,6 +191,46 @@ export default function FloodContactsView() {
           </p>
         )}
       </section>
+
+      {/* The government's live district register. It stands beside the reviewed
+          block above rather than replacing it: the reviewed numbers were rung
+          by a person, these were not, and the page says which is which. */}
+      {(official?.items?.length ?? 0) > 0 && (
+        <section className="fl-sec">
+          <div className="fl-sec-head">
+            <span>{lang === 'ne' ? 'प्रत्यक्ष' : 'Live'}</span>
+            <h2>{t('bipadTitle')}</h2>
+            <em>{(official?.items || []).reduce((n, d) => n + d.contacts.length, 0)}</em>
+          </div>
+          <p className="fl-note fl-pending">{t('bipadNote')}</p>
+          {(official?.items || []).map(d => (
+            <React.Fragment key={d.id}>
+              <h4 className="fl-minor">{lang === 'ne' ? d.nameNe : d.name}</h4>
+              <div className="fl-calls-more">
+                {d.contacts.map(c => (
+                  <a key={c.id} href={`tel:${c.phone}`}>
+                    <b>{c.phone}</b>
+                    <span>
+                      {c.name}
+                      {c.position ? ` · ${c.position}` : ''}
+                      {c.drrFocal ? ` · ${t('drrFocal')}` : ''}
+                    </span>
+                  </a>
+                ))}
+              </div>
+            </React.Fragment>
+          ))}
+          {official && (
+            <p className="fl-note">
+              {t('read')} {ageFrom(official.fetchedAt, lang)}
+              {' · '}
+              <a href={official.source.url} target="_blank" rel="noopener noreferrer">
+                {official.source.label} &#8599;
+              </a>
+            </p>
+          )}
+        </section>
+      )}
 
       {(() => {
         const contacts = data?.portalContacts?.items || [];

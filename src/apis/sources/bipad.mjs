@@ -246,3 +246,90 @@ export async function getCorridorIncidents({ since = EVENT_START } = {}) {
     };
   }
 }
+
+// ─── The local government's own contact register ───────────────────────────
+//
+// BIPAD holds a contact list per district: the Chief District Officer, the
+// district's disaster focal person, municipal police chiefs, ward officers. It
+// is the government's own register of who is answering the phone in each
+// affected district, kept by the same portal the incident data comes from.
+//
+// This exists because the alternative was a reviewed JSON file with one
+// district hand-typed into it. A hand-checked number is still better than an
+// unchecked one, so the reviewed lines keep their place on the page — but a
+// list that covers one district out of nine is not a list, and this one covers
+// them all and moves when the portal does.
+//
+// What is NOT done here: no number is presented as verified by Atlas. The page
+// labels these as the portal's own register and says it has not rung them.
+
+/**
+ * A row somebody left behind while testing the portal.
+ *
+ * BIPAD's Nuwakot list currently carries a "Test / Test / 9811123456" entry.
+ * On an ordinary directory that is noise; on a page a person in trouble is
+ * dialling from, it is a wasted call, so it is dropped rather than shown.
+ */
+function isPlaceholder(name, position, number) {
+  const text = `${name || ''} ${position || ''}`.trim();
+  if (/\b(test|demo|dummy|sample|asdf)\b/i.test(text)) return true;
+  // A number that is a run of one digit, or an obvious keyboard sequence.
+  return /^(\d)\1+$/.test(number) || /123456|1234567/.test(number);
+}
+
+/** A phone number reduced to digits, or null if there is nothing dialable. */
+function phone(value) {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.replace(/[^\d+]/g, '');
+  return trimmed.length >= 6 ? trimmed : null;
+}
+
+/**
+ * Live official contacts for the affected districts.
+ *
+ * A contact with no dialable number is dropped — the whole point of the section
+ * is that a reader can press it and be connected. Disaster focal persons are
+ * flagged so the page can put them first.
+ *
+ * @returns {Promise<{districts: object[], error: string|null,
+ *   source: {label: string, url: string}, fetchedAt: string}>}
+ */
+export async function getDistrictContacts() {
+  const fetchedAt = new Date().toISOString();
+  const source = { label: 'BIPAD Portal — district contacts', url: 'https://bipadportal.gov.np/' };
+  try {
+    return await cached('district-contacts', async () => {
+      const settled = await Promise.allSettled(
+        AFFECTED_DISTRICTS.map(async d => {
+          const data = await getJson(`municipality-contact/?district=${d.id}&limit=100`);
+          const rows = Array.isArray(data?.results) ? data.results : [];
+          const contacts = rows
+            .map(r => ({
+              id: r.id,
+              name: r.name || null,
+              position: r.position || null,
+              phone: phone(r.mobileNumber) || phone(r.workNumber),
+              email: r.email || null,
+              // BIPAD's own flag for the district's disaster focal person.
+              drrFocal: Boolean(r.isDrrFocalPerson),
+            }))
+            .filter(c => c.name && c.phone && !isPlaceholder(c.name, c.position, c.phone))
+            // Focal persons first, then whatever order the portal keeps.
+            .sort((a, b) => Number(b.drrFocal) - Number(a.drrFocal));
+          return { id: d.id, name: d.en, nameNe: d.ne, contacts };
+        }),
+      );
+
+      const districts = settled
+        .filter(r => r.status === 'fulfilled')
+        .map(r => r.value)
+        .filter(d => d.contacts.length);
+
+      if (!districts.length) throw new Error('no district contacts in the response');
+      return { districts, error: null, source, fetchedAt };
+    });
+  } catch (err) {
+    console.error('[BIPAD contacts] Unavailable:', err.message);
+    return { districts: [], error: err.message, source, fetchedAt };
+  }
+}

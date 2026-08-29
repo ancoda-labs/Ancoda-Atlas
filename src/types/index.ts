@@ -430,12 +430,18 @@ export interface FloodDistrictContacts extends Bilingual<'name'> {
 
 export interface FloodDeskPayload extends FloodContent {
   river: RiverGauges;
-  bulletinRescue?: BulletinRescue | null;
   portal?: RescuePortalStats | null;
+  /** BIPAD's corridor incident tally, for the live band on the overview. */
+  corridor?: CorridorIncidents | null;
+  /** NDRRMA's own rescued-persons totals. The register itself is served separately. */
+  rescueSummary?: RescueSummary | null;
+  /** When that register was last read, so the page can date the figure. */
+  rescueFetchedAt?: string | null;
   dailyBulletin?: FloodOfficialFeed<NdrrmaBulletin> | null;
   advisories?: FloodOfficialFeed<NationalAdvisory> | null;
   govEfforts?: FloodOfficialFeed<GovEffort> | null;
   portalContacts?: FloodOfficialFeed<PortalContact> | null;
+  popups?: FloodOfficialFeed<NdrrmaPopup> | null;
   generatedAt: string;
 }
 

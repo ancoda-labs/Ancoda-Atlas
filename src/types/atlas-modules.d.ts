@@ -168,13 +168,27 @@ declare module '*/apis/sources/ndrrma.mjs' {
 }
 
 declare module '*/apis/sources/bipad.mjs' {
-  import type { BipadAlert, BipadHazard, BipadIncident, CorridorIncidents } from '@/types';
+  import type {
+    BipadAlert,
+    BipadDistrictContacts,
+    BipadHazard,
+    BipadIncident,
+    CorridorIncidents,
+    SourceRef,
+  } from '@/types';
   export const HAZARD: { FLOOD: number; LANDSLIDE: number; HEAVY_RAINFALL: number; THUNDERBOLT: number };
   export const CORRIDOR_BBOX: { minLat: number; maxLat: number; minLon: number; maxLon: number };
   export function getHazards(): Promise<BipadHazard[]>;
   export function getIncidents(opts?: { hazard?: number; since?: string; corridorOnly?: boolean }): Promise<BipadIncident[]>;
   export function getAlerts(opts?: { limit?: number }): Promise<BipadAlert[]>;
   export function getCorridorIncidents(opts?: { since?: string }): Promise<CorridorIncidents>;
+  export const AFFECTED_DISTRICTS: Array<{ id: number; en: string; ne: string }>;
+  export function getDistrictContacts(): Promise<{
+    districts: BipadDistrictContacts[];
+    error: string | null;
+    source: SourceRef;
+    fetchedAt: string;
+  }>;
 }
 
 declare module '*/apis/sources/youtube.mjs' {
