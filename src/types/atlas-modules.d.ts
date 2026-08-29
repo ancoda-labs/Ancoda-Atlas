@@ -229,11 +229,11 @@ declare module '*/apis/sources/rescue-portal.mjs' {
     daoStatus: string | null;
     daoOffice: string | null;
     origin: string | null;
-    thumb: string | null;
     image: string | null;
   }
-  export function getPersonReports(opts: { type: 'lost' | 'found'; limit?: number }): Promise<{
+  export function getPersonReports(opts?: { type?: 'lost' | 'found'; status?: string }): Promise<{
     items: PortalPersonRaw[];
+    total: number | null;
     error: string | null;
     source: SourceRef;
     fetchedAt: string;
@@ -241,6 +241,9 @@ declare module '*/apis/sources/rescue-portal.mjs' {
   export function getPersonRegister(): Promise<{
     lost: PortalPersonRaw[];
     found: PortalPersonRaw[];
+    other: PortalPersonRaw[];
+    total: number | null;
+    fetched: number;
     error: string | null;
     source: SourceRef;
     fetchedAt: string;

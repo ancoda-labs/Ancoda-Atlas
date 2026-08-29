@@ -728,15 +728,26 @@ export interface OpmcmPersonReport {
   daoStatus: string | null;
   daoOffice: string | null;
   origin: string | null;
-  /** Inline base64 data-URI preview, or null. */
-  thumb: string | null;
   /** Signed media-proxy path for the full image, or null. */
   imageProxy: string | null;
 }
 
+/**
+ * The portal's open missing-and-found register, in full.
+ *
+ * Every open report is carried, not a first page of them: this is the list a
+ * family searches by name, and a search over the first two hundred of eight
+ * thousand answers "not found" about someone who is on it.
+ */
 export interface OpmcmPersonRegister {
   lost: OpmcmPersonReport[];
   found: OpmcmPersonReport[];
+  /** Rows the portal files under neither heading. Still somebody's relative. */
+  other: OpmcmPersonReport[];
+  /** What the portal states the register holds. */
+  total: number | null;
+  /** How many rows were actually read, so a short sweep is visible. */
+  fetched: number;
   error: string | null;
   source: SourceRef;
   fetchedAt: string;

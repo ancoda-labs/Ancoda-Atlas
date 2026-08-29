@@ -295,59 +295,126 @@ export async function getEmergencyContacts({ limit = 50 } = {}) {
  *
  * @param {{type: 'lost'|'found', limit?: number}} opts
  */
-export async function getPersonReports({ type, limit = 200 } = {}) {
+/** The portal's page size ceiling. Asking for more silently returns 500. */
+const PERSON_PAGE = 500;
+
+/** Enough pages for four times the current register, and a stop either way. */
+const PERSON_MAX_PAGES = 60;
+
+/** One person report, as the portal published it. */
+function personRow(row, fallbackType) {
+  return {
+    id: text(row._id),
+    type: text(row.type) || fallbackType || null,
+    name: text(row.fullName),
+    age: text(row.approximateAge),
+    gender: text(row.gender),
+    place: text(row.locationText),
+    eventAt: text(row.eventAt) || text(row.createdAt),
+    description: text(row.description),
+    status: text(row.status),
+    daoStatus: text(row.daoStatus),
+    daoOffice: text(row.daoOffice),
+    origin: text(row.source),
+    // The portal ships a base64 thumbnail inline on the rows that have a
+    // photograph. It is deliberately dropped: at eight thousand rows those
+    // data URIs are tens of megabytes, and the same photograph is available
+    // as a URL below, which the media proxy streams on demand.
+    image: absolute(Array.isArray(row.images) && row.images.length ? row.images[0] : row.imageUrl),
+  };
+}
+
+/**
+ * Page through the register until the portal runs out of rows.
+ *
+ * The portal caps `limit` at 500 and paginates with `page`, reporting the true
+ * size in `total`. Termination is decided by three things — the stated total
+ * reached, a short page, or the page cap — because during a live response the
+ * register is being written to while it is being read, and `total` moves
+ * between requests.
+ */
+async function collectPersons(query) {
+  const items = [];
+  let total = null;
+  for (let page = 1; page <= PERSON_MAX_PAGES; page++) {
+    const data = await getPortalJson(`/api/person-reports?${query}&page=${page}&limit=${PERSON_PAGE}`);
+    const rows = Array.isArray(data.items) ? data.items : [];
+    items.push(...rows);
+    if (typeof data.total === 'number') total = data.total;
+    if (!rows.length || rows.length < PERSON_PAGE) break;
+    if (total != null && items.length >= total) break;
+  }
+  return { rows: items, total };
+}
+
+/**
+ * One half of the missing-and-found register, in full.
+ *
+ * @param {{type?: 'lost'|'found', status?: string}} opts
+ */
+export async function getPersonReports({ type, status = 'open' } = {}) {
   const fetchedAt = new Date().toISOString();
-  const source = { label: 'OPMCM rescue portal — person reports', url: `${BASE}/` };
+  const source = { label: 'OPMCM rescue portal — person reports', url: `${BASE}/person-reports` };
   try {
-    return await cachedContent(`persons:${type}:${limit}`, async () => {
-      const data = await getPortalJson(
-        `/api/person-reports?type=${encodeURIComponent(type)}&limit=${Math.max(1, limit)}`,
-      );
-      const rows = Array.isArray(data.items) ? data.items : [];
-      const items = rows.map(r => ({
-        id: text(r._id),
-        type: text(r.type) || type,
-        name: text(r.fullName),
-        age: text(r.approximateAge),
-        gender: text(r.gender),
-        place: text(r.locationText),
-        eventAt: text(r.eventAt) || text(r.createdAt),
-        description: text(r.description),
-        status: text(r.status),
-        daoStatus: text(r.daoStatus),
-        daoOffice: text(r.daoOffice),
-        origin: text(r.source),
-        thumb: dataThumb(r.thumbnail),
-        // Raw absolute URL — the caller signs it through the media proxy.
-        image: absolute(Array.isArray(r.images) && r.images.length ? r.images[0] : r.imageUrl),
-      }));
-      return { items, error: null, source, fetchedAt };
+    return await cachedContent(`persons:${type}:${status}`, async () => {
+      const params = [status ? `status=${encodeURIComponent(status)}` : null, type ? `type=${encodeURIComponent(type)}` : null]
+        .filter(Boolean)
+        .join('&');
+      const { rows, total } = await collectPersons(params);
+      return { items: rows.map(r => personRow(r, type)), total, error: null, source, fetchedAt };
     });
   } catch (err) {
-    console.error(`[Rescue portal persons:${type}] Unavailable:`, err.message);
-    return { items: [], error: err.message, source, fetchedAt };
+    console.error(`[Rescue portal persons:${type || 'all'}] Unavailable:`, err.message);
+    return { items: [], total: null, error: err.message, source, fetchedAt };
   }
 }
 
-/** Both halves of the register in one call. */
+/**
+ * The whole open register, split by the type the portal filed each row under.
+ *
+ * Read in one sweep rather than two: the portal's untyped query returns every
+ * open report, including the handful it files under neither `lost` nor `found`,
+ * and each row carries its own type. Fetching it once and splitting locally
+ * means the two halves are always the same read of the same register, and no
+ * row is dropped for being filed oddly.
+ *
+ * This is the register a family searches by name, so it is fetched whole. A
+ * search that covers the first two hundred of eight thousand names is worse
+ * than no search: it answers "not found" about someone who is on the list.
+ */
 export async function getPersonRegister() {
-  const [lost, found] = await Promise.allSettled([
-    getPersonReports({ type: 'lost' }),
-    getPersonReports({ type: 'found' }),
-  ]);
   const fetchedAt = new Date().toISOString();
-  const source = { label: 'OPMCM rescue portal — person reports', url: `${BASE}/` };
-  const errors = [lost, found]
-    .filter(r => r.status === 'rejected' || r.value?.error)
-    .map(r => String(r.reason?.message || r.value?.error))
-    .filter(Boolean);
-  return {
-    lost: lost.status === 'fulfilled' ? lost.value.items : [],
-    found: found.status === 'fulfilled' ? found.value.items : [],
-    error: errors.length ? errors.join('; ') : null,
-    source,
-    fetchedAt,
-  };
+  const source = { label: 'OPMCM rescue portal — person reports', url: `${BASE}/person-reports` };
+  try {
+    return await cachedContent('persons:register', async () => {
+      const { rows, total } = await collectPersons('status=open');
+      const lost = [];
+      const found = [];
+      const other = [];
+      for (const raw of rows) {
+        const row = personRow(raw, null);
+        if (row.type === 'lost') lost.push(row);
+        else if (row.type === 'found') found.push(row);
+        else other.push(row);
+      }
+      return {
+        lost,
+        found,
+        // Rows the portal files under neither heading. Kept rather than
+        // discarded — an unusual type is still somebody's relative.
+        other,
+        /** What the portal said the register holds, against what was read. */
+        total,
+        fetched: rows.length,
+        error: null,
+        source,
+        fetchedAt,
+      };
+    });
+  } catch (err) {
+    console.error('[Rescue portal register] Unavailable:', err.message);
+    return { lost: [], found: [], other: [], total: null, fetched: 0, error: err.message, source, fetchedAt };
+  }
 }
 
 /**
