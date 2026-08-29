@@ -1169,6 +1169,20 @@ export interface FloodDeskStore {
   opmcmPersons: OpmcmPersonRegister | null;
   /** OPMCM geolocated help requests, for the situation map. */
   helpRequests: FloodOfficialFeed<HelpRequest> | null;
+  /** Live district contact lists from BIPAD, for the contacts page. */
+  officialContacts: FloodOfficialFeed<BipadDistrictContacts> | null;
+  /** NDRRMA's featured photographs. */
+  featuredPhotos: FloodOfficialFeed<NdrrmaPhoto> | null;
+  /** NDRRMA's site-wide notice — its current "read this first". */
+  popups: FloodOfficialFeed<NdrrmaPopup> | null;
+  /** The OPMCM portal's own home-page photographs. */
+  carousel: FloodOfficialFeed<PortalCarouselPhoto> | null;
+  /** Donation channels as the OPMCM portal publishes them, live. */
+  donationChannels: FloodOfficialFeed<PortalDonationChannel> | null;
+  /** The portal's newest filings — help asked for, and help offered. */
+  latestActivity: PortalActivity | null;
+  /** The OPMCM missing-and-found register as map points. */
+  personPoints: FloodOfficialFeed<PersonMapPoint> | null;
   health: FeedStatus[];
   lastRunAt: string | null;
   nextRunAt: string | null;

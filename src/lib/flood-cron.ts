@@ -50,6 +50,13 @@ function emptyStore(): FloodDeskStore {
     portalContacts: null,
     opmcmPersons: null,
     helpRequests: null,
+    officialContacts: null,
+    featuredPhotos: null,
+    popups: null,
+    carousel: null,
+    donationChannels: null,
+    latestActivity: null,
+    personPoints: null,
     health: [],
     lastRunAt: null,
     nextRunAt: null,
@@ -199,50 +206,6 @@ export async function runFloodRefresh(): Promise<FloodDeskStore> {
         },
         value => {
           store.rescue = value;
-        },
-      ),
-
-      refresh(
-        'family',
-        store,
-        async () => {
-          const { getFamilyRegister } = await import('@/apis/sources/family-register.mjs');
-          const register = await getFamilyRegister();
-          if (register.error) throw new Error(register.error);
-          return register;
-        },
-        value => {
-          store.family = value;
-        },
-      ),
-
-      refresh(
-        'bulletinRescue',
-        store,
-        async () => {
-          const { getBulletinRescue } = await import('@/apis/sources/bulletin-rescue.mjs');
-          const register = await getBulletinRescue();
-          if (register.error) throw new Error(register.error);
-          return register;
-        },
-        value => {
-          store.bulletinRescue = value;
-        },
-      ),
-
-      refresh(
-        'sitrep',
-        store,
-        async () => {
-          const { getBulletinSitrep } = await import('@/apis/sources/bulletin-sitrep.mjs');
-          const live = await getBulletinSitrep();
-          // No figures with an error is a failed read, not an emptied toll —
-          // fail so the reviewed figures stay on the page.
-          if (live.error || !live.breakdowns.length) throw new Error(live.error || 'no figures');
-          return live;
-        },
-        value => {
-          store.sitrep = value;
         },
       ),
 
@@ -420,6 +383,118 @@ export async function runFloodRefresh(): Promise<FloodDeskStore> {
         },
         value => {
           store.helpRequests = value;
+        },
+      ),
+
+      // The local government's own contact register. This is why the contacts
+      // page no longer depends on one hand-typed district: BIPAD publishes the
+      // list for every affected district and it moves when the portal does.
+      refresh(
+        'officialContacts',
+        store,
+        async () => {
+          const { getDistrictContacts } = await import('@/apis/sources/bipad.mjs');
+          const feed = await getDistrictContacts();
+          if (feed.error && !feed.districts.length) throw new Error(feed.error);
+          return { items: feed.districts, error: feed.error, source: feed.source, fetchedAt: feed.fetchedAt };
+        },
+        value => {
+          store.officialContacts = value;
+        },
+      ),
+
+      refresh(
+        'personPoints',
+        store,
+        async () => {
+          const { getPersonMapPoints } = await import('@/apis/sources/rescue-portal.mjs');
+          const feed = await getPersonMapPoints({ limit: 200 });
+          if (feed.error && !feed.points.length) throw new Error(feed.error);
+          return { items: feed.points, error: feed.error, source: feed.source, fetchedAt: feed.fetchedAt };
+        },
+        value => {
+          store.personPoints = value;
+        },
+      ),
+
+      refresh(
+        'portalLatest',
+        store,
+        async () => {
+          const { getLatestActivity } = await import('@/apis/sources/rescue-portal.mjs');
+          const feed = await getLatestActivity({ limit: 6 });
+          if (feed.error && !feed.requests.length && !feed.offers.length) throw new Error(feed.error);
+          return feed;
+        },
+        value => {
+          store.latestActivity = value;
+        },
+      ),
+
+      refresh(
+        'portalCarousel',
+        store,
+        async () => {
+          const { getCarousel } = await import('@/apis/sources/rescue-portal.mjs');
+          const feed = await getCarousel();
+          if (feed.error && !feed.items.length) throw new Error(feed.error);
+          return {
+            items: feed.items.map(({ image, ...rest }) => ({ ...rest, imageProxy: proxyUrlFor(image) })),
+            error: feed.error,
+            source: feed.source,
+            fetchedAt: feed.fetchedAt,
+          };
+        },
+        value => {
+          store.carousel = value;
+        },
+      ),
+
+      // The portal's donation channels. Kept in the store so the giving page can
+      // show them beside — never inside — the reviewed accounts.
+      refresh(
+        'portalDonations',
+        store,
+        async () => {
+          const { getDonationChannels } = await import('@/apis/sources/rescue-portal.mjs');
+          const feed = await getDonationChannels({ limit: 12 });
+          if (feed.error && !feed.items.length) throw new Error(feed.error);
+          return {
+            items: feed.items.map(({ qrImage, ...rest }) => ({ ...rest, qrProxy: proxyUrlFor(qrImage) })),
+            error: feed.error,
+            source: feed.source,
+            fetchedAt: feed.fetchedAt,
+          };
+        },
+        value => {
+          store.donationChannels = value;
+        },
+      ),
+
+      refresh(
+        'ndrrmaMedia',
+        store,
+        async () => {
+          const { getFeaturedPhotos, getWebsitePopups } = await import('@/apis/sources/ndrrma-notices.mjs');
+          const [photos, popups] = await Promise.all([getFeaturedPhotos({ limit: 12 }), getWebsitePopups()]);
+          if (photos.error && !photos.items.length && popups.error) throw new Error(photos.error);
+          // An empty popup list is a real state — NDRRMA is not always raising
+          // a notice — so it is stored rather than treated as a failed read.
+          store.popups = {
+            items: popups.items.map(({ image, ...rest }) => ({ ...rest, imageProxy: proxyUrlFor(image) })),
+            error: popups.error,
+            source: popups.source,
+            fetchedAt: popups.fetchedAt,
+          };
+          return {
+            items: photos.items.map(({ image, ...rest }) => ({ ...rest, imageProxy: proxyUrlFor(image) })),
+            error: photos.error,
+            source: photos.source,
+            fetchedAt: photos.fetchedAt,
+          };
+        },
+        value => {
+          store.featuredPhotos = value;
         },
       ),
     ]);

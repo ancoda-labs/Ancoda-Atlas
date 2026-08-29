@@ -2,7 +2,14 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getFloodStore } from '@/lib/flood-cron';
 import { cacheFor, noStore } from '@/lib/http-cache';
-import type { BipadAlert, CorridorIncidents, FloodOfficialFeed, HelpRequest } from '@/types';
+import type {
+  BipadAlert,
+  CorridorIncidents,
+  FloodOfficialFeed,
+  HelpRequest,
+  PersonMapPoint,
+  PortalActivity,
+} from '@/types';
 import { errorMessage } from '@/types';
 
 export const dynamic = 'force-dynamic';
@@ -22,6 +29,10 @@ interface SituationPayload {
   corridor: CorridorIncidents;
   alerts: BipadAlert[];
   helpRequests: FloodOfficialFeed<HelpRequest> | null;
+  /** Where the portal's missing-and-found reports are being filed from. */
+  personPoints: FloodOfficialFeed<PersonMapPoint> | null;
+  /** The portal's newest filings — help asked for, and help offered. */
+  latest: PortalActivity | null;
   generatedAt: string;
 }
 
@@ -30,16 +41,23 @@ let pending: Promise<SituationPayload> | null = null;
 
 async function build(since: string): Promise<SituationPayload> {
   const { getCorridorIncidents, getAlerts } = await import('@/apis/sources/bipad.mjs');
-  const { getHelpRequestsMap } = await import('@/apis/sources/rescue-portal.mjs');
-  const [corridor, alerts, helpFeed] = await Promise.all([
+  const { getHelpRequestsMap, getPersonMapPoints, getLatestActivity } = await import(
+    '@/apis/sources/rescue-portal.mjs'
+  );
+  const [corridor, alerts, helpFeed, pointFeed, latest] = await Promise.all([
     getCorridorIncidents({ since }),
     getAlerts({ limit: 40 }).catch(() => []),
     getHelpRequestsMap({ limit: 200 }).catch(() => null),
+    getPersonMapPoints({ limit: 200 }).catch(() => null),
+    getLatestActivity({ limit: 6 }).catch(() => null),
   ]);
   const helpRequests = helpFeed
     ? { items: helpFeed.requests, error: helpFeed.error, source: helpFeed.source, fetchedAt: helpFeed.fetchedAt }
     : null;
-  return { corridor, alerts, helpRequests, generatedAt: new Date().toISOString() };
+  const personPoints = pointFeed
+    ? { items: pointFeed.points, error: pointFeed.error, source: pointFeed.source, fetchedAt: pointFeed.fetchedAt }
+    : null;
+  return { corridor, alerts, helpRequests, personPoints, latest, generatedAt: new Date().toISOString() };
 }
 
 export async function GET(req: NextRequest) {
@@ -53,6 +71,8 @@ export async function GET(req: NextRequest) {
       corridor: store.corridor,
       alerts: store.alerts,
       helpRequests: store.helpRequests,
+      personPoints: store.personPoints,
+      latest: store.latestActivity,
       generatedAt: store.lastRunAt || new Date().toISOString(),
     });
     res.headers.set('X-Atlas-Cache', 'cron');
@@ -95,6 +115,8 @@ export async function GET(req: NextRequest) {
         },
         alerts: [],
         helpRequests: null,
+        personPoints: null,
+        latest: null,
         generatedAt: new Date().toISOString(),
       },
       { status: 200 },
