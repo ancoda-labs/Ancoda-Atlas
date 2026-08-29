@@ -396,3 +396,17 @@ declare module '*/apis/sources/ndrrma-notices.mjs' {
   }>;
 }
 
+declare module '*/apis/utils/fetch.mjs' {
+  export interface SafeFetchOptions {
+    timeout?: number;
+    retries?: number;
+    headers?: Record<string, string>;
+    as?: 'json' | 'text';
+  }
+  export function safeFetch(url: string, opts?: SafeFetchOptions): Promise<unknown>;
+  export function ago(hours: number): string;
+  export function today(): string;
+  export function daysAgo(n: number): string;
+}
+
+

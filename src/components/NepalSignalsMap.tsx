@@ -2,7 +2,7 @@
 
 import React, { useRef, useEffect, useState } from 'react';
 import { provinceOf } from '@/apis/utils/nepal.mjs';
-import type { GeoCollection, Geometry } from '@/types';
+import type { GeoCollection, Geometry, BipadPayload, BipadRiverStation, BipadRainStation, BipadAlert, BipadIncident, BipadEarthquake, BipadRainAverage } from '@/types';
 import { errorMessage } from '@/types';
 
 /** A province or district outline, flattened to rings for canvas drawing. */
@@ -265,11 +265,25 @@ function nmlFormatAgo(date: Date) {
   return Math.round(h / 24) + 'd ago';
 }
 
-interface NepalSignalsMapProps {
-  stories: MapStory[];
+interface MapHit {
+  id: string;
+  type: 'province' | 'river' | 'rain' | 'alert' | 'incident' | 'earthquake' | 'news';
+  title: string;
+  subtitle: string;
+  details: string[];
+  x: number;
+  y: number;
+  radius: number;
+  link?: string;
+  raw?: unknown;
 }
 
-export default function NepalSignalsMap({ stories }: NepalSignalsMapProps) {
+interface NepalSignalsMapProps {
+  stories: MapStory[];
+  bipadData?: BipadPayload | null;
+}
+
+export default function NepalSignalsMap({ stories, bipadData }: NepalSignalsMapProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -281,15 +295,23 @@ export default function NepalSignalsMap({ stories }: NepalSignalsMapProps) {
 
   // Map Controls State
   const [showDistricts, setShowDistricts] = useState(true);
-  const [showSignals, setShowSignals] = useState(true);
-  const [selectedProvince, setSelectedProvince] = useState<number | null>(null);
+  const [showSignals, setShowSignals] = useState(true); // News Feed
+  const [showRiver, setShowRiver] = useState(true);
+  const [showRain, setShowRain] = useState(false); // Off by default to avoid crowding
+  const [showAlerts, setShowAlerts] = useState(true);
+  const [showIncidents, setShowIncidents] = useState(true);
+  const [showEarthquakes, setShowEarthquakes] = useState(true);
+
+  const [selectedBipadItem, setSelectedBipadItem] = useState<MapHit | null>(null);
+  const [hoveredItem, setHoveredItem] = useState<MapHit | null>(null);
+  const [hoveredPos, setHoveredPos] = useState<{ x: number; y: number } | null>(null);
   const [expanded, setExpanded] = useState(false);
 
   // Navigation state (pan/zoom)
   const zoomRef = useRef(1);
   const panXRef = useRef(0);
   const panYRef = useRef(0);
-  const badgeHitsRef = useRef<Array<{ provinceCode: number; count: number; x: number; y: number; radius: number }>>([]);
+  const mapHitsRef = useRef<MapHit[]>([]);
 
   // Processed signals
   const [signals, setSignals] = useState<MapSignal[]>([]);
@@ -374,10 +396,6 @@ export default function NepalSignalsMap({ stories }: NepalSignalsMapProps) {
       });
     }
     setSignals(out);
-
-    if (selectedProvince && !out.some(s => s.provinceCode === selectedProvince)) {
-      setSelectedProvince(null);
-    }
   }, [stories]);
 
   // Handle canvas drawing on resize/nav state changes
@@ -396,7 +414,7 @@ export default function NepalSignalsMap({ stories }: NepalSignalsMapProps) {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, width, height);
 
-    badgeHitsRef.current = [];
+    mapHitsRef.current = [];
 
     // Projection helpers
     const project = (pt: [number, number]): [number, number] => {
@@ -462,7 +480,233 @@ export default function NepalSignalsMap({ stories }: NepalSignalsMapProps) {
       fillStroke(prov);
     }
 
-    // Draw signals
+    // Draw rain stations
+    if (showRain && bipadData?.rainStations) {
+      for (const station of bipadData.rainStations) {
+        const coords = station.point?.coordinates;
+        if (!Array.isArray(coords) || coords.length < 2) continue;
+        const [x, y] = project([coords[0], coords[1]]);
+        
+        const avg24 = station.averages?.find((a: BipadRainAverage) => a.interval === 24)?.value;
+        const avg3 = station.averages?.find((a: BipadRainAverage) => a.interval === 3)?.value;
+        const avg1 = station.averages?.find((a: BipadRainAverage) => a.interval === 1)?.value;
+        
+        let color = '#5856d6';
+        let outline = 'rgba(88, 86, 214, 0.2)';
+        if (avg24 != null) {
+          if (avg24 >= 100) {
+            color = '#ff3b30';
+            outline = 'rgba(255, 59, 48, 0.3)';
+          } else if (avg24 >= 50) {
+            color = '#ffb020';
+            outline = 'rgba(255, 176, 32, 0.3)';
+          }
+        }
+        
+        const r = 4.0;
+        ctx.beginPath(); ctx.fillStyle = outline; ctx.arc(x, y, r + 4, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.fillStyle = color; ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1; ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke();
+
+        const details = [
+          `24h Precipitation: ${avg24 != null ? avg24 + ' mm' : '0.0 mm'}`,
+          `3h Precipitation: ${avg3 != null ? avg3 + ' mm' : '0.0 mm'}`,
+          `1h Precipitation: ${avg1 != null ? avg1 + ' mm' : '0.0 mm'}`,
+          `Status: ${station.status || 'BELOW WARNING LEVEL'}`,
+          `Measured on: ${station.measuredOn ? new Date(station.measuredOn).toLocaleString() : 'N/A'}`
+        ];
+
+        mapHitsRef.current.push({
+          id: `rain-${station.id}`,
+          type: 'rain',
+          title: station.title || 'Precipitation Telemetry',
+          subtitle: 'Rainfall Telemetry Station',
+          details,
+          x,
+          y,
+          radius: r + 5,
+          raw: station
+        });
+      }
+    }
+
+    // Draw river stations
+    if (showRiver && bipadData?.riverStations) {
+      for (const station of bipadData.riverStations) {
+        const coords = station.point?.coordinates;
+        if (!Array.isArray(coords) || coords.length < 2) continue;
+        const [x, y] = project([coords[0], coords[1]]);
+        
+        const wl = station.waterLevel;
+        const warn = station.warningLevel;
+        const danger = station.dangerLevel;
+        
+        let color = '#2096f3';
+        let outline = 'rgba(32, 150, 243, 0.2)';
+        let statusStr = 'Normal';
+        if (wl != null) {
+          if (danger != null && wl >= danger) {
+            color = '#ff3b30';
+            outline = 'rgba(255, 59, 48, 0.3)';
+            statusStr = 'ABOVE DANGER LEVEL';
+          } else if (warn != null && wl >= warn) {
+            color = '#ff9500';
+            outline = 'rgba(255, 149, 0, 0.3)';
+            statusStr = 'ABOVE WARNING LEVEL';
+          }
+        }
+        
+        const r = 4.5;
+        ctx.beginPath(); ctx.fillStyle = outline; ctx.arc(x, y, r + 4, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.fillStyle = color; ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1; ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke();
+
+        const details = [
+          `Current level: ${wl != null ? wl + ' m' : 'N/A'}`,
+          `Warning level: ${warn != null ? warn + ' m' : 'N/A'}`,
+          `Danger level: ${danger != null ? danger + ' m' : 'N/A'}`,
+          `Status: ${statusStr}`,
+          `Last measured: ${station.waterLevelOn ? new Date(station.waterLevelOn).toLocaleString() : 'N/A'}`
+        ];
+
+        mapHitsRef.current.push({
+          id: `river-${station.id}`,
+          type: 'river',
+          title: station.title || 'Hydrological Station',
+          subtitle: `River Gauge • ${station.steady || 'steady'}`,
+          details,
+          x,
+          y,
+          radius: r + 5,
+          raw: station
+        });
+      }
+    }
+
+    // Draw incidents
+    if (showIncidents && bipadData?.incidents) {
+      for (const incident of bipadData.incidents) {
+        const coords = incident.point?.coordinates;
+        if (!Array.isArray(coords) || coords.length < 2) continue;
+        const [x, y] = project([coords[0], coords[1]]);
+        
+        let color = '#ff9500';
+        let typeStr = 'Incident';
+        if (incident.hazard === 10) { color = '#ff3b30'; typeStr = 'Fire'; }
+        else if (incident.hazard === 11) { color = '#007af5'; typeStr = 'Flood'; }
+        else if (incident.hazard === 17) { color = '#a25f25'; typeStr = 'Landslide'; }
+        else if (incident.hazard === 12) { color = '#34c759'; typeStr = 'Heavy Rain'; }
+        else if (incident.hazard === 23) { color = '#af52de'; typeStr = 'Thunderbolt'; }
+
+        const outline = `rgba(${color === '#ff3b30' ? '255, 59, 48' : color === '#007af5' ? '0, 122, 245' : '162, 95, 37'}, 0.25)`;
+        const r = 4.0;
+
+        ctx.beginPath(); ctx.fillStyle = outline; ctx.arc(x, y, r + 4, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.fillStyle = color; ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1; ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke();
+
+        const details = [
+          `Type: ${typeStr}`,
+          `Address: ${incident.streetAddress || 'N/A'}`,
+          `Incident Date: ${incident.incidentOn ? new Date(incident.incidentOn).toLocaleString() : 'N/A'}`,
+          `Deaths: ${incident.loss?.deaths ?? 0} • Missing: ${incident.loss?.missing ?? 0}`,
+          `Injured: ${incident.loss?.injured ?? 0} • Families Affected: ${incident.loss?.familiesAffected ?? 0}`
+        ];
+
+        mapHitsRef.current.push({
+          id: `incident-${incident.id}`,
+          type: 'incident',
+          title: incident.title || incident.titleNe || 'Disaster Incident',
+          subtitle: `Disaster Event • ${typeStr}`,
+          details,
+          x,
+          y,
+          radius: r + 5,
+          raw: incident
+        });
+      }
+    }
+
+    // Draw alerts
+    if (showAlerts && bipadData?.alerts) {
+      for (const alert of bipadData.alerts) {
+        const coords = alert.point?.coordinates;
+        if (!Array.isArray(coords) || coords.length < 2) continue;
+        const [x, y] = project([coords[0], coords[1]]);
+        
+        const color = '#ff2d55';
+        const outline = 'rgba(255, 45, 85, 0.25)';
+        const r = 5.5;
+
+        ctx.beginPath(); ctx.fillStyle = outline; ctx.arc(x, y, r + 6, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.fillStyle = color; ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.2; ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 8px monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('!', x, y);
+
+        const details = [
+          `Alert details: ${alert.description || 'No description available'}`,
+          `Source: ${alert.source || 'DHM'}`,
+          `Active Since: ${alert.startedOn ? new Date(alert.startedOn).toLocaleString() : 'N/A'}`,
+          `Expires on: ${alert.expireOn ? new Date(alert.expireOn).toLocaleString() : 'Active Alert'}`
+        ];
+
+        mapHitsRef.current.push({
+          id: `alert-${alert.id}`,
+          type: 'alert',
+          title: alert.title || alert.titleNe || 'Early Warning Alert',
+          subtitle: `Early Warning • ${alert.source || 'DHM'}`,
+          details,
+          x,
+          y,
+          radius: r + 6,
+          raw: alert
+        });
+      }
+    }
+
+    // Draw earthquakes
+    if (showEarthquakes && bipadData?.earthquakes) {
+      for (const eq of bipadData.earthquakes) {
+        const coords = eq.point?.coordinates;
+        if (!Array.isArray(coords) || coords.length < 2) continue;
+        const [x, y] = project([coords[0], coords[1]]);
+        
+        const mag = eq.magnitude || 4.0;
+        const r = Math.max(3, mag * 1.5);
+        const color = '#e85c13';
+
+        ctx.beginPath(); ctx.strokeStyle = 'rgba(232, 92, 19, 0.18)'; ctx.lineWidth = 1.5; ctx.arc(x, y, r * 2.8, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.fillStyle = 'rgba(232, 92, 19, 0.1)'; ctx.arc(x, y, r * 1.8, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.fillStyle = color; ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1; ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke();
+
+        const details = [
+          `Magnitude: M ${mag}`,
+          `Epicenter: ${eq.address || 'N/A'}`,
+          `Depth: ${eq.depth ? eq.depth + ' km' : 'N/A'}`,
+          `Time: ${eq.eventOn ? new Date(eq.eventOn).toLocaleString() : 'N/A'}`
+        ];
+
+        mapHitsRef.current.push({
+          id: `eq-${eq.id}`,
+          type: 'earthquake',
+          title: `M ${mag} Earthquake`,
+          subtitle: `Seismic Activity`,
+          details,
+          x,
+          y,
+          radius: r * 2,
+          raw: eq
+        });
+      }
+    }
+
+    // Draw signals (News Feed)
     if (showSignals) {
       for (const sig of signals) {
         const [x, y] = project([sig.lon, sig.lat]);
@@ -471,33 +715,26 @@ export default function NepalSignalsMap({ stories }: NepalSignalsMapProps) {
         ctx.beginPath(); ctx.fillStyle = pal.ring; ctx.arc(x, y, r + 3.4, 0, Math.PI * 2); ctx.fill();
         ctx.beginPath(); ctx.fillStyle = pal.fill; ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
         ctx.beginPath(); ctx.strokeStyle = lightTheme ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.6)'; ctx.lineWidth = 0.6; ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke();
-      }
 
-      // Draw province badges
-      const countByProv = new Map<number, number>();
-      for (const s of signals) countByProv.set(s.provinceCode, (countByProv.get(s.provinceCode) || 0) + 1);
+        const details = [
+          `Severity: ${sig.severity.toUpperCase()}`,
+          `Type: ${NML_TYPE_LABEL[sig.type] || sig.type}`,
+          `Region: ${sig.provinceName}`,
+          `Published: ${nmlFormatAgo(sig.pubDate)}`
+        ];
 
-      for (const prov of geoData.provinces) {
-        const code = nmlGetProvinceCode(prov);
-        const count = countByProv.get(code) || 0;
-        if (count <= 0) continue;
-        const centroid = getCentroid(prov);
-        if (!centroid) continue;
-        const bx = centroid[0] + 14, by = centroid[1] - 10;
-        const r = count > 9 ? 11 : 9;
-        const isSel = selectedProvince === code;
-
-        ctx.beginPath(); ctx.fillStyle = lightTheme ? 'rgba(255,255,255,0.94)' : 'rgba(11,18,27,0.92)'; ctx.arc(bx, by, r, 0, Math.PI * 2); ctx.fill();
-        ctx.beginPath(); ctx.strokeStyle = isSel ? '#6ad6ff' : 'rgba(84,156,255,0.9)'; ctx.lineWidth = isSel ? 2.2 : 1.4; ctx.arc(bx, by, r, 0, Math.PI * 2); ctx.stroke();
-
-        if (isSel) {
-          ctx.beginPath(); ctx.strokeStyle = 'rgba(106,214,255,0.28)'; ctx.lineWidth = 5; ctx.arc(bx, by, r + 3, 0, Math.PI * 2); ctx.stroke();
-        }
-
-        ctx.fillStyle = lightTheme ? '#19302d' : '#d9e7fb'; ctx.font = '10px "Geist Pixel"'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText(String(count), bx, by);
-
-        badgeHitsRef.current.push({ provinceCode: code, count, x: bx, y: by, radius: r + 5 });
+        mapHitsRef.current.push({
+          id: `sig-${sig.id}`,
+          type: 'news',
+          title: sig.title,
+          subtitle: `News • ${sig.source}`,
+          details,
+          x,
+          y,
+          radius: r + 5,
+          link: sig.link,
+          raw: sig
+        });
       }
     }
 
@@ -513,13 +750,39 @@ export default function NepalSignalsMap({ stories }: NepalSignalsMapProps) {
   // Re-draw when dependencies change
   useEffect(() => {
     draw();
-  }, [geoData, signals, showDistricts, showSignals, selectedProvince, expanded]);
+  }, [
+    geoData,
+    signals,
+    showDistricts,
+    showSignals,
+    showRiver,
+    showRain,
+    showAlerts,
+    showIncidents,
+    showEarthquakes,
+    selectedBipadItem,
+    expanded,
+    bipadData
+  ]);
 
   useEffect(() => {
     const observer = new MutationObserver(() => draw());
     observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
     return () => observer.disconnect();
-  }, [geoData, signals, showDistricts, showSignals, selectedProvince, expanded]);
+  }, [
+    geoData,
+    signals,
+    showDistricts,
+    showSignals,
+    showRiver,
+    showRain,
+    showAlerts,
+    showIncidents,
+    showEarthquakes,
+    selectedBipadItem,
+    expanded,
+    bipadData
+  ]);
 
   // Wheel and drag interactions
   useEffect(() => {
@@ -572,10 +835,17 @@ export default function NepalSignalsMap({ stories }: NepalSignalsMapProps) {
       const x = e.clientX - rect.left, y = e.clientY - rect.top;
 
       // Find hover hit
-      let hit = null;
-      for (const h of badgeHitsRef.current) {
+      let hit: MapHit | null = null;
+      for (const h of mapHitsRef.current) {
         const dx = x - h.x, dy = y - h.y;
         if (Math.sqrt(dx * dx + dy * dy) <= h.radius) { hit = h; break; }
+      }
+
+      setHoveredItem(hit);
+      if (hit) {
+        setHoveredPos({ x: x + 12, y: y + 12 });
+      } else {
+        setHoveredPos(null);
       }
 
       if (pointerActive && pointerId === e.pointerId) {
@@ -614,13 +884,15 @@ export default function NepalSignalsMap({ stories }: NepalSignalsMapProps) {
       pointerMovedDist = 0; isDragging = false;
 
       if (!wasDrag && moved < 6) {
-        let hit = null;
-        for (const h of badgeHitsRef.current) {
+        let hit: MapHit | null = null;
+        for (const h of mapHitsRef.current) {
           const dx = x - h.x, dy = y - h.y;
           if (Math.sqrt(dx * dx + dy * dy) <= h.radius) { hit = h; break; }
         }
         if (hit) {
-          setSelectedProvince(prev => prev === hit.provinceCode ? null : hit.provinceCode);
+          setSelectedBipadItem(prev => prev?.id === hit!.id ? null : hit);
+        } else {
+          setSelectedBipadItem(null);
         }
       }
       canvas.style.cursor = zoomRef.current > 1 ? 'grab' : 'default';
@@ -630,9 +902,6 @@ export default function NepalSignalsMap({ stories }: NepalSignalsMapProps) {
       draw();
     };
 
-    // The canvas is now sized by the flex layout rather than a fixed height,
-    // so it can change size without the window changing size — expanding the
-    // map, or the toolbar wrapping onto a second row. Watch the element.
     const ro = new ResizeObserver(() => draw());
     ro.observe(canvas);
 
@@ -652,7 +921,7 @@ export default function NepalSignalsMap({ stories }: NepalSignalsMapProps) {
       window.removeEventListener('resize', handleResize);
       ro.disconnect();
     };
-  }, [geoData, signals]);
+  }, [geoData, signals, bipadData, showRiver, showRain, showAlerts, showIncidents, showEarthquakes]);
 
   const handleZoomReset = () => {
     zoomRef.current = 1;
@@ -664,74 +933,112 @@ export default function NepalSignalsMap({ stories }: NepalSignalsMapProps) {
   if (loading) return <div className="nml-empty">Loading Nepal boundaries...</div>;
   if (error) return <div className="nml-empty">Failed to load Nepal map: {error}</div>;
 
-  const selSigs = selectedProvince == null ? [] : signals.filter(s => s.provinceCode === selectedProvince);
-  const selNearLabel = selectedProvince == null ? '' : (NML_PROVINCE_NEAR_LABEL[selectedProvince] || NML_PROVINCE_NAME[selectedProvince] || 'selected area');
-  const selFeedTitle = selectedProvince == null ? 'Expand map and click a circle to load local signal feed' : `${selSigs.length} stories near ${selNearLabel}`;
-
   return (
     <div ref={containerRef} className={`nml-map-layout-container ${expanded ? 'nml-map-expanded' : ''}`}>
       <div className="nml-map-toolbar">
         <button className="nml-map-toggle" onClick={() => setShowDistricts(prev => !prev)}>
-          District boundaries: {showDistricts ? 'Shown' : 'Hidden'}
+          Districts: {showDistricts ? 'On' : 'Off'}
         </button>
-        <button className="nml-map-toggle" onClick={() => setShowSignals(prev => !prev)}>
-          Alerts: {showSignals ? 'Shown' : 'Hidden'}
+        <button className={`nml-map-toggle ${showSignals ? 'active' : ''}`} onClick={() => setShowSignals(prev => !prev)}>
+          News Feed
         </button>
-        <button className="nml-map-toggle" onClick={() => { zoomRef.current = nmlClamp(zoomRef.current * 1.2, 1, 8); draw(); }}>
-          Zoom in
+        <button className={`nml-map-toggle ${showRiver ? 'active' : ''}`} onClick={() => setShowRiver(prev => !prev)}>
+          River Levels
         </button>
-        <button className="nml-map-toggle" onClick={() => { zoomRef.current = nmlClamp(zoomRef.current / 1.2, 1, 8); if (zoomRef.current <= 1.01) { zoomRef.current = 1; panXRef.current = 0; panYRef.current = 0; } draw(); }}>
-          Zoom out
+        <button className={`nml-map-toggle ${showRain ? 'active' : ''}`} onClick={() => setShowRain(prev => !prev)}>
+          Rain Gauges
+        </button>
+        <button className={`nml-map-toggle ${showAlerts ? 'active' : ''}`} onClick={() => setShowAlerts(prev => !prev)}>
+          Warnings
+        </button>
+        <button className={`nml-map-toggle ${showIncidents ? 'active' : ''}`} onClick={() => setShowIncidents(prev => !prev)}>
+          Incidents
+        </button>
+        <button className={`nml-map-toggle ${showEarthquakes ? 'active' : ''}`} onClick={() => setShowEarthquakes(prev => !prev)}>
+          Earthquakes
         </button>
         <button className="nml-map-toggle" onClick={handleZoomReset}>
-          Reset map
+          Reset Pan
         </button>
-        <button className="nml-map-toggle" onClick={() => { setExpanded(prev => !prev); }}>
-          {expanded ? 'Close full map' : 'Open full map'}
+        <button className="nml-map-toggle" onClick={() => setExpanded(prev => !prev)}>
+          {expanded ? 'Collapse Map' : 'Full Screen'}
         </button>
         <div className="nml-map-caption">
-          {signals.filter(s => s.severity === 'high').length} high-priority &bull; {signals.length} total updates
+          {bipadData ? 'BIPAD Connected' : 'Loading Telemetry...'}
         </div>
       </div>
       <div className="nml-map-layout">
         <div className="nml-map-wrap">
           <canvas ref={canvasRef} className="nml-map-canvas" aria-label="Nepal signals map"></canvas>
-          {selectedProvince !== null && (
+
+          {/* Floating interactive tooltip card */}
+          {hoveredItem && hoveredPos && (
+            <div
+              className="nml-map-tooltip"
+              style={{
+                position: 'absolute',
+                left: hoveredPos.x,
+                top: hoveredPos.y,
+                transform: 'translate(5px, 5px)',
+                zIndex: 1000,
+                pointerEvents: 'none'
+              }}
+            >
+              <div className="nml-tooltip-subtitle">{hoveredItem.subtitle}</div>
+              <div className="nml-tooltip-title">{hoveredItem.title}</div>
+              <div className="nml-tooltip-divider" />
+              <div className="nml-tooltip-rows">
+                {hoveredItem.details.map((d, i) => (
+                  <div key={i} className="nml-tooltip-row">{d}</div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Detail feed/selection overlay */}
+          {selectedBipadItem !== null && (
             <div className="nml-map-overlay">
               <div className="nml-map-feed-header">
-                <div className="nml-market-subtitle">{selFeedTitle}</div>
-                <button className="nml-map-toggle" onClick={() => setSelectedProvince(null)}>Clear</button>
+                <div className="nml-market-subtitle">
+                  {selectedBipadItem.subtitle}
+                </div>
+                <button className="nml-map-toggle" onClick={() => setSelectedBipadItem(null)}>
+                  Clear
+                </button>
               </div>
               <div className="nml-map-feed-list">
-                {selSigs.length > 0 ? (
-                  selSigs.slice(0, 12).map((s, idx) => (
-                    <article key={idx} className="nml-map-feed-item">
-                      <div className="nml-map-feed-meta">
-                        <span className={`nml-sig-tag ${s.severity}`}>{NML_TYPE_LABEL[s.type] || s.type}</span>
-                        <span>{nmlFormatAgo(s.pubDate)}</span>
+                <div className="nml-bipad-detail-card">
+                  <h4 className="nml-bipad-detail-title">{selectedBipadItem.title}</h4>
+                  <div className="nml-bipad-detail-rows">
+                    {selectedBipadItem.details.map((d, i) => (
+                      <div key={i} className="nml-bipad-detail-row">
+                        {d}
                       </div>
-                      <a className="nml-news-title" target="_blank" rel="noopener noreferrer" href={s.link}>
-                        {s.title}
-                      </a>
-                      <div className="nml-map-feed-sub">{s.provinceName} &bull; {s.source}</div>
-                    </article>
-                  ))
-                ) : (
-                  <div className="nml-empty">No matching signals for this area.</div>
-                )}
+                    ))}
+                  </div>
+                  {selectedBipadItem.link && (
+                    <a href={selectedBipadItem.link} target="_blank" rel="noopener noreferrer" className="nml-bipad-detail-link">
+                      View source url ↗
+                    </a>
+                  )}
+                </div>
               </div>
             </div>
           )}
         </div>
         <div className="nml-map-helper">
-          Select a province marker to see nearby updates.
+          Hover over markers to view metadata. Click a circle to open detail panel.
         </div>
         <div className="nml-map-legend">
-          <span><i className="high"></i>High Alert</span>
-          <span><i className="elevated"></i>Elevated</span>
-          <span><i className="monitoring"></i>Monitoring</span>
+          <span><i className="legend-news"></i>News Signal</span>
+          <span><i className="legend-river"></i>River Level</span>
+          <span><i className="legend-rain"></i>Rain Telemetry</span>
+          <span><i className="legend-warning"></i>DHM Warning</span>
+          <span><i className="legend-incident"></i>Disaster Event</span>
+          <span><i className="legend-eq"></i>Earthquake</span>
         </div>
       </div>
     </div>
   );
 }
+

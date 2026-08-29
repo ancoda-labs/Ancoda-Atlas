@@ -982,6 +982,7 @@ export interface BipadIncident {
   lat: number | null;
   lon: number | null;
   loss?: BipadLoss | null;
+  point?: { type: string; coordinates?: [number, number] } | null;
 }
 
 export interface BipadAlert {
@@ -997,6 +998,7 @@ export interface BipadAlert {
   verified: boolean;
   lat: number | null;
   lon: number | null;
+  point?: { type: string; coordinates?: [number, number] } | null;
 }
 
 /** Tally of what BIPAD holds for the corridor — never presented as the national toll. */
@@ -1293,3 +1295,56 @@ export interface AffectedDistrictProps {
   status: 'severe' | 'affected';
   province: string;
 }
+
+// ─── BIPAD Datasets ─────────────────────────────────────────────────────────
+
+export interface BipadRiverStation {
+  id: number;
+  title?: string;
+  waterLevel?: number | null;
+  warningLevel?: number | null;
+  dangerLevel?: number | null;
+  waterLevelOn?: string | null;
+  steady?: string | null;
+  image?: string | null;
+  point?: { type: string; coordinates?: [number, number] } | null;
+  province?: number;
+}
+
+export interface BipadRainAverage {
+  interval: number;
+  value: number | null;
+  status: {
+    danger: boolean;
+    warning: boolean;
+  };
+}
+
+export interface BipadRainStation {
+  id: number;
+  title?: string;
+  measuredOn?: string | null;
+  point?: { type: string; coordinates?: [number, number] } | null;
+  averages?: BipadRainAverage[];
+  status?: string | null;
+  province?: number;
+}
+
+export interface BipadEarthquake {
+  id: number;
+  magnitude?: number | null;
+  address?: string | null;
+  eventOn?: string | null;
+  point?: { type: string; coordinates?: [number, number] } | null;
+  depth?: number | null;
+  province?: number;
+}
+
+export interface BipadPayload {
+  riverStations: BipadRiverStation[];
+  rainStations: BipadRainStation[];
+  alerts: BipadAlert[];
+  incidents: BipadIncident[];
+  earthquakes: BipadEarthquake[];
+}
+

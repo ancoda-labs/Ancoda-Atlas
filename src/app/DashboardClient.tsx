@@ -9,6 +9,7 @@ import type {
   WeatherAlert,
   FloodVideo,
   VideoFeed,
+  BipadPayload,
 } from '@/types';
 import { errorMessage } from '@/types';
 
@@ -314,11 +315,28 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
   const [language, setLanguage] = useState<'en' | 'ne'>('en');
   const [newsWindow, setNewsWindow] = useState('24h');
   const [glossaryOpen, setGlossaryOpen] = useState(false);
+  const [bipadData, setBipadData] = useState<BipadPayload | null>(null);
 
   // Live news panel data cache
   const [newsCache, setNewsCache] = useState<Record<string, PanelState>>(() =>
     Object.fromEntries(NEWS_PANELS.map(p => [p.id, { items: [], status: 'loading' as const }])),
   );
+
+  // Fetch BIPAD data on load
+  useEffect(() => {
+    async function fetchBipad() {
+      try {
+        const res = await fetch('/api/bipad');
+        if (res.ok) {
+          const data = await res.json();
+          setBipadData(data);
+        }
+      } catch (err) {
+        console.error('[DashboardClient] Failed to fetch BIPAD data:', err);
+      }
+    }
+    fetchBipad();
+  }, []);
 
   // Broadcast coverage for the video rail, and the clip currently playing.
   const [videoFeed, setVideoFeed] = useState<VideoFeed | null>(null);
@@ -626,7 +644,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
       <section className="map-hero" aria-label="Live geographic view">
         <div className="map-workspace">
           <div className="map-workspace-map">
-            <NepalSignalsMap stories={D.news || []} />
+            <NepalSignalsMap stories={D.news || []} bipadData={bipadData} />
           </div>
           <div className="live-feed-panel g-panel">
             <div className="sec-head">
