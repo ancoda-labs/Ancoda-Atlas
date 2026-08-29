@@ -3,7 +3,17 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import type { Lang } from '@/hooks/use-flood-lang';
-import type { SitrepBreakdown, SitrepContent, SitrepValue, FloodContent, RescuePortalStats, PortalCount } from '@/types';
+import type {
+  SitrepBreakdown,
+  SitrepContent,
+  SitrepNameList,
+  SitrepValue,
+  CorridorIncidents,
+  FloodContent,
+  RescuePortalStats,
+  RescueSummary,
+  PortalCount,
+} from '@/types';
 import { ageFrom } from '@/lib/relative-time';
 
 // The summary of everything, as it appears under the map on the overview.
@@ -45,6 +55,27 @@ const T = {
     ne: 'प्रधानमन्त्री कार्यालयको उद्धार पोर्टलमा जनताले दर्ता गरेका विवरण। यी रिपोर्टको संख्या हो, व्यक्तिको होइन — एउटै व्यक्तिको लागि धेरै आफन्तले रिपोर्ट गर्न सक्छन्, र भेटिएपछि रिपोर्ट बन्द गर्न फर्किने कम हुन्छन्। यसलाई सहयोगको मागको सूचकका रूपमा हेर्नुहोस्, माथिको तथ्यांकमा नजोड्नुहोस्।',
   },
   portalRead: { en: 'Portal read', ne: 'पोर्टल पढिएको' },
+  liveTitle: { en: 'Live from the government portals', ne: 'सरकारी पोर्टलबाट प्रत्यक्ष' },
+  liveIntro: {
+    en: 'Read directly from NDRRMA and the BIPAD Portal a few minutes ago. The BIPAD figures count what has been entered into the incident register so far, not the national toll — an incident is logged as soon as it is reported and the damage is counted later. Read them beside the reviewed figures above, never added to them.',
+    ne: 'केही मिनेटअघि एनडीआरआरएमए र बिपद् पोर्टलबाट सिधै पढिएको। बिपद्का अंकहरूले अहिलेसम्म घटना अभिलेखमा प्रविष्ट भएको मात्र गन्छन्, राष्ट्रिय क्षति होइन — घटना जनाइनासाथ दर्ता हुन्छ र क्षति पछि गणना हुन्छ। माथिका जाँचिएका तथ्यांकसँग जोडेर होइन, छेउछाउ राखेर पढ्नुहोस्।',
+  },
+  liveRescued: { en: 'Rescued, on the NDRRMA register', ne: 'एनडीआरआरएमए सूचीमा उद्धार' },
+  liveForeign: { en: 'of them foreign nationals', ne: 'मध्ये विदेशी नागरिक' },
+  liveIncidents: { en: 'Incidents logged in BIPAD', ne: 'बिपद्मा दर्ता घटना' },
+  liveAwaiting: { en: 'Still awaiting damage figures', ne: 'क्षति तथ्यांक कुर्दै' },
+  liveDeaths: { en: 'Deaths entered in BIPAD', ne: 'बिपद्मा प्रविष्ट मृत्यु' },
+  liveMissing: { en: 'Missing entered in BIPAD', ne: 'बिपद्मा प्रविष्ट बेपत्ता' },
+  liveHouses: { en: 'Houses destroyed', ne: 'भत्किएका घर' },
+  liveRead: { en: 'Read', ne: 'पढिएको' },
+  reviewedAsOf: { en: 'Reviewed figures, as of', ne: 'जाँचिएका तथ्यांक, मिति' },
+  noLiveFeed: {
+    en: 'No portal publishes these as data, so they move only when the desk edits them. The live incident register is on the situation page.',
+    ne: 'यी तथ्यांक कुनै पोर्टलले डेटाका रूपमा प्रकाशित गर्दैन, त्यसैले डेस्कले सम्पादन गर्दा मात्र परिवर्तन हुन्छन्। प्रत्यक्ष घटना अभिलेख अवस्था पृष्ठमा छ।',
+  },
+  liveRow: { en: 'live', ne: 'प्रत्यक्ष' },
+  portalOpenLost: { en: 'OPMCM portal, open reports', ne: 'प्रधानमन्त्री कार्यालय पोर्टल, खुला विवरण' },
+  portalFound: { en: 'OPMCM portal, reported found', ne: 'प्रधानमन्त्री कार्यालय पोर्टल, भेटिएको जनाइएको' },
 };
 
 /** "13,248+" — the number, grouped, with any suffix the source published. */
@@ -236,14 +267,19 @@ export default function FloodSummary({
   lang,
   whatHappened,
   portal,
+  corridor,
+  rescueSummary,
+  rescueFetchedAt,
 }: {
   sitrep: SitrepContent;
   lang: Lang;
   whatHappened: FloodContent['whatHappened'] | null;
   portal?: RescuePortalStats | null;
+  corridor?: CorridorIncidents | null;
+  rescueSummary?: RescueSummary | null;
+  rescueFetchedAt?: string | null;
 }) {
   const t = (key: keyof typeof T) => T[key][lang];
-  const breakdowns = sitrep.breakdowns || [];
   const nameLists = sitrep.name_lists;
   const missingFound = sitrep.missing_found;
   const infrastructure = sitrep.infrastructure;
@@ -251,6 +287,60 @@ export default function FloodSummary({
   // A portal that failed its last read still has its previous figures behind
   // it; one that has never answered has nothing to draw.
   const portalCards = portal ? portalBreakdowns(portal) : [];
+  const corridorTotals = corridor?.totals ?? null;
+
+  /**
+   * The reviewed lists, with the one figure that has a live source replaced.
+   *
+   * Both list sections below are reviewed content, and both carried "NDRRMA
+   * rescued: 529" — a figure typed in when it was true. The register those
+   * cards link to now holds well over two thousand people, so the page was
+   * contradicting itself one click apart. Where a row is the NDRRMA register
+   * (`id: 'ndrrma'`), its value comes from the live register instead; every
+   * other row has no live source and is shown exactly as reviewed.
+   */
+  const liveList = <T extends { id: string; value: number }>(item: T): T => {
+    if (item.id !== 'ndrrma' || rescueSummary?.total == null) return item;
+    return { ...item, value: rescueSummary.total };
+  };
+
+  /**
+   * The portal's own counters, as extra rows on the missing-and-found lists.
+   *
+   * Appended rather than merged into the reviewed rows: the OPMCM portal is a
+   * separate collection from the forms and helplines listed beside it, the same
+   * person can be filed in several of them, and the section's own warning is
+   * that these are never added together. Each row is marked live so a reader
+   * can see which figure moves on its own and which waits for an edit.
+   */
+  const portalRow = (
+    id: string,
+    value: number | null | undefined,
+    label: { en: string; ne: string },
+  ): SitrepNameList[] =>
+    value == null
+      ? []
+      : [{
+          id,
+          value,
+          label_en: `${label.en} · ${T.liveRow.en}`,
+          label_ne: `${label.ne} · ${T.liveRow.ne}`,
+        }];
+
+  /** The reviewed figures' own dateline and sources, printed under a section. */
+  const ReviewedSource = ({ note }: { note?: boolean }) => (
+    <p className="fl-note">
+      {t('reviewedAsOf')}{' '}
+      {(lang === 'ne' ? sitrep.as_of_label_ne || sitrep.as_of_label_en : sitrep.as_of_label_en) || '—'}
+      {' · '}
+      {(sitrep.sources || []).map((src, i) => (
+        <a key={i} href={src.url} target="_blank" rel="noopener noreferrer">
+          {src.label} &#8599;
+        </a>
+      ))}
+      {note && <span className="fl-blank"> {t('noLiveFeed')}</span>}
+    </p>
+  );
 
   const LBody = (o: { body_en?: string | string[]; body_ne?: string | string[] } | null | undefined): string[] => {
     if (!o) return [];
@@ -271,39 +361,114 @@ export default function FloodSummary({
         </aside>
       )}
 
-      {/* Toll and Damage side-by-side in a grid */}
+      {/* The live figures and the damage record, side by side.
+          The reviewed toll grid that used to lead this section is gone: it was
+          a file nobody could refresh, sitting above live counters that
+          contradicted it. What survives is the portals' own current figures,
+          and the infrastructure record, which has no live source. */}
       <section className="fl-sec">
         <div className="fl-split">
           <div>
-            <div className="fl-sec-head">
-              <span>{lang === 'ne' ? 'अवस्था' : 'Toll'}</span>
-              <h2>{lang === 'ne' ? 'अहिलेसम्मको तथ्यांक' : 'Where things stand'}</h2>
-            </div>
-            <p className="fl-note">{t('tapHint')}</p>
-
-            <div className="fl-figs">
-              {breakdowns.map(b => (
-                <BreakdownCard key={b.id} breakdown={b} lang={lang} />
-              ))}
-            </div>
-
-            <p className="fl-note">
-              {t('asOf')}{' '}
-              {(lang === 'ne' ? sitrep.as_of_label_ne || sitrep.as_of_label_en : sitrep.as_of_label_en) || '—'}
-              {' · '}
-              {(sitrep.sources || []).map((s, i) => (
-                <a key={i} href={s.url} target="_blank" rel="noopener noreferrer">
-                  {s.label} &#8599;
-                </a>
-              ))}
-            </p>
-
-            {/* What the public filed, kept apart from the official toll above.
-                The portal counts reports rather than people, so its figures sit
-                under their own heading with the caveat attached, never mixed
-                into the sitrep grid where a reader might sum across them. */}
-            {portalCards.length > 0 && portal && (
+            {/* The government portals' own current figures.
+                These replace the live overlay that used to be scraped from a
+                community compilation: everything here is read straight from
+                NDRRMA and BIPAD, is labelled with what it actually counts, and
+                is never merged into the reviewed grid above. */}
+            {(rescueSummary || corridorTotals) && (
               <div className="fl-portal">
+                <div className="fl-sec-head">
+                  <span>{lang === 'ne' ? 'प्रत्यक्ष' : 'Live'}</span>
+                  <h2>{t('liveTitle')}</h2>
+                </div>
+                <p className="fl-note">{t('liveIntro')}</p>
+
+                <div className="fl-tiles">
+                  {rescueSummary && (
+                    <>
+                      <div className="t-positive">
+                        <dd>{rescueSummary.total.toLocaleString()}</dd>
+                        <dt>{t('liveRescued')}</dt>
+                      </div>
+                      <div>
+                        <dd>{rescueSummary.foreign.toLocaleString()}</dd>
+                        <dt>{t('liveForeign')}</dt>
+                      </div>
+                    </>
+                  )}
+                  {corridorTotals && (
+                    <>
+                      <div>
+                        <dd>{corridorTotals.incidentCount.toLocaleString()}</dd>
+                        <dt>{t('liveIncidents')}</dt>
+                      </div>
+                      <div className="t-warning">
+                        <dd>{corridorTotals.incidentsAwaitingFigures.toLocaleString()}</dd>
+                        <dt>{t('liveAwaiting')}</dt>
+                      </div>
+                      <div className="t-critical">
+                        <dd>{corridorTotals.deaths.toLocaleString()}</dd>
+                        <dt>{t('liveDeaths')}</dt>
+                      </div>
+                      <div className="t-critical">
+                        <dd>{corridorTotals.missing.toLocaleString()}</dd>
+                        <dt>{t('liveMissing')}</dt>
+                      </div>
+                      <div>
+                        <dd>{corridorTotals.housesDestroyed.toLocaleString()}</dd>
+                        <dt>{t('liveHouses')}</dt>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                <p className="fl-note">
+                  {t('liveRead')} {ageFrom(corridor?.fetchedAt, lang)}
+                  {' · '}
+                  <a href="https://ndrrma.gov.np/np/rescue" target="_blank" rel="noopener noreferrer">
+                    NDRRMA &#8599;
+                  </a>
+                  <a href="https://bipadportal.gov.np/" target="_blank" rel="noopener noreferrer">
+                    {lang === 'ne' ? 'बिपद् पोर्टल' : 'BIPAD Portal'} &#8599;
+                  </a>
+                </p>
+              </div>
+            )}
+
+          </div>
+
+          <div>
+            {infrastructure?.items && infrastructure.items.length > 0 && (
+              <>
+                <div className="fl-sec-head">
+                  <span>{lang === 'ne' ? 'संरचना' : 'Damage'}</span>
+                  <h2>{lang === 'ne' ? infrastructure.title_ne || infrastructure.title_en : infrastructure.title_en}</h2>
+                </div>
+                <ul className="fl-fig-list fl-fig-wide">
+                  {infrastructure.items.map((item, i) => (
+                    <ValueRow key={i} item={item} lang={lang} />
+                  ))}
+                </ul>
+                {/* These are deliberately NOT swapped for BIPAD's live counts.
+                    BIPAD stores an unfilled loss record as zeros, and most of
+                    this corridor's incidents are still awaiting figures — so
+                    the live read says nought bridges destroyed where the
+                    reviewed record says eighty. Printing that would not be
+                    fresher, it would be wrong. The live entered-so-far figures
+                    are on the situation page, under their own caveat. */}
+                <ReviewedSource note />
+              </>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* What the public filed, on its own full-width row.
+          The portal counts reports rather than people, so its figures sit under
+          their own heading with the caveat attached, never mixed into the
+          figures above where a reader might sum across them. */}
+      {portalCards.length > 0 && portal && (
+        <section className="fl-sec">
+          <div className="fl-portal fl-portal-wide">
                 <div className="fl-sec-head">
                   <span>{lang === 'ne' ? 'पोर्टल' : 'Portal'}</span>
                   <h2>{t('portalTitle')}</h2>
@@ -324,26 +489,9 @@ export default function FloodSummary({
                   </a>
                 </p>
               </div>
-            )}
-          </div>
-
-          <div>
-            {infrastructure?.items && infrastructure.items.length > 0 && (
-              <>
-                <div className="fl-sec-head">
-                  <span>{lang === 'ne' ? 'संरचना' : 'Damage'}</span>
-                  <h2>{lang === 'ne' ? infrastructure.title_ne || infrastructure.title_en : infrastructure.title_en}</h2>
-                </div>
-                <ul className="fl-fig-list fl-fig-wide">
-                  {infrastructure.items.map((item, i) => (
-                    <ValueRow key={i} item={item} lang={lang} />
-                  ))}
-                </ul>
-              </>
-            )}
-          </div>
-        </div>
-      </section>
+            )
+        </section>
+      )}
 
       {/* Background and On the ground side-by-side in a grid */}
       {(whatHappened || (sitrep.notes && sitrep.notes.length > 0)) && (
@@ -402,7 +550,7 @@ export default function FloodSummary({
             <em>{nameLists.lists.length}</em>
           </div>
           <div className="fl-listcards">
-            {nameLists.lists.map(list => {
+            {nameLists.lists.map(liveList).map(list => {
               const inner = (
                 <>
                   <dd>{list.value.toLocaleString()}</dd>
@@ -424,6 +572,19 @@ export default function FloodSummary({
             <b>{t('doNotMerge')}</b>{' '}
             {lang === 'ne' ? nameLists.do_not_merge_ne || nameLists.do_not_merge_en : nameLists.do_not_merge_en}
           </p>
+          {/* Two datelines, because these rows do not share one: the NDRRMA
+              card is re-read every ten minutes, the rest move only on a
+              content edit. */}
+          {rescueSummary && (
+            <p className="fl-note">
+              {t('liveRead')} {ageFrom(rescueFetchedAt, lang)}
+              {' · '}
+              <a href="https://ndrrma.gov.np/np/rescue" target="_blank" rel="noopener noreferrer">
+                NDRRMA &#8599;
+              </a>
+            </p>
+          )}
+          <ReviewedSource />
         </section>
       )}
 
@@ -437,7 +598,10 @@ export default function FloodSummary({
             <div>
               <h4 className="fl-minor">{t('missing')}</h4>
               <ul className="fl-fig-list">
-                {(missingFound.missing || []).map(item => (
+                {[
+                  ...(missingFound.missing || []),
+                  ...portalRow('portal-lost', portal?.persons.lostOpen, T.portalOpenLost),
+                ].map(item => (
                   <ValueRow key={item.id} item={item} lang={lang} />
                 ))}
               </ul>
@@ -448,7 +612,10 @@ export default function FloodSummary({
                 {missingFound.found_total ? ` · ${missingFound.found_total.toLocaleString()}` : ''}
               </h4>
               <ul className="fl-fig-list">
-                {(missingFound.found || []).map(item => (
+                {[
+                  ...(missingFound.found || []).map(liveList),
+                  ...portalRow('portal-found', portal?.persons.found, T.portalFound),
+                ].map(item => (
                   <ValueRow key={item.id} item={item} lang={lang} />
                 ))}
               </ul>
@@ -458,6 +625,16 @@ export default function FloodSummary({
             <b>{t('doNotMerge')}</b>{' '}
             {lang === 'ne' ? missingFound.do_not_merge_ne || missingFound.do_not_merge_en : missingFound.do_not_merge_en}
           </p>
+          {portal && (
+            <p className="fl-note">
+              {t('liveRead')} {ageFrom(portal.fetchedAt, lang)}
+              {' · '}
+              <a href={portal.source.url} target="_blank" rel="noopener noreferrer">
+                {portal.source.label} &#8599;
+              </a>
+            </p>
+          )}
+          <ReviewedSource />
         </section>
       )}
     </>

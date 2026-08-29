@@ -24,10 +24,10 @@ let pending: Promise<RescueRegister> | null = null;
 export async function GET() {
   const store = getFloodStore();
   if (store.rescue) {
-    const res = NextResponse.json({
-      ...store.rescue,
-      bulletinRescue: store.bulletinRescue,
-    });
+    // The OPMCM register is deliberately not folded in here: it is eight
+    // thousand rows and has its own route, so this response stays small enough
+    // to paint the search box quickly.
+    const res = NextResponse.json(store.rescue);
     res.headers.set('X-Atlas-Cache', 'cron');
     return cacheFor(res, { edge: CACHE_TTL_S });
   }
@@ -41,15 +41,7 @@ export async function GET() {
   if (!pending) {
     pending = (async () => {
       const { getRescueRegister } = await import('@/apis/sources/ndrrma.mjs');
-      const { getBulletinRescue } = await import('@/apis/sources/bulletin-rescue.mjs');
-      const [ndrrma, bulletin] = await Promise.all([
-        getRescueRegister(),
-        getBulletinRescue().catch(() => null),
-      ]);
-      return {
-        ...ndrrma,
-        bulletinRescue: bulletin,
-      };
+      return getRescueRegister();
     })()
       .then(data => {
         // Only cache a register that actually arrived. Caching an empty result

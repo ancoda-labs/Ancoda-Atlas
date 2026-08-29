@@ -21,11 +21,36 @@ import { join } from 'path';
 import { fetchCorridorGauges } from './flood';
 import { proxyUrlFor } from './news-media';
 import { scheduleCatchup } from './news-digest-store';
-import type { FeedStatus, FloodDeskStore, NewsItem } from '@/types';
+import type { FeedStatus, FloodDeskStore, NewsItem, OpmcmPersonRegister, OpmcmPersonReport } from '@/types';
 import { errorMessage } from '@/types';
 
 const DEFAULT_INTERVAL_MINUTES = 10;
 const STORE_FILE = 'flood-desk.json';
+
+/**
+ * The shape of the persisted store.
+ *
+ * Bump this whenever a field in FloodDeskStore changes shape — a renamed key,
+ * a new required sub-field, a list that gains a third bucket.
+ *
+ * Without it the restore below is a trap. It merges whatever is on disk over
+ * the empty store, so a file written by an older build silently supplies an
+ * older shape for a key the new code assumes it owns, and the first component
+ * to read a field that did not exist then crashes the page. That is exactly how
+ * the rescue page went down for a reader after the OPMCM register grew its
+ * third list: the previous build's `{lost, found}` restored cleanly over a
+ * shape that now also expects `other`.
+ *
+ * A mismatched file is discarded rather than migrated. The only cost is one
+ * cold cycle after a deploy; the alternative is a page that throws — or, more
+ * quietly, one that renders a field the restored rows simply do not have.
+ *
+ * v3 added `country` to the NDRRMA rescued-persons rows. A v2 store restores
+ * cleanly without it, and the rescue table then prints "FOREIGN" beside a
+ * hundred Indian nationals with no country against any of them — no error, no
+ * warning, just a column that is silently blank.
+ */
+const STORE_VERSION = 3;
 
 function intervalMinutes(): number {
   const raw = Number(process.env.FLOOD_REFRESH_INTERVAL_MINUTES);
@@ -40,12 +65,23 @@ function emptyStore(): FloodDeskStore {
     corridor: null,
     alerts: [],
     rescue: null,
-    family: null,
-    bulletinRescue: null,
     portal: null,
-    sitrep: null,
     videos: null,
     news: [],
+    dailyBulletin: null,
+    pressReleases: null,
+    advisories: null,
+    govEfforts: null,
+    portalContacts: null,
+    opmcmPersons: null,
+    helpRequests: null,
+    officialContacts: null,
+    featuredPhotos: null,
+    popups: null,
+    carousel: null,
+    donationChannels: null,
+    latestActivity: null,
+    personPoints: null,
     health: [],
     lastRunAt: null,
     nextRunAt: null,
@@ -82,7 +118,14 @@ function loadFromDisk(): FloodDeskStore | null {
   try {
     const path = join(runsDir(), STORE_FILE);
     if (!existsSync(path)) return null;
-    const parsed = JSON.parse(readFileSync(path, 'utf8')) as FloodDeskStore;
+    const parsed = JSON.parse(readFileSync(path, 'utf8')) as FloodDeskStore & { version?: number };
+    if (parsed.version !== STORE_VERSION) {
+      console.log(
+        `[Flood cron] Ignoring desk store written for shape v${parsed.version ?? 'unversioned'} ` +
+          `(this build expects v${STORE_VERSION}) — starting cold`,
+      );
+      return null;
+    }
     console.log('[Flood cron] Restored desk store from disk');
     return { ...emptyStore(), ...parsed };
   } catch (err) {
@@ -93,7 +136,7 @@ function loadFromDisk(): FloodDeskStore | null {
 
 function persist(store: FloodDeskStore): void {
   try {
-    writeFileSync(join(runsDir(), STORE_FILE), JSON.stringify(store));
+    writeFileSync(join(runsDir(), STORE_FILE), JSON.stringify({ ...store, version: STORE_VERSION }));
   } catch (err) {
     // Losing the on-disk copy costs a cold start, not correctness.
     console.warn('[Flood cron] Could not persist store:', errorMessage(err));
@@ -161,7 +204,9 @@ export async function runFloodRefresh(): Promise<FloodDeskStore> {
         store,
         async () => {
           const { getCorridorIncidents } = await import('@/apis/sources/bipad.mjs');
-          return getCorridorIncidents({ since: '2026-08-20' });
+          // No `since` — the source resolves the event's start from the shared
+          // scope, so the refresher and a direct call cannot disagree.
+          return getCorridorIncidents();
         },
         value => {
           store.corridor = value;
@@ -193,50 +238,6 @@ export async function runFloodRefresh(): Promise<FloodDeskStore> {
         },
         value => {
           store.rescue = value;
-        },
-      ),
-
-      refresh(
-        'family',
-        store,
-        async () => {
-          const { getFamilyRegister } = await import('@/apis/sources/family-register.mjs');
-          const register = await getFamilyRegister();
-          if (register.error) throw new Error(register.error);
-          return register;
-        },
-        value => {
-          store.family = value;
-        },
-      ),
-
-      refresh(
-        'bulletinRescue',
-        store,
-        async () => {
-          const { getBulletinRescue } = await import('@/apis/sources/bulletin-rescue.mjs');
-          const register = await getBulletinRescue();
-          if (register.error) throw new Error(register.error);
-          return register;
-        },
-        value => {
-          store.bulletinRescue = value;
-        },
-      ),
-
-      refresh(
-        'sitrep',
-        store,
-        async () => {
-          const { getBulletinSitrep } = await import('@/apis/sources/bulletin-sitrep.mjs');
-          const live = await getBulletinSitrep();
-          // No figures with an error is a failed read, not an emptied toll —
-          // fail so the reviewed figures stay on the page.
-          if (live.error || !live.breakdowns.length) throw new Error(live.error || 'no figures');
-          return live;
-        },
-        value => {
-          store.sitrep = value;
         },
       ),
 
@@ -284,6 +285,248 @@ export async function runFloodRefresh(): Promise<FloodDeskStore> {
         },
         value => {
           store.news = value;
+        },
+      ),
+
+      refresh(
+        'ndrrmaBulletin',
+        store,
+        async () => {
+          const { getDailyBulletins } = await import('@/apis/sources/ndrrma-bulletin.mjs');
+          const feed = await getDailyBulletins({ limit: 5 });
+          if (feed.error && !feed.bulletins.length) throw new Error(feed.error);
+          return {
+            items: feed.bulletins.map(b => ({
+              id: b.id,
+              title: b.title,
+              titleNe: b.titleNe,
+              summary: b.summary,
+              summaryNe: b.summaryNe,
+              date: b.date,
+              pdfUrl: b.pdfUrl,
+              imageProxy: proxyUrlFor(b.image),
+            })),
+            error: feed.error,
+            source: feed.source,
+            fetchedAt: feed.fetchedAt,
+          };
+        },
+        value => {
+          store.dailyBulletin = value;
+        },
+      ),
+
+      refresh(
+        'ndrrmaNotices',
+        store,
+        async () => {
+          const { getPressReleases, getNationalAdvisories } = await import('@/apis/sources/ndrrma-notices.mjs');
+          const [press, adv] = await Promise.all([
+            getPressReleases({ limit: 12 }),
+            getNationalAdvisories(),
+          ]);
+          if (press.error && !press.items.length && adv.error && !adv.advisories.length) {
+            throw new Error(press.error || adv.error);
+          }
+          store.pressReleases = {
+            items: press.items.map(n => ({
+              id: n.id,
+              title: n.title,
+              titleNe: n.titleNe,
+              summary: n.summary,
+              summaryNe: n.summaryNe,
+              date: n.date,
+              imageProxy: proxyUrlFor(n.image),
+            })),
+            error: press.error,
+            source: press.source,
+            fetchedAt: press.fetchedAt,
+          };
+          return { items: adv.advisories, error: adv.error, source: adv.source, fetchedAt: adv.fetchedAt };
+        },
+        value => {
+          store.advisories = value;
+        },
+      ),
+
+      refresh(
+        'govEfforts',
+        store,
+        async () => {
+          const { getGovernmentEfforts } = await import('@/apis/sources/rescue-portal.mjs');
+          const feed = await getGovernmentEfforts({ limit: 20 });
+          if (feed.error && !feed.items.length) throw new Error(feed.error);
+          return feed;
+        },
+        value => {
+          store.govEfforts = value;
+        },
+      ),
+
+      refresh(
+        'portalContacts',
+        store,
+        async () => {
+          const { getEmergencyContacts } = await import('@/apis/sources/rescue-portal.mjs');
+          const feed = await getEmergencyContacts({ limit: 50 });
+          if (feed.error && !feed.items.length) throw new Error(feed.error);
+          return feed;
+        },
+        value => {
+          store.portalContacts = value;
+        },
+      ),
+
+      refresh(
+        'opmcmPersons',
+        store,
+        async () => {
+          const { getPersonRegister } = await import('@/apis/sources/rescue-portal.mjs');
+          const register = await getPersonRegister();
+          if (register.error && !register.lost.length && !register.found.length) {
+            throw new Error(register.error);
+          }
+          const withProxy = (list: typeof register.lost): OpmcmPersonReport[] =>
+            list.map(({ image, ...rest }) => ({ ...rest, imageProxy: proxyUrlFor(image) }));
+          return {
+            lost: withProxy(register.lost),
+            found: withProxy(register.found),
+            other: withProxy(register.other),
+            total: register.total,
+            fetched: register.fetched,
+            error: register.error,
+            source: register.source,
+            fetchedAt: register.fetchedAt,
+          } satisfies OpmcmPersonRegister;
+        },
+        value => {
+          store.opmcmPersons = value;
+        },
+      ),
+
+      refresh(
+        'helpRequests',
+        store,
+        async () => {
+          const { getHelpRequestsMap } = await import('@/apis/sources/rescue-portal.mjs');
+          const feed = await getHelpRequestsMap({ limit: 200 });
+          if (feed.error && !feed.requests.length) throw new Error(feed.error);
+          return { items: feed.requests, error: feed.error, source: feed.source, fetchedAt: feed.fetchedAt };
+        },
+        value => {
+          store.helpRequests = value;
+        },
+      ),
+
+      // The local government's own contact register. This is why the contacts
+      // page no longer depends on one hand-typed district: BIPAD publishes the
+      // list for every affected district and it moves when the portal does.
+      refresh(
+        'officialContacts',
+        store,
+        async () => {
+          const { getDistrictContacts } = await import('@/apis/sources/bipad.mjs');
+          const feed = await getDistrictContacts();
+          if (feed.error && !feed.districts.length) throw new Error(feed.error);
+          return { items: feed.districts, error: feed.error, source: feed.source, fetchedAt: feed.fetchedAt };
+        },
+        value => {
+          store.officialContacts = value;
+        },
+      ),
+
+      refresh(
+        'personPoints',
+        store,
+        async () => {
+          const { getPersonMapPoints } = await import('@/apis/sources/rescue-portal.mjs');
+          const feed = await getPersonMapPoints({ limit: 200 });
+          if (feed.error && !feed.points.length) throw new Error(feed.error);
+          return { items: feed.points, error: feed.error, source: feed.source, fetchedAt: feed.fetchedAt };
+        },
+        value => {
+          store.personPoints = value;
+        },
+      ),
+
+      refresh(
+        'portalLatest',
+        store,
+        async () => {
+          const { getLatestActivity } = await import('@/apis/sources/rescue-portal.mjs');
+          const feed = await getLatestActivity({ limit: 6 });
+          if (feed.error && !feed.requests.length && !feed.offers.length) throw new Error(feed.error);
+          return feed;
+        },
+        value => {
+          store.latestActivity = value;
+        },
+      ),
+
+      refresh(
+        'portalCarousel',
+        store,
+        async () => {
+          const { getCarousel } = await import('@/apis/sources/rescue-portal.mjs');
+          const feed = await getCarousel();
+          if (feed.error && !feed.items.length) throw new Error(feed.error);
+          return {
+            items: feed.items.map(({ image, ...rest }) => ({ ...rest, imageProxy: proxyUrlFor(image) })),
+            error: feed.error,
+            source: feed.source,
+            fetchedAt: feed.fetchedAt,
+          };
+        },
+        value => {
+          store.carousel = value;
+        },
+      ),
+
+      // The portal's donation channels. Kept in the store so the giving page can
+      // show them beside — never inside — the reviewed accounts.
+      refresh(
+        'portalDonations',
+        store,
+        async () => {
+          const { getDonationChannels } = await import('@/apis/sources/rescue-portal.mjs');
+          const feed = await getDonationChannels({ limit: 12 });
+          if (feed.error && !feed.items.length) throw new Error(feed.error);
+          return {
+            items: feed.items.map(({ qrImage, ...rest }) => ({ ...rest, qrProxy: proxyUrlFor(qrImage) })),
+            error: feed.error,
+            source: feed.source,
+            fetchedAt: feed.fetchedAt,
+          };
+        },
+        value => {
+          store.donationChannels = value;
+        },
+      ),
+
+      refresh(
+        'ndrrmaMedia',
+        store,
+        async () => {
+          const { getFeaturedPhotos, getWebsitePopups } = await import('@/apis/sources/ndrrma-notices.mjs');
+          const [photos, popups] = await Promise.all([getFeaturedPhotos({ limit: 12 }), getWebsitePopups()]);
+          if (photos.error && !photos.items.length && popups.error) throw new Error(photos.error);
+          // An empty popup list is a real state — NDRRMA is not always raising
+          // a notice — so it is stored rather than treated as a failed read.
+          store.popups = {
+            items: popups.items.map(({ image, ...rest }) => ({ ...rest, imageProxy: proxyUrlFor(image) })),
+            error: popups.error,
+            source: popups.source,
+            fetchedAt: popups.fetchedAt,
+          };
+          return {
+            items: photos.items.map(({ image, ...rest }) => ({ ...rest, imageProxy: proxyUrlFor(image) })),
+            error: photos.error,
+            source: photos.source,
+            fetchedAt: photos.fetchedAt,
+          };
+        },
+        value => {
+          store.featuredPhotos = value;
         },
       ),
     ]);

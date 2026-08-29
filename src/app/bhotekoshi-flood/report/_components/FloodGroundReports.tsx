@@ -3,6 +3,7 @@
 import React, { useRef, useState } from 'react';
 import type { FloodPhoto } from '@/types';
 import { ageFrom, orientationTransform } from '@/lib/relative-time';
+import { AFFECTED_DISTRICTS } from '@/apis/utils/flood-scope.mjs';
 
 // Ground reports — photos the public sends in from the flood corridor.
 //
@@ -66,15 +67,14 @@ const T = {
   errGeneric: { en: 'That did not send. Please try again.', ne: 'पठाउन सकिएन। फेरि प्रयास गर्नुहोस्।' },
 };
 
-const DISTRICTS: Array<{ value: string; en: string; ne: string }> = [
-  { value: 'Rasuwa', en: 'Rasuwa', ne: 'रसुवा' },
-  { value: 'Nuwakot', en: 'Nuwakot', ne: 'नुवाकोट' },
-  { value: 'Dhading', en: 'Dhading', ne: 'धादिङ' },
-  { value: 'Gorkha', en: 'Gorkha', ne: 'गोरखा' },
-  { value: 'Chitwan', en: 'Chitwan', ne: 'चितवन' },
-  { value: 'Sindhupalchok', en: 'Sindhupalchok', ne: 'सिन्धुपाल्चोक' },
-  { value: 'Kathmandu', en: 'Kathmandu', ne: 'काठमाडौँ' },
-];
+// The districts this form offers are the districts the desk covers — one list,
+// shared with the incident window, the contact reader and the map, so a sender
+// cannot be offered a district the rest of the desk does not know about.
+const DISTRICTS: Array<{ value: string; en: string; ne: string }> = AFFECTED_DISTRICTS.map(d => ({
+  value: d.en,
+  en: d.en,
+  ne: d.ne,
+}));
 
 /** Map an error code from the upload route onto a sentence a sender can act on. */
 function errorText(code: string, lang: Lang): string {

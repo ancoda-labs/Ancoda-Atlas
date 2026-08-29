@@ -4,7 +4,20 @@ import React, { useEffect, useState } from 'react';
 import FloodShell from '@/components/FloodShell';
 import { useFloodLang } from '@/hooks/use-flood-lang';
 import { ageFrom } from '@/lib/relative-time';
-import type { FloodVideo, NewsItem, VideoFeed } from '@/types';
+import type {
+  FloodOfficialFeed,
+  FloodVideo,
+  NdrrmaPhoto,
+  NewsItem,
+  PortalCarouselPhoto,
+  VideoFeed,
+} from '@/types';
+
+interface GalleryFeed {
+  carousel: FloodOfficialFeed<PortalCarouselPhoto> | null;
+  /** Still served by /api/flood/gallery; this page no longer renders it. */
+  featured?: FloodOfficialFeed<NdrrmaPhoto> | null;
+}
 
 // Coverage: what the Nepali press and broadcasters are reporting.
 //
@@ -37,12 +50,22 @@ const T = {
     en: 'Cross-channel search is off — set YOUTUBE_API_KEY to widen this beyond the listed channels.',
     ne: 'च्यानलबीचको खोज बन्द छ — सूचीबद्ध च्यानलभन्दा बाहिर खोज्न YOUTUBE_API_KEY सेट गर्नुहोस्।',
   },
+  portalPhotos: { en: 'Photographs from the rescue portal', ne: 'उद्धार पोर्टलका तस्बिर' },
+  portalPhotosHint: {
+    en: 'Published by the Office of the Prime Minister on its rescue portal, with its own captions. Streamed from the portal — Atlas stores none of them.',
+    ne: 'प्रधानमन्त्री कार्यालयले आफ्नो उद्धार पोर्टलमा आफ्नै क्याप्सनसहित प्रकाशित गरेका तस्बिर। पोर्टलबाटै देखाइएको — एट्लसले कुनै तस्बिर राख्दैन।',
+  },
 };
 
 export default function FloodMediaView() {
   const [lang, setLang] = useFloodLang();
   const [news, setNews] = useState<NewsItem[] | null>(null);
   const [videoFeed, setVideoFeed] = useState<VideoFeed | null>(null);
+  const [gallery, setGallery] = useState<GalleryFeed | null>(null);
+  // NDRRMA publishes camera originals — one of them is a 9 MB JPEG the media
+  // proxy refuses on size. A photograph that will not load is dropped rather
+  // than left as a broken frame in the grid.
+  const [brokenPhotos, setBrokenPhotos] = useState<Set<string>>(new Set());
   const [playing, setPlaying] = useState<FloodVideo | null>(null);
   const [visibleNewsCount, setVisibleNewsCount] = useState(9);
   const [visibleVideosCount, setVisibleVideosCount] = useState(9);
@@ -66,6 +89,12 @@ export default function FloodMediaView() {
       } catch {
         /* the press section stands on its own */
       }
+      try {
+        const res = await fetch('/api/flood/gallery');
+        if (res.ok && !cancelled) setGallery(await res.json());
+      } catch {
+        /* the galleries are optional */
+      }
     };
     load();
     const id = setInterval(load, 5 * 60 * 1000);
@@ -84,6 +113,8 @@ export default function FloodMediaView() {
   }, []);
 
   const videos = videoFeed?.videos || [];
+  const dropBroken = (key: string) => setBrokenPhotos(prev => (prev.has(key) ? prev : new Set(prev).add(key)));
+  const portalPhotos = (gallery?.carousel?.items || []).filter(p => !brokenPhotos.has(`portal:${p.id}`));
   const liveVideos = videoFeed?.live || [];
   const withImages = (news || []).filter(n => n.imageProxy);
   const withoutImages = (news || []).filter(n => !n.imageProxy);
@@ -128,6 +159,61 @@ export default function FloodMediaView() {
           </div>
         )}
       </section>
+
+      {/* The rescue portal's own photographs, in the same card grid the press
+          coverage below uses. They are the government's pictures of its own
+          response, so the section keeps its "Official" eyebrow and every card
+          links back to the portal — but a reader scanning the page should not
+          have to switch reading modes between two galleries of the same thing. */}
+      {portalPhotos.length > 0 && (
+        <section className="fl-sec">
+          <div className="fl-sec-head">
+            <span>{lang === 'ne' ? 'सरकारी' : 'Official'}</span>
+            <h2>{t('portalPhotos')}</h2>
+            <em>{portalPhotos.length}</em>
+          </div>
+          <p className="fl-note">{t('portalPhotosHint')}</p>
+          <div className="fl-media-grid">
+            {portalPhotos.map(photo => {
+              const caption = (lang === 'ne' ? photo.altNe || photo.altEn : photo.altEn || photo.altNe) || '';
+              return (
+                <a
+                  key={photo.id}
+                  href="https://rescue.opmcm.gov.np/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {photo.imageProxy && (
+                    <img
+                      src={photo.imageProxy}
+                      alt={caption}
+                      loading="lazy"
+                      referrerPolicy="no-referrer"
+                      onError={() => dropBroken(`portal:${photo.id}`)}
+                    />
+                  )}
+                  <div>
+                    <p>{caption}</p>
+                    <span className="fl-report-meta">
+                      <b>{lang === 'ne' ? 'प्रधानमन्त्री कार्यालय' : 'OPMCM'}</b>
+                      {photo.createdAt && <time>{ageFrom(photo.createdAt, lang)}</time>}
+                    </span>
+                  </div>
+                </a>
+              );
+            })}
+          </div>
+          {gallery?.carousel && (
+            <p className="fl-note">
+              {lang === 'ne' ? 'पढिएको' : 'Read'} {ageFrom(gallery.carousel.fetchedAt, lang)}
+              {' · '}
+              <a href={gallery.carousel.source.url} target="_blank" rel="noopener noreferrer">
+                {gallery.carousel.source.label} &#8599;
+              </a>
+            </p>
+          )}
+        </section>
+      )}
 
       <section className="fl-sec">
         <div className="fl-sec-head">

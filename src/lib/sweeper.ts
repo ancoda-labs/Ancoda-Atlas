@@ -38,7 +38,7 @@ class SweeperManager {
     const memoryDir = join(runsDir, 'memory');
     for (const dir of [runsDir, memoryDir, join(memoryDir, 'cold')]) {
       try {
-        if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+        if (!existsSync(/*turbopackIgnore: true*/ dir)) mkdirSync(/*turbopackIgnore: true*/ dir, { recursive: true });
       } catch (err) {
         console.warn(`[Sweeper] Failed to ensure directory exists: ${dir} (filesystem might be read-only)`, err instanceof Error ? err.message : err);
       }
@@ -50,9 +50,9 @@ class SweeperManager {
     // dashboard.json holds the synthesized payload the UI renders.
     // latest.json holds the raw sweep and is for the CLI and LLM layers.
     const dashboardPath = join(runsDir, 'dashboard.json');
-    if (existsSync(dashboardPath)) {
+    if (existsSync(/*turbopackIgnore: true*/ dashboardPath)) {
       try {
-        this.currentData = JSON.parse(readFileSync(dashboardPath, 'utf8'));
+        this.currentData = JSON.parse(readFileSync(/*turbopackIgnore: true*/ dashboardPath, 'utf8'));
         console.log('[Sweeper] Loaded existing data from runs/dashboard.json');
       } catch (err) {
         console.warn('[Sweeper] Failed to read runs/dashboard.json:', errorMessage(err));

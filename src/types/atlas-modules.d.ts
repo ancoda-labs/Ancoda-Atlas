@@ -88,6 +88,15 @@ declare module '*/apis/sources/nepal-news.mjs' {
   export const DEFAULT_TOPIC: string;
 }
 
+declare module '*/apis/utils/flood-scope.mjs' {
+  /** The event's start date, the lower bound of every incident query. */
+  export const EVENT_START: string;
+  /** The districts the desk covers, with the ids BIPAD files them under. */
+  export const AFFECTED_DISTRICTS: ReadonlyArray<{ id: number; en: string; ne: string }>;
+  export const CORRIDOR_BBOX: { minLat: number; maxLat: number; minLon: number; maxLon: number };
+  export function inCorridor(lat: number | null, lon: number | null): boolean;
+}
+
 declare module '*/apis/utils/nepal.mjs' {
   export interface ProvinceBox {
     label: string;
@@ -159,13 +168,27 @@ declare module '*/apis/sources/ndrrma.mjs' {
 }
 
 declare module '*/apis/sources/bipad.mjs' {
-  import type { BipadAlert, BipadHazard, BipadIncident, CorridorIncidents } from '@/types';
+  import type {
+    BipadAlert,
+    BipadDistrictContacts,
+    BipadHazard,
+    BipadIncident,
+    CorridorIncidents,
+    SourceRef,
+  } from '@/types';
   export const HAZARD: { FLOOD: number; LANDSLIDE: number; HEAVY_RAINFALL: number; THUNDERBOLT: number };
   export const CORRIDOR_BBOX: { minLat: number; maxLat: number; minLon: number; maxLon: number };
   export function getHazards(): Promise<BipadHazard[]>;
   export function getIncidents(opts?: { hazard?: number; since?: string; corridorOnly?: boolean }): Promise<BipadIncident[]>;
   export function getAlerts(opts?: { limit?: number }): Promise<BipadAlert[]>;
   export function getCorridorIncidents(opts?: { since?: string }): Promise<CorridorIncidents>;
+  export const AFFECTED_DISTRICTS: Array<{ id: number; en: string; ne: string }>;
+  export function getDistrictContacts(): Promise<{
+    districts: BipadDistrictContacts[];
+    error: string | null;
+    source: SourceRef;
+    fetchedAt: string;
+  }>;
 }
 
 declare module '*/apis/sources/youtube.mjs' {
@@ -178,23 +201,198 @@ declare module '*/apis/sources/youtube.mjs' {
   }): Promise<VideoFeed>;
 }
 
-declare module '*/apis/sources/family-register.mjs' {
-  import type { FamilyRegister } from '@/types';
-  export function getFamilyRegister(): Promise<FamilyRegister>;
-}
-
-declare module '*/apis/sources/bulletin-rescue.mjs' {
-  import type { BulletinRescue } from '@/types';
-  export function getBulletinRescue(): Promise<BulletinRescue>;
-}
-
-declare module '*/apis/sources/bulletin-sitrep.mjs' {
-  import type { BulletinSitrep } from '@/types';
-  export function getBulletinSitrep(): Promise<BulletinSitrep>;
-}
-
 declare module '*/apis/sources/rescue-portal.mjs' {
-  import type { RescuePortalStats } from '@/types';
+  import type {
+    GovEffort,
+    HelpRequest,
+    PersonMapPoint,
+    PortalContact,
+    PortalHelpFiling,
+    PortalOfferFiling,
+    RescuePortalStats,
+    SourceRef,
+  } from '@/types';
   export function getRescuePortalStats(): Promise<RescuePortalStats>;
+  export function getGovernmentEfforts(opts?: { limit?: number }): Promise<{
+    items: GovEffort[];
+    error: string | null;
+    source: SourceRef;
+    fetchedAt: string;
+  }>;
+  export function getEmergencyContacts(opts?: { limit?: number }): Promise<{
+    items: PortalContact[];
+    error: string | null;
+    source: SourceRef;
+    fetchedAt: string;
+  }>;
+  /**
+   * A person report as the portal published it; `image` is a raw upstream URL.
+   * The portal's inline base64 thumbnail is dropped at the source — at eight
+   * thousand rows those data URIs are tens of megabytes.
+   */
+  export interface PortalPersonRaw {
+    id: string | null;
+    type: string;
+    name: string | null;
+    age: string | null;
+    gender: string | null;
+    place: string | null;
+    eventAt: string | null;
+    description: string | null;
+    status: string | null;
+    daoStatus: string | null;
+    daoOffice: string | null;
+    origin: string | null;
+    image: string | null;
+  }
+  export function getPersonReports(opts?: { type?: 'lost' | 'found'; status?: string }): Promise<{
+    items: PortalPersonRaw[];
+    total: number | null;
+    error: string | null;
+    source: SourceRef;
+    fetchedAt: string;
+  }>;
+  export function getPersonRegister(): Promise<{
+    lost: PortalPersonRaw[];
+    found: PortalPersonRaw[];
+    other: PortalPersonRaw[];
+    total: number | null;
+    fetched: number;
+    error: string | null;
+    source: SourceRef;
+    fetchedAt: string;
+  }>;
+  export function getHelpRequestsMap(opts?: { limit?: number }): Promise<{
+    requests: HelpRequest[];
+    error: string | null;
+    source: SourceRef;
+    fetchedAt: string;
+  }>;
+  /** A carousel photograph; `image` is a raw upstream URL for the media proxy. */
+  export interface PortalCarouselRaw {
+    id: string | null;
+    altEn: string | null;
+    altNe: string | null;
+    order: number | null;
+    createdAt: string | null;
+    image: string | null;
+  }
+  export function getCarousel(): Promise<{
+    items: PortalCarouselRaw[];
+    error: string | null;
+    source: SourceRef;
+    fetchedAt: string;
+  }>;
+  /** A donation channel; `qrImage` is a raw upstream URL, `qrData` a data URI. */
+  export interface PortalDonationRaw {
+    id: string | null;
+    title: string | null;
+    organization: string | null;
+    description: string | null;
+    bankName: string | null;
+    accountName: string | null;
+    accountNumber: string | null;
+    branch: string | null;
+    swiftCode: string | null;
+    walletName: string | null;
+    walletId: string | null;
+    qrData: string | null;
+    qrImage: string | null;
+    priority: number | null;
+  }
+  export function getDonationChannels(opts?: { limit?: number }): Promise<{
+    items: PortalDonationRaw[];
+    error: string | null;
+    source: SourceRef;
+    fetchedAt: string;
+  }>;
+  export function getLatestActivity(opts?: { limit?: number }): Promise<{
+    requests: PortalHelpFiling[];
+    offers: PortalOfferFiling[];
+    error: string | null;
+    source: SourceRef;
+    fetchedAt: string;
+  }>;
+  export function getPersonMapPoints(opts?: { limit?: number }): Promise<{
+    points: PersonMapPoint[];
+    error: string | null;
+    source: SourceRef;
+    fetchedAt: string;
+  }>;
+}
+
+declare module '*/apis/sources/ndrrma-bulletin.mjs' {
+  import type { SourceRef } from '@/types';
+  export interface NdrrmaBulletinRaw {
+    id: number;
+    title: string | null;
+    titleNe: string | null;
+    summary: string | null;
+    summaryNe: string | null;
+    date: string | null;
+    pdfUrl: string | null;
+    image: string | null;
+  }
+  export function getDailyBulletins(opts?: { limit?: number }): Promise<{
+    bulletins: NdrrmaBulletinRaw[];
+    error: string | null;
+    source: SourceRef;
+    fetchedAt: string;
+  }>;
+}
+
+declare module '*/apis/sources/ndrrma-notices.mjs' {
+  import type { NationalAdvisory, SourceRef } from '@/types';
+  export interface NdrrmaNoticeRaw {
+    id: number;
+    title: string | null;
+    titleNe: string | null;
+    summary: string | null;
+    summaryNe: string | null;
+    date: string | null;
+    image: string | null;
+  }
+  export function getPressReleases(opts?: { limit?: number }): Promise<{
+    items: NdrrmaNoticeRaw[];
+    error: string | null;
+    source: SourceRef;
+    fetchedAt: string;
+  }>;
+  export function getNationalAdvisories(): Promise<{
+    advisories: NationalAdvisory[];
+    error: string | null;
+    source: SourceRef;
+    fetchedAt: string;
+  }>;
+  /** A featured photograph; `image` is a raw upstream URL for the media proxy. */
+  export interface NdrrmaPhotoRaw {
+    id: number;
+    title: string | null;
+    titleNe: string | null;
+    description: string | null;
+    descriptionNe: string | null;
+    image: string | null;
+  }
+  export function getFeaturedPhotos(opts?: { limit?: number }): Promise<{
+    items: NdrrmaPhotoRaw[];
+    error: string | null;
+    source: SourceRef;
+    fetchedAt: string;
+  }>;
+  export interface NdrrmaPopupRaw {
+    id: string;
+    title: string | null;
+    titleNe: string | null;
+    body: string | null;
+    bodyNe: string | null;
+    pdfUrl: string | null;
+    image: string | null;
+  }
+  export function getWebsitePopups(): Promise<{
+    items: NdrrmaPopupRaw[];
+    error: string | null;
+    source: SourceRef;
+    fetchedAt: string;
+  }>;
 }
 

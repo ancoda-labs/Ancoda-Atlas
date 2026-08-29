@@ -79,7 +79,11 @@ export default function FloodShell({ lang, setLang, kicker, title, standfirst, c
   }, []);
 
   const site = desk?.site;
-  const safety = site ? (lang === 'ne' ? site.safety_ne || site.safety_en : site.safety_en) : '';
+  const safetyText = site ? (lang === 'ne' ? site.safety_ne || site.safety_en : site.safety_en) : '';
+  // NDRRMA's standing advisory rides in the same ticker, after the safety line.
+  const advisory = desk?.advisories?.items?.[0];
+  const advisoryText = advisory ? (lang === 'ne' ? advisory.bodyNe || advisory.body : advisory.body || advisory.bodyNe) : '';
+  const safety = [safetyText, advisoryText].filter(Boolean).join(' • ');
   const lines = desk?.helplines?.lines || [];
 
   return (

@@ -381,6 +381,10 @@ export interface FloodOrg extends Bilingual<'description'> {
   url: string;
   status?: string;
   moderation?: string;
+  /** Where the desk checked that this organisation is running an appeal. */
+  source_verification_url?: string;
+  /** The date it was last checked against that source. */
+  last_verified?: string;
 }
 
 export interface SourceRef {
@@ -390,24 +394,22 @@ export interface SourceRef {
 
 export interface FloodContent {
   site: FloodSite | null;
-  keyFigures:
-    | (Bilingual<'preliminary_note'> &
-        Bilingual<'counts_conflict_note'> & {
-          last_updated?: string;
-          sources?: SourceRef[];
-          figures?: FloodFigure[];
-          latest_reported?: Bilingual<'caveat'> & { as_of?: string; items?: FloodReportedFigure[] };
-        })
-    | null;
   whatHappened: (Bilingual<'headline'> & { body_en?: string[]; body_ne?: string[]; sources?: SourceRef[] }) | null;
   alerts: (Bilingual<'note'> & { alerts?: FloodAlert[] }) | null;
-  floodPath: (Bilingual<'lead'> & Bilingual<'body'> & { points?: FloodPathPoint[]; sources?: SourceRef[] }) | null;
+  floodPath:
+    | (Bilingual<'lead'> &
+        Bilingual<'body'> & {
+          points?: FloodPathPoint[];
+          sources?: SourceRef[];
+          /** The date the desk last checked this course against its source. */
+          last_updated?: string;
+        })
+    | null;
   helplines: { lines?: FloodHelpline[]; source_url?: string } | null;
   bankAccounts: {
     funds?: FloodBankFund[];
     verification?: Bilingual<'note'> & { source_url?: string };
   } | null;
-  affectedDistricts: { districts?: Array<Bilingual<'name'>> } | null;
   districtContacts: {
     last_verified?: string | null;
     sources?: SourceRef[];
@@ -432,8 +434,18 @@ export interface FloodDistrictContacts extends Bilingual<'name'> {
 
 export interface FloodDeskPayload extends FloodContent {
   river: RiverGauges;
-  bulletinRescue?: BulletinRescue | null;
   portal?: RescuePortalStats | null;
+  /** BIPAD's corridor incident tally, for the live band on the overview. */
+  corridor?: CorridorIncidents | null;
+  /** NDRRMA's own rescued-persons totals. The register itself is served separately. */
+  rescueSummary?: RescueSummary | null;
+  /** When that register was last read, so the page can date the figure. */
+  rescueFetchedAt?: string | null;
+  dailyBulletin?: FloodOfficialFeed<NdrrmaBulletin> | null;
+  advisories?: FloodOfficialFeed<NationalAdvisory> | null;
+  govEfforts?: FloodOfficialFeed<GovEffort> | null;
+  portalContacts?: FloodOfficialFeed<PortalContact> | null;
+  popups?: FloodOfficialFeed<NdrrmaPopup> | null;
   generatedAt: string;
 }
 
@@ -575,7 +587,10 @@ export interface RescuedPerson {
   nameNe: string | null;
   age: number | null;
   gender: string | null;
+  /** 'nepali' or 'foreign', as the portal files it. */
   nationality: string | null;
+  /** The country, for a foreign national. Null where the portal left it blank. */
+  country: string | null;
   rescuedOn: string | null;
   rescuedAt: RescuePlace | null;
   stationedAt: RescuePlace | null;
@@ -639,6 +654,277 @@ export interface RescuePortalStats {
     childrenMissing: PortalCount;
     elderlyMissing: PortalCount;
   };
+  error: string | null;
+  source: SourceRef;
+  fetchedAt: string;
+}
+
+// ─── OPMCM / NDRRMA content feeds ───────────────────────────────────────────
+//
+// The official portals publish more than counters: NDRRMA's national daily
+// bulletin and press notes, and the OPMCM portal's government-effort log,
+// contact directory, missing-and-found register and geolocated help requests.
+// All of it is national or portal-scoped context — shown under its own heading,
+// never folded into the corridor sitrep. See src/apis/sources/ndrrma-*.mjs and
+// src/apis/sources/rescue-portal.mjs.
+
+export interface NdrrmaBulletin {
+  id: number;
+  title: string | null;
+  titleNe: string | null;
+  summary: string | null;
+  summaryNe: string | null;
+  date: string | null;
+  pdfUrl: string | null;
+  /** Signed media-proxy path, or null. */
+  imageProxy: string | null;
+}
+
+export interface NdrrmaNotice {
+  id: number;
+  title: string | null;
+  titleNe: string | null;
+  summary: string | null;
+  summaryNe: string | null;
+  date: string | null;
+  imageProxy: string | null;
+}
+
+export interface NationalAdvisory {
+  id: number;
+  title: string | null;
+  titleNe: string | null;
+  body: string | null;
+  bodyNe: string | null;
+  links: Array<{ name: string | null; link: string | null }>;
+  numbers: Array<{ name: string | null; designation: string | null; number: string | null }>;
+}
+
+export interface GovEffort {
+  id: string | null;
+  title: string | null;
+  titleNe: string | null;
+  bodyEn: string | null;
+  bodyNe: string | null;
+  agency: string | null;
+  district: string | null;
+  province: string | null;
+  link: string | null;
+  createdAt: string | null;
+}
+
+export interface PortalContact {
+  id: string | null;
+  name: string | null;
+  nameNe: string | null;
+  organization: string | null;
+  category: string | null;
+  phones: string[];
+  email: string | null;
+  description: string | null;
+  descriptionNe: string | null;
+  district: string | null;
+  isNationwide: boolean;
+  available24x7: boolean;
+}
+
+export interface OpmcmPersonReport {
+  id: string | null;
+  type: string;
+  name: string | null;
+  age: string | null;
+  gender: string | null;
+  place: string | null;
+  eventAt: string | null;
+  description: string | null;
+  status: string | null;
+  daoStatus: string | null;
+  daoOffice: string | null;
+  origin: string | null;
+  /** Signed media-proxy path for the full image, or null. */
+  imageProxy: string | null;
+}
+
+/**
+ * The portal's open missing-and-found register, in full.
+ *
+ * Every open report is carried, not a first page of them: this is the list a
+ * family searches by name, and a search over the first two hundred of eight
+ * thousand answers "not found" about someone who is on it.
+ */
+export interface OpmcmPersonRegister {
+  lost: OpmcmPersonReport[];
+  found: OpmcmPersonReport[];
+  /** Rows the portal files under neither heading. Still somebody's relative. */
+  other: OpmcmPersonReport[];
+  /** What the portal states the register holds. */
+  total: number | null;
+  /** How many rows were actually read, so a short sweep is visible. */
+  fetched: number;
+  error: string | null;
+  source: SourceRef;
+  fetchedAt: string;
+}
+
+export interface HelpRequest {
+  id: string | null;
+  ref: string | null;
+  title: string | null;
+  problemType: string | null;
+  helpTypes: string[];
+  urgency: string | null;
+  status: string | null;
+  place: string | null;
+  lat: number | null;
+  lon: number | null;
+}
+
+/** A photograph NDRRMA features on its own site, with its bilingual caption. */
+export interface NdrrmaPhoto {
+  id: number;
+  title: string | null;
+  titleNe: string | null;
+  description: string | null;
+  descriptionNe: string | null;
+  /** Signed media-proxy path, or null. */
+  imageProxy: string | null;
+}
+
+/**
+ * A notice NDRRMA raises over its own site — its current "read this first",
+ * usually with the document it is pointing at.
+ */
+export interface NdrrmaPopup {
+  id: string;
+  title: string | null;
+  titleNe: string | null;
+  body: string | null;
+  bodyNe: string | null;
+  pdfUrl: string | null;
+  imageProxy: string | null;
+}
+
+/** A photograph from the OPMCM portal's own home-page gallery. */
+export interface PortalCarouselPhoto {
+  id: string | null;
+  altEn: string | null;
+  altNe: string | null;
+  order: number | null;
+  createdAt: string | null;
+  /** Signed media-proxy path, or null. */
+  imageProxy: string | null;
+}
+
+/**
+ * A donation channel as the OPMCM portal publishes it.
+ *
+ * Live, and therefore kept apart from the reviewed accounts on the giving page:
+ * these are shown under the portal's name with a link back to it, never merged
+ * into the hand-checked fund table.
+ */
+export interface PortalDonationChannel {
+  id: string | null;
+  title: string | null;
+  organization: string | null;
+  description: string | null;
+  bankName: string | null;
+  accountName: string | null;
+  accountNumber: string | null;
+  branch: string | null;
+  swiftCode: string | null;
+  walletName: string | null;
+  walletId: string | null;
+  /** Inline base64 QR, usable as an <img> src verbatim. */
+  qrData: string | null;
+  /** Signed media-proxy path, when the portal published a URL instead. */
+  qrProxy: string | null;
+  priority: number | null;
+}
+
+/** A request for help filed on the portal. No filer name or number is carried. */
+export interface PortalHelpFiling {
+  id: string | null;
+  ref: string | null;
+  title: string | null;
+  description: string | null;
+  problemType: string | null;
+  helpTypes: string[];
+  affectedCount: number | null;
+  urgency: string | null;
+  status: string | null;
+  district: string | null;
+  place: string | null;
+  createdAt: string | null;
+  lat: number | null;
+  lon: number | null;
+}
+
+/** An offer of help filed on the portal. Individual volunteers stay anonymous. */
+export interface PortalOfferFiling {
+  id: string | null;
+  ref: string | null;
+  title: string | null;
+  description: string | null;
+  providerType: string | null;
+  providerName: string | null;
+  resourceTypes: string[];
+  quantity: number | null;
+  capacity: string | null;
+  status: string | null;
+  district: string | null;
+  place: string | null;
+  createdAt: string | null;
+  lat: number | null;
+  lon: number | null;
+}
+
+/** What has just been filed on the portal: asked for, and offered. */
+export interface PortalActivity {
+  requests: PortalHelpFiling[];
+  offers: PortalOfferFiling[];
+  error: string | null;
+  source: SourceRef;
+  fetchedAt: string;
+}
+
+/**
+ * One missing-or-found report reduced to a map point.
+ *
+ * Only points inside Nepal survive the source module — the register's
+ * coordinates are unreliable — and no photograph is carried.
+ */
+export interface PersonMapPoint {
+  id: string | null;
+  type: string | null;
+  name: string | null;
+  age: string | null;
+  gender: string | null;
+  eventAt: string | null;
+  lat: number | null;
+  lon: number | null;
+}
+
+/** One official the local government lists as reachable, per BIPAD. */
+export interface BipadContact {
+  id: number;
+  name: string | null;
+  position: string | null;
+  phone: string | null;
+  email: string | null;
+  /** BIPAD's own flag for the district's disaster focal person. */
+  drrFocal: boolean;
+}
+
+/** One affected district's live contact list, as BIPAD holds it. */
+export interface BipadDistrictContacts {
+  id: number;
+  name: string;
+  nameNe: string;
+  contacts: BipadContact[];
+}
+
+export interface FloodOfficialFeed<T> {
+  items: T[];
   error: string | null;
   source: SourceRef;
   fetchedAt: string;
@@ -826,23 +1112,6 @@ export interface SitrepDiscrepancy {
   summed: number;
 }
 
-/**
- * The headline figures as the Rasuwa flood bulletin currently states them.
- *
- * Same shape as the reviewed breakdowns it stands in for, so the overview
- * renders either without knowing which it got. Empty with an error set means
- * the scrape failed and the reviewed figures should stay on the page.
- */
-export interface BulletinSitrep {
-  breakdowns: SitrepBreakdown[];
-  /** The bulletin's own dateline, e.g. "12 Bhadra". */
-  asOfLabelEn: string | null;
-  asOfLabelNe: string | null;
-  error: string | null;
-  source: SourceRef;
-  fetchedAt: string;
-}
-
 export interface SitrepContent {
   as_of?: string;
   as_of_label_en?: string;
@@ -867,42 +1136,6 @@ export interface SitrepContent {
   discrepancies?: SitrepDiscrepancy[];
 }
 
-// ─── Community missing-and-found register ───────────────────────────────────
-
-/**
- * One person on the community register.
- *
- * Reproduced as filed, including the contact number — that is the mechanism the
- * register works by, the line a family left so someone who finds their relative
- * can reach them. Never merged with the NDRRMA register: the same person may
- * sit on both under two spellings, and reconciling them silently would either
- * hide someone still missing or announce a rescue that has not happened.
- */
-export interface FamilyPerson {
-  id: string;
-  name: string | null;
-  age: string | null;
-  place: string | null;
-  when: string | null;
-  phone: string | null;
-  note: string | null;
-  source: string | null;
-  status: string | null;
-}
-
-export interface FamilyRegister {
-  missing: FamilyPerson[];
-  found: FamilyPerson[];
-  matched: FamilyPerson[];
-  counts: { missing: number; found: number; matched: number };
-  forms: { missing: string | null; found: string | null };
-  sheet: string | null;
-  updatedAt: string | null;
-  error: string | null;
-  source: SourceRef;
-  fetchedAt: string;
-}
-
 // ─── Scheduled refresh ──────────────────────────────────────────────────────
 
 /** How one upstream fared on the last refresh cycle. */
@@ -917,38 +1150,43 @@ export interface FeedStatus {
   durationMs: number | null;
 }
 
-export interface BulletinRescue {
-  treat: string[][];
-  shelter: string[][];
-  surya: string[][];
-  nuwakot: string[][];
-  dao: string[][];
-  india: string[][];
-  trishuli1: string[][];
-  /** Null where the bulletin's markup moved and the figure could not be read. */
-  stats: {
-    cashTotal: string | null;
-    goodsTotal: string | null;
-    fundsTotal: string | null;
-    aidSubtext: string | null;
-  };
-  fetchedAt: string;
-  source: SourceRef;
-  error: string | null;
-}
-
 /** The refresher's view of the desk, served to routes instead of a cold fetch. */
 export interface FloodDeskStore {
   river: RiverGauges | null;
   corridor: CorridorIncidents | null;
   alerts: BipadAlert[];
   rescue: RescueRegister | null;
-  family: FamilyRegister | null;
-  bulletinRescue?: BulletinRescue | null;
   portal: RescuePortalStats | null;
-  sitrep: BulletinSitrep | null;
   videos: VideoFeed | null;
   news: NewsItem[];
+  /** NDRRMA national Daily Disaster Bulletin — newest first. */
+  dailyBulletin: FloodOfficialFeed<NdrrmaBulletin> | null;
+  /** NDRRMA press notes, for the Coverage page. */
+  pressReleases: FloodOfficialFeed<NdrrmaNotice> | null;
+  /** Standing NDRRMA public advisories. */
+  advisories: FloodOfficialFeed<NationalAdvisory> | null;
+  /** OPMCM government-effort log. */
+  govEfforts: FloodOfficialFeed<GovEffort> | null;
+  /** OPMCM emergency-contact directory. */
+  portalContacts: FloodOfficialFeed<PortalContact> | null;
+  /** OPMCM missing-and-found register. */
+  opmcmPersons: OpmcmPersonRegister | null;
+  /** OPMCM geolocated help requests, for the situation map. */
+  helpRequests: FloodOfficialFeed<HelpRequest> | null;
+  /** Live district contact lists from BIPAD, for the contacts page. */
+  officialContacts: FloodOfficialFeed<BipadDistrictContacts> | null;
+  /** NDRRMA's featured photographs. */
+  featuredPhotos: FloodOfficialFeed<NdrrmaPhoto> | null;
+  /** NDRRMA's site-wide notice — its current "read this first". */
+  popups: FloodOfficialFeed<NdrrmaPopup> | null;
+  /** The OPMCM portal's own home-page photographs. */
+  carousel: FloodOfficialFeed<PortalCarouselPhoto> | null;
+  /** Donation channels as the OPMCM portal publishes them, live. */
+  donationChannels: FloodOfficialFeed<PortalDonationChannel> | null;
+  /** The portal's newest filings — help asked for, and help offered. */
+  latestActivity: PortalActivity | null;
+  /** The OPMCM missing-and-found register as map points. */
+  personPoints: FloodOfficialFeed<PersonMapPoint> | null;
   health: FeedStatus[];
   lastRunAt: string | null;
   nextRunAt: string | null;
