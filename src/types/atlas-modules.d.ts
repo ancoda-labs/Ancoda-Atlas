@@ -187,26 +187,14 @@ declare module '*/apis/sources/youtube.mjs' {
   }): Promise<VideoFeed>;
 }
 
-declare module '*/apis/sources/family-register.mjs' {
-  import type { FamilyRegister } from '@/types';
-  export function getFamilyRegister(): Promise<FamilyRegister>;
-}
-
-declare module '*/apis/sources/bulletin-rescue.mjs' {
-  import type { BulletinRescue } from '@/types';
-  export function getBulletinRescue(): Promise<BulletinRescue>;
-}
-
-declare module '*/apis/sources/bulletin-sitrep.mjs' {
-  import type { BulletinSitrep } from '@/types';
-  export function getBulletinSitrep(): Promise<BulletinSitrep>;
-}
-
 declare module '*/apis/sources/rescue-portal.mjs' {
   import type {
     GovEffort,
     HelpRequest,
+    PersonMapPoint,
     PortalContact,
+    PortalHelpFiling,
+    PortalOfferFiling,
     RescuePortalStats,
     SourceRef,
   } from '@/types';

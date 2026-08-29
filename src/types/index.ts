@@ -944,23 +944,6 @@ export interface SitrepDiscrepancy {
   summed: number;
 }
 
-/**
- * The headline figures as the Rasuwa flood bulletin currently states them.
- *
- * Same shape as the reviewed breakdowns it stands in for, so the overview
- * renders either without knowing which it got. Empty with an error set means
- * the scrape failed and the reviewed figures should stay on the page.
- */
-export interface BulletinSitrep {
-  breakdowns: SitrepBreakdown[];
-  /** The bulletin's own dateline, e.g. "12 Bhadra". */
-  asOfLabelEn: string | null;
-  asOfLabelNe: string | null;
-  error: string | null;
-  source: SourceRef;
-  fetchedAt: string;
-}
-
 export interface SitrepContent {
   as_of?: string;
   as_of_label_en?: string;
@@ -985,42 +968,6 @@ export interface SitrepContent {
   discrepancies?: SitrepDiscrepancy[];
 }
 
-// ─── Community missing-and-found register ───────────────────────────────────
-
-/**
- * One person on the community register.
- *
- * Reproduced as filed, including the contact number — that is the mechanism the
- * register works by, the line a family left so someone who finds their relative
- * can reach them. Never merged with the NDRRMA register: the same person may
- * sit on both under two spellings, and reconciling them silently would either
- * hide someone still missing or announce a rescue that has not happened.
- */
-export interface FamilyPerson {
-  id: string;
-  name: string | null;
-  age: string | null;
-  place: string | null;
-  when: string | null;
-  phone: string | null;
-  note: string | null;
-  source: string | null;
-  status: string | null;
-}
-
-export interface FamilyRegister {
-  missing: FamilyPerson[];
-  found: FamilyPerson[];
-  matched: FamilyPerson[];
-  counts: { missing: number; found: number; matched: number };
-  forms: { missing: string | null; found: string | null };
-  sheet: string | null;
-  updatedAt: string | null;
-  error: string | null;
-  source: SourceRef;
-  fetchedAt: string;
-}
-
 // ─── Scheduled refresh ──────────────────────────────────────────────────────
 
 /** How one upstream fared on the last refresh cycle. */
@@ -1035,36 +982,13 @@ export interface FeedStatus {
   durationMs: number | null;
 }
 
-export interface BulletinRescue {
-  treat: string[][];
-  shelter: string[][];
-  surya: string[][];
-  nuwakot: string[][];
-  dao: string[][];
-  india: string[][];
-  trishuli1: string[][];
-  /** Null where the bulletin's markup moved and the figure could not be read. */
-  stats: {
-    cashTotal: string | null;
-    goodsTotal: string | null;
-    fundsTotal: string | null;
-    aidSubtext: string | null;
-  };
-  fetchedAt: string;
-  source: SourceRef;
-  error: string | null;
-}
-
 /** The refresher's view of the desk, served to routes instead of a cold fetch. */
 export interface FloodDeskStore {
   river: RiverGauges | null;
   corridor: CorridorIncidents | null;
   alerts: BipadAlert[];
   rescue: RescueRegister | null;
-  family: FamilyRegister | null;
-  bulletinRescue?: BulletinRescue | null;
   portal: RescuePortalStats | null;
-  sitrep: BulletinSitrep | null;
   videos: VideoFeed | null;
   news: NewsItem[];
   /** NDRRMA national Daily Disaster Bulletin — newest first. */

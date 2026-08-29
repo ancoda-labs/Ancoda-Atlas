@@ -24,11 +24,10 @@ let pending: Promise<RescueRegister> | null = null;
 export async function GET() {
   const store = getFloodStore();
   if (store.rescue) {
-    const res = NextResponse.json({
-      ...store.rescue,
-      bulletinRescue: store.bulletinRescue,
-      opmcmPersons: store.opmcmPersons,
-    });
+    // The OPMCM register is deliberately not folded in here: it is eight
+    // thousand rows and has its own route, so this response stays small enough
+    // to paint the search box quickly.
+    const res = NextResponse.json(store.rescue);
     res.headers.set('X-Atlas-Cache', 'cron');
     return cacheFor(res, { edge: CACHE_TTL_S });
   }
@@ -42,29 +41,7 @@ export async function GET() {
   if (!pending) {
     pending = (async () => {
       const { getRescueRegister } = await import('@/apis/sources/ndrrma.mjs');
-      const { getBulletinRescue } = await import('@/apis/sources/bulletin-rescue.mjs');
-      const { getPersonRegister } = await import('@/apis/sources/rescue-portal.mjs');
-      const { proxyUrlFor } = await import('@/lib/news-media');
-      const [ndrrma, bulletin, opmcm] = await Promise.all([
-        getRescueRegister(),
-        getBulletinRescue().catch(() => null),
-        getPersonRegister().catch(() => null),
-      ]);
-      const proxyPersons = (list: Array<Record<string, any>>) =>
-        list.map(({ image, ...rest }) => ({ ...rest, imageProxy: proxyUrlFor(image as string | null) }));
-      return {
-        ...ndrrma,
-        bulletinRescue: bulletin,
-        opmcmPersons: opmcm
-          ? {
-              lost: proxyPersons(opmcm.lost),
-              found: proxyPersons(opmcm.found),
-              error: opmcm.error,
-              source: opmcm.source,
-              fetchedAt: opmcm.fetchedAt,
-            }
-          : null,
-      };
+      return getRescueRegister();
     })()
       .then(data => {
         // Only cache a register that actually arrived. Caching an empty result

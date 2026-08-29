@@ -7,8 +7,7 @@
     "account_numbers": "unverified_against_primary",
     "note_en": "Fund names were verified against the Prime Minister's Office appeal (archived copy, 27 Aug 2026). Every QR shown was decoded and confirms a Government of Nepal relief fund as the payee. The account numbers below could NOT be checked against a primary government source — opmcm.gov.np was unreachable and its appeal page does not publish them. Re-verify with the bank or an official notice before relying on a typed account number.",
     "note_ne": "कोषका नाम प्रधानमन्त्री तथा मन्त्रिपरिषद्को कार्यालयको अपिल (अभिलेख प्रति, २०२६ अगस्ट २७) सँग भिडाइएको हो। देखाइएका सबै QR डिकोड गरी नेपाल सरकारको राहत कोष नै भुक्तानी पाउने पक्ष हो भन्ने पुष्टि गरिएको छ। तर तलका खाता नम्बरहरू सरकारी प्राथमिक स्रोतबाट पुष्टि गर्न सकिएको छैन — opmcm.gov.np पहुँचयोग्य थिएन र अपिल पृष्ठमा ती प्रकाशित छैनन्। खाता नम्बर टाइप गरेर पठाउनुअघि बैंक वा आधिकारिक सूचनाबाट पुनः पुष्टि गर्नुहोस्।",
-    "source_url": "http://web.archive.org/web/20260827071506/https://opmcm.gov.np/content/586/heartfelt-appeal/",
-    "compiled_from": "https://nirajbhusal.github.io/rasuwa-flood-bulletin/"
+    "source_url": "http://web.archive.org/web/20260827071506/https://opmcm.gov.np/content/586/heartfelt-appeal/"
   },
   "funds": [
     {
