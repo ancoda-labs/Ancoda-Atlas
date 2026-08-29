@@ -5,6 +5,7 @@ import FloodShell from '@/components/FloodShell';
 import FloodRiverGauges from '@/app/bhotekoshi-flood/situation/_components/FloodRiverGauges';
 import { useFloodLang } from '@/hooks/use-flood-lang';
 import { ageFrom } from '@/lib/relative-time';
+import { DESK_POLL_MS } from '@/hooks/use-desk-refresh';
 import type {
   BipadAlert,
   BipadIncident,
@@ -156,7 +157,7 @@ export default function FloodSituationView() {
     const id = setInterval(() => {
       load();
       loadDesk();
-    }, 4 * 60 * 1000);
+    }, DESK_POLL_MS);
     return () => {
       cancelled = true;
       clearInterval(id);

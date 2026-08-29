@@ -1,6 +1,8 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
+import { nextUpdateLabel, useDeskRefresh, useTick } from '@/hooks/use-desk-refresh';
+import { ageFrom } from '@/lib/relative-time';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import FloodThemeToggle from '@/components/FloodThemeToggle';
@@ -65,18 +67,22 @@ interface Props {
 export default function FloodShell({ lang, setLang, kicker, title, standfirst, children }: Props) {
   const [desk, setDesk] = useState<FloodDeskPayload | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
-    fetch('/api/flood')
-      .then(r => (r.ok ? r.json() : null))
-      .then(d => {
-        if (!cancelled) setDesk(d);
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  // The shell sits on every desk page, so it is where the freshness line
+  // belongs — one statement of how old the figures are, wherever the reader is.
+  useDeskRefresh(
+    React.useCallback(() => {
+      fetch('/api/flood')
+        .then(r => (r.ok ? r.json() : null))
+        .then(d => {
+          if (d) setDesk(d);
+        })
+        .catch(() => {});
+    }, []),
+  );
+
+  // Re-render on a timer so "4 min ago" does not sit frozen at whatever it said
+  // when the page loaded.
+  useTick();
 
   const site = desk?.site;
   const safetyText = site ? (lang === 'ne' ? site.safety_ne || site.safety_en : site.safety_en) : '';
@@ -129,6 +135,27 @@ export default function FloodShell({ lang, setLang, kicker, title, standfirst, c
             <FloodReportButton lang={lang} />
           </div>
           {standfirst && <p className="fl-dateline">{standfirst}</p>}
+          {/* How old the figures on this page are, and when they next move.
+              A reader deciding whether to act on a number is entitled to know
+              its age before they read it. */}
+          <p className="fl-freshness">
+            <i aria-hidden="true" />
+            {desk?.refreshedAt ? (
+              <>
+                {lang === 'ne' ? 'तथ्यांक अद्यावधिक' : 'Data updated'}{' '}
+                <b>{ageFrom(desk.refreshedAt, lang)}</b>
+                {nextUpdateLabel(desk.nextRefreshAt, lang, desk.refreshing) && (
+                  <span> · {nextUpdateLabel(desk.nextRefreshAt, lang, desk.refreshing)}</span>
+                )}
+              </>
+            ) : (
+              <span>
+                {lang === 'ne'
+                  ? 'तथ्यांक ताजा गरिँदै — केही क्षणमा देखिनेछ'
+                  : 'Fetching the latest figures — they will appear shortly'}
+              </span>
+            )}
+          </p>
         </div>
       </header>
 

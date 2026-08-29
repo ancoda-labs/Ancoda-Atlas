@@ -9,6 +9,7 @@ import FloodMapDialog from '@/components/FloodMapDialog';
 import { useFloodLang } from '@/hooks/use-flood-lang';
 import { ageFrom, orientationTransform } from '@/lib/relative-time';
 import type { FloodDeskPayload, FloodPhoto, FloodPhotoFeed } from '@/types';
+import { useDeskRefresh } from '@/hooks/use-desk-refresh';
 
 // Photographs sent in from the corridor, and the map they sit on.
 //
@@ -54,13 +55,18 @@ export default function FloodReportView() {
     }
   }, []);
 
-  useEffect(() => {
-    loadPhotos();
-    fetch('/api/flood')
-      .then(r => (r.ok ? r.json() : null))
-      .then(d => d && setDesk(d))
-      .catch(() => {});
-  }, [loadPhotos]);
+  // Photographs arrive from the public while this page is open, so it refreshes
+  // on the same cycle as the rest of the desk rather than showing whoever had
+  // sent one by the time the tab was opened.
+  useDeskRefresh(
+    React.useCallback(() => {
+      loadPhotos();
+      fetch('/api/flood')
+        .then(r => (r.ok ? r.json() : null))
+        .then(d => d && setDesk(d))
+        .catch(() => {});
+    }, [loadPhotos]),
+  );
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

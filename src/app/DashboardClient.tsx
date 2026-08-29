@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import NepalSignalsMap from '@/components/NepalSignalsMap';
+import { nextUpdateLabel, useDeskRefresh, useTick } from '@/hooks/use-desk-refresh';
+import { ageFrom } from '@/lib/relative-time';
 import BhotekoshiFloodButton from '@/app/_components/BhotekoshiFloodButton';
 import type {
   HazardSnapshot,
@@ -305,6 +307,8 @@ function copy(key: keyof typeof DASHBOARD_COPY, language: 'en' | 'ne') {
 
 export default function DashboardClient({ initialData }: DashboardClientProps) {
   const [D, setD] = useState(initialData);
+  // Keeps the "data updated N ago" pill honest between sweeps.
+  useTick();
   const meta = D.meta || {};
 
   // Boot sequence state
@@ -389,6 +393,25 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
       es.close();
     };
   }, []);
+
+  // A polling fallback beside the stream.
+  //
+  // The dashboard used to depend on SSE alone: if the stream never delivered —
+  // a proxy that buffers event-streams, a dropped connection the browser does
+  // not retry, an instance that has not swept yet — the page kept whatever it
+  // was rendered with and never moved again, with nothing on screen to say so.
+  // Polling the same snapshot on a short cycle makes that unnoticeable rather
+  // than terminal, and costs one cached response every couple of minutes.
+  useDeskRefresh(
+    React.useCallback(() => {
+      fetch('/api/data')
+        .then(r => (r.ok ? r.json() : null))
+        .then(d => {
+          if (d?.meta) setD(d);
+        })
+        .catch(() => {});
+    }, []),
+  );
 
   // Fetch live hazard news on load & newsWindow changes
   const fetchAllNews = async () => {
@@ -525,6 +548,12 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
   };
 
   const ts = new Date(meta.timestamp || new Date());
+  // The sweep states when it ran and how often it repeats, not when it next
+  // runs; the countdown beside the age is derived from the two.
+  const nextSweepAt =
+    meta.timestamp && meta.refreshIntervalMinutes
+      ? new Date(new Date(meta.timestamp).getTime() + meta.refreshIntervalMinutes * 60_000).toISOString()
+      : null;
   const formattedDate = ts.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase();
   const formattedTime = ts.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
 
@@ -602,8 +631,18 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
             <button className={language === 'en' ? 'active' : ''} onClick={() => changeLanguage('en')} aria-pressed={language === 'en'}>EN</button>
             <button className={language === 'ne' ? 'active' : ''} onClick={() => changeLanguage('ne')} aria-pressed={language === 'ne'}>ने</button>
           </div>
-          <span className="meta-pill" suppressHydrationWarning>
-            Updated in <span className="v">{((meta.totalDurationMs || 0) / 1000).toFixed(1)}s</span>
+          {/* How old the figures are, in the terms a reader actually asks the
+              question in. The absolute stamp beside this says when the sweep
+              ran; it does not say whether that was four minutes or four hours
+              ago, and on a hazard dashboard that is the difference that
+              matters. "Updated in 1.2s" was how long the sweep took, which is
+              a fact about Atlas rather than about Nepal. */}
+          <span className="meta-pill fresh-pill" suppressHydrationWarning>
+            <i aria-hidden="true" />
+            Data updated <span className="v">{ageFrom(meta.timestamp, 'en')}</span>
+            {nextSweepAt && nextUpdateLabel(nextSweepAt, 'en', meta.sweeping) ? (
+              <em> · {nextUpdateLabel(nextSweepAt, 'en', meta.sweeping)}</em>
+            ) : null}
           </span>
           <span className="meta-pill" suppressHydrationWarning>
             {formattedDate} <span className="v">{formattedTime}</span>

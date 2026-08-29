@@ -15,6 +15,10 @@ export interface SweepMeta {
   sourcesQueried?: number;
   sourcesOk?: number;
   sourcesFailed?: number;
+  /** How often the sweep repeats, in minutes. */
+  refreshIntervalMinutes?: number;
+  /** True while a sweep is running. */
+  sweeping?: boolean;
 }
 
 export interface SourceHealth {
@@ -446,6 +450,13 @@ export interface FloodDeskPayload extends FloodContent {
   govEfforts?: FloodOfficialFeed<GovEffort> | null;
   portalContacts?: FloodOfficialFeed<PortalContact> | null;
   popups?: FloodOfficialFeed<NdrrmaPopup> | null;
+  /** When the ten-minute cycle last finished, and when the next one is due. */
+  refreshedAt?: string | null;
+  nextRefreshAt?: string | null;
+  refreshIntervalMinutes?: number;
+  /** True while a cycle is running, so the page can say so rather than
+   *  reporting the previous cycle as overdue. */
+  refreshing?: boolean;
   generatedAt: string;
 }
 
