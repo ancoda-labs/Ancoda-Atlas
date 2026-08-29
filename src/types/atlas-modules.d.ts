@@ -88,6 +88,15 @@ declare module '*/apis/sources/nepal-news.mjs' {
   export const DEFAULT_TOPIC: string;
 }
 
+declare module '*/apis/utils/flood-scope.mjs' {
+  /** The event's start date, the lower bound of every incident query. */
+  export const EVENT_START: string;
+  /** The districts the desk covers, with the ids BIPAD files them under. */
+  export const AFFECTED_DISTRICTS: ReadonlyArray<{ id: number; en: string; ne: string }>;
+  export const CORRIDOR_BBOX: { minLat: number; maxLat: number; minLon: number; maxLon: number };
+  export function inCorridor(lat: number | null, lon: number | null): boolean;
+}
+
 declare module '*/apis/utils/nepal.mjs' {
   export interface ProvinceBox {
     label: string;

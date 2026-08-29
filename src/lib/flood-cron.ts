@@ -168,7 +168,9 @@ export async function runFloodRefresh(): Promise<FloodDeskStore> {
         store,
         async () => {
           const { getCorridorIncidents } = await import('@/apis/sources/bipad.mjs');
-          return getCorridorIncidents({ since: '2026-08-20' });
+          // No `since` — the source resolves the event's start from the shared
+          // scope, so the refresher and a direct call cannot disagree.
+          return getCorridorIncidents();
         },
         value => {
           store.corridor = value;

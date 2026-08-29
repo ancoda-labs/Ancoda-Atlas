@@ -15,6 +15,9 @@
 // are expected to say so.
 
 import { safeFetch } from '../utils/fetch.mjs';
+import { AFFECTED_DISTRICTS, CORRIDOR_BBOX, EVENT_START, inCorridor } from '../utils/flood-scope.mjs';
+
+export { AFFECTED_DISTRICTS, CORRIDOR_BBOX };
 
 const BASE = 'https://bipadportal.gov.np/api/v1';
 const UA = 'AncodaAtlas/4.0 (Nepal hazard monitoring; +https://github.com/ancoda-labs/Ancoda-Atlas)';
@@ -23,15 +26,6 @@ const PAGE = 100;
 
 /** BIPAD hazard ids. Flood and landslide are the pair this desk cares about. */
 export const HAZARD = { FLOOD: 11, LANDSLIDE: 17, HEAVY_RAINFALL: 12, THUNDERBOLT: 23 };
-
-/**
- * The Rasuwa–Bhotekoshi corridor, as a bounding box.
- *
- * BIPAD's own `district` filter is unreliable on the incident endpoint, so the
- * corridor is decided from each incident's coordinates instead: the Trishuli
- * catchment from the Tibet border down to the Narayani confluence.
- */
-export const CORRIDOR_BBOX = { minLat: 27.4, maxLat: 28.6, minLon: 84.3, maxLon: 85.9 };
 
 const TTL_MS = 3 * 60 * 1000;
 const cache = new Map();
@@ -77,14 +71,6 @@ function coordsOf(node) {
   return Array.isArray(c) ? { lat: c[1] ?? null, lon: c[0] ?? null } : { lat: null, lon: null };
 }
 
-function inCorridor(lat, lon) {
-  if (lat == null || lon == null) return false;
-  return (
-    lat >= CORRIDOR_BBOX.minLat && lat <= CORRIDOR_BBOX.maxLat &&
-    lon >= CORRIDOR_BBOX.minLon && lon <= CORRIDOR_BBOX.maxLon
-  );
-}
-
 /** The loss fields Atlas surfaces, mapped off BIPAD's much wider record. */
 function normaliseLoss(raw) {
   if (!raw) return null;
@@ -126,7 +112,7 @@ export async function getHazards() {
 }
 
 /** Incidents of one hazard since a date, newest first, corridor-filtered. */
-export async function getIncidents({ hazard = HAZARD.FLOOD, since = '2026-08-25', corridorOnly = true } = {}) {
+export async function getIncidents({ hazard = HAZARD.FLOOD, since = EVENT_START, corridorOnly = true } = {}) {
   return cached(`incidents:${hazard}:${since}:${corridorOnly}`, async () => {
     // `expand=loss` returns the loss record inline. Without it every incident
     // needed a second request to loss/{id}/, which during a live response meant
@@ -205,7 +191,7 @@ export async function getAlerts({ limit = 40 } = {}) {
  * The corridor's incident picture: every flood and landslide incident logged
  * since `since`, with whatever loss figures have actually been entered.
  */
-export async function getCorridorIncidents({ since = '2026-08-25' } = {}) {
+export async function getCorridorIncidents({ since = EVENT_START } = {}) {
   const fetchedAt = new Date().toISOString();
   try {
     const [floods, slides] = await Promise.all([

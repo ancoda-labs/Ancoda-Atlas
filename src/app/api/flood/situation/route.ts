@@ -43,11 +43,12 @@ async function build(since: string): Promise<SituationPayload> {
 }
 
 export async function GET(req: NextRequest) {
-  const since = req.nextUrl.searchParams.get('since') || '2026-08-20';
+  const { EVENT_START } = await import('@/apis/utils/flood-scope.mjs');
+  const since = req.nextUrl.searchParams.get('since') || EVENT_START;
 
   // The refresher covers the default window; an explicit `since` still fetches.
   const store = getFloodStore();
-  if (store.corridor && since === '2026-08-20') {
+  if (store.corridor && since === EVENT_START) {
     const res = NextResponse.json({
       corridor: store.corridor,
       alerts: store.alerts,
