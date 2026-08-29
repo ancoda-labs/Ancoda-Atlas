@@ -24,6 +24,15 @@ const T = {
   },
   lost: { en: 'Reported lost', ne: 'हराएको जनाइएको' },
   found: { en: 'Reported found', ne: 'भेटिएको जनाइएको' },
+  other: { en: 'Filed otherwise', ne: 'अन्य रूपमा दर्ता' },
+  wholeRegister: {
+    en: 'Every open report on the portal is searchable here, not just the first page of them.',
+    ne: 'पोर्टलका सबै खुला विवरण यहाँ खोज्न सकिन्छ — पहिलो पृष्ठका मात्र होइन।',
+  },
+  shortRead: {
+    en: 'The portal states more reports than were read on the last sweep, so a few of the newest may be missing. It is re-read every ten minutes.',
+    ne: 'पोर्टलले पढिएकोभन्दा बढी विवरण रहेको जनाएको छ, त्यसैले पछिल्ला केही छुट्न सक्छन्। हरेक दस मिनेटमा पुनः पढिन्छ।',
+  },
   search: { en: 'Search this register', ne: 'यो सूचीमा खोज्नुहोस्' },
   showing: { en: 'showing', ne: 'देखाइएको' },
   name: { en: 'Name', ne: 'नाम' },
@@ -60,7 +69,7 @@ function fold(value: string): string {
 const DEVA_DIGITS = ['०', '१', '२', '३', '४', '५', '६', '७', '८', '९'];
 const toNeDigits = (str: string) => str.replace(/[0-9]/g, d => DEVA_DIGITS[Number(d)]);
 
-type Which = 'lost' | 'found';
+type Which = 'lost' | 'found' | 'other';
 
 export default function FloodOpmcmRegister({
   register,
@@ -79,7 +88,12 @@ export default function FloodOpmcmRegister({
     setPage(0);
   }, [which, q]);
 
-  const list = which === 'lost' ? register?.lost || [] : register?.found || [];
+  const list =
+    which === 'lost'
+      ? register?.lost ?? []
+      : which === 'found'
+        ? register?.found ?? []
+        : register?.other ?? [];
 
   const rows = useMemo(() => {
     const needle = fold(q.trim());
@@ -103,17 +117,35 @@ export default function FloodOpmcmRegister({
       <div className="fl-sec-head">
         <span>{lang === 'ne' ? 'पोर्टल' : 'Portal'}</span>
         <h2>{t('title')}</h2>
-        {register && <em>{rows.length} {t('showing')}</em>}
+        {register && <em>{rows.length.toLocaleString()} {t('showing')}</em>}
       </div>
-      <p className="fl-note">{t('intro')}</p>
+      <p className="fl-note">
+        {t('intro')} {t('wholeRegister')}
+      </p>
+
+      {/* The portal is written to while it is read, so `total` can move between
+          the first page and the last. A sweep that came up short says so rather
+          than letting a family assume the name they searched for is not there. */}
+      {register && register.total != null && register.fetched < register.total && (
+        <p className="fl-note fl-pending">{t('shortRead')}</p>
+      )}
 
       <div className="fl-chips">
         <button className={which === 'lost' ? 'on' : ''} onClick={() => setWhich('lost')}>
-          {t('lost')} {register ? `· ${register.lost.length}` : ''}
+          {t('lost')} {register ? `· ${(register.lost?.length ?? 0).toLocaleString()}` : ''}
         </button>
         <button className={which === 'found' ? 'on' : ''} onClick={() => setWhich('found')}>
-          {t('found')} {register ? `· ${register.found.length}` : ''}
+          {t('found')} {register ? `· ${(register.found?.length ?? 0).toLocaleString()}` : ''}
         </button>
+        {/* Guarded on the field, not just the object. A register handed to this
+            component can predate the field — the refresher restores its last
+            store from disk across a deploy — and an unguarded `.length` here
+            takes the whole page down for someone searching for a relative. */}
+        {(register?.other?.length ?? 0) > 0 && (
+          <button className={which === 'other' ? 'on' : ''} onClick={() => setWhich('other')}>
+            {t('other')} · {(register?.other?.length ?? 0).toLocaleString()}
+          </button>
+        )}
       </div>
 
       <input
@@ -213,9 +245,9 @@ export default function FloodOpmcmRegister({
 
           {selected && (
             <div className="space-y-3 text-sm leading-relaxed">
-              {(selected.thumb || selected.imageProxy) && (
+              {selected.imageProxy && (
                 <img
-                  src={selected.imageProxy || selected.thumb || undefined}
+                  src={selected.imageProxy}
                   alt=""
                   referrerPolicy="no-referrer"
                   className="max-h-56 w-full rounded object-contain"

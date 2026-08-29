@@ -1,9 +1,17 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
-import type { SitrepContent, SitrepNameList, RescueRegister, RescuedPerson, BulletinRescue } from '@/types';
+import type {
+  SitrepContent,
+  SitrepNameList,
+  RescueRegister,
+  RescuedPerson,
+  FloodOfficialFeed,
+  NdrrmaPopup,
+  OpmcmPersonRegister,
+} from '@/types';
 import FloodShell from '@/components/FloodShell';
-import FloodFamilyRegister from '@/app/bhotekoshi-flood/rescue/_components/FloodFamilyRegister';
+import FloodOpmcmRegister from '@/app/bhotekoshi-flood/rescue/_components/FloodOpmcmRegister';
 import { useFloodLang, type Lang } from '@/hooks/use-flood-lang';
 import { ageFrom } from '@/lib/relative-time';
 import { Button } from '@/components/ui/button';
@@ -42,6 +50,7 @@ const T = {
   all: { en: 'All', ne: 'सबै' },
   nepali: { en: 'Nepali', ne: 'नेपाली' },
   foreign: { en: 'Foreign nationals', ne: 'विदेशी नागरिक' },
+  foreignBadge: { en: 'Foreign', ne: 'विदेशी' },
   total: { en: 'Rescued in total', ne: 'कुल उद्धार' },
   showing: { en: 'showing', ne: 'देखाइएको' },
   name: { en: 'Name', ne: 'नाम' },
@@ -134,75 +143,17 @@ function bilingual(
 
 type Filter = 'all' | 'nepali' | 'foreign';
 
-const BULLETIN_TABS = {
-  nuwakot: {
-    en: 'Nuwakot',
-    ne: 'नुवाकोट',
-    headers: {
-      en: ['Name', 'Age', 'Address', 'Gender'],
-      ne: ['नाम', 'उमेर', 'ठेगाना', 'लिङ्ग']
-    }
-  },
-  surya: {
-    en: 'Suryagadhi',
-    ne: 'सूर्यगढी',
-    headers: {
-      en: ['Name', 'Address', 'Age', 'Gender'],
-      ne: ['नाम', 'ठेगाना', 'उमेर', 'लिङ्ग']
-    }
-  },
-  shelter: {
-    en: 'Sheltered',
-    ne: 'उद्धार सूची',
-    headers: {
-      en: ['Name', 'Address', 'Age', 'Gender'],
-      ne: ['नाम', 'ठेगाना', 'उमेर', 'लिङ्ग']
-    }
-  },
-  treat: {
-    en: 'Treated (KTM)',
-    ne: 'घाइते काठमाडौं',
-    headers: {
-      en: ['Name', 'Age', 'Address', 'Phone', 'District', 'Hospital', 'Status'],
-      ne: ['नाम', 'उमेर', 'ठेगाना', 'सम्पर्क', 'जिल्ला', 'अस्पताल', 'अवस्था']
-    }
-  },
-  dao: {
-    en: 'NDRRMA Rec',
-    ne: 'NDRRMA उद्धार',
-    headers: {
-      en: ['Name', 'Address', 'Age', 'Gender', 'Remarks'],
-      ne: ['नाम', 'ठेगाना', 'उमेर', 'लिङ्ग', 'कैफियत']
-    }
-  },
-  india: {
-    en: 'Indian Tourists',
-    ne: 'भारतीय',
-    headers: {
-      en: ['Name'],
-      ne: ['नाम']
-    }
-  },
-  trishuli1: {
-    en: 'Trishuli-1',
-    ne: 'त्रिशूली-१',
-    headers: {
-      en: ['Name'],
-      ne: ['नाम']
-    }
-  }
-};
-type BulletinTab = keyof typeof BULLETIN_TABS;
-
 export default function FloodRescueView() {
   const [lang, setLang] = useFloodLang();
-  const [data, setData] = useState<(RescueRegister & { bulletinRescue?: BulletinRescue | null }) | null>(null);
-  const [sourceType, setSourceType] = useState<'ndrrma' | 'bulletin'>('ndrrma');
-  const [bulletinTab, setBulletinTab] = useState<BulletinTab>('nuwakot');
+  const [data, setData] = useState<RescueRegister | null>(null);
+  // Eight thousand rows on their own route, loaded alongside rather than inside
+  // the NDRRMA register so the search box on this page paints immediately.
+  const [portalRegister, setPortalRegister] = useState<OpmcmPersonRegister | null>(null);
   const [q, setQ] = useState('');
   const [filter, setFilter] = useState<Filter>('all');
   const [page, setPage] = useState(0);
   const [sitrep, setSitrep] = useState<SitrepContent | null>(null);
+  const [notices, setNotices] = useState<FloodOfficialFeed<NdrrmaPopup> | null>(null);
   const [form, setForm] = useState({ kind: 'wrong_details', message: '', contact: '' });
   const [formState, setFormState] = useState<'idle' | 'sending' | 'sent' | 'failed' | 'off'>('idle');
 
@@ -210,13 +161,20 @@ export default function FloodRescueView() {
 
   useEffect(() => {
     let cancelled = false;
-    const load = () =>
+    const load = () => {
       fetch('/api/flood/rescue')
         .then(r => (r.ok ? r.json() : null))
         .then(d => {
           if (!cancelled && d) setData(d);
         })
         .catch(() => {});
+      fetch('/api/flood/persons')
+        .then(r => (r.ok ? r.json() : null))
+        .then(d => {
+          if (!cancelled && d) setPortalRegister(d);
+        })
+        .catch(() => {});
+    };
     load();
     const id = setInterval(load, 3 * 60 * 1000);
     return () => {
@@ -230,7 +188,12 @@ export default function FloodRescueView() {
     fetch('/api/flood')
       .then(r => (r.ok ? r.json() : null))
       .then(d => {
-        if (!cancelled && d?.sitrep) setSitrep(d.sitrep);
+        if (cancelled || !d) return;
+        if (d.sitrep) setSitrep(d.sitrep);
+        // NDRRMA's site-wide notice. During this response it has been the
+        // official list of rescued Nepali and foreign citizens, as a PDF —
+        // which belongs on the page where people are searching for a name.
+        if (d.popups) setNotices(d.popups);
       })
       .catch(() => {});
     return () => {
@@ -240,7 +203,7 @@ export default function FloodRescueView() {
 
   useEffect(() => {
     setPage(0);
-  }, [sourceType, bulletinTab, q, filter]);
+  }, [q, filter]);
 
   const persons: RescuedPerson[] = useMemo(() => data?.persons || [], [data]);
 
@@ -250,20 +213,10 @@ export default function FloodRescueView() {
       if (filter === 'nepali' && p.nationality !== 'nepali') return false;
       if (filter === 'foreign' && p.nationality === 'nepali') return false;
       if (!needle) return true;
-      const haystack = fold(`${p.name || ''} ${p.nameNe || ''} ${p.rescuedAt?.title || ''} ${p.rescuedAt?.titleNe || ''} ${p.stationedAt?.title || ''} ${p.stationedAt?.titleNe || ''}`);
+      const haystack = fold(`${p.name || ''} ${p.nameNe || ''} ${p.country || ''} ${p.rescuedAt?.title || ''} ${p.rescuedAt?.titleNe || ''} ${p.stationedAt?.title || ''} ${p.stationedAt?.titleNe || ''}`);
       return haystack.includes(needle);
     });
   }, [persons, q, filter]);
-
-  const bulletinRows = useMemo(() => {
-    const list: string[][] = data?.bulletinRescue?.[bulletinTab as keyof BulletinRescue] as string[][] ?? [];
-    const needle = fold(q.trim());
-    if (!needle) return list;
-    return list.filter((row: string[]) => {
-      const text = row.slice(1).join(' ');
-      return fold(text).includes(needle);
-    });
-  }, [data, bulletinTab, q]);
 
   const PAGE_SIZE = 10;
 
@@ -271,14 +224,7 @@ export default function FloodRescueView() {
     return matches.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
   }, [matches, page]);
 
-  const paginatedBulletinRows = useMemo(() => {
-    return bulletinRows.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
-  }, [bulletinRows, page]);
-
-  const totalPages = useMemo(() => {
-    const total = sourceType === 'ndrrma' ? matches.length : bulletinRows.length;
-    return Math.ceil(total / PAGE_SIZE);
-  }, [sourceType, matches, bulletinRows]);
+  const totalPages = useMemo(() => Math.ceil(matches.length / PAGE_SIZE), [matches]);
 
   const toNeDigits = (str: string) => {
     const DEVA_DIGITS = ['०', '१', '२', '३', '४', '५', '६', '७', '८', '९'];
@@ -309,16 +255,10 @@ export default function FloodRescueView() {
 
   return (
     <FloodShell lang={lang} setLang={setLang} kicker={t('kicker')} title={t('title')} standfirst={t('standfirst')}>
-      {sitrep?.name_lists?.lists ? (
-        <div className="fl-tiles">
-          {sitrep.name_lists.lists.map((list: SitrepNameList) => (
-            <div key={list.id}>
-              <dd>{list.value.toLocaleString()}</dd>
-              <dt>{bilingual(lang, list.label_en, list.label_ne)}</dt>
-            </div>
-          ))}
-        </div>
-      ) : summary ? (
+      {/* NDRRMA's own totals lead, because they are the register this page
+          searches and they move with it. The reviewed name-list figures stand
+          in only while the portal is unreachable. */}
+      {summary ? (
         <div className="fl-tiles">
           <div><dd>{summary.total.toLocaleString()}</dd><dt>{t('total')}</dt></div>
           <div><dd>{summary.nepali.toLocaleString()}</dd><dt>{t('nepali')}</dt></div>
@@ -330,7 +270,49 @@ export default function FloodRescueView() {
             </div>
           ))}
         </div>
+      ) : sitrep?.name_lists?.lists ? (
+        <div className="fl-tiles">
+          {sitrep.name_lists.lists.map((list: SitrepNameList) => (
+            <div key={list.id}>
+              <dd>{list.value.toLocaleString()}</dd>
+              <dt>{bilingual(lang, list.label_en, list.label_ne)}</dt>
+            </div>
+          ))}
+        </div>
       ) : null}
+
+      {(notices?.items?.length ?? 0) > 0 && (
+        <section className="fl-sec">
+          <div className="fl-sec-head">
+            <span>{lang === 'ne' ? 'सरकारी' : 'Official'}</span>
+            <h2>{lang === 'ne' ? 'एनडीआरआरएमएको सूचना' : 'NDRRMA notice'}</h2>
+          </div>
+          {(notices?.items || []).map(notice => {
+            const title = bilingual(lang, notice.title, notice.titleNe);
+            const body = bilingual(lang, notice.body, notice.bodyNe);
+            return (
+              <div className="fl-place-note" key={notice.id}>
+                <h3>{title}</h3>
+                {body && body !== title && <p>{body}</p>}
+                {notice.pdfUrl && (
+                  <p className="fl-note">
+                    <a href={notice.pdfUrl} target="_blank" rel="noopener noreferrer">
+                      {lang === 'ne' ? 'कागजात खोल्नुहोस् (PDF)' : 'Open the document (PDF)'} &#8599;
+                    </a>
+                  </p>
+                )}
+              </div>
+            );
+          })}
+          {/* No source link here: the notice's own document link sits directly
+              above, and a second link to the same authority under it read as a
+              different destination. The read time stays — a reader still needs
+              to know how fresh this is. */}
+          <p className="fl-note">
+            {lang === 'ne' ? 'पढिएको' : 'Read'} {notices ? ageFrom(notices.fetchedAt, lang) : '—'}
+          </p>
+        </section>
+      )}
 
       <section className="fl-sec">
         <div className="fl-sec-head">
@@ -383,7 +365,18 @@ export default function FloodRescueView() {
                     <tr key={p.id} style={{ height: '40px' }}>
                       <th scope="row" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {bilingual(lang, p.name, p.nameNe) || t('noName')}
-                        {p.nationality && p.nationality !== 'nepali' && <em>{p.nationality}</em>}
+                        {/* "FOREIGN (India)". The badge is uppercased by the
+                            stylesheet; the country keeps the case the portal
+                            wrote it in, because "SOUTH KOREA" reads worse than
+                            "South Korea" and neither is translated. A foreign
+                            row the portal left without a country — there is one
+                            — reads simply "FOREIGN". */}
+                        {p.nationality && p.nationality !== 'nepali' && (
+                          <em>
+                            {t('foreignBadge')}
+                            {p.country && <span> ({p.country})</span>}
+                          </em>
+                        )}
                       </th>
                       <td className="num" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {p.age ?? '—'}
@@ -440,7 +433,12 @@ export default function FloodRescueView() {
         </p>
       </section>
 
-      <FloodFamilyRegister lang={lang} />
+      {/* Two registers, side by side and never merged: NDRRMA's official one
+          above and the Prime Minister's Office portal here. The same person can
+          sit on both under different spellings, and reconciling them by machine
+          would either hide someone still missing or announce a reunion that has
+          not happened. */}
+      <FloodOpmcmRegister register={portalRegister} lang={lang} />
 
       <section className="fl-sec">
         <div className="fl-sec-head">

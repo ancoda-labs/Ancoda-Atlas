@@ -3850,6 +3850,45 @@ body.dark-theme .fl {
   line-height: 1.4;
 }
 
+/* ── Overview: full-width portal band, and the paired official panes ──────── */
+
+/* The portal counters sit on their own row now, so the cards can use the
+   whole measure instead of a half-width column. */
+.fl-portal-wide { margin-top: 0; padding-top: 0; border-top: 0; }
+.fl-portal-wide .fl-figs { grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
+
+/* Two official feeds, equal height, each scrolling inside itself rather than
+   letting the longer one set the height of the row. */
+/* Equal columns here, unlike the 1.25fr/1fr split the rest of the desk uses —
+   neither feed is the subordinate one. */
+.fl-official-pair { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: stretch; }
+.fl-official-pane { display: flex; flex-direction: column; min-width: 0; }
+.fl-official-scroll {
+  flex: 1 1 auto;
+  max-height: 420px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--rule-2) transparent;
+  /* Room for the scrollbar so text never sits under it. */
+  padding-right: 10px;
+}
+.fl-official-scroll::-webkit-scrollbar { width: 6px; }
+.fl-official-scroll::-webkit-scrollbar-thumb { background: var(--rule-2); border-radius: 3px; }
+.fl-official-scroll .fl-alerts { margin-top: 0; }
+
+/* On one column the panes stack, and a capped height helps less than it hurts. */
+@media (max-width: 860px) {
+  .fl-official-scroll { max-height: 320px; }
+}
+
+/* Per-layer provenance under the overview map. Tighter than a normal note
+   stack: three short lines that read as one block, not three paragraphs. */
+.fl-map-sources { margin-top: 10px; padding-top: 12px; border-top: 1px solid var(--rule); }
+.fl-map-sources .fl-note { margin: 0 0 5px; font-size: 12px; }
+.fl-map-sources .fl-note:last-child { margin-bottom: 0; }
+.fl-map-sources b { color: var(--ink-2); font-weight: 600; }
+.fl-map-sources .fl-blank { color: var(--ink-3); }
+
 /* ── The portal's own donation channels ──────────────────────────────────
    After de-duplication this table is usually the single QR-only channel the
    portal publishes, so it is laid out as one clear payee and one scannable
