@@ -583,7 +583,10 @@ export interface RescuedPerson {
   nameNe: string | null;
   age: number | null;
   gender: string | null;
+  /** 'nepali' or 'foreign', as the portal files it. */
   nationality: string | null;
+  /** The country, for a foreign national. Null where the portal left it blank. */
+  country: string | null;
   rescuedOn: string | null;
   rescuedAt: RescuePlace | null;
   stationedAt: RescuePlace | null;

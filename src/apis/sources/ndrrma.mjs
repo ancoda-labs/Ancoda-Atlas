@@ -80,6 +80,11 @@ export async function getRescuedPersons() {
       age: typeof r.age === 'number' ? r.age : null,
       gender: r.gender || null,
       nationality: r.nationality || null,
+      // The portal states nationality as 'nepali' or 'foreign' and names the
+      // country separately. Both are carried: "foreign" alone tells a reader
+      // looking for a relative almost nothing, and the register holds people
+      // from eleven countries.
+      country: r.country || null,
       rescuedOn: r.rescued_date || null,
       rescuedAt: place(r.rescued_location),
       stationedAt: place(r.stationed_location),
