@@ -5,7 +5,16 @@ import FloodShell from '@/components/FloodShell';
 import FloodRiverGauges from '@/app/bhotekoshi-flood/situation/_components/FloodRiverGauges';
 import { useFloodLang } from '@/hooks/use-flood-lang';
 import { ageFrom } from '@/lib/relative-time';
-import type { BipadAlert, BipadIncident, CorridorIncidents, FloodDeskPayload } from '@/types';
+import type {
+  BipadAlert,
+  BipadIncident,
+  CorridorIncidents,
+  FloodDeskPayload,
+  FloodOfficialFeed,
+  HelpRequest,
+  PersonMapPoint,
+  PortalActivity,
+} from '@/types';
 
 // The corridor's incident register, from BIPAD.
 //
@@ -22,6 +31,9 @@ import type { BipadAlert, BipadIncident, CorridorIncidents, FloodDeskPayload } f
 interface Payload {
   corridor: CorridorIncidents;
   alerts: BipadAlert[];
+  helpRequests: FloodOfficialFeed<HelpRequest> | null;
+  personPoints: FloodOfficialFeed<PersonMapPoint> | null;
+  latest: PortalActivity | null;
   generatedAt: string;
 }
 
@@ -62,6 +74,30 @@ const T = {
   loading: { en: 'Loading…', ne: 'लोड हुँदै…' },
   unavailable: { en: 'BIPAD cannot be reached right now.', ne: 'बिपद् पोर्टलमा अहिले पहुँच भएन।' },
   updated: { en: 'Read', ne: 'पढिएको' },
+  tilesCaveat: {
+    en: 'What has been entered into the register so far, not the national toll.',
+    ne: 'अहिलेसम्म अभिलेखमा प्रविष्ट भएको मात्र, राष्ट्रिय क्षति होइन।',
+  },
+  nationalTitle: { en: 'The national picture — past 24 hours', ne: 'राष्ट्रिय अवस्था — विगत २४ घण्टा' },
+  nationalHint: {
+    en: 'NDRRMA’s Daily Disaster Bulletin, in the authority’s own words. It covers the whole country over the last 24 hours, while the figures above are this corridor since the flood began — read them side by side, never added together.',
+    ne: 'एनडीआरआरएमएको दैनिक विपद् बुलेटिन, प्राधिकरणकै शब्दमा। यसले विगत २४ घण्टाको सिंगो देश समेट्छ, माथिका तथ्यांक भने बाढी सुरु भएयताको यही करिडोरका हुन् — छेउछाउ राखेर पढ्नुहोस्, जोड्नुहोस् नहोस्।',
+  },
+  openBulletin: { en: 'Open the full bulletin (PDF)', ne: 'पूरा बुलेटिन खोल्नुहोस् (PDF)' },
+  askedTitle: { en: 'What is being asked for', ne: 'के-कस्तो सहयोग मागिँदैछ' },
+  askedHint: {
+    en: 'The newest filings on the Office of the Prime Minister’s rescue portal. These count filings, not people: one person in trouble can be the subject of several, and a family rarely comes back to close a report. Read them as demand, never as a toll.',
+    ne: 'प्रधानमन्त्री कार्यालयको उद्धार पोर्टलमा भर्खरै दर्ता भएका निवेदन। यी निवेदनको गणना हो, व्यक्तिको होइन — एउटै व्यक्तिका लागि थुप्रै निवेदन पर्न सक्छन्, र समस्या हल भएपछि प्रायः कसैले फिर्ता लिँदैन। यसलाई मागको सूचक मान्नुहोस्, क्षतिको होइन।',
+  },
+  askedFor: { en: 'Requests for help', ne: 'सहयोगका निवेदन' },
+  offered: { en: 'Offers of help', ne: 'सहयोग दिने प्रस्ताव' },
+  onMap: { en: 'geolocated requests on the portal map', ne: 'पोर्टलको नक्सामा स्थान तोकिएका निवेदन' },
+  onMapPersons: { en: 'missing-and-found reports with a location', ne: 'स्थान तोकिएका हराएका/भेटिएका विवरण' },
+  anonymous: {
+    en: 'Names and telephone numbers of the people who filed these are not reproduced here.',
+    ne: 'निवेदन दिनेको नाम र फोन नम्बर यहाँ राखिएको छैन।',
+  },
+  noFilings: { en: 'The portal has published no recent filings.', ne: 'पोर्टलमा हालैका निवेदन प्रकाशित छैनन्।' },
   police: { en: 'Nepal Police', ne: 'नेपाल प्रहरी' },
   dhm: { en: 'DHM', ne: 'डीएचएम' },
   other: { en: 'Other', ne: 'अन्य' },
@@ -130,6 +166,11 @@ export default function FloodSituationView() {
   const totals = data?.corridor?.totals;
   const incidents = data?.corridor?.incidents || [];
   const alerts = (data?.alerts || []).filter(a => a.public);
+  const latestRequests = data?.latest?.requests || [];
+  const latestOffers = data?.latest?.offers || [];
+  const geolocatedRequests = data?.helpRequests?.items.length || 0;
+  const geolocatedPersons = data?.personPoints?.items.length || 0;
+  const dailyBulletin = desk?.dailyBulletin?.items?.[0] || null;
 
   return (
     <FloodShell lang={lang} setLang={setLang} kicker={t('kicker')} title={t('title')} standfirst={t('standfirst')}>
@@ -153,7 +194,64 @@ export default function FloodSituationView() {
         </div>
       )}
 
+      {/* The tiles above are the one set of figures on this desk that is
+          genuinely live end to end — BIPAD is re-read every ten minutes — so
+          they carry their own read time rather than borrowing the one at the
+          bottom of the incident table. */}
+      {totals && (
+        <p className="fl-note">
+          {t('updated')} {ageFrom(data?.corridor?.fetchedAt, lang)}
+          {' · '}
+          <a href="https://bipadportal.gov.np/" target="_blank" rel="noopener noreferrer">
+            {lang === 'ne' ? 'बिपद् पोर्टल' : 'BIPAD Portal'} &#8599;
+          </a>
+          {' · '}
+          <span className="fl-blank">{t('tilesCaveat')}</span>
+        </p>
+      )}
+
       <FloodRiverGauges river={desk?.river} lang={lang} />
+
+      {/* NDRRMA's national bulletin, beside the corridor figures rather than
+          folded into them: a nationwide 24-hour count and a cumulative corridor
+          count are different things and must never be added. */}
+      {dailyBulletin && (
+        <section className="fl-sec">
+          <div className="fl-sec-head">
+            <span>{lang === 'ne' ? 'सरकारी' : 'Official'}</span>
+            <h2>{t('nationalTitle')}</h2>
+          </div>
+          <p className="fl-note">{t('nationalHint')}</p>
+          <div className="fl-place-note">
+            <h3>
+              {(lang === 'ne'
+                ? dailyBulletin.titleNe || dailyBulletin.title
+                : dailyBulletin.title || dailyBulletin.titleNe) || dailyBulletin.date}
+            </h3>
+            <p>
+              {(lang === 'ne'
+                ? dailyBulletin.summaryNe || dailyBulletin.summary
+                : dailyBulletin.summary || dailyBulletin.summaryNe) || ''}
+            </p>
+            {dailyBulletin.pdfUrl && (
+              <p className="fl-note">
+                <a href={dailyBulletin.pdfUrl} target="_blank" rel="noopener noreferrer">
+                  {t('openBulletin')} &#8599;
+                </a>
+              </p>
+            )}
+          </div>
+          {desk?.dailyBulletin && (
+            <p className="fl-note">
+              {t('updated')} {ageFrom(desk.dailyBulletin.fetchedAt, lang)}
+              {' · '}
+              <a href={desk.dailyBulletin.source.url} target="_blank" rel="noopener noreferrer">
+                {desk.dailyBulletin.source.label} &#8599;
+              </a>
+            </p>
+          )}
+        </section>
+      )}
 
       <section className="fl-sec">
         <div className="fl-sec-head">
@@ -167,20 +265,135 @@ export default function FloodSituationView() {
         ) : alerts.length === 0 ? (
           <p className="fl-empty">{t('noAlerts')}</p>
         ) : (
-          <ul className="fl-alerts">
-            {alerts.slice(0, 12).map(a => (
-              <li key={a.id}>
-                <h3>{lang === 'ne' ? a.titleNe || a.title : a.title}</h3>
-                {a.description && <p>{a.description}</p>}
-                <span className="fl-report-meta">
-                  <b>{sourceLabel(a.source, lang)}</b>
-                  <time>{ageFrom(a.startedOn, lang)}</time>
-                </span>
-              </li>
-            ))}
-          </ul>
+          // Every alert, not the first twelve — the pane scrolls, so there is
+          // nothing gained by truncating a list a reader is scanning for the
+          // warning that applies to them.
+          <div className="fl-scroll-pane">
+            <ul className="fl-alerts">
+              {alerts.map(a => (
+                <li key={a.id}>
+                  <h3>{lang === 'ne' ? a.titleNe || a.title : a.title}</h3>
+                  {a.description && <p>{a.description}</p>}
+                  <span className="fl-report-meta">
+                    <b>{sourceLabel(a.source, lang)}</b>
+                    <time>{ageFrom(a.startedOn, lang)}</time>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
+        <p className="fl-note">
+          {t('updated')} {ageFrom(data?.corridor?.fetchedAt, lang)}
+          {' · '}
+          <a href="https://bipadportal.gov.np/" target="_blank" rel="noopener noreferrer">
+            {lang === 'ne' ? 'जल तथा मौसम विज्ञान विभाग · बिपद् पोर्टल' : 'DHM · BIPAD Portal'} &#8599;
+          </a>
+        </p>
       </section>
+
+      {/* The public's side of the same event: what people are asking the
+          government for, and what is being offered back. Kept clearly apart
+          from the incident figures above — a filing is not a casualty. */}
+      {(latestRequests.length > 0 || latestOffers.length > 0) && (
+        <section className="fl-sec">
+          <div className="fl-sec-head">
+            <span>{lang === 'ne' ? 'पोर्टल' : 'Portal'}</span>
+            <h2>{t('askedTitle')}</h2>
+          </div>
+          <p className="fl-note">{t('askedHint')}</p>
+
+          {(geolocatedRequests > 0 || geolocatedPersons > 0) && (
+            <div className="fl-tiles">
+              {geolocatedRequests > 0 && (
+                <div>
+                  <dd>{geolocatedRequests}</dd>
+                  <dt>{t('onMap')}</dt>
+                </div>
+              )}
+              {geolocatedPersons > 0 && (
+                <div>
+                  <dd>{geolocatedPersons}</dd>
+                  <dt>{t('onMapPersons')}</dt>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Asked for and offered, side by side. They are two halves of one
+              picture — demand against supply — and reading them as a stacked
+              pair made that impossible to see at a glance. Each column scrolls
+              on its own so a long request description cannot drag the other
+              side down with it. */}
+          <div className="fl-split fl-asked-pair">
+            {latestRequests.length > 0 && (
+              <div className="fl-asked-col">
+                <h4 className="fl-minor">
+                  {t('askedFor')} <em>{latestRequests.length}</em>
+                </h4>
+                <div className="fl-scroll-pane">
+                  <ul className="fl-filings">
+                    {latestRequests.map(r => (
+                      <li key={r.id} className={r.urgency ? `u-${r.urgency.toLowerCase()}` : undefined}>
+                        <div className="fl-filing-head">
+                          <h3>{r.title || r.problemType || r.ref || '—'}</h3>
+                          {r.urgency && <span className="fl-filing-tag">{r.urgency}</span>}
+                        </div>
+                        {r.description && <p>{r.description}</p>}
+                        <span className="fl-report-meta">
+                          {r.helpTypes.length > 0 && <b>{r.helpTypes.join(' · ')}</b>}
+                          {r.place && <i>{r.place}</i>}
+                          <time>{ageFrom(r.createdAt, lang)}</time>
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
+
+            {latestOffers.length > 0 && (
+              <div className="fl-asked-col">
+                <h4 className="fl-minor">
+                  {t('offered')} <em>{latestOffers.length}</em>
+                </h4>
+                <div className="fl-scroll-pane">
+                  <ul className="fl-filings fl-filings-offer">
+                    {latestOffers.map(o => (
+                      <li key={o.id}>
+                        <div className="fl-filing-head">
+                          <h3>{o.title || o.providerName || o.resourceTypes.join(' · ') || o.ref || '—'}</h3>
+                          {o.status && <span className="fl-filing-tag ok">{o.status}</span>}
+                        </div>
+                        {o.description && <p>{o.description}</p>}
+                        <span className="fl-report-meta">
+                          {o.resourceTypes.length > 0 && <b>{o.resourceTypes.join(' · ')}</b>}
+                          {o.place && <i>{o.place}</i>}
+                          <time>{ageFrom(o.createdAt, lang)}</time>
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <p className="fl-note">
+            {t('anonymous')}
+            {data?.latest && (
+              <>
+                {' '}
+                {t('updated')} {ageFrom(data.latest.fetchedAt, lang)}
+                {' · '}
+                <a href={data.latest.source.url} target="_blank" rel="noopener noreferrer">
+                  {data.latest.source.label} &#8599;
+                </a>
+              </>
+            )}
+          </p>
+        </section>
+      )}
 
       <section className="fl-sec">
         <div className="fl-sec-head">
@@ -194,7 +407,7 @@ export default function FloodSituationView() {
         ) : data.corridor.error ? (
           <p className="fl-empty">{t('unavailable')}</p>
         ) : (
-          <div className="fl-table-scroll">
+          <div className="fl-table-scroll fl-table-tall">
             <table className="fl-register">
               <thead>
                 <tr>

@@ -3850,42 +3850,72 @@ body.dark-theme .fl {
   line-height: 1.4;
 }
 
-/* ── Overview: full-width portal band, and the paired official panes ──────── */
-
-/* The portal counters sit on their own row now, so the cards can use the
-   whole measure instead of a half-width column. */
-.fl-portal-wide { margin-top: 0; padding-top: 0; border-top: 0; }
-.fl-portal-wide .fl-figs { grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
-
-/* Two official feeds, equal height, each scrolling inside itself rather than
-   letting the longer one set the height of the row. */
-/* Equal columns here, unlike the 1.25fr/1fr split the rest of the desk uses —
-   neither feed is the subordinate one. */
-.fl-official-pair { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: stretch; }
-.fl-official-pane { display: flex; flex-direction: column; min-width: 0; }
-.fl-official-scroll {
-  flex: 1 1 auto;
-  max-height: 420px;
+/* ── Situation tab: capped, scrollable panes ─────────────────────────────
+   Three lists on this page are open-ended — live alerts, portal filings and
+   the incident register all grow through the day. Capping each one and letting
+   it scroll inside itself keeps the page navigable, and keeps the source line
+   under each list visible instead of a screen further down. */
+.fl-scroll-pane {
+  max-height: 460px;
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--rule-2) transparent;
-  /* Room for the scrollbar so text never sits under it. */
   padding-right: 10px;
 }
-.fl-official-scroll::-webkit-scrollbar { width: 6px; }
-.fl-official-scroll::-webkit-scrollbar-thumb { background: var(--rule-2); border-radius: 3px; }
-.fl-official-scroll .fl-alerts { margin-top: 0; }
+.fl-scroll-pane::-webkit-scrollbar { width: 6px; }
+.fl-scroll-pane::-webkit-scrollbar-thumb { background: var(--rule-2); border-radius: 3px; }
+.fl-scroll-pane .fl-alerts { margin-top: 0; }
 
-/* On one column the panes stack, and a capped height helps less than it hurts. */
-@media (max-width: 860px) {
-  .fl-official-scroll { max-height: 320px; }
+/* The incident table keeps its horizontal scroll and gains a vertical one,
+   with the header staying put so a reader deep in the list still knows which
+   column is which. */
+.fl-table-tall { max-height: 560px; overflow-y: auto; }
+.fl-table-tall thead th {
+  position: sticky; top: 0; z-index: 1;
+  background: var(--paper); box-shadow: inset 0 -1px 0 var(--rule);
 }
 
-/* Per-layer provenance under the overview map. Tighter than a normal note
-   stack: three short lines that read as one block, not three paragraphs. */
-.fl-map-sources { margin-top: 10px; padding-top: 12px; border-top: 1px solid var(--rule); }
-.fl-map-sources .fl-note { margin: 0 0 5px; font-size: 12px; }
-.fl-map-sources .fl-note:last-child { margin-bottom: 0; }
-.fl-map-sources b { color: var(--ink-2); font-weight: 600; }
-.fl-map-sources .fl-blank { color: var(--ink-3); }
+/* ── Asked for / offered, side by side ───────────────────────────────── */
+.fl-asked-pair { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; margin-top: 26px; }
+.fl-asked-col { min-width: 0; }
+.fl-asked-col .fl-minor { display: flex; align-items: baseline; gap: 10px; margin-top: 0; }
+.fl-asked-col .fl-minor em {
+  font-style: normal; font-family: var(--mono); font-size: 11px;
+  letter-spacing: 0.08em; color: var(--ink-3);
+}
 
+.fl-filings { list-style: none; margin: 0; padding: 0; }
+.fl-filings li {
+  padding: 14px 0 14px 14px;
+  border-left: 3px solid var(--rule-2);
+  border-bottom: 1px solid var(--rule);
+}
+/* Urgency is the whole point of a request list: the critical ones must be
+   findable without reading every card. */
+.fl-filings li.u-critical { border-left-color: var(--red); }
+.fl-filings li.u-high { border-left-color: var(--amber); }
+.fl-filings-offer li { border-left-color: var(--green); }
+
+.fl-filing-head { display: flex; align-items: flex-start; gap: 10px; justify-content: space-between; }
+.fl-filings h3 { margin: 0 0 5px; font-size: 15px; font-weight: 600; color: var(--ink); line-height: 1.35; }
+.fl-filings p {
+  margin: 0 0 8px; font-size: 13.5px; line-height: 1.5; color: var(--ink-2);
+  white-space: pre-line;
+  /* Filings run from a line to several paragraphs; clamp so one long story
+     cannot swallow the column, and the full text is on the portal. */
+  display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;
+}
+.fl-filing-tag {
+  flex: none; padding: 2px 7px; font-family: var(--mono); font-size: 9px;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  border: 1px solid var(--rule-2); color: var(--ink-3); white-space: nowrap;
+}
+.fl-filings li.u-critical .fl-filing-tag { border-color: var(--red); color: var(--red); }
+.fl-filings li.u-high .fl-filing-tag { border-color: var(--amber); color: #b06f00; }
+.fl-filing-tag.ok { border-color: var(--green); color: var(--green); }
+
+@media (max-width: 860px) {
+  .fl-asked-pair { grid-template-columns: 1fr; }
+  .fl-scroll-pane { max-height: 360px; }
+  .fl-table-tall { max-height: 420px; }
+}
