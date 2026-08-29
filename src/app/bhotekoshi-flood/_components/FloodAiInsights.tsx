@@ -64,7 +64,6 @@ const T = {
     ne: 'यो संक्षेप नेपालीमा छ। यसलाई यो भाषामा लेख्न सकिएन:',
   },
   viaNepali: { en: 'via Nepali', ne: 'नेपालीमार्फत' },
-  translated: { en: 'Machine-translated', ne: 'मेसिनद्वारा अनुवादित' },
 };
 
 interface Props {
@@ -196,7 +195,13 @@ export default function FloodAiInsights({ lang }: Props) {
           )}
 
           <h3>{insight.headline}</h3>
-          <p className="fl-insights-summary">{insight.summary}</p>
+          {/* Only a model-written brief has a summary worth printing. The
+              extractive one is boilerplate — "N reports from M outlets, listed
+              below" — which the footer already states as "from N reports", with
+              the headlines themselves directly underneath. */}
+          {insight.generator === 'llm' && insight.summary && (
+            <p className="fl-insights-summary">{insight.summary}</p>
+          )}
 
           {insight.bullets.length > 0 && (
             <ul className="fl-insights-points">
@@ -205,14 +210,11 @@ export default function FloodAiInsights({ lang }: Props) {
           )}
 
           <div className="fl-insights-foot">
-            {/* Two separate claims, and the reader needs both: that Atlas
-                listed these headlines rather than summarising them, and
-                whether the words under them are still the outlets' own. */}
+            {/* Kept: that Atlas listed these headlines rather than summarising
+                them. A reader deciding whether to act on the panel needs that
+                one. */}
             {insight.generator !== 'llm' && (
               <span className="g-list">{t('byList')}</span>
-            )}
-            {insight.translated && (
-              <span className="g-list">{t('translated')}</span>
             )}
             <span>
               {t('basedOn')} {insight.itemCount} {t('reports')} · {ageFrom(insight.generatedAt, lang)}
