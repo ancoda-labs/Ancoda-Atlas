@@ -390,24 +390,22 @@ export interface SourceRef {
 
 export interface FloodContent {
   site: FloodSite | null;
-  keyFigures:
-    | (Bilingual<'preliminary_note'> &
-        Bilingual<'counts_conflict_note'> & {
-          last_updated?: string;
-          sources?: SourceRef[];
-          figures?: FloodFigure[];
-          latest_reported?: Bilingual<'caveat'> & { as_of?: string; items?: FloodReportedFigure[] };
-        })
-    | null;
   whatHappened: (Bilingual<'headline'> & { body_en?: string[]; body_ne?: string[]; sources?: SourceRef[] }) | null;
   alerts: (Bilingual<'note'> & { alerts?: FloodAlert[] }) | null;
-  floodPath: (Bilingual<'lead'> & Bilingual<'body'> & { points?: FloodPathPoint[]; sources?: SourceRef[] }) | null;
+  floodPath:
+    | (Bilingual<'lead'> &
+        Bilingual<'body'> & {
+          points?: FloodPathPoint[];
+          sources?: SourceRef[];
+          /** The date the desk last checked this course against its source. */
+          last_updated?: string;
+        })
+    | null;
   helplines: { lines?: FloodHelpline[]; source_url?: string } | null;
   bankAccounts: {
     funds?: FloodBankFund[];
     verification?: Bilingual<'note'> & { source_url?: string };
   } | null;
-  affectedDistricts: { districts?: Array<Bilingual<'name'>> } | null;
   districtContacts: {
     last_verified?: string | null;
     sources?: SourceRef[];

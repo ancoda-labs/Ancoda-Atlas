@@ -40,13 +40,11 @@ import { errorMessage } from '@/types';
 // fund means adding it to RELIEF_FUNDS below — dropping a JSON file into the
 // directory no longer picks it up on its own.
 import siteJson from '../../content/bhotekoshi-flood/site.json';
-import keyFiguresJson from '../../content/bhotekoshi-flood/key-figures.json';
 import whatHappenedJson from '../../content/bhotekoshi-flood/what-happened.json';
 import alertsJson from '../../content/bhotekoshi-flood/alerts.json';
 import floodPathJson from '../../content/bhotekoshi-flood/flood-path.json';
 import helplinesJson from '../../content/bhotekoshi-flood/helplines.json';
 import bankAccountsJson from '../../content/bhotekoshi-flood/bank-accounts.json';
-import affectedDistrictsJson from '../../content/bhotekoshi-flood/affected-districts.json';
 import districtContactsJson from '../../content/bhotekoshi-flood/district-contacts.json';
 import sitrepJson from '../../content/bhotekoshi-flood/sitrep.json';
 import districtGeoJson from '../../public/data/flood-affected-districts.json';
@@ -171,13 +169,11 @@ export function loadFloodContent(): FloodContent {
 
   return {
     site: content<FloodContent['site']>(siteJson),
-    keyFigures: content<FloodContent['keyFigures']>(keyFiguresJson),
     whatHappened: content<FloodContent['whatHappened']>(whatHappenedJson),
     alerts: content<FloodContent['alerts']>(alertsJson),
     floodPath: content<FloodContent['floodPath']>(floodPathJson),
     helplines: content<FloodContent['helplines']>(helplinesJson),
     bankAccounts: content<FloodContent['bankAccounts']>(bankAccountsJson),
-    affectedDistricts: content<FloodContent['affectedDistricts']>(affectedDistrictsJson),
     districtContacts: content<FloodContent['districtContacts']>(districtContactsJson),
     sitrep: loadSitrep(),
     funds,
