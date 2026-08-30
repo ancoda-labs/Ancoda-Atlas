@@ -5,6 +5,7 @@ import type {
   SitrepContent,
   SitrepNameList,
   RescueRegister,
+  RescuedPerson,
   FloodOfficialFeed,
   NdrrmaPopup,
   OpmcmPersonRegister,
@@ -39,8 +40,8 @@ const T = {
   kicker: { en: 'Rescue register', ne: 'उद्धार सूची' },
   title: { en: 'People rescued', ne: 'उद्धार गरिएका व्यक्ति' },
   standfirst: {
-    en: 'Atlas reproduces the NDRRMA portal register as published. Machine-read attachment rows are labelled and must be checked against the source document.',
-    ne: 'एट्लसले एनडीआरआरएमए पोर्टलको सूची जस्ताको तस्तै देखाउँछ। मेसिनले पढेका कागजातका पङ्क्ति छुट्टै चिन्ह लगाइएका छन् र मूल कागजातसँग जाँच्नुपर्छ।',
+    en: 'Published by NDRRMA. Atlas reproduces it as it stands and cannot change the official record.',
+    ne: 'एनडीआरआरएमएद्वारा प्रकाशित। एट्लसले यसलाई जस्ताको तस्तै देखाउँछ र आधिकारिक अभिलेख परिवर्तन गर्न सक्दैन।',
   },
   search: { en: 'Search for a name', ne: 'नाम खोज्नुहोस्' },
   searchHint: {
@@ -98,22 +99,6 @@ const T = {
     en: 'Corrections are not switched on for this deployment. Contact NDRRMA directly.',
     ne: 'यो सर्भरमा सुधार सुविधा सक्रिय छैन। सिधै एनडीआरआरएमएलाई सम्पर्क गर्नुहोस्।',
   },
-  ocrKicker: { en: 'Document OCR', ne: 'कागजात ओसीआर' },
-  ocrTitle: { en: 'Rows extracted from the official attachment', ne: 'आधिकारिक कागजातबाट निकालिएका पङ्क्ति' },
-  ocrIntro: {
-    en: 'Tarka read this NDRRMA attachment. These rows are searchable below, but OCR can misspell a name: every row remains unverified until checked against the PDF.',
-    ne: 'टार्काले यो एनडीआरआरएमए कागजात पढेको हो। यी पङ्क्ति तल खोज्न सकिन्छ, तर ओसीआरले नाम गलत पढ्न सक्छ; पीडीएफसँग जाँच नभएसम्म सबै पङ्क्ति अप्रमाणित छन्।',
-  },
-  ocrTotal: { en: 'Document rows', ne: 'कागजातका पङ्क्ति' },
-  ocrUnknown: { en: 'Origin not recorded', ne: 'मूल स्थान उल्लेख छैन' },
-  ocrPartial: {
-    en: 'Only part of this document could be read. The counts below are incomplete.',
-    ne: 'यो कागजातको केही भाग मात्र पढ्न सकियो। तलका संख्या अपूर्ण छन्।',
-  },
-  ocrBadge: { en: 'OCR · unverified', ne: 'ओसीआर · अप्रमाणित' },
-  ocrRead: { en: 'Extracted', ne: 'निकालिएको' },
-  exportJson: { en: 'Download JSON', ne: 'JSON डाउनलोड' },
-  exportCsv: { en: 'Download CSV', ne: 'CSV डाउनलोड' },
 };
 
 /**
@@ -158,23 +143,6 @@ function bilingual(
 }
 
 type Filter = 'all' | 'nepali' | 'foreign';
-
-interface SearchPerson {
-  key: string;
-  name: string | null;
-  nameNe: string | null;
-  age: number | null;
-  nationality: string | null;
-  country: string | null;
-  rescuedOn: string | null;
-  rescueLocation: string | null;
-  rescueLocationNe: string | null;
-  destination: string | null;
-  destinationNe: string | null;
-  status: string | null;
-  statusNe: string | null;
-  source: 'portal' | 'ocr';
-}
 
 export default function FloodRescueView() {
   const [lang, setLang] = useFloodLang();
@@ -238,49 +206,15 @@ export default function FloodRescueView() {
     setPage(0);
   }, [q, filter]);
 
-  const persons = useMemo<SearchPerson[]>(() => {
-    const portal: SearchPerson[] = (data?.persons || []).map(person => ({
-      key: `portal-${person.id}`,
-      name: person.name,
-      nameNe: person.nameNe,
-      age: person.age,
-      nationality: person.nationality,
-      country: person.country,
-      rescuedOn: person.rescuedOn,
-      rescueLocation: person.rescuedAt?.title || null,
-      rescueLocationNe: person.rescuedAt?.titleNe || null,
-      destination: person.stationedAt?.title || null,
-      destinationNe: person.stationedAt?.titleNe || null,
-      status: person.status?.title || null,
-      statusNe: person.status?.titleNe || null,
-      source: 'portal',
-    }));
-    const ocr: SearchPerson[] = (data?.ocrDocument?.records || []).map(person => ({
-      key: person.id,
-      name: person.name,
-      nameNe: person.name,
-      age: person.age,
-      nationality: person.nationality,
-      country: person.country,
-      rescuedOn: person.rescue_date,
-      rescueLocation: person.rescue_location,
-      rescueLocationNe: person.rescue_location,
-      destination: person.destination_or_hospital,
-      destinationNe: person.destination_or_hospital,
-      status: person.status,
-      statusNe: person.status,
-      source: 'ocr',
-    }));
-    return [...portal, ...ocr];
-  }, [data]);
+  const persons: RescuedPerson[] = useMemo(() => data?.persons || [], [data]);
 
   const matches = useMemo(() => {
     const needle = fold(q.trim());
     return persons.filter(p => {
       if (filter === 'nepali' && p.nationality !== 'nepali') return false;
-      if (filter === 'foreign' && p.nationality !== 'foreign') return false;
+      if (filter === 'foreign' && p.nationality === 'nepali') return false;
       if (!needle) return true;
-      const haystack = fold(`${p.name || ''} ${p.nameNe || ''} ${p.country || ''} ${p.rescueLocation || ''} ${p.rescueLocationNe || ''} ${p.destination || ''} ${p.destinationNe || ''}`);
+      const haystack = fold(`${p.name || ''} ${p.nameNe || ''} ${p.country || ''} ${p.rescuedAt?.title || ''} ${p.rescuedAt?.titleNe || ''} ${p.stationedAt?.title || ''} ${p.stationedAt?.titleNe || ''}`);
       return haystack.includes(needle);
     });
   }, [persons, q, filter]);
@@ -319,7 +253,6 @@ export default function FloodRescueView() {
   };
 
   const summary = data?.summary;
-  const ocrDocument = data?.ocrDocument || null;
 
   return (
     <FloodShell lang={lang} setLang={setLang} kicker={t('kicker')} title={t('title')} standfirst={t('standfirst')}>
@@ -382,43 +315,6 @@ export default function FloodRescueView() {
         </section>
       )}
 
-      {ocrDocument && (
-        <section className="fl-sec">
-          <div className="fl-sec-head">
-            <span>{t('ocrKicker')}</span>
-            <h2>{t('ocrTitle')}</h2>
-          </div>
-          <p className="fl-note">{t('ocrIntro')}</p>
-          {!ocrDocument.complete && (
-            <p className="fl-insights-note" role="note">{t('ocrPartial')}</p>
-          )}
-          <div className="fl-tiles">
-            <div><dd>{ocrDocument.summary.total.toLocaleString()}</dd><dt>{t('ocrTotal')}</dt></div>
-            <div><dd>{ocrDocument.summary.nepali.toLocaleString()}</dd><dt>{t('nepali')}</dt></div>
-            <div><dd>{ocrDocument.summary.foreign.toLocaleString()}</dd><dt>{t('foreign')}</dt></div>
-            {ocrDocument.summary.unknown > 0 && (
-              <div><dd>{ocrDocument.summary.unknown.toLocaleString()}</dd><dt>{t('ocrUnknown')}</dt></div>
-            )}
-          </div>
-          <p className="fl-note">
-            {t('ocrRead')} {ageFrom(ocrDocument.extracted_at, lang)} ·{' '}
-            {ocrDocument.source_url && (
-              <>
-                <a href={ocrDocument.source_url} target="_blank" rel="noopener noreferrer">
-                  {ocrDocument.source_document} &#8599;
-                </a>{' · '}
-              </>
-            )}
-            <a href="/api/flood/rescue/ocr" target="_blank" rel="noopener noreferrer">
-              {t('exportJson')}
-            </a>{' · '}
-            <a href="/api/flood/rescue/ocr?format=csv">
-              {t('exportCsv')}
-            </a>
-          </p>
-        </section>
-      )}
-
       <section className="fl-sec">
         <div className="fl-sec-head">
           <span>{lang === 'ne' ? 'खोज' : 'Search'}</span>
@@ -447,7 +343,7 @@ export default function FloodRescueView() {
 
         {!data ? (
           <p className="fl-empty">{t('loading')}</p>
-        ) : data.error && persons.length === 0 ? (
+        ) : data.error ? (
           <p className="fl-empty">{t('unavailable')}</p>
         ) : matches.length === 0 ? (
           <p className="fl-empty">{t('noResults')}</p>
@@ -467,10 +363,9 @@ export default function FloodRescueView() {
                 </thead>
                 <tbody>
                   {paginatedMatches.map(p => (
-                    <tr key={p.key} style={{ height: '40px' }}>
+                    <tr key={p.id} style={{ height: '40px' }}>
                       <th scope="row" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {bilingual(lang, p.name, p.nameNe) || t('noName')}
-                        {p.source === 'ocr' && <em>{t('ocrBadge')}</em>}
                         {/* "FOREIGN (India)". The badge is uppercased by the
                             stylesheet; the country keeps the case the portal
                             wrote it in, because "SOUTH KOREA" reads worse than
@@ -488,13 +383,13 @@ export default function FloodRescueView() {
                         {p.age ?? '—'}
                       </td>
                       <td style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {bilingual(lang, p.rescueLocation, p.rescueLocationNe) || '—'}
+                        {bilingual(lang, p.rescuedAt?.title, p.rescuedAt?.titleNe) || '—'}
                       </td>
                       <td style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {bilingual(lang, p.destination, p.destinationNe) || '—'}
+                        {bilingual(lang, p.stationedAt?.title, p.stationedAt?.titleNe) || '—'}
                       </td>
                       <td style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {bilingual(lang, p.status, p.statusNe) || <span className="fl-blank">{t('notRecorded')}</span>}
+                        {bilingual(lang, p.status?.title, p.status?.titleNe) || <span className="fl-blank">{t('notRecorded')}</span>}
                       </td>
                       <td className="num" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {p.rescuedOn || '—'}

@@ -428,34 +428,6 @@ Groq's free tier is metered per minute. Atlas retries a `429` honouring
 `Retry-After`, but a burst of language switches on a busy page can still exhaust
 it — a paid tier is worth it if the multilingual panel matters to you.
 
-### Rescue document OCR (optional)
-
-Set `TARKA_API_KEY` to let the flood refresh read PDF attachments from NDRRMA's
-site-wide notice with Tarka's `glm-ocr-nepali` utility model. A deployment with
-`LLM_PROVIDER=tarka` reuses `LLM_API_KEY`; `TARKA_OCR_MODEL` and
-`TARKA_OCR_BASE_URL` override the defaults. The scheduled refresh follows a
-matching rescue-list popup and falls back to issue #6's target document;
-`NDRRMA_RESCUE_DOCUMENT_URL` can pin a replacement official media URL.
-
-The importer accepts PDFs, JPEG, PNG and WebP, caps documents at 12 MiB and 32
-pages, and only fetches HTTPS files under `ndrrma.gov.np/mediafiles/`. Extracted
-rows stay labelled `unverified_ocr` and appear separately from the structured
-NDRRMA portal register. Public JSON/CSV omits passport/ID and contact fields.
-
-Operators can ingest an official URL or upload a document with the
-`FLOOD_ADMIN_TOKEN` bearer token:
-
-```bash
-curl -X POST http://localhost:3117/api/flood/rescue/ocr \
-  -H "Authorization: Bearer $FLOOD_ADMIN_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"url":"https://ndrrma.gov.np/mediafiles/website/popup/documents/rescued.pdf"}'
-```
-
-`GET /api/flood/rescue/ocr` exports the latest privacy-safe JSON; append
-`?format=csv` for CSV. An authenticated `?include_sensitive=1` returns the full
-operator record when the source document contained identity/contact columns.
-
 ### Community layer (optional)
 
 | Key | How to Get |
@@ -467,7 +439,7 @@ operator record when the source document contained identity/contact columns.
 | `MINIO_BUCKET` | Bucket for uploaded photos (default `atlas`) |
 | `ATLAS_IP_SALT` | Random string. Salts hashed uploader IPs for rate limiting — set it, or the hashes are not worth much |
 | `ATLAS_MEDIA_SECRET` | Signs media proxy URLs |
-| `FLOOD_ADMIN_TOKEN` | Bearer token for photo moderation and rescue-document ingestion |
+| `FLOOD_ADMIN_TOKEN` | Bearer token for the photo moderation endpoints |
 | `FLOOD_REFRESH_TOKEN` | Bearer token to trigger `/api/flood/refresh` externally |
 | `YOUTUBE_API_KEY` | *(Optional)* Enriches the flood desk's video panel |
 
@@ -699,7 +671,7 @@ route and every news panel.
 | `MINIO_PRESIGNED_EXPIRY_SECONDS` | `3600` | Presigned URL lifetime |
 | `ATLAS_IP_SALT` | — | Salt for hashed uploader IPs |
 | `ATLAS_MEDIA_SECRET` | — | Signs media proxy URLs |
-| `FLOOD_ADMIN_TOKEN` | — | Bearer token for photo moderation and rescue-document ingestion |
+| `FLOOD_ADMIN_TOKEN` | — | Bearer token for photo moderation |
 | `YOUTUBE_API_KEY` | disabled | Enriches the flood desk video panel |
 | `TELEGRAM_BOT_TOKEN` | disabled | For Telegram alerts + bot commands |
 | `TELEGRAM_CHAT_ID` | — | Your Telegram chat ID |
@@ -730,8 +702,6 @@ Geographic coverage lives in `src/apis/utils/nepal.mjs` — the national boundin
 | `GET /api/flood/digest?lang=&limit=` | Stored ten-minute digest timeline (`en` / `ne`; needs Supabase) |
 | `GET /api/flood/situation` | Situation report and river gauge detail |
 | `GET /api/flood/persons` | Searchable rescue register |
-| `GET /api/flood/rescue/ocr` | Latest privacy-safe OCR rescue document (JSON or CSV) |
-| `POST /api/flood/rescue/ocr` | Admin-only NDRRMA URL/file ingestion through Tarka OCR |
 | `GET /api/flood/contacts` | District contacts and helplines |
 | `GET /api/flood/donations` | Human-verified relief funds and bank details |
 | `GET /api/flood/photos` | Crowdsourced ground photos (needs Supabase + MinIO) |
@@ -1212,34 +1182,6 @@ Groq's free tier is metered per minute. Atlas retries a `429` honouring
 `Retry-After`, but a burst of language switches on a busy page can still exhaust
 it — a paid tier is worth it if the multilingual panel matters to you.
 
-### Rescue document OCR (optional)
-
-Set `TARKA_API_KEY` to let the flood refresh read PDF attachments from NDRRMA's
-site-wide notice with Tarka's `glm-ocr-nepali` utility model. A deployment with
-`LLM_PROVIDER=tarka` reuses `LLM_API_KEY`; `TARKA_OCR_MODEL` and
-`TARKA_OCR_BASE_URL` override the defaults. The scheduled refresh follows a
-matching rescue-list popup and falls back to issue #6's target document;
-`NDRRMA_RESCUE_DOCUMENT_URL` can pin a replacement official media URL.
-
-The importer accepts PDFs, JPEG, PNG and WebP, caps documents at 12 MiB and 32
-pages, and only fetches HTTPS files under `ndrrma.gov.np/mediafiles/`. Extracted
-rows stay labelled `unverified_ocr` and appear separately from the structured
-NDRRMA portal register. Public JSON/CSV omits passport/ID and contact fields.
-
-Operators can ingest an official URL or upload a document with the
-`FLOOD_ADMIN_TOKEN` bearer token:
-
-```bash
-curl -X POST http://localhost:3117/api/flood/rescue/ocr \
-  -H "Authorization: Bearer $FLOOD_ADMIN_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"url":"https://ndrrma.gov.np/mediafiles/website/popup/documents/rescued.pdf"}'
-```
-
-`GET /api/flood/rescue/ocr` exports the latest privacy-safe JSON; append
-`?format=csv` for CSV. An authenticated `?include_sensitive=1` returns the full
-operator record when the source document contained identity/contact columns.
-
 ### Community layer (optional)
 
 | Key | How to Get |
@@ -1251,7 +1193,7 @@ operator record when the source document contained identity/contact columns.
 | `MINIO_BUCKET` | Bucket for uploaded photos (default `atlas`) |
 | `ATLAS_IP_SALT` | Random string. Salts hashed uploader IPs for rate limiting — set it, or the hashes are not worth much |
 | `ATLAS_MEDIA_SECRET` | Signs media proxy URLs |
-| `FLOOD_ADMIN_TOKEN` | Bearer token for photo moderation and rescue-document ingestion |
+| `FLOOD_ADMIN_TOKEN` | Bearer token for the photo moderation endpoints |
 | `FLOOD_REFRESH_TOKEN` | Bearer token to trigger `/api/flood/refresh` externally |
 | `YOUTUBE_API_KEY` | *(Optional)* Enriches the flood desk's video panel |
 
@@ -1483,7 +1425,7 @@ route and every news panel.
 | `MINIO_PRESIGNED_EXPIRY_SECONDS` | `3600` | Presigned URL lifetime |
 | `ATLAS_IP_SALT` | — | Salt for hashed uploader IPs |
 | `ATLAS_MEDIA_SECRET` | — | Signs media proxy URLs |
-| `FLOOD_ADMIN_TOKEN` | — | Bearer token for photo moderation and rescue-document ingestion |
+| `FLOOD_ADMIN_TOKEN` | — | Bearer token for photo moderation |
 | `YOUTUBE_API_KEY` | disabled | Enriches the flood desk video panel |
 | `TELEGRAM_BOT_TOKEN` | disabled | For Telegram alerts + bot commands |
 | `TELEGRAM_CHAT_ID` | — | Your Telegram chat ID |
@@ -1514,8 +1456,6 @@ Geographic coverage lives in `src/apis/utils/nepal.mjs` — the national boundin
 | `GET /api/flood/digest?lang=&limit=` | Stored ten-minute digest timeline (`en` / `ne`; needs Supabase) |
 | `GET /api/flood/situation` | Situation report and river gauge detail |
 | `GET /api/flood/persons` | Searchable rescue register |
-| `GET /api/flood/rescue/ocr` | Latest privacy-safe OCR rescue document (JSON or CSV) |
-| `POST /api/flood/rescue/ocr` | Admin-only NDRRMA URL/file ingestion through Tarka OCR |
 | `GET /api/flood/contacts` | District contacts and helplines |
 | `GET /api/flood/donations` | Human-verified relief funds and bank details |
 | `GET /api/flood/photos` | Crowdsourced ground photos (needs Supabase + MinIO) |

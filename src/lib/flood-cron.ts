@@ -21,20 +21,11 @@ import { join } from 'path';
 import { fetchCorridorGauges } from './flood';
 import { proxyUrlFor } from './news-media';
 import { scheduleCatchup } from './news-digest-store';
-import type {
-  FeedStatus,
-  FloodDeskStore,
-  NewsItem,
-  OpmcmPersonRegister,
-  OpmcmPersonReport,
-  RescueOcrDocument,
-} from '@/types';
+import type { FeedStatus, FloodDeskStore, NewsItem, OpmcmPersonRegister, OpmcmPersonReport } from '@/types';
 import { errorMessage } from '@/types';
 
 const DEFAULT_INTERVAL_MINUTES = 10;
 const STORE_FILE = 'flood-desk.json';
-const DEFAULT_RESCUE_DOCUMENT_URL =
-  'https://ndrrma.gov.np/mediafiles/website/popup/documents/List_of_Rescued_Foreign_citizens_and_rescued_Nepali_persons.pdf';
 
 /**
  * The shape of the persisted store.
@@ -58,10 +49,8 @@ const DEFAULT_RESCUE_DOCUMENT_URL =
  * cleanly without it, and the rescue table then prints "FOREIGN" beside a
  * hundred Indian nationals with no country against any of them — no error, no
  * warning, just a column that is silently blank.
- *
- * v4 adds the separately attributed OCR rescue document and its review state.
  */
-const STORE_VERSION = 4;
+const STORE_VERSION = 3;
 
 function intervalMinutes(): number {
   const raw = Number(process.env.FLOOD_REFRESH_INTERVAL_MINUTES);
@@ -76,7 +65,6 @@ function emptyStore(): FloodDeskStore {
     corridor: null,
     alerts: [],
     rescue: null,
-    ocrRescue: null,
     portal: null,
     videos: null,
     news: [],
@@ -134,13 +122,6 @@ export function getFloodStore(): FloodDeskStore {
   // and it returns before the cycle it kicks off finishes.
   startFloodCron();
   return g.__atlasFloodStore;
-}
-
-/** Publish an operator-triggered OCR result into the same store the cron uses. */
-export function setRescueOcrDocument(document: RescueOcrDocument): void {
-  const store = getFloodStore();
-  store.ocrRescue = document;
-  persist(store);
 }
 
 function loadFromDisk(): FloodDeskStore | null {
@@ -267,40 +248,6 @@ export async function runFloodRefresh(): Promise<FloodDeskStore> {
         },
         value => {
           store.rescue = value;
-        },
-      ),
-
-      refresh(
-        'rescueOcr',
-        store,
-        async () => {
-          const { isTarkaOcrConfigured } = await import('@/lib/llm/tarka-ocr.mjs');
-          // Keep the last extracted attachment visible if an operator
-          // temporarily removes the key. Disabled inference is not evidence
-          // that the official document stopped existing.
-          if (!isTarkaOcrConfigured()) return store.ocrRescue;
-
-          const { getWebsitePopups } = await import('@/apis/sources/ndrrma-notices.mjs');
-          const feed = await getWebsitePopups();
-          if (feed.error && !feed.items.length) throw new Error(feed.error);
-          const notice = feed.items.find(item => item.pdfUrl && /rescu|उद्धार/i.test(
-            `${item.title || ''} ${item.titleNe || ''} ${item.pdfUrl}`,
-          ));
-          // NDRRMA removes old rows from the popup API before it removes their
-          // media files. Keep issue #6's official document as the event-specific
-          // fallback so a fresh deployment can still build the rescue register.
-          const documentUrl = process.env.NDRRMA_RESCUE_DOCUMENT_URL?.trim()
-            || notice?.pdfUrl
-            || DEFAULT_RESCUE_DOCUMENT_URL;
-
-          const { ingestRescueDocumentFromUrl } = await import('@/lib/rescue-ocr.mjs');
-          return ingestRescueDocumentFromUrl({
-            url: documentUrl,
-            previous: store.ocrRescue,
-          });
-        },
-        value => {
-          store.ocrRescue = value;
         },
       ),
 

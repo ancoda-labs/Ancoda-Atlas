@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getFloodStore } from '@/lib/flood-cron';
 import { cacheFor, noStore } from '@/lib/http-cache';
-import { publicRescueOcrDocument } from '@/lib/rescue-ocr-utils.mjs';
 import type { RescueRegister } from '@/types';
 import { errorMessage } from '@/types';
 
@@ -28,19 +27,13 @@ export async function GET() {
     // The OPMCM register is deliberately not folded in here: it is eight
     // thousand rows and has its own route, so this response stays small enough
     // to paint the search box quickly.
-    const res = NextResponse.json({
-      ...store.rescue,
-      ocrDocument: publicRescueOcrDocument(store.ocrRescue),
-    });
+    const res = NextResponse.json(store.rescue);
     res.headers.set('X-Atlas-Cache', 'cron');
     return cacheFor(res, { edge: CACHE_TTL_S });
   }
 
   if (cache && Date.now() - cache.at < CACHE_TTL_MS) {
-    const res = NextResponse.json({
-      ...cache.data,
-      ocrDocument: publicRescueOcrDocument(store.ocrRescue),
-    });
+    const res = NextResponse.json(cache.data);
     res.headers.set('X-Atlas-Cache', 'hit');
     return cacheFor(res, { edge: CACHE_TTL_S });
   }
@@ -64,10 +57,7 @@ export async function GET() {
 
   try {
     const data = await pending;
-    const res = NextResponse.json({
-      ...data,
-      ocrDocument: publicRescueOcrDocument(store.ocrRescue),
-    });
+    const res = NextResponse.json(data);
     res.headers.set('X-Atlas-Cache', 'miss');
     // Same rule the in-memory cache follows above: a register that did not
     // arrive is not something to keep serving.
@@ -83,7 +73,6 @@ export async function GET() {
         error: message,
         source: { label: 'NDRRMA rescue portal', url: 'https://ndrrma.gov.np/np/rescue' },
         fetchedAt: new Date().toISOString(),
-        ocrDocument: publicRescueOcrDocument(store.ocrRescue),
       } satisfies RescueRegister,
       { status: 200 },
     ));
