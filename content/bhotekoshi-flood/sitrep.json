@@ -1,99 +1,103 @@
 {
   "id": "sitrep",
-  "_comment": "Figures for the Rasuwa-Bhotekoshi flood, from Nepal Police district reporting and NDRRMA SitRep-6. These are reviewed content and are served exactly as written - there is no longer a live scrape laying newer figures over them, so a stale number here is a stale number on the page. Re-check them against the NDRRMA Daily Disaster Bulletin and the police briefings, and edit here. The overview also shows live government figures beside this grid (BIPAD corridor incidents, NDRRMA rescued-persons totals, OPMCM portal counters); those come straight from the portals and are never merged into these numbers. Two rules govern edits. (1) Never sum across groups that the source keeps apart - the `exclusive` flags and `do_not_merge` notes exist because several of these counts overlap, and adding them would invent casualties. (2) Every breakdown must sum to its own stated total; lib/flood.ts re-adds them at load and the page shows a warning if either stops reconciling.",
-  "as_of": "2026-08-28T06:00:00+05:45",
-  "as_of_label_en": "12 Bhadau, 06:00 (police figures)",
-  "as_of_label_ne": "१२ भदौ, ०६:०० (प्रहरी तथ्यांक)",
+  "_comment": "Figures for the Rasuwa-Bhotekoshi flood, from NDRRMA / Ministry of Home Affairs, 14 Bhadra 13:00. Compiled from that government statement as published on the Rasuwa flood bulletin (nirajbhusal.github.io/rasuwa-flood-bulletin) — the bulletin is someone else's aggregation; the government statement is the source. These are reviewed content and are served exactly as written - there is no longer a live scrape laying newer figures over them, so a stale number here is a stale number on the page. The overview also shows live government figures beside this grid (BIPAD corridor incidents, NDRRMA rescued-persons totals, OPMCM portal counters); those come straight from the portals and are never merged into these numbers. Two rules govern edits. (1) Never sum across groups that the source keeps apart - the `exclusive` flags and `do_not_merge` notes exist because several of these counts overlap, and adding them would invent casualties. (2) Every breakdown must sum to its own stated total; lib/flood.ts re-adds them at load and the page shows a warning if either stops reconciling.",
+  "as_of": "2026-08-30T13:00:00+05:45",
+  "as_of_label_en": "14 Bhadau, 13:00 (NDRRMA / MoHA)",
+  "as_of_label_ne": "१४ भदौ, १३:०० (एनडीआरआरएमए / गृह)",
   "sources": [
-    { "label": "Nepal Police district reporting", "url": "https://nepalpolice.gov.np/" },
-    { "label": "NDRRMA SitRep-6", "url": "https://ndrrma.gov.np/" }
+    { "label": "NDRRMA / MoHA", "url": "https://ndrrma.gov.np/" },
+    { "label": "Rasuwa flood bulletin (compilation)", "url": "https://nirajbhusal.github.io/rasuwa-flood-bulletin/" }
   ],
 
   "headline": [
-    { "id": "deaths", "value": 469, "tone": "critical", "label_en": "Deaths", "label_ne": "मृत्यु", "source": "Nepal Police" },
-    { "id": "injured", "value": 73, "tone": "warning", "label_en": "Injured", "label_ne": "घाइते", "source": "SitRep-6" },
-    { "id": "uncontacted", "value": 977, "tone": "critical", "label_en": "Uncontacted", "label_ne": "सम्पर्कविहीन", "source": "SitRep-6" },
+    { "id": "deaths", "value": 752, "tone": "critical", "label_en": "Deaths", "label_ne": "मृत्यु", "source": "NDRRMA / MoHA" },
+    { "id": "injured", "value": 239, "tone": "warning", "label_en": "Injured", "label_ne": "घाइते", "source": "NDRRMA / MoHA" },
+    { "id": "uncontacted", "value": 2502, "tone": "critical", "label_en": "Uncontacted", "label_ne": "सम्पर्कविहीन", "source": "NDRRMA / MoHA" },
     { "id": "heli", "value": 1976, "tone": "positive", "label_en": "Rescued by air", "label_ne": "हवाई उद्धार", "source": "SitRep-6" },
-    { "id": "deployed", "value": 13248, "suffix": "+", "tone": "positive", "label_en": "Personnel deployed", "label_ne": "परिचालित जनशक्ति", "source": "SitRep-6" }
+    { "id": "deployed", "value": 19895, "tone": "positive", "label_en": "Personnel deployed", "label_ne": "परिचालित जनशक्ति", "source": "NDRRMA / MoHA" }
   ],
 
   "breakdowns": [
     {
       "id": "deaths",
-      "total": 469,
+      "total": 752,
       "title_en": "Deaths",
       "title_ne": "मृत्यु",
       "tone": "critical",
-      "caption_en": "Nepal Police, by district",
-      "caption_ne": "नेपाल प्रहरी, जिल्लाअनुसार",
+      "caption_en": "NDRRMA / MoHA, 14 Bhadra 13:00, by district",
+      "caption_ne": "एनडीआरआरएमए / गृह, १४ भदौ १३:००, जिल्लाअनुसार",
       "items": [
-        { "label_en": "Chitwan", "label_ne": "चितवन", "value": 178 },
-        { "label_en": "Nawalparasi East", "label_ne": "नवलपरासी पूर्व", "value": 110 },
-        { "label_en": "Gorkha", "label_ne": "गोरखा", "value": 44 },
-        { "label_en": "Nuwakot", "label_ne": "नुवाकोट", "value": 37 },
-        { "label_en": "Dhading", "label_ne": "धादिङ", "value": 33 },
-        { "label_en": "Tanahun", "label_ne": "तनहुँ", "value": 28 },
-        { "label_en": "Nawalparasi West", "label_ne": "नवलपरासी पश्चिम", "value": 27 },
-        { "label_en": "Rasuwa", "label_ne": "रसुवा", "value": 12 }
+        { "label_en": "Chitwan", "label_ne": "चितवन", "value": 259 },
+        { "label_en": "Nawalparasi East", "label_ne": "नवलपरासी पूर्व", "value": 184 },
+        { "label_en": "Nawalparasi West", "label_ne": "नवलपरासी पश्चिम", "value": 100 },
+        { "label_en": "Gorkha", "label_ne": "गोरखा", "value": 58 },
+        { "label_en": "Nuwakot", "label_ne": "नुवाकोट", "value": 52 },
+        { "label_en": "Dhading", "label_ne": "धादिङ", "value": 50 },
+        { "label_en": "Tanahun", "label_ne": "तनहुँ", "value": 36 },
+        { "label_en": "Rasuwa", "label_ne": "रसुवा", "value": 13 }
       ]
     },
     {
       "id": "injured",
-      "total": 73,
+      "total": 239,
       "title_en": "Injured",
       "title_ne": "घाइते",
       "tone": "warning",
-      "caption_en": "SitRep-6, by district",
-      "caption_ne": "सिटरेप-६, जिल्लाअनुसार",
-      "do_not_merge_en": "Kathmandu valley hospitals treated or discharged 84, and police report 63 in treatment. Those describe the same injured people at a different point in their care — they are not added to the 73.",
-      "do_not_merge_ne": "काठमाडौँ उपत्यकाका अस्पतालले ८४ जनाको उपचार वा डिस्चार्ज गरे, प्रहरीले ६३ जना उपचाररत जनाएको छ। ती उनै घाइतेको उपचारका फरक चरण हुन् — ७३ मा जोडिँदैन।",
+      "caption_en": "NDRRMA / MoHA, 14 Bhadra 13:00 — in treatment and discharged. No current district partition of the 239 has been published.",
+      "caption_ne": "एनडीआरआरएमए / गृह, १४ भदौ १३:०० — उपचाररत र डिस्चार्ज सहित। २३९ को हालको जिल्लागत विभाजन प्रकाशित छैन।",
+      "do_not_merge_en": "The last published district split (Rasuwa 43, Nuwakot 27, Dhading 3) summed to the old total of 73, not to 239. Kathmandu DEOC 88, Rasuwa Hospital Dhunche 74, and police injured-and-rescued 2,301 are labels for other collections — they are not added to the 239.",
+      "do_not_merge_ne": "पछिल्लो प्रकाशित जिल्ला विभाजन (रसुवा ४३, नुवाकोट २७, धादिङ ३) पुरानो जम्मा ७३ मा जोडिन्छ, २३९ मा होइन। काठमाडौं डीईओसी ८८, रसुवा अस्पताल धुन्चे ७४ र प्रहरी घाइते तथा उद्धार २,३०१ अन्य संकलनका लेबल हुन् — २३९ मा जोडिँदैनन्।",
+      "no_total_check": true,
       "items": [
-        { "label_en": "Rasuwa", "label_ne": "रसुवा", "value": 43 },
-        { "label_en": "Nuwakot", "label_ne": "नुवाकोट", "value": 27 },
-        { "label_en": "Dhading", "label_ne": "धादिङ", "value": 3 }
+        { "label_en": "Rasuwa (older district split)", "label_ne": "रसुवा (पुरानो जिल्ला विभाजन)", "value": 43 },
+        { "label_en": "Nuwakot (older district split)", "label_ne": "नुवाकोट (पुरानो जिल्ला विभाजन)", "value": 27 },
+        { "label_en": "Dhading (older district split)", "label_ne": "धादिङ (पुरानो जिल्ला विभाजन)", "value": 3 }
       ]
     },
     {
       "id": "uncontacted",
-      "total": 977,
+      "total": 2502,
       "title_en": "Uncontacted",
       "title_ne": "सम्पर्कविहीन",
       "tone": "critical",
-      "caption_en": "NDRRMA SitRep-6, by reporting body",
-      "caption_ne": "एनडीआरआरएमए सिटरेप-६, जनाउने निकायअनुसार",
-      "do_not_merge_en": "The public missing-report forms (875), Hello Sarkar (140) and the tourist list (668) are separate collections. The same person can appear in more than one. The official figure stays 977.",
-      "do_not_merge_ne": "सार्वजनिक हराएको फारम (८७५), हेलो सरकार (१४०) र पर्यटक सूची (६६८) छुट्टै संकलन हुन्। एउटै व्यक्ति एकभन्दा बढी सूचीमा पर्न सक्छ। आधिकारिक संख्या ९७७ नै रहन्छ।",
+      "caption_en": "NDRRMA / MoHA, 14 Bhadra 13:00, by reporting body",
+      "caption_ne": "एनडीआरआरएमए / गृह, १४ भदौ १३:००, जनाउने निकायअनुसार",
+      "do_not_merge_en": "The public missing-report forms, Hello Sarkar (140), Madhesh Police (30) and the tourist list (668) are separate collections. The same person can appear in more than one. Do not add this breakdown on top of 2,502. Police 25 are already inside the official 2,502.",
+      "do_not_merge_ne": "सार्वजनिक हराएको फारम, हेलो सरकार (१४०), मधेश प्रहरी (३०) र पर्यटक सूची (६६८) छुट्टै संकलन हुन्। एउटै व्यक्ति एकभन्दा बढी सूचीमा पर्न सक्छ। यो विभाजन २,५०२ माथि नजोड्नुहोस्। प्रहरी २५ आधिकारिक २,५०२ भित्र छन्।",
       "items": [
-        { "label_en": "Foreign nationals", "label_ne": "विदेशी नागरिक", "value": 517 },
-        { "label_en": "Rasuwa DEOC", "label_ne": "रसुवा डीईओसी", "value": 161 },
-        { "label_en": "NRN", "label_ne": "एनआरएन", "value": 127 },
-        { "label_en": "Makwanpur DEOC", "label_ne": "मकवानपुर डीईओसी", "value": 66 },
+        { "label_en": "Hydropower", "label_ne": "जलविद्युत", "value": 933 },
+        { "label_en": "Foreign nationals", "label_ne": "विदेशी नागरिक", "value": 592 },
+        { "label_en": "Rasuwa DEOC", "label_ne": "रसुवा डीईओसी", "value": 562 },
+        { "label_en": "Nepalis living abroad", "label_ne": "विदेशमा बस्ने नेपाली", "value": 127 },
+        { "label_en": "Nuwakot DEOC", "label_ne": "नुवाकोट डीईओसी", "value": 115 },
+        { "label_en": "Makwanpur DEOC", "label_ne": "मकवानपुर डीईओसी", "value": 65 },
         { "label_en": "Army", "label_ne": "सेना", "value": 45 },
-        { "label_en": "Police", "label_ne": "प्रहरी", "value": 28 },
+        { "label_en": "Police", "label_ne": "प्रहरी", "value": 25 },
         { "label_en": "Customs", "label_ne": "भन्सार", "value": 15 },
         { "label_en": "Armed Police", "label_ne": "सशस्त्र प्रहरी", "value": 13 },
         { "label_en": "Immigration", "label_ne": "अध्यागमन", "value": 4 },
-        { "label_en": "Nuwakot DEOC", "label_ne": "नुवाकोट डीईओसी", "value": 1 }
+        { "label_en": "Langtang National Park", "label_ne": "लाङटाङ निकुञ्ज", "value": 3 },
+        { "label_en": "Quarantine office", "label_ne": "क्वारेन्टाइन कार्यालय", "value": 3 }
       ]
     },
     {
       "id": "deployed",
-      "total": 13248,
-      "suffix": "+",
+      "total": 19895,
       "title_en": "Personnel deployed",
       "title_ne": "परिचालित जनशक्ति",
       "tone": "positive",
-      "caption_en": "Security forces. Medical staff and aircraft are counted separately.",
-      "caption_ne": "सुरक्षा निकाय। स्वास्थ्यकर्मी र हवाईजहाज छुट्टै गनिन्छन्।",
-      "do_not_merge_en": "The 200+ medical staff are not inside the 13,248 security total, and the 14 helicopters are aircraft, not people.",
-      "do_not_merge_ne": "२००+ स्वास्थ्यकर्मी १३,२४८ को सुरक्षा जम्मामा समावेश छैनन्, र १४ हेलिकप्टर हवाईजहाज हुन्, मानिस होइनन्।",
+      "caption_en": "Security forces. Medical staff, surgical teams and aircraft are counted separately.",
+      "caption_ne": "सुरक्षा निकाय। स्वास्थ्यकर्मी, सर्जिकल टोली र हवाईजहाज छुट्टै गनिन्छन्।",
+      "do_not_merge_en": "The 200+ medical staff and 6 surgical teams are not inside the 19,895 security total, and the 14 helicopters are aircraft, not people.",
+      "do_not_merge_ne": "२००+ स्वास्थ्यकर्मी र ६ सर्जिकल टोली १९,८९५ को सुरक्षा जम्मामा समावेश छैनन्, र १४ हेलिकप्टर हवाईजहाज हुन्, मानिस होइनन्।",
       "items": [
-        { "label_en": "Army", "label_ne": "नेपाली सेना", "value": 5200, "suffix": "+" },
-        { "label_en": "Police", "label_ne": "नेपाल प्रहरी", "value": 4348 },
-        { "label_en": "Armed Police", "label_ne": "सशस्त्र प्रहरी", "value": 3700, "suffix": "+" }
+        { "label_en": "Army", "label_ne": "नेपाली सेना", "value": 8399 },
+        { "label_en": "Police", "label_ne": "नेपाल प्रहरी", "value": 7293 },
+        { "label_en": "Armed Police", "label_ne": "सशस्त्र प्रहरी", "value": 4203 }
       ],
       "aside": [
         { "label_en": "Medical staff", "label_ne": "स्वास्थ्यकर्मी", "value": 200, "suffix": "+", "exclusive": true },
+        { "label_en": "Surgical teams", "label_ne": "सर्जिकल टोली", "value": 6, "exclusive": true },
         { "label_en": "Helicopters", "label_ne": "हेलिकप्टर", "value": 14, "exclusive": true }
       ]
     },
@@ -103,10 +107,10 @@
       "title_en": "Rescued by air",
       "title_ne": "हवाई उद्धार",
       "tone": "positive",
-      "caption_en": "SitRep-6",
-      "caption_ne": "सिटरेप-६",
-      "do_not_merge_en": "14 is the number of helicopters flying, not people rescued.",
-      "do_not_merge_ne": "१४ भनेको उडानरत हेलिकप्टरको संख्या हो, उद्धार भएका मानिस होइन।",
+      "caption_en": "SitRep-6 helicopter rescue. NDRRMA's 8,730 (army 2,974, police 2,699, APF 3,057) is a separate graphic — not added here.",
+      "caption_ne": "सिटरेप-६ हेलि उद्धार। एनडीआरआरएमएको ८,७३० (सेना २,९७४, प्रहरी २,६९९, सशस्त्र ३,०५७) छुट्टै ग्राफिक हो — यहाँ जोडिँदैन।",
+      "do_not_merge_en": "14 is the number of helicopters flying, not people rescued. SitRep 1,976, NDRRMA 8,730 and the army/private heli name-list 654 are not additive.",
+      "do_not_merge_ne": "१४ भनेको उडानरत हेलिकप्टरको संख्या हो, उद्धार भएका मानिस होइन। सिटरेप १,९७६, एनडीआरआरएमए ८,७३० र सेना/निजी हेलि नामावली ६५४ जोडिँदैनन्।",
       "items": [
         { "label_en": "Citizens rescued", "label_ne": "उद्धार भएका नागरिक", "value": 1552 },
         { "label_en": "Army, by air, this morning", "label_ne": "सेना, हवाई, आज बिहान", "value": 724 },
@@ -117,17 +121,17 @@
     },
     {
       "id": "police-treated",
-      "total": 1545,
+      "total": 2301,
       "title_en": "Police: injured and rescued",
       "title_ne": "प्रहरी: घाइते र उद्धार",
       "tone": "positive",
-      "caption_en": "Police figures at 06:00",
-      "caption_ne": "प्रहरी तथ्यांक, ०६:००",
-      "do_not_merge_en": "Kathmandu valley hospitals treated or discharged 84. That is not added on top of this total.",
-      "do_not_merge_ne": "काठमाडौँ उपत्यकाका अस्पतालले ८४ जनाको उपचार वा डिस्चार्ज गरे। यो जम्मामा थपिँदैन।",
+      "caption_en": "Police, 13 Bhadra 07:00. A label, not a substitute for the official injured figure of 239.",
+      "caption_ne": "प्रहरी, १३ भदौ ०७:००। लेबल मात्र, आधिकारिक घाइते २३९ को सट्टा होइन।",
+      "do_not_merge_en": "Kathmandu valley hospitals and Rasuwa Hospital Dhunche describe the same injured people at a different point in their care — they are not added to the 239 or to this police total.",
+      "do_not_merge_ne": "काठमाडौँ उपत्यकाका अस्पताल र रसुवा अस्पताल धुन्चे उनै घाइतेको उपचारका फरक चरण हुन् — २३९ वा यो प्रहरी जम्मामा जोडिँदैनन्।",
       "items": [
-        { "label_en": "Nuwakot", "label_ne": "नुवाकोट", "value": 898 },
-        { "label_en": "Rasuwa", "label_ne": "रसुवा", "value": 644 },
+        { "label_en": "Nuwakot", "label_ne": "नुवाकोट", "value": 1622 },
+        { "label_en": "Rasuwa", "label_ne": "रसुवा", "value": 676 },
         { "label_en": "Dhading", "label_ne": "धादिङ", "value": 3 }
       ]
     },
@@ -137,10 +141,10 @@
       "title_en": "Tourist list",
       "title_ne": "पर्यटक सूची",
       "tone": "warning",
-      "caption_en": "As of 14:15, 27 August. Male 341, female 327.",
-      "caption_ne": "२७ अगस्ट, १४:१५ सम्म। पुरुष ३४१, महिला ३२७।",
-      "do_not_merge_en": "A separate collection from the official uncontacted figure of 977. Not added to it.",
-      "do_not_merge_ne": "आधिकारिक सम्पर्कविहीन ९७७ भन्दा छुट्टै संकलन। त्यसमा जोडिँदैन।",
+      "caption_en": "As of 14:15, 27 August. Male 341, female 327. Nepali 127, foreign 541.",
+      "caption_ne": "२७ अगस्ट, १४:१५ सम्म। पुरुष ३४१, महिला ३२७। नेपाली १२७, विदेशी ५४१।",
+      "do_not_merge_en": "A separate collection from the official uncontacted figure of 2,502. Not added to it.",
+      "do_not_merge_ne": "आधिकारिक सम्पर्कविहीन २,५०२ भन्दा छुट्टै संकलन। त्यसमा जोडिँदैन।",
       "items": [
         { "label_en": "India", "label_ne": "भारत", "value": 178 },
         { "label_en": "Nepal", "label_ne": "नेपाल", "value": 127 },
@@ -156,15 +160,15 @@
     },
     {
       "id": "security-uncontacted",
-      "total": 86,
+      "total": 83,
       "title_en": "Security personnel uncontacted",
       "title_ne": "सम्पर्कविहीन सुरक्षाकर्मी",
       "tone": "critical",
-      "caption_en": "Already counted inside the 977 total",
-      "caption_ne": "९७७ को जम्मामा पहिल्यै समावेश",
+      "caption_en": "Already counted inside the 2,502 total",
+      "caption_ne": "२,५०२ को जम्मामा पहिल्यै समावेश",
       "items": [
         { "label_en": "Army", "label_ne": "सेना", "value": 45 },
-        { "label_en": "Police", "label_ne": "प्रहरी", "value": 28 },
+        { "label_en": "Police", "label_ne": "प्रहरी", "value": 25 },
         { "label_en": "Armed Police", "label_ne": "सशस्त्र प्रहरी", "value": 13 }
       ]
     },
@@ -185,11 +189,13 @@
     "title_en": "Infrastructure damage",
     "title_ne": "भौतिक संरचना क्षति",
     "items": [
-      { "label_en": "Bridges", "label_ne": "पुल", "value": 80, "detail_en": "35 motorable, 45 suspension", "detail_ne": "३५ मोटरेबल, ४५ झोलुंगे" },
-      { "label_en": "Power plants", "label_ne": "विद्युत् आयोजना", "value": 7, "detail_en": "276 MW", "detail_ne": "२७६ मेगावाट" },
-      { "label_en": "Telecom towers", "label_ne": "दूरसञ्चार टावर", "value": 7 },
-      { "label_en": "Road washed away", "label_ne": "बगेको सडक", "value": 40, "unit_en": "km", "unit_ne": "कि.मी." },
-      { "label_en": "Vehicles washed away", "label_ne": "बगेका सवारी", "value": 300, "suffix": "+" }
+      { "id": "bridges", "label_en": "Bridges", "label_ne": "पुल", "value": 80, "detail_en": "35 motorable, 45 suspension · SitRep-3", "detail_ne": "३५ मोटरेबल, ४५ झोलुंगे · सिटरेप-३" },
+      { "id": "houses", "label_en": "Houses destroyed", "label_ne": "भत्किएका घर", "value": 323, "detail_en": "destroyed; 32 damaged, 78 possible, of 559 assessed · Copernicus EMSR927", "detail_ne": "ध्वस्त; क्षति ३२, सम्भावित ७८, ५५९ मध्ये · कोपर्निकस EMSR927" },
+      { "id": "power", "label_en": "Power plants", "label_ne": "विद्युत् आयोजना", "value": 7, "detail_en": "276 MW · Nepal Electricity Authority", "detail_ne": "२७६ मेगावाट · नेपाल विद्युत् प्राधिकरण" },
+      { "id": "telecom", "label_en": "Telecom towers", "label_ne": "दूरसञ्चार टावर", "value": 198, "detail_en": "145 operating · NDRRMA 13 Bhadra 18:30", "detail_ne": "१४५ सञ्चालनमा · एनडीआरआरएमए १३ भदौ १८:३०" },
+      { "id": "road", "label_en": "Road washed away", "label_ne": "बगेको सडक", "value": 40, "unit_en": "km", "unit_ne": "कि.मी.", "detail_en": "paved road fully destroyed · SitRep-3. Copernicus mapped 7.6 km in its AOI — not added.", "detail_ne": "पक्की सडक पूर्ण ध्वस्त · सिटरेप-३। कोपर्निकसले आफ्नो क्षेत्रमा ७.६ कि.मी. नक्सा गरेको — जोडिँदैन।" },
+      { "id": "vehicles", "label_en": "Vehicles washed away", "label_ne": "बगेका सवारी", "value": 300, "suffix": "+", "detail_en": "Timure customs", "detail_ne": "टिमुरे भन्सार" },
+      { "id": "gauge", "label_en": "Flood gauges lost", "label_ne": "बगेको बाढी मापन केन्द्र", "value": 1, "detail_en": "Galchhi · NDRRMA 13 Bhadra 18:30", "detail_ne": "गल्छी · एनडीआरआरएमए १३ भदौ १८:३०" }
     ]
   },
 
@@ -220,8 +226,8 @@
   "name_lists": {
     "title_en": "Published name lists",
     "title_ne": "प्रकाशित नामावली",
-    "do_not_merge_en": "Nine lists, published separately by different offices. The same person can appear on more than one, so they are never added into a single rescue total. The official injured figure stays 73.",
-    "do_not_merge_ne": "नौ सूची, फरक-फरक कार्यालयले छुट्टै प्रकाशित गरेका। एउटै व्यक्ति एकभन्दा बढी सूचीमा पर्न सक्छ, त्यसैले यी एउटै उद्धार जम्मामा जोडिँदैनन्। आधिकारिक घाइते संख्या ७३ नै रहन्छ।",
+    "do_not_merge_en": "Nine lists, published separately by different offices. The same person can appear on more than one, so they are never added into a single rescue total. The official injured figure stays 239. NDRRMA's graphic of 8,730 rescued is a separate count from these lists.",
+    "do_not_merge_ne": "नौ सूची, फरक-फरक कार्यालयले छुट्टै प्रकाशित गरेका। एउटै व्यक्ति एकभन्दा बढी सूचीमा पर्न सक्छ, त्यसैले यी एउटै उद्धार जम्मामा जोडिँदैनन्। आधिकारिक घाइते संख्या २३९ नै रहन्छ। एनडीआरआरएमएको उद्धार ग्राफिक ८,७३० यी सूचीभन्दा छुट्टै गणना हो।",
     "lists": [
       { "id": "ndrrma", "value": 529, "label_en": "NDRRMA rescued", "label_ne": "एनडीआरआरएमए उद्धार", "href": "/bhotekoshi-flood/rescue" },
       { "id": "injured-ktm", "value": 88, "label_en": "Injured, Kathmandu", "label_ne": "घाइते, काठमाडौँ" },
@@ -237,10 +243,10 @@
   "missing_found": {
     "title_en": "Missing and found",
     "title_ne": "हराएका र भेटिएका",
-    "do_not_merge_en": "Public reports, not official figures. Lists stay separate and names are not merged across them. The official uncontacted figure stays 977.",
-    "do_not_merge_ne": "सार्वजनिक जानकारी, आधिकारिक तथ्यांक होइन। सूचीहरू छुट्टै रहन्छन् र नाम मिसाइँदैन। आधिकारिक सम्पर्कविहीन संख्या ९७७ नै रहन्छ।",
+    "do_not_merge_en": "Public reports, not official figures. Lists stay separate and names are not merged across them. The official uncontacted figure stays 2,502.",
+    "do_not_merge_ne": "सार्वजनिक जानकारी, आधिकारिक तथ्यांक होइन। सूचीहरू छुट्टै रहन्छन् र नाम मिसाइँदैन। आधिकारिक सम्पर्कविहीन संख्या २,५०२ नै रहन्छ।",
     "missing": [
-      { "id": "form", "value": 875, "label_en": "Reported via form", "label_ne": "फारमबाट जनाइएको" },
+      { "id": "form", "value": 714, "label_en": "Reported via form", "label_ne": "फारमबाट जनाइएको" },
       { "id": "hello-sarkar", "value": 140, "label_en": "Hello Sarkar", "label_ne": "हेलो सरकार" },
       { "id": "madhesh-police", "value": 30, "label_en": "Madhesh Police", "label_ne": "मधेश प्रहरी", "note_en": "2 rescued", "note_ne": "२ जना उद्धार" }
     ],
@@ -248,7 +254,7 @@
       { "id": "ndrrma", "value": 529, "label_en": "NDRRMA rescued", "label_ne": "एनडीआरआरएमए उद्धार" },
       { "id": "rasuwa-timure", "value": 73, "label_en": "Rasuwa / Timure", "label_ne": "रसुवा / टिमुरे" },
       { "id": "trishuli-1", "value": 63, "label_en": "Trishuli-1", "label_ne": "त्रिशूली-१" },
-      { "id": "form", "value": 41, "label_en": "Reported found via form", "label_ne": "फारमबाट भेटिएको" },
+      { "id": "form", "value": 42, "label_en": "Reported found via form", "label_ne": "फारमबाट भेटिएको" },
       { "id": "indian", "value": 21, "label_en": "Indian nationals", "label_ne": "भारतीय नागरिक" }
     ],
     "found_total": 727

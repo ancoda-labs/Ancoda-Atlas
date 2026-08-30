@@ -46,6 +46,18 @@ async function build(): Promise<FloodDeskPayload> {
   // request simply has no gauges yet; the next poll has them.
   const river =
     store.river ?? (isFloodRefreshRunning() ? null : await fetchCorridorGauges());
+  // Same cold-start as the gauges: the overview leads with BIPAD's incident
+  // tiles, and those must not wait for the ten-minute cycle. Skipped while a
+  // cycle is already fetching them.
+  let corridor = store.corridor;
+  if (!corridor && !isFloodRefreshRunning()) {
+    try {
+      const { getCorridorIncidents } = await import('@/apis/sources/bipad.mjs');
+      corridor = await getCorridorIncidents();
+    } catch {
+      corridor = null;
+    }
+  }
   return {
     ...content,
     river: river ?? { gauges: [], error: null, fetchedAt: new Date().toISOString() },
@@ -53,7 +65,7 @@ async function build(): Promise<FloodDeskPayload> {
     // overview can put live government figures beside the reviewed toll. The
     // rescue register itself does not: it is two thousand names, and the page
     // that searches them fetches it on its own route.
-    corridor: store.corridor,
+    corridor,
     rescueSummary: store.rescue?.summary ?? null,
     rescueFetchedAt: store.rescue?.fetchedAt ?? null,
     portal: store.portal,

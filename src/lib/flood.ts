@@ -19,6 +19,7 @@ import type {
   GaugeLevel,
   GeoCollection,
   RiverGauges,
+  FloodReliefReceived,
   SitrepBreakdown,
   SitrepContent,
   SitrepDiscrepancy,
@@ -47,6 +48,7 @@ import helplinesJson from '../../content/bhotekoshi-flood/helplines.json';
 import bankAccountsJson from '../../content/bhotekoshi-flood/bank-accounts.json';
 import districtContactsJson from '../../content/bhotekoshi-flood/district-contacts.json';
 import sitrepJson from '../../content/bhotekoshi-flood/sitrep.json';
+import reliefReceivedJson from '../../content/bhotekoshi-flood/relief-received.json';
 import districtGeoJson from '../../public/data/flood-affected-districts.json';
 
 import careNepalFund from '../../content/bhotekoshi-flood/relief-funds/care-nepal.json';
@@ -176,6 +178,7 @@ export function loadFloodContent(): FloodContent {
     bankAccounts: content<FloodContent['bankAccounts']>(bankAccountsJson),
     districtContacts: content<FloodContent['districtContacts']>(districtContactsJson),
     sitrep: loadSitrep(),
+    reliefReceived: loadReliefReceived(),
     funds,
   };
 }
@@ -216,6 +219,11 @@ export function reconcile(breakdowns: SitrepBreakdown[] | undefined): SitrepDisc
 function loadSitrep(): SitrepContent {
   const sitrep = content<SitrepContent>(sitrepJson);
   return { ...sitrep, discrepancies: reconcile(sitrep.breakdowns) };
+}
+
+function loadReliefReceived(): FloodReliefReceived {
+  const received = content<FloodReliefReceived>(reliefReceivedJson);
+  return { ...received, discrepancies: reconcile(received.breakdowns) };
 }
 
 /** One station as BIPAD publishes it. Only the fields Atlas reads are listed. */
