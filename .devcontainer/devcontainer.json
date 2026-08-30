@@ -1,0 +1,31 @@
+{
+  "name": "Ancoda Atlas",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  "forwardPorts": [3117, 9000, 9001],
+  "portsAttributes": {
+    "3117": {
+      "label": "Atlas (Next.js)",
+      "onAutoForward": "notify"
+    },
+    "9000": {
+      "label": "MinIO S3 API"
+    },
+    "9001": {
+      "label": "MinIO console"
+    }
+  },
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "customizations": {
+    "vscode": {
+      "extensions": ["bradlc.vscode-tailwindcss"],
+      "settings": {
+        "editor.tabSize": 2
+      }
+    }
+  },
+  "remoteEnv": {
+    "PORT": "3117"
+  }
+}

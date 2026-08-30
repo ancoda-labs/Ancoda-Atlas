@@ -44,6 +44,58 @@ export const AFFECTED_DISTRICTS = [
 ];
 
 /**
+ * A point inside each district, for pins that only know a name — a news
+ * headline, a photo tagged with a district rather than a GPS fix. These are
+ * district centres, not places the water reached; anything placed from this
+ * table must be drawn as approximate.
+ */
+export const DISTRICT_PINS = {
+  Rasuwa:            { lat: 28.1167, lon: 85.3000 },
+  Nuwakot:           { lat: 27.9167, lon: 85.1667 },
+  Dhading:           { lat: 27.8667, lon: 84.9000 },
+  Sindhupalchok:     { lat: 27.9500, lon: 85.6833 },
+  Gorkha:            { lat: 28.0000, lon: 84.6333 },
+  Tanahu:            { lat: 27.9500, lon: 84.2500 },
+  Chitwan:           { lat: 27.5833, lon: 84.5000 },
+  'Nawalparasi East': { lat: 27.6700, lon: 84.1400 },
+  'Nawalparasi West': { lat: 27.5300, lon: 83.6700 },
+};
+
+// Longer needles first so "Nawalparasi East" wins over "Nawalparasi".
+const PIN_NEEDLES = [
+  ['nawalparasi east', 'nawalparasi purba', 'east nawalparasi', 'नवलपरासी पूर्व', 'nawalpur', 'नवलपुर', 'Nawalparasi East'],
+  ['nawalparasi west', 'nawalparasi paschim', 'west nawalparasi', 'नवलपरासी पश्चिम', 'Nawalparasi West'],
+  ['sindhupalchok', 'sindhupalchowk', 'सिन्धुपाल्चोक', 'Sindhupalchok'],
+  ['nuwakot', 'नुवाकोट', 'betrawati', 'बेत्रावती', 'Nuwakot'],
+  ['dhading', 'धादिङ', 'galchhi', 'घल्छी', 'krishna bhir', 'कृष्णभीर', 'Dhading'],
+  ['gorkha', 'गोरखा', 'ghyalchok', 'घ्याल्चोक', 'Gorkha'],
+  ['tanahu', 'tanahun', 'तनहुँ', 'Tanahu'],
+  ['chitwan', 'चितवन', 'narayanghat', 'नारायणगढ', 'Chitwan'],
+  ['rasuwa', 'रसुवा', 'timure', 'तिमुरे', 'syaphrubesi', 'स्याफ्रु', 'bhotekoshi', 'bhote koshi', 'भोटेकोशी', 'Rasuwa'],
+].map(([...needles]) => {
+  const district = needles[needles.length - 1];
+  return { district, needles: needles.slice(0, -1) };
+});
+
+/**
+ * The district a headline or caption is talking about, if it names one we
+ * cover. Returns a pin at that district's centre — approximate, never a claim
+ * that the photograph was taken at those coordinates.
+ */
+export function districtPinForText(text) {
+  if (!text) return null;
+  const hay = ` ${String(text).toLowerCase()} `;
+  for (const rule of PIN_NEEDLES) {
+    if (rule.needles.some(n => hay.includes(n))) {
+      const pin = DISTRICT_PINS[rule.district];
+      if (!pin) return null;
+      return { district: rule.district, lat: pin.lat, lon: pin.lon };
+    }
+  }
+  return null;
+}
+
+/**
  * The corridor as a bounding box.
  *
  * BIPAD's own `district` filter is unreliable on the incident endpoint, so an

@@ -1,160 +1,85 @@
 # Contributing to Ancoda Atlas
 
-Ancoda Atlas is an open-source emergency disaster intelligence platform for
-Nepal, stewarded by **Ancoda Labs**. Contributions are welcome from anyone.
+Thank you. Atlas is a public site people use in real emergencies in Nepal. You do not need to be a senior engineer. Careful, small help is more useful than a large rewrite.
 
-Atlas moves quickly, but review bandwidth is limited. The easiest way to get a
-change merged is to keep it small, well-scoped, and aligned with the project's
-direction.
+Live site: [atlas.ancodalabs.com](https://atlas.ancodalabs.com). Licence: AGPL-3.0 (see below).
 
-## Licensing of Contributions
+## If Atlas is wrong during an event — start here
 
-Atlas is distributed under the **GNU Affero General Public License v3.0**
-(see [LICENSE](LICENSE)). By opening a pull request you agree that your
-contribution is licensed under the AGPL-3.0.
+This matters more than a typical bug. Use the path that matches the harm:
 
-Two consequences worth understanding before you contribute:
+**Money, phone numbers, or “who to call”** — email **research@ancodalabs.com** with subject `[Atlas Funds]` or `[Atlas Helpline]`. Do **not** open a public issue (scammers watch those). Include the page URL, what is shown, and a link to the official source. Same-day when we can verify. Details: [SECURITY.md](SECURITY.md).
 
-- **Derivatives stay AGPL.** Anyone who modifies Atlas must release their
-  changes under the AGPL-3.0 as well.
-- **Network use counts as distribution.** If you run a modified Atlas as a
-  public service, the AGPL requires you to offer your users the source of your
-  modified version. This is deliberate — it keeps public-good disaster tooling
-  in the open.
+**Hazard picture is wrong** (river levels, earthquake list, fire map, news that is not a disaster, sitrep figures, map pins, a language brief that does not match the headlines) — open a GitHub issue with the **Data accuracy** template. Say which page, the time you looked (Nepal time if you know it), what you saw, and what it should have been. Screenshots help.
 
-Do not paste in code, content, or data from a source whose licence you have not
-checked. If you bring in third-party material, say so in the PR and add it to
-[NOTICE](NOTICE) with its licence. Attribution-required data (for example the
-MIT-licensed boundary files already listed there) must keep its attribution.
+**Security hole** (XSS, open proxy, leaked keys) — email **research@ancodalabs.com** with `[Atlas Security]`. Do not file it in public.
+
+## What you can do without much code
+
+Highest value right now:
+
+1. Native-language review (Nepali and others). Look for `pending_native_review` in `content/`.
+2. Check that a brief in *your* language still matches the listed headlines.
+3. Re-check a relief fund or helpline against the organisation’s own page, and send a correction as above if it has gone stale.
+
+## Run it on your machine
+
+You need **Node.js 22** (see `.nvmrc`) and npm 10+.
+
+```bash
+git clone https://github.com/ancoda-labs/Ancoda-Atlas.git
+cd Ancoda-Atlas
+cp .env.example .env
+npm install
+npm run dev
+```
+
+Open [http://localhost:3117](http://localhost:3117). Empty panels for a few seconds is normal — the first sweep is still running. If it never starts, `npm run diag`.
+
+You do **not** need API keys, Supabase, or MinIO for the main dashboard. NASA FIRMS and ReliefWeb are better with free keys; without them those panels degrade instead of crashing.
+
+**GitHub Codespaces:** open the repo in Codespaces (dev container: Node 22 + MinIO). After it finishes installing, run `npm run dev` and use port 3117. Hosted Supabase is still optional; photo uploads need both Supabase keys in Codespaces secrets and the MinIO sidecar (already running).
+
+**Docker Compose** on your laptop is the production-shaped path (`docker compose up --build`). You must set `MINIO_ROOT_PASSWORD` in `.env` or Compose will refuse to start.
+
+## Branch, commits, pull requests
+
+Default branch is **`main`**. Do not commit on `main`.
+
+Branch names (pick one prefix):
+
+- `fix/short-description` — a bug
+- `feat/short-description` — a new, in-scope capability
+- `docs/short-description` — README, this file, comments
+- `chore/short-description` — tooling, deps, chores
+
+Commit subject format (git will reject others):
+
+`type(scope): short description`
+
+Allowed types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`. Example: `fix(flood): handle missing gauge data`.
+
+Before you push, `npm run verify` must pass (the pre-commit hook runs the same thing: no `any` types, tests, production build). Then open a pull request against `main`. Keep the PR to **one** bug or **one** feature. Fill in the PR template. If you change `content/` (funds, banks, helplines, figures), cite the primary source for every value.
+
+Open an **issue first** if you want to add a paid API, a new dashboard surface, a new dependency, or anything that widens scope.
 
 ## Scope
 
-Atlas covers **natural hazards in Nepal and nothing else**: earthquakes, floods,
-landslides, glacial lake outburst floods, wildfire, hazardous air, extreme heat
-and cold, avalanches, drought, and the humanitarian response to them.
+Natural hazards in Nepal and the response to them. Political, market, conflict, and general-news feeds will not be merged.
 
-Political, market, conflict, trade and general-news sources are out of scope by
-design and will not be merged, however good the feed is. If a change widens the
-scope beyond natural hazards, open an issue first — that is a roadmap decision,
-not a source addition.
+Never invent or placeholder hazard numbers, alerts, helplines, or donation links. Never weaken photo-upload checks. Never commit `.env` or secrets.
 
-## What Contributions Are Most Helpful
+## What AGPL means if you contribute
 
-- Focused bug fixes with a clear reproduction and validation path
-- Documentation improvements that reduce setup friction
-- Dashboard usability improvements with a small review surface
-- New **natural-hazard** sources that add clear signal, degrade gracefully, and
-  fit the existing architecture
-- Nepali-language review — much of the UI copy and the flood content is marked
-  `pending_native_review` and needs a native speaker
+By opening a pull request you license your work under the **GNU Affero GPL v3.0** (`LICENSE`).
 
-## Changes That Should Start With an Issue First
+- Atlas stays AGPL. So do modifications.
+- If you run a **changed** Atlas on the public internet, you must offer users the **source of that changed version**. That is the point of AGPL for a public-good disaster tool.
 
-Open an issue before writing code if your change would:
+Do not paste code or data whose licence you have not checked. Third-party material must be listed in `NOTICE`. The map files under `public/data/` are MIT (openknowledgenp/localboundaries) — keep that credit.
 
-- add a new external provider or paid API
-- add a new feature family or dashboard surface
-- change the project scope or roadmap
-- change licensing, distribution, or deployment model
-- introduce new dependencies
+More engineering detail (how to add a hazard source, layout of `src/`): see [AGENTS.md](AGENTS.md) and the rest of the README.
 
-## Development Baseline
+## Conduct
 
-- Node.js 22+
-- Pure ESM for the `src/apis/` and `src/lib/` modules; TypeScript in `src/app/`
-  and `src/components/`
-- Keep the near-zero-dependency approach unless there is a strong reason not to
-- Do not commit secrets, `.env` files, or generated runtime data under `runs/`
-- `npm run verify` must pass before committing. It rejects explicit TypeScript
-  `any` types and runs the production build with type-checking enabled.
-- `npm run diag` should load every module
-- Install hooks automatically with `npm install`, or run `npm run prepare`
-
-### Repository layout and commits
-
-Application routes belong in `src/app/`, alongside the views and `_components/`
-they render. Only genuinely cross-route UI belongs in `src/components/`
-(`src/components/ui/` holds the shadcn primitives). Shared
-TypeScript domain types live in `src/types/`, server logic in `src/lib/`,
-source integrations in
-`src/apis/`, operational scripts in `scripts/`, and tests in `test/`. Runtime data
-belongs in the gitignored `runs/` directory.
-
-Commit subjects must use the conventional format
-`type(scope): subject` (the scope is optional), for example
-`fix(flood): handle missing gauge data`. Allowed types are `feat`, `fix`,
-`docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, and
-`revert`.
-
-## Adding a New Source
-
-Each source should be a standalone module in `src/apis/sources/` and integrate
-cleanly with `src/apis/briefing.mjs`.
-
-A source should:
-
-- export a `briefing()` function returning structured data
-- run standalone: `node src/apis/sources/yoursource.mjs`
-- handle upstream errors and rate limits cleanly
-- return a structured error rather than throwing, so one bad feed does not break
-  the sweep
-- avoid breaking the full sweep if the source fails
-- report `stale: true` when it is answering from a fallback rather than its
-  primary feed, so source health tells the truth
-
-Your PR should:
-
-- explain why the source improves hazard signal quality, not just source count
-- state which hazard type it covers and how it degrades when its upstream is down
-- note any API key, rate limit, or paid tier it introduces
-
-If your source also affects the dashboard, wire it through `src/lib/synthesize.mjs`
-into the synthesized shape, and add its metrics to `src/lib/delta/engine.mjs` so
-changes between sweeps are tracked.
-
-## Content Changes
-
-Anything under `content/` — relief funds, bank details, helplines, casualty
-figures — is held to a higher bar than code, because people act on it with money
-and with their safety.
-
-- Every value needs a primary source recorded in the record itself
-- Donation links are **curated, never scraped**: disaster fundraising scams peak
-  in the first 48–72 hours, and an aggregator that auto-surfaces unverified
-  fundraisers is worse than none at all
-- Never add a donation route that is not the organisation's own page
-- If figures conflict between sources, record both with their sources rather than
-  picking one
-
-Frontend changes are reviewed carefully because the dashboard renders content
-from feeds we do not control.
-
-## Pull Request Scope
-
-Good:
-
-- fix one bug
-- add one source and its minimal wiring
-- improve one panel
-
-Avoid:
-
-- add a source, redesign the dashboard, and change config behavior in the same PR
-
-## Review Priorities
-
-Reviewers weigh, in order:
-
-- correctness of anything a person could act on
-- security of externally sourced content rendering
-- graceful degradation when a feed is down
-- scope and long-term maintenance cost
-
-Not every technically correct change will be merged. Scope and long-term
-maintenance cost matter.
-
-## Reporting Security or Content Problems
-
-Do not open a public issue for a security vulnerability, a wrong account number,
-or a dead helpline. See [SECURITY.md](SECURITY.md) — those go to
-`research@ancodalabs.com`.
+[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md). Maintainer: Ancoda Labs — `research@ancodalabs.com`.

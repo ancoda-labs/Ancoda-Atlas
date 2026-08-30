@@ -88,6 +88,9 @@ export default function FloodReportView() {
       lon: p.lon,
       geoSource: p.geoSource,
       label: p.caption || (lang === 'ne' ? 'जनताको तस्बिर' : 'Ground report'),
+      url: p.url,
+      orientation: p.orientation,
+      layer: 'ground',
     }));
   const open = photos.find(p => p.id === openId) || null;
   const site = desk?.site;
