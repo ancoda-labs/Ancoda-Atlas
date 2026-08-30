@@ -3,7 +3,6 @@ node_modules/
 
 # Environment (contains API keys)
 .env
-apis/.env
 
 # Runtime data
 runs/
@@ -21,11 +20,10 @@ output/
 Thumbs.db
 desktop.ini
 
-# Claude Code
+# Local agent files (Next.js may rewrite CLAUDE.md)
 .claude/
 CLAUDE.md
 AGENTS.md
-
 
 # Playwright
 .playwright-cli/
@@ -34,20 +32,12 @@ AGENTS.md
 *.log
 npm-debug.log*
 
-
-# Package lock (optional — remove this line if you want deterministic installs)
-# package-lock.json
-
 # Backup files
 *.bak
 
 # Local maintainer notes
 MAINTAINER_DECISIONS.local.md
 
-# Local deploy config
-dashboard/public/vercel.json
-
 # Next.js build output
 .next/
 *.tsbuildinfo
-

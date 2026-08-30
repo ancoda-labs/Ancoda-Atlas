@@ -3,7 +3,7 @@ import { readFileSync, existsSync } from 'fs';
 import type { HazardSnapshot } from '@/types';
 import { errorMessage } from '@/types';
 import { sweeper } from '@/lib/sweeper';
-import DashboardClient from '@/app/DashboardClient';
+import DashboardClient from '@/app/_components/DashboardClient';
 
 export const dynamic = 'force-dynamic';
 

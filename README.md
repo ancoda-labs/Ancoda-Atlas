@@ -483,8 +483,7 @@ atlas/
 │   ├── app/                   # Next.js App Router — routes and the views they render
 │   │   ├── page.tsx           # SSR entry — hydrates DashboardClient
 │   │   ├── layout.tsx
-│   │   ├── DashboardClient.tsx    # View switch + the full monitoring terminal
-│   │   ├── _components/       # Pieces used only by the dashboard route
+│   │   ├── _components/       # Dashboard-route-only UI (DashboardClient, maps, flood button)
 │   │   ├── bhotekoshi-flood/  # Public flood response page
 │   │   │   ├── BhotekoshiFloodView.tsx
 │   │   │   ├── _components/   # Shared across the flood desk's own routes
@@ -499,7 +498,6 @@ atlas/
 │   ├── components/            # Reusable across routes — nothing route-specific
 │   │   ├── ui/                # shadcn/ui primitives (Button, Command, Popover, …)
 │   │   ├── FloodShell.tsx     # Chrome shared by every flood desk page
-│   │   ├── NepalSignalsMap.tsx    # D3 province map, canvas-rendered
 │   │   └── FloodDistrictMap.tsx   # Affected-district map with the flood path
 │   │
 │   ├── hooks/                 # use-atlas-theme, use-flood-lang
@@ -1237,8 +1235,7 @@ atlas/
 │   ├── app/                   # Next.js App Router — routes and the views they render
 │   │   ├── page.tsx           # SSR entry — hydrates DashboardClient
 │   │   ├── layout.tsx
-│   │   ├── DashboardClient.tsx    # View switch + the full monitoring terminal
-│   │   ├── _components/       # Pieces used only by the dashboard route
+│   │   ├── _components/       # Dashboard-route-only UI (DashboardClient, maps, flood button)
 │   │   ├── bhotekoshi-flood/  # Public flood response page
 │   │   │   ├── BhotekoshiFloodView.tsx
 │   │   │   ├── _components/   # Shared across the flood desk's own routes
@@ -1253,7 +1250,6 @@ atlas/
 │   ├── components/            # Reusable across routes — nothing route-specific
 │   │   ├── ui/                # shadcn/ui primitives (Button, Command, Popover, …)
 │   │   ├── FloodShell.tsx     # Chrome shared by every flood desk page
-│   │   ├── NepalSignalsMap.tsx    # D3 province map, canvas-rendered
 │   │   └── FloodDistrictMap.tsx   # Affected-district map with the flood path
 │   │
 │   ├── hooks/                 # use-atlas-theme, use-flood-lang

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import NepalSignalsMap from '@/components/NepalSignalsMap';
+import NepalSignalsMap from '@/app/_components/NepalSignalsMap';
 import { nextUpdateLabel, useDeskRefresh, useTick } from '@/hooks/use-desk-refresh';
 import { ageFrom } from '@/lib/relative-time';
 import BhotekoshiFloodButton from '@/app/_components/BhotekoshiFloodButton';

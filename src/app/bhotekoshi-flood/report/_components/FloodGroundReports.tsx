@@ -2,7 +2,8 @@
 
 import React, { useRef, useState } from 'react';
 import type { FloodPhoto } from '@/types';
-import { ageFrom, orientationTransform } from '@/lib/relative-time';
+import { ageFrom } from '@/lib/relative-time';
+import { orientationTransform } from '@/lib/photo-orientation';
 import { AFFECTED_DISTRICTS } from '@/apis/utils/flood-scope.mjs';
 
 // Ground reports — photos the public sends in from the flood corridor.

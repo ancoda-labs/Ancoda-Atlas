@@ -7,7 +7,8 @@ import FloodDistrictMap from '@/components/FloodDistrictMap';
 import type { MapPhoto, MapSelection } from '@/components/FloodDistrictMap';
 import FloodMapDialog from '@/components/FloodMapDialog';
 import { useFloodLang } from '@/hooks/use-flood-lang';
-import { ageFrom, orientationTransform } from '@/lib/relative-time';
+import { ageFrom } from '@/lib/relative-time';
+import { orientationTransform } from '@/lib/photo-orientation';
 import type { FloodDeskPayload, FloodPhoto, FloodPhotoFeed } from '@/types';
 import { useDeskRefresh } from '@/hooks/use-desk-refresh';
 
