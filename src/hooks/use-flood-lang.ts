@@ -4,34 +4,29 @@ import { useCallback, useEffect, useState } from 'react';
 
 // One language choice, shared by every page of the flood desk.
 //
-// The desk is now several routes rather than one, and a reader who picks Nepali
-// on the overview must not land back in English on the rescue register. The
-// choice lives in localStorage under the key the rest of Atlas already uses,
-// and a custom event keeps every mounted component on a page in step — storage
-// events only fire in *other* tabs, so they cannot do this on their own.
+// A visit opens in English. Nepali is one click away, and that click is
+// remembered for this tab so Overview → Contacts stays in the same language.
+// It is not carried into the next visit — the first thing shown is English.
 
 export type Lang = 'en' | 'ne';
 
 const KEY = 'atlas_language';
 const EVENT = 'atlas:language';
 
-function readStored(): Lang | null {
+function readSession(): Lang | null {
   try {
-    const value = localStorage.getItem(KEY);
+    const value = sessionStorage.getItem(KEY);
     return value === 'ne' || value === 'en' ? value : null;
   } catch {
-    // Private mode and blocked site data both throw here. English is fine.
     return null;
   }
 }
 
 export function useFloodLang(): [Lang, (next: Lang) => void] {
-  // Always starts English so the server-rendered markup and the first client
-  // render agree; the stored choice is applied immediately after mount.
   const [lang, setLang] = useState<Lang>('en');
 
   useEffect(() => {
-    const stored = readStored();
+    const stored = readSession();
     if (stored) setLang(stored);
 
     const onChange = (e: Event) => {
@@ -50,10 +45,14 @@ export function useFloodLang(): [Lang, (next: Lang) => void] {
     };
   }, []);
 
+  useEffect(() => {
+    document.documentElement.lang = lang === 'ne' ? 'ne' : 'en';
+  }, [lang]);
+
   const setLanguage = useCallback((next: Lang) => {
     setLang(next);
     try {
-      localStorage.setItem(KEY, next);
+      sessionStorage.setItem(KEY, next);
     } catch {
       /* the choice still applies for this page view */
     }

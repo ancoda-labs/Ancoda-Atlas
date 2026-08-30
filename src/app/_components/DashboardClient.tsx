@@ -16,6 +16,8 @@ import type {
 } from '@/types';
 import { errorMessage } from '@/types';
 import { useFloodLang } from '@/hooks/use-flood-lang';
+import { useAtlasTheme } from '@/hooks/use-atlas-theme';
+import FloodThemeToggle from '@/components/FloodThemeToggle';
 import FloodFooter from '@/components/FloodFooter';
 
 interface PanelState {
@@ -314,8 +316,8 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
   // Boot sequence state
   const [booting, setBooting] = useState(true);
 
-  // Custom visual quality modes
-  const [darkTheme, setDarkTheme] = useState(false);
+  const [theme] = useAtlasTheme();
+  const darkTheme = theme === 'dark';
   const [language, changeLanguage] = useFloodLang();
   const [newsWindow, setNewsWindow] = useState('24h');
   const [glossaryOpen, setGlossaryOpen] = useState(false);
@@ -352,13 +354,8 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
   // Load configuration from local storage
   useEffect(() => {
     const cachedPerf = localStorage.getItem('atlas_low_perf') === 'true';
-    const cachedTheme = localStorage.getItem('atlas_theme') === 'dark';
-    setDarkTheme(cachedTheme);
     if (cachedPerf) {
       document.body.classList.add('low-perf');
-    }
-    if (cachedTheme) {
-      document.body.classList.add('dark-theme');
     }
   }, []);
 
@@ -488,14 +485,6 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
     return () => window.removeEventListener('keydown', onKey);
   }, [playing]);
 
-  const toggleTheme = () => {
-    const target = !darkTheme;
-    setDarkTheme(target);
-    localStorage.setItem('atlas_theme', target ? 'dark' : 'light');
-    document.body.classList.toggle('dark-theme', target);
-  };
-
-
   // The two media rails.
   //
   // Photographs come out of the news sweep that is already running — every
@@ -591,7 +580,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
   }
 
   return (
-    <div id="main" className="p-3" suppressHydrationWarning>
+    <div id="main" className="p-3" lang={language} suppressHydrationWarning>
       {/* Topbar */}
       <div className="topbar">
         <div className="top-left">
@@ -610,17 +599,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
           </span>
         </div>
         <div className="top-right">
-          <button
-            className="theme-toggle"
-            onClick={toggleTheme}
-            aria-label={`Switch to ${darkTheme ? 'light' : 'dark'} theme`}
-            aria-pressed={darkTheme}
-          >
-            <span className="theme-toggle-label">{darkTheme ? 'Dark' : 'Light'}</span>
-            <span className="theme-switch" aria-hidden="true">
-              <span className="theme-switch-thumb" />
-            </span>
-          </button>
+          <FloodThemeToggle lang={language} />
           <div className="language-toggle" role="group" aria-label="Language">
             <button className={language === 'en' ? 'active' : ''} onClick={() => changeLanguage('en')} aria-pressed={language === 'en'}>EN</button>
             <button className={language === 'ne' ? 'active' : ''} onClick={() => changeLanguage('ne')} aria-pressed={language === 'ne'}>ने</button>

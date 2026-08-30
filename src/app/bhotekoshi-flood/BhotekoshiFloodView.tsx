@@ -74,6 +74,8 @@ const T = {
   rescueSub: { en: 'Search the NDRRMA register by name', ne: 'एनडीआरआरएमए सूचीमा नाम खोज्नुहोस्' },
   situation: { en: 'Incident register', ne: 'घटना अभिलेख' },
   situationSub: { en: 'River levels, alerts and logged incidents', ne: 'नदीको सतह, चेतावनी र दर्ता घटना' },
+  damage: { en: 'Damage assessment', ne: 'क्षति मूल्यांकन' },
+  damageSub: { en: 'Copernicus EMSR927 and the NEA notice', ne: 'कोपर्निकस EMSR927 र प्राधिकरण सूचना' },
   report: { en: 'Ground reports', ne: 'जनताका तस्बिर' },
   reportSub: { en: 'Photographs from the affected districts', ne: 'प्रभावित जिल्लाका तस्बिर' },
   coverage: { en: 'Coverage', ne: 'समाचार' },
@@ -200,12 +202,13 @@ export default function BhotekoshiFloodView() {
     { href: '/bhotekoshi-flood/donate', title: t('donate'), sub: t('donateSub') },
     { href: '/bhotekoshi-flood/rescue', title: t('rescue'), sub: t('rescueSub') },
     { href: '/bhotekoshi-flood/situation', title: t('situation'), sub: t('situationSub') },
+    { href: '/bhotekoshi-flood/damage', title: t('damage'), sub: t('damageSub') },
     { href: '/bhotekoshi-flood/media', title: t('coverage'), sub: t('coverageSub') },
     { href: '/bhotekoshi-flood/contacts', title: t('contacts'), sub: t('contactsSub') },
   ];
 
   return (
-    <div className="fl">
+    <div className="fl" lang={lang}>
       <div className="fl-rail">
         <div className="fl-wrap" style={{ paddingTop: '8px', paddingBottom: '8px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '18px', flexWrap: 'wrap', marginBottom: marquee ? '6px' : '0' }}>
@@ -233,9 +236,11 @@ export default function BhotekoshiFloodView() {
         <div className="fl-wrap">
           <div className="fl-mast-top">
             <Link href="/">&larr; {t('back')}</Link>
-            <div className="fl-lang">
-              <button className={lang === 'en' ? 'on' : ''} onClick={() => setLang('en')}>English</button>
-              <button className={lang === 'ne' ? 'on' : ''} onClick={() => setLang('ne')}>नेपाली</button>
+            <div className="fl-mast-controls">
+              <div className="fl-lang">
+                <button className={lang === 'en' ? 'on' : ''} onClick={() => setLang('en')}>English</button>
+                <button className={lang === 'ne' ? 'on' : ''} onClick={() => setLang('ne')}>नेपाली</button>
+              </div>
               <FloodThemeToggle lang={lang} />
             </div>
           </div>

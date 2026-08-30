@@ -80,6 +80,8 @@ const T = {
     en: 'SitRep-3 still holds the 80 bridges and 40 km of paved road. Towers are NDRRMA 13 Bhadra 18:30. Houses are Copernicus EMSR927 — a mapped area of interest, not the national sitrep. None of this is BIPAD’s register, and these collections are not added together.',
     ne: 'सिटरेप-३ मा अझै ८० पुल र ४० कि.मी. पक्की सडक छन्। टावर एनडीआरआरएमए १३ भदौ १८:३० का हुन्। घर कोपर्निकस EMSR927 हुन् — नक्साको क्षेत्र, राष्ट्रिय सिटरेप होइन। यो बिपद्को अभिलेख होइन, र यी संकलन जोडिँदैनन्।',
   },
+  fullGrading: { en: 'Full Copernicus grading', ne: 'पूरा कोपर्निकस ग्रेडिङ' },
+  liveRow: { en: 'live', ne: 'प्रत्यक्ष' },
   portalOpenLost: { en: 'OPMCM portal, open reports', ne: 'प्रधानमन्त्री कार्यालय पोर्टल, खुला विवरण' },
   portalFound: { en: 'OPMCM portal, reported found', ne: 'प्रधानमन्त्री कार्यालय पोर्टल, भेटिएको जनाइएको' },
 };
@@ -454,6 +456,9 @@ export default function FloodSummary({
                     fresher, it would be wrong. The entered-so-far figures sit
                     in the left column, under their own caveat. */}
                 <ReviewedSource note="damage" />
+                <p className="fl-note">
+                  <Link href="/bhotekoshi-flood/damage">{t('fullGrading')} →</Link>
+                </p>
               </>
             )}
           </div>

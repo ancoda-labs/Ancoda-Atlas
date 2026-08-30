@@ -47,16 +47,17 @@ export function reconcile(breakdowns: SitrepBreakdown[] | undefined): SitrepDisc
  * Whether a live panel is safe to lay over the reviewed group of the same id.
  *
  * Deaths never go down: this disaster's toll is recovered bodies, and a
- * compilation that has not caught up with Police would otherwise put 752 back
- * over 788. Other groups may fall (uncontacted, as people are found). A panel
- * whose parts do not add up to its stated total is left as reviewed — the
- * page already prints a discrepancy for a bad hand edit; a scrape must not
- * invent one.
+ * compilation that has not caught up with Police would otherwise put 781 back
+ * over 794. Other groups may fall (uncontacted, as people are found). A panel
+ * whose parts do not add up to its stated total is left as reviewed — including
+ * overlapping air-rescue rows. The bulletin's air KPI has drifted to NDRRMA's
+ * all-rescued graphic (9,435 air and ground); that must not replace the
+ * SitRep helicopter tile. `no_total_check` only silences the page warning.
  */
 export function shouldOverlay(reviewed: SitrepBreakdown | undefined, live: SitrepBreakdown): boolean {
   if (live.total == null || !Number.isFinite(live.total)) return false;
   if (live.id === 'deaths' && reviewed && live.total < reviewed.total) return false;
-  if (!live.no_total_check && summed(live) !== live.total) return false;
+  if (summed(live) !== live.total) return false;
   return true;
 }
 

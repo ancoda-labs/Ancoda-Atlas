@@ -422,6 +422,10 @@ export interface FloodContent {
   sitrep: SitrepContent | null;
   /** Cash in the Prime Minister's fund, and pledges that must not be added to it. */
   reliefReceived: FloodReliefReceived | null;
+  /** NDRRMA demand list and the warehouses that will take in-kind goods. */
+  reliefNeeded: FloodReliefNeeded | null;
+  /** Copernicus EMSR927 grading and the NEA 10 Bhadra notice. */
+  damage: FloodDamageContent | null;
   funds: FloodOrg[];
 }
 
@@ -1097,6 +1101,8 @@ export interface SitrepHeadline extends Bilingual<'label'>, Bilingual<'unit'> {
   id: string;
   value: number;
   suffix?: string;
+  /** Printed before the number, e.g. the "~" in "~450". */
+  approximate?: boolean;
   tone: 'critical' | 'warning' | 'positive';
   source: string;
   /** True when the Rasuwa flood bulletin scrape currently overlays this tile. */
@@ -1117,6 +1123,43 @@ export interface FloodReliefReceived {
   /** Pledges, in-kind cargo and other collections that are not the PM fund. */
   exclusive?: SitrepValue[];
   discrepancies?: SitrepDiscrepancy[];
+}
+
+/** One line on the NDRRMA in-kind demand list. */
+export interface ReliefNeedItem extends Bilingual<'label'>, Bilingual<'detail'>, Bilingual<'unit'> {
+  id: string;
+  value?: number;
+  /** True when the source published the item with no quantity. */
+  unspecified?: boolean;
+}
+
+export interface ReliefNeedGroup extends Bilingual<'title'> {
+  id: string;
+  items: ReliefNeedItem[];
+}
+
+export interface ReliefWarehouseContact extends Bilingual<'name'> {
+  phone: string;
+}
+
+export interface ReliefWarehouse extends Bilingual<'name'> {
+  id: string;
+  contacts: ReliefWarehouseContact[];
+}
+
+/**
+ * What NDRRMA is still asking for, and the warehouses that will take it.
+ *
+ * Separate from the cash in the Prime Minister's fund: tents are not rupees.
+ */
+export interface FloodReliefNeeded extends Bilingual<'warehouse_note'> {
+  as_of?: string;
+  as_of_label_en?: string;
+  as_of_label_ne?: string;
+  sources?: SourceRef[];
+  headline?: SitrepHeadline[];
+  groups?: ReliefNeedGroup[];
+  warehouses?: ReliefWarehouse[];
 }
 
 export interface SitrepBreakdown
@@ -1155,6 +1198,113 @@ export interface SitrepDiscrepancy {
   id: string;
   stated: number;
   summed: number;
+}
+
+/**
+ * One class in the Copernicus EMSR927 AOI01 grading table.
+ *
+ * `affected` is the published total for the class, not a re-sum. 433 is all
+ * buildings; 392 is residential inside that — they are never added.
+ */
+export interface DamageGradeRow extends Bilingual<'label'>, Bilingual<'unit'> {
+  id: string;
+  group: 'hazard' | 'people' | 'buildings' | 'transport' | 'facilities' | 'landcover';
+  destroyed?: number | null;
+  damaged?: number | null;
+  possible?: number | null;
+  affected?: number | null;
+  aoi?: number | null;
+  /** Share as the source printed it, e.g. "77.5%". Not recomputed. */
+  share?: string | null;
+  approximate?: boolean;
+}
+
+export interface NeaPlant extends Bilingual<'name'>, Bilingual<'remarks'> {
+  id: string;
+  mw: number;
+  /** True only when the NEA notice marked the plant as directly affected. */
+  hit: boolean;
+}
+
+/**
+ * A Copernicus product map or an AOI ground photograph from the bulletin.
+ *
+ * `lat`/`lon` on photographs are the reviewed flood-path pin for the place
+ * the caption names, not GPS of the shutter. Maps have no coordinates —
+ * Copernicus does not publish this AOI as a live GeoJSON feed.
+ */
+export interface DamageImage extends Bilingual<'caption'> {
+  id: string;
+  kind: 'overview' | 'detail' | 'infographic' | 'photo';
+  src: string;
+  imageProxy?: string | null;
+  alt?: string;
+  href?: string;
+  lat?: number;
+  lon?: number;
+  place_id?: string;
+}
+
+/**
+ * Copernicus EMSR927 Syapru Besi grading and the NEA 10 Bhadra notice.
+ *
+ * The bulletin compilation is scraped for the Copernicus table; the NEA
+ * plants stay reviewed — that notice does not move every cycle.
+ */
+export interface FloodDamageContent {
+  as_of?: string;
+  as_of_label_en?: string;
+  as_of_label_ne?: string;
+  sources?: SourceRef[];
+  copernicus?: {
+    title_en?: string;
+    title_ne?: string;
+    lead_en?: string;
+    lead_ne?: string;
+    note_en?: string;
+    note_ne?: string;
+    portal_url?: string;
+    headline?: SitrepHeadline[];
+    rows?: DamageGradeRow[];
+    /** EMSR927 grading maps reprinted by the bulletin. */
+    maps?: DamageImage[];
+    /** Syabrubesi / Timure photographs from the same compilation. */
+    photos?: DamageImage[];
+  };
+  power?: {
+    title_en?: string;
+    title_ne?: string;
+    body_en?: string;
+    body_ne?: string;
+    note_en?: string;
+    note_ne?: string;
+    foot_en?: string;
+    foot_ne?: string;
+    listed_mw?: number;
+    affected_mw?: number;
+    phones?: string[];
+    plants?: NeaPlant[];
+    uncontacted?: SitrepValue;
+    langtang_staff?: SitrepValue;
+  };
+}
+
+/**
+ * Live Copernicus grading from the Rasuwa flood bulletin's damage page.
+ *
+ * Overlay onto reviewed damage; a failed read, or a scrape whose building
+ * arithmetic does not close, leaves the reviewed figures standing.
+ */
+export interface BulletinDamage {
+  rows: DamageGradeRow[];
+  headline: SitrepHeadline[];
+  maps?: DamageImage[];
+  photos?: DamageImage[];
+  asOfLabelEn: string | null;
+  asOfLabelNe: string | null;
+  error: string | null;
+  source: SourceRef;
+  fetchedAt: string;
 }
 
 /**
@@ -1226,6 +1376,11 @@ export interface FloodDeskStore {
    * sitrep; a failed read leaves the reviewed figures standing.
    */
   sitrep: BulletinSitrep | null;
+  /**
+   * Live Copernicus EMSR927 table from the bulletin's damage page. Overlay
+   * onto reviewed damage; a failed read leaves the reviewed figures standing.
+   */
+  damage: BulletinDamage | null;
   /** NDRRMA national Daily Disaster Bulletin — newest first. */
   dailyBulletin: FloodOfficialFeed<NdrrmaBulletin> | null;
   /** NDRRMA press notes, for the Coverage page. */

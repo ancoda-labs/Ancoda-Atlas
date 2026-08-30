@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 export const metadata: Metadata = {
   title: 'Give safely · Rasuwa–Bhotekoshi Flood · Ancoda Atlas',
   description:
-    'Verified ways to donate to the Rasuwa–Bhotekoshi flood response: official government relief funds and recognised organisations, with account numbers and QR codes.',
+    'Give to the Rasuwa–Bhotekoshi flood response: authorized Prime Minister’s Disaster Relief Fund QR, cash already in that fund, and the NDRRMA relief-goods demand list with emergency warehouses.',
 };
 
 export default function DonatePage() {

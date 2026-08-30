@@ -32,6 +32,7 @@ const NAV: NavItem[] = [
   // looking for a way to help and find a fake QR code somewhere else.
   { href: '/bhotekoshi-flood/donate', en: 'Donate', ne: 'सहयोग' },
   { href: '/bhotekoshi-flood/situation', en: 'Situation', ne: 'अवस्था' },
+  { href: '/bhotekoshi-flood/damage', en: 'Damage', ne: 'क्षति' },
   { href: '/bhotekoshi-flood/rescue', en: 'Rescued', ne: 'उद्धार' },
   { href: '/bhotekoshi-flood/media', en: 'Coverage', ne: 'समाचार' },
   { href: '/bhotekoshi-flood/contacts', en: 'Contacts', ne: 'सम्पर्क' },
@@ -95,7 +96,7 @@ export default function FloodShell({ lang, setLang, kicker, title, standfirst, c
   const lines = desk?.helplines?.lines || [];
 
   return (
-    <div className="fl">
+    <div className="fl" lang={lang}>
       <div className="fl-rail">
         <div className="fl-wrap" style={{ paddingTop: '8px', paddingBottom: '8px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '18px', flexWrap: 'wrap', marginBottom: safety ? '6px' : '0' }}>
@@ -123,9 +124,11 @@ export default function FloodShell({ lang, setLang, kicker, title, standfirst, c
         <div className="fl-wrap">
           <div className="fl-mast-top">
             <Link href="/">&larr; {lang === 'ne' ? 'एट्लसमा फर्कनुहोस्' : 'Back to Atlas'}</Link>
-            <div className="fl-lang">
-              <button className={lang === 'en' ? 'on' : ''} onClick={() => setLang('en')}>English</button>
-              <button className={lang === 'ne' ? 'on' : ''} onClick={() => setLang('ne')}>नेपाली</button>
+            <div className="fl-mast-controls">
+              <div className="fl-lang">
+                <button className={lang === 'en' ? 'on' : ''} onClick={() => setLang('en')}>English</button>
+                <button className={lang === 'ne' ? 'on' : ''} onClick={() => setLang('ne')}>नेपाली</button>
+              </div>
               <FloodThemeToggle lang={lang} />
             </div>
           </div>
