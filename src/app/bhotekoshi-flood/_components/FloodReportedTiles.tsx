@@ -51,6 +51,11 @@ const T = {
     en: 'Incident counts and families come from BIPAD’s corridor register and refresh on the desk cycle. Deaths, uncontacted and injured are reviewed figures, overlaid from the Rasuwa flood bulletin when that scrape’s parts add up. Deaths never go down. Personnel, air rescue and damage sit in their own sections. Do not add the register and the official toll together.',
     ne: 'दर्ता घटना र परिवार बिपद्को करिडोर अभिलेख हुन् र डेस्क चक्रमा ताजा हुन्छन्। मृत्यु, सम्पर्कविहीन र घाइते जाँचिएका तथ्यांक हुन्, रसुवा बाढी बुलेटिनबाट ओभरले हुन्छ जब भागहरू जोडिन्छन्। मृत्यु घट्दैन। जनशक्ति, हवाई उद्धार र क्षति आ-आफ्नै खण्डमा छन्। अभिलेख र आधिकारिक क्षति नजोड्नुहोस्।',
   },
+  caveatShort: {
+    en: 'Register and official toll are separate — do not add together.',
+    ne: 'अभिलेख र आधिकारिक क्षति छुट्टै छन् — जोड्नुहोस् नहोस्।',
+  },
+  sourcesN: { en: 'sources', ne: 'स्रोत' },
 };
 
 function headline(sitrep: SitrepContent | null | undefined, id: string): SitrepHeadline | undefined {
@@ -150,6 +155,7 @@ export default function FloodReportedTiles({
   sitrep,
   showHeading = true,
   scope = 'all',
+  compactFootnote = false,
 }: {
   lang: Lang;
   corridor?: CorridorIncidents | null;
@@ -161,6 +167,8 @@ export default function FloodReportedTiles({
    * `all` keeps the situation-page register, which still prints every tile.
    */
   scope?: 'all' | 'headline';
+  /** Short provenance lines for the overview topic panel. */
+  compactFootnote?: boolean;
 }) {
   useTick();
   const t = (key: keyof typeof T) => T[key][lang];
@@ -267,32 +275,70 @@ export default function FloodReportedTiles({
         )}
       </div>
 
-      <p className="fl-note">
-        {totals && (
-          <>
-            {t('read')} {ageFrom(corridor?.fetchedAt, lang)}
-            {' · '}
-            <a href="https://bipadportal.gov.np/" target="_blank" rel="noopener noreferrer">
-              {lang === 'ne' ? 'बिपद् पोर्टल' : 'BIPAD Portal'} &#8599;
-            </a>
-            {' · '}
-          </>
-        )}
-        {figures && (
-          <>
-            {t('asOf')}{' '}
-            {(lang === 'ne' ? figures.as_of_label_ne || figures.as_of_label_en : figures.as_of_label_en) || '—'}
-            {(figures.sources || []).map((src, i) => (
-              <a key={i} href={src.url} target="_blank" rel="noopener noreferrer">
-                {' · '}
-                {src.label} &#8599;
+      {compactFootnote ? (
+        <div className="fl-prov">
+          <p className="fl-prov-row">
+            {totals && (
+              <>
+                <span>
+                  {t('read')} {ageFrom(corridor?.fetchedAt, lang)}
+                </span>
+                <a href="https://bipadportal.gov.np/" target="_blank" rel="noopener noreferrer">
+                  {lang === 'ne' ? 'बिपद् पोर्टल' : 'BIPAD Portal'} &#8599;
+                </a>
+              </>
+            )}
+            <span>
+              {t('asOf')}{' '}
+              {(lang === 'ne' ? figures.as_of_label_ne || figures.as_of_label_en : figures.as_of_label_en) || '—'}
+            </span>
+          </p>
+          {(figures.sources || []).length > 0 && (
+            <details className="fl-prov-sources">
+              <summary>
+                {(figures.sources || []).length} {t('sourcesN')}
+              </summary>
+              <ul>
+                {(figures.sources || []).map((src, i) => (
+                  <li key={i}>
+                    <a href={src.url} target="_blank" rel="noopener noreferrer">
+                      {src.label} &#8599;
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )}
+          <p className="fl-prov-note">{t('caveatShort')}</p>
+        </div>
+      ) : (
+        <p className="fl-note">
+          {totals && (
+            <>
+              {t('read')} {ageFrom(corridor?.fetchedAt, lang)}
+              {' · '}
+              <a href="https://bipadportal.gov.np/" target="_blank" rel="noopener noreferrer">
+                {lang === 'ne' ? 'बिपद् पोर्टल' : 'BIPAD Portal'} &#8599;
               </a>
-            ))}
-            {' · '}
-          </>
-        )}
-        <span className="fl-blank">{scope === 'headline' ? t('caveatHeadline') : t('caveat')}</span>
-      </p>
+              {' · '}
+            </>
+          )}
+          {figures && (
+            <>
+              {t('asOf')}{' '}
+              {(lang === 'ne' ? figures.as_of_label_ne || figures.as_of_label_en : figures.as_of_label_en) || '—'}
+              {(figures.sources || []).map((src, i) => (
+                <a key={i} href={src.url} target="_blank" rel="noopener noreferrer">
+                  {' · '}
+                  {src.label} &#8599;
+                </a>
+              ))}
+              {' · '}
+            </>
+          )}
+          <span className="fl-blank">{scope === 'headline' ? t('caveatHeadline') : t('caveat')}</span>
+        </p>
+      )}
     </>
   );
 }

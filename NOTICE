@@ -36,7 +36,9 @@ Administrative boundary data
     Licensed under the MIT License.
 
     The flood subset has been reduced to the affected districts and lowered in
-    coordinate precision. The MIT licence text is reproduced below.
+    coordinate precision. nepal-provinces.geojson and nepal-districts.geojson
+    are further simplified (mapshaper, keep-shapes) so a 3G phone is not asked
+    to download the full vertex set. The MIT licence text is reproduced below.
 
 
 Relief-fund and helpline content

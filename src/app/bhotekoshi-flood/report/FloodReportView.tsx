@@ -9,8 +9,9 @@ import FloodMapDialog from '@/components/FloodMapDialog';
 import { useFloodLang } from '@/hooks/use-flood-lang';
 import { ageFrom } from '@/lib/relative-time';
 import { orientationTransform } from '@/lib/photo-orientation';
-import type { FloodDeskPayload, FloodPhoto, FloodPhotoFeed } from '@/types';
+import type { FloodPhoto, FloodPhotoFeed } from '@/types';
 import { useDeskRefresh } from '@/hooks/use-desk-refresh';
+import { useFloodDesk } from '@/app/bhotekoshi-flood/_components/FloodDeskProvider';
 
 // Photographs sent in from the corridor, and the map they sit on.
 //
@@ -41,7 +42,7 @@ const T = {
 
 export default function FloodReportView() {
   const [lang, setLang] = useFloodLang();
-  const [desk, setDesk] = useState<FloodDeskPayload | null>(null);
+  const { desk } = useFloodDesk();
   const [feed, setFeed] = useState<FloodPhotoFeed | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
   const [selection, setSelection] = useState<MapSelection | null>(null);
@@ -62,10 +63,6 @@ export default function FloodReportView() {
   useDeskRefresh(
     React.useCallback(() => {
       loadPhotos();
-      fetch('/api/flood')
-        .then(r => (r.ok ? r.json() : null))
-        .then(d => d && setDesk(d))
-        .catch(() => {});
     }, [loadPhotos]),
   );
 

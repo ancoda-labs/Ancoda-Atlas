@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { nextUpdateLabel, useDeskRefresh, useTick } from '@/hooks/use-desk-refresh';
+import React from 'react';
+import { nextUpdateLabel, useTick } from '@/hooks/use-desk-refresh';
 import { ageFrom } from '@/lib/relative-time';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -9,8 +9,8 @@ import FloodThemeToggle from '@/components/FloodThemeToggle';
 import FloodReportButton from '@/components/FloodReportButton';
 import FloodNewsTicker from '@/components/FloodNewsTicker';
 import type { Lang } from '@/hooks/use-flood-lang';
-import type { FloodDeskPayload } from '@/types';
 import FloodFooter from '@/components/FloodFooter';
+import { useFloodDesk } from '@/app/bhotekoshi-flood/_components/FloodDeskProvider';
 
 // The frame every flood-desk page sits in.
 //
@@ -28,12 +28,12 @@ interface NavItem {
 
 const NAV: NavItem[] = [
   { href: '/bhotekoshi-flood', en: 'Overview', ne: 'सारांश' },
-  // Giving sits second: after a reader has the picture, before they go
+  { href: '/bhotekoshi-flood/rescue', en: 'Rescued', ne: 'उद्धार' },
+  // Giving sits early: after a reader has the picture, before they go
   // looking for a way to help and find a fake QR code somewhere else.
   { href: '/bhotekoshi-flood/donate', en: 'Donate', ne: 'सहयोग' },
   { href: '/bhotekoshi-flood/situation', en: 'Situation', ne: 'अवस्था' },
   { href: '/bhotekoshi-flood/damage', en: 'Damage', ne: 'क्षति' },
-  { href: '/bhotekoshi-flood/rescue', en: 'Rescued', ne: 'उद्धार' },
   { href: '/bhotekoshi-flood/media', en: 'Coverage', ne: 'समाचार' },
   { href: '/bhotekoshi-flood/contacts', en: 'Contacts', ne: 'सम्पर्क' },
 ];
@@ -68,20 +68,7 @@ interface Props {
 }
 
 export default function FloodShell({ lang, setLang, kicker, title, standfirst, children }: Props) {
-  const [desk, setDesk] = useState<FloodDeskPayload | null>(null);
-
-  // The shell sits on every desk page, so it is where the freshness line
-  // belongs — one statement of how old the figures are, wherever the reader is.
-  useDeskRefresh(
-    React.useCallback(() => {
-      fetch('/api/flood')
-        .then(r => (r.ok ? r.json() : null))
-        .then(d => {
-          if (d) setDesk(d);
-        })
-        .catch(() => {});
-    }, []),
-  );
+  const { desk, live } = useFloodDesk();
 
   // Re-render on a timer so "4 min ago" does not sit frozen at whatever it said
   // when the page loaded.
@@ -145,12 +132,12 @@ export default function FloodShell({ lang, setLang, kicker, title, standfirst, c
               its age before they read it. */}
           <p className="fl-freshness">
             <i aria-hidden="true" />
-            {desk?.refreshedAt ? (
+            {live?.refreshedAt ? (
               <>
                 {lang === 'ne' ? 'तथ्यांक अद्यावधिक' : 'Data updated'}{' '}
-                <b>{ageFrom(desk.refreshedAt, lang)}</b>
-                {nextUpdateLabel(desk.nextRefreshAt, lang, desk.refreshing) && (
-                  <span> · {nextUpdateLabel(desk.nextRefreshAt, lang, desk.refreshing)}</span>
+                <b>{ageFrom(live.refreshedAt, lang)}</b>
+                {nextUpdateLabel(live.nextRefreshAt, lang, live.refreshing) && (
+                  <span> · {nextUpdateLabel(live.nextRefreshAt, lang, live.refreshing)}</span>
                 )}
               </>
             ) : (

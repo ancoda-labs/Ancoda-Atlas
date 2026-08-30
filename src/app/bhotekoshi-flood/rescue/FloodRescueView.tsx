@@ -2,13 +2,10 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import type {
-  SitrepContent,
-  SitrepNameList,
   RescueRegister,
   RescuedPerson,
-  FloodOfficialFeed,
-  NdrrmaPopup,
   OpmcmPersonRegister,
+  SitrepNameList,
 } from '@/types';
 import FloodShell from '@/components/FloodShell';
 import FloodOpmcmRegister from '@/app/bhotekoshi-flood/rescue/_components/FloodOpmcmRegister';
@@ -19,6 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { DESK_POLL_MS } from '@/hooks/use-desk-refresh';
+import { useFloodDesk } from '@/app/bhotekoshi-flood/_components/FloodDeskProvider';
 import {
   Select,
   SelectContent,
@@ -146,6 +144,7 @@ type Filter = 'all' | 'nepali' | 'foreign';
 
 export default function FloodRescueView() {
   const [lang, setLang] = useFloodLang();
+  const { desk } = useFloodDesk();
   const [data, setData] = useState<RescueRegister | null>(null);
   // Eight thousand rows on their own route, loaded alongside rather than inside
   // the NDRRMA register so the search box on this page paints immediately.
@@ -153,8 +152,8 @@ export default function FloodRescueView() {
   const [q, setQ] = useState('');
   const [filter, setFilter] = useState<Filter>('all');
   const [page, setPage] = useState(0);
-  const [sitrep, setSitrep] = useState<SitrepContent | null>(null);
-  const [notices, setNotices] = useState<FloodOfficialFeed<NdrrmaPopup> | null>(null);
+  const sitrep = desk.sitrep;
+  const notices = desk.popups ?? null;
   const [form, setForm] = useState({ kind: 'wrong_details', message: '', contact: '' });
   const [formState, setFormState] = useState<'idle' | 'sending' | 'sent' | 'failed' | 'off'>('idle');
 
@@ -163,42 +162,26 @@ export default function FloodRescueView() {
   useEffect(() => {
     let cancelled = false;
     const load = () => {
-      fetch('/api/flood/rescue')
-        .then(r => (r.ok ? r.json() : null))
-        .then(d => {
-          if (!cancelled && d) setData(d);
-        })
-        .catch(() => {});
-      fetch('/api/flood/persons')
-        .then(r => (r.ok ? r.json() : null))
-        .then(d => {
-          if (!cancelled && d) setPortalRegister(d);
-        })
-        .catch(() => {});
+      void Promise.all([
+        fetch('/api/flood/rescue')
+          .then(r => (r.ok ? r.json() : null))
+          .then(d => {
+            if (!cancelled && d) setData(d);
+          })
+          .catch(() => {}),
+        fetch('/api/flood/persons')
+          .then(r => (r.ok ? r.json() : null))
+          .then(d => {
+            if (!cancelled && d) setPortalRegister(d);
+          })
+          .catch(() => {}),
+      ]);
     };
     load();
     const id = setInterval(load, DESK_POLL_MS);
     return () => {
       cancelled = true;
       clearInterval(id);
-    };
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    fetch('/api/flood')
-      .then(r => (r.ok ? r.json() : null))
-      .then(d => {
-        if (cancelled || !d) return;
-        if (d.sitrep) setSitrep(d.sitrep);
-        // NDRRMA's site-wide notice. During this response it has been the
-        // official list of rescued Nepali and foreign citizens, as a PDF —
-        // which belongs on the page where people are searching for a name.
-        if (d.popups) setNotices(d.popups);
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
     };
   }, []);
 

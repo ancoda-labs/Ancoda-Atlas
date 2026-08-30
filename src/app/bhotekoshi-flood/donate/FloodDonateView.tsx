@@ -6,7 +6,6 @@ import { useFloodLang } from '@/hooks/use-flood-lang';
 import type { Lang } from '@/hooks/use-flood-lang';
 import type {
   FloodBank,
-  FloodDeskPayload,
   FloodOfficialFeed,
   PortalDonationChannel,
   ReliefNeedItem,
@@ -16,6 +15,7 @@ import type {
 import { ageFrom } from '@/lib/relative-time';
 import { useDeskRefresh } from '@/hooks/use-desk-refresh';
 import { useJumpSection } from '@/hooks/use-jump-section';
+import { useFloodDesk } from '@/app/bhotekoshi-flood/_components/FloodDeskProvider';
 import FloodWarehouses from '@/app/bhotekoshi-flood/_components/FloodWarehouses';
 
 // Giving, on its own page.
@@ -34,6 +34,7 @@ import FloodWarehouses from '@/app/bhotekoshi-flood/_components/FloodWarehouses'
 
 const T = {
   kicker: { en: 'Give', ne: 'सहयोग' },
+  loading: { en: 'Loading…', ne: 'लोड हुँदै…' },
   title: { en: 'Give safely', ne: 'सुरक्षित रूपमा सहयोग गर्नुहोस्' },
   standfirst: {
     en: 'Three things, in that order: the authorized government QR, what has already reached that fund, and the goods NDRRMA is still asking for. Atlas never handles money.',
@@ -55,7 +56,6 @@ const T = {
     en: 'After scanning, check that the payee name your app shows matches the name above.',
     ne: 'स्क्यान गरेपछि भुक्तानी पाउने पक्षको नाम माथिको नामसँग मिल्छ कि मिल्दैन जाँच्नुहोस्।',
   },
-  loading: { en: 'Loading…', ne: 'लोड हुँदै…' },
   portalTitle: { en: 'Also listed by the government rescue portal', ne: 'सरकारी उद्धार पोर्टलमा सूचीकृत अन्य माध्यम' },
   portalHint: {
     en: 'Published live by the Office of the Prime Minister on rescue.opmcm.gov.np. These are read straight from that portal and are not part of the reviewed list above — check the payee name your own app shows before confirming any payment, and open the portal itself if anything looks wrong.',
@@ -267,25 +267,12 @@ function CopyableAccount({ value, lang }: { value: string; lang: Lang }) {
 
 export default function FloodDonateView() {
   const [lang, setLang] = useFloodLang();
-  const [data, setData] = useState<FloodDeskPayload | null>(null);
+  const { desk: data } = useFloodDesk();
   const [qrOpen, setQrOpen] = useState<{ src: string; payee: string } | null>(null);
   const [portal, setPortal] = useState<FloodOfficialFeed<PortalDonationChannel> | null>(null);
   const t = (key: keyof typeof T) => T[key][lang];
 
-  // This page used to fetch once and never again, so a reader who left it open
-  // kept whatever the portal was publishing when they arrived.
-  useDeskRefresh(
-    React.useCallback(() => {
-      fetch('/api/flood')
-        .then(r => (r.ok ? r.json() : null))
-        .then(d => {
-          if (d) setData(d);
-        })
-        .catch(() => {});
-    }, []),
-  );
-
-  // The portal's channels ride on their own route: the QR codes arrive as
+  // The portal's own channels ride on their own route: the QR codes arrive as
   // inline images and would otherwise bloat the payload every desk page loads.
   useDeskRefresh(
     React.useCallback(() => {

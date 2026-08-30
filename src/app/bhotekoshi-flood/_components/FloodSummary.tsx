@@ -2,6 +2,22 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import {
+  Building2,
+  ClipboardList,
+  Gauge,
+  Home,
+  Landmark,
+  ListOrdered,
+  MessageSquare,
+  Radio,
+  Route,
+  Shield,
+  Truck,
+  Users,
+  Zap,
+  type LucideIcon,
+} from 'lucide-react';
 import type { Lang } from '@/hooks/use-flood-lang';
 import type {
   SitrepBreakdown,
@@ -52,6 +68,13 @@ const T = {
   familiesRelocated: { en: 'Families relocated', ne: 'पुनर्स्थापित परिवार' },
   peopleAffected: { en: 'People affected', ne: 'प्रभावित व्यक्ति' },
   nameLists: { en: 'Published name lists', ne: 'प्रकाशित नामावली' },
+  chapterKicker: { en: 'Read by topic', ne: 'विषयअनुसार पढ्नुहोस्' },
+  chapterTitle: { en: 'Official figures', ne: 'आधिकारिक तथ्यांक' },
+  chapterHint: {
+    en: 'Pick a topic. Each tab counts something different — do not add across tabs.',
+    ne: 'विषय छान्नुहोस्। प्रत्येक ट्याबले फरक कुरा गन्छ — ट्याबहरू जोड्नुहोस् नहोस्।',
+  },
+  reportedTitle: { en: 'What has been reported', ne: 'के-के जनाइएको छ' },
   missingFound: { en: 'Missing and found', ne: 'हराएका र भेटिएका' },
   missing: { en: 'Reported missing', ne: 'हराएको जनाइएको' },
   found: { en: 'Reported found', ne: 'भेटिएको जनाइएको' },
@@ -69,9 +92,19 @@ const T = {
     en: 'Filed by the public on the OPMCM rescue portal. These count reports, not people — one person is often reported by several relatives, and a family who finds someone rarely comes back to close the report. Read them as demand on the response, and do not add them to the figures above.',
     ne: 'प्रधानमन्त्री कार्यालयको उद्धार पोर्टलमा जनताले दर्ता गरेका विवरण। यी रिपोर्टको संख्या हो, व्यक्तिको होइन — एउटै व्यक्तिको लागि धेरै आफन्तले रिपोर्ट गर्न सक्छन्, र भेटिएपछि रिपोर्ट बन्द गर्न फर्किने कम हुन्छन्। यसलाई सहयोगको मागको सूचकका रूपमा हेर्नुहोस्, माथिको तथ्यांकमा नजोड्नुहोस्।',
   },
+  portalIntroShort: {
+    en: 'Public filings on the OPMCM portal — reports, not people. Do not add to the official toll.',
+    ne: 'प्रधानमन्त्री कार्यालय पोर्टलका जनताका रिपोर्ट — व्यक्ति होइन। आधिकारिक क्षतिमा नजोड्नुहोस्।',
+  },
   portalRead: { en: 'Portal read', ne: 'पोर्टल पढिएको' },
   liveRead: { en: 'Read', ne: 'पढिएको' },
   reviewedAsOf: { en: 'Reviewed figures, as of', ne: 'जाँचिएका तथ्यांक, मिति' },
+  reviewedShort: { en: 'Reviewed', ne: 'जाँचिएको' },
+  sourcesN: { en: 'sources', ne: 'स्रोत' },
+  doNotAddTabs: {
+    en: 'Do not add figures across tabs.',
+    ne: 'ट्याबहरूमा तथ्यांक नजोड्नुहोस्।',
+  },
   noLiveFeed: {
     en: 'No portal publishes these as data, so they move only when the desk edits them.',
     ne: 'यी तथ्यांक कुनै पोर्टलले डेटाका रूपमा प्रकाशित गर्दैन, त्यसैले डेस्कले सम्पादन गर्दा मात्र परिवर्तन हुन्छन्।',
@@ -91,10 +124,6 @@ function figure(value: number, suffix?: string): string {
   return `${value.toLocaleString()}${suffix || ''}`;
 }
 
-function label(item: { label_en?: string; label_ne?: string }, lang: Lang): string {
-  return (lang === 'ne' ? item.label_ne || item.label_en : item.label_en) || '';
-}
-
 function ValueRow({ item, lang }: { item: SitrepValue; lang: Lang }) {
   const detail = lang === 'ne' ? item.detail_ne || item.detail_en : item.detail_en;
   const note = lang === 'ne' ? item.note_ne || item.note_en : item.note_en;
@@ -111,6 +140,51 @@ function ValueRow({ item, lang }: { item: SitrepValue; lang: Lang }) {
       </b>
       {(detail || note) && <small>{detail || note}</small>}
     </li>
+  );
+}
+
+function label(item: { label_en?: string; label_ne?: string }, lang: Lang): string {
+  return (lang === 'ne' ? item.label_ne || item.label_en : item.label_en) || '';
+}
+
+const CHAPTER_ICONS = {
+  reported: ClipboardList,
+  damage: Building2,
+  response: Shield,
+  toll: Users,
+  portal: MessageSquare,
+  lists: ListOrdered,
+} as const;
+
+const DAMAGE_ICONS: Record<string, LucideIcon> = {
+  bridges: Landmark,
+  houses: Home,
+  power: Zap,
+  telecom: Radio,
+  road: Route,
+  vehicles: Truck,
+  gauge: Gauge,
+};
+
+function DamageCard({ item, lang }: { item: SitrepValue; lang: Lang }) {
+  const Icon = DAMAGE_ICONS[item.id || ''] || Building2;
+  const detail = lang === 'ne' ? item.detail_ne || item.detail_en : item.detail_en;
+  const note = lang === 'ne' ? item.note_ne || item.note_en : item.note_en;
+  const unit = lang === 'ne' ? item.unit_ne || item.unit_en : item.unit_en;
+  return (
+    <div className="fl-damage-card">
+      <span className="fl-damage-card-icon" aria-hidden="true">
+        <Icon size={20} strokeWidth={1.75} />
+      </span>
+      <div className="fl-damage-card-body">
+        <dt>{label(item, lang)}</dt>
+        <dd>
+          {figure(item.value, item.suffix)}
+          {unit ? ` ${unit}` : ''}
+        </dd>
+        {(detail || note) && <small>{detail || note}</small>}
+      </div>
+    </div>
   );
 }
 
@@ -174,6 +248,13 @@ function pickBreakdowns(sitrep: SitrepContent, ids: string[]): SitrepBreakdown[]
     const row = byId.get(id);
     return row ? [row] : [];
   });
+}
+
+function headlineValue(sitrep: SitrepContent, id: string): number | null {
+  const fromHeadline = (sitrep.headline || []).find(h => h.id === id);
+  if (fromHeadline) return fromHeadline.value;
+  const row = (sitrep.breakdowns || []).find(b => b.id === id);
+  return row?.total ?? null;
 }
 
 /** BIPAD's family figures as one card, so evacuated sits with affected and relocated. */
@@ -325,6 +406,7 @@ export default function FloodSummary({
   corridor,
   rescueSummary,
   rescueFetchedAt,
+  section = 'all',
 }: {
   sitrep: SitrepContent;
   lang: Lang;
@@ -333,8 +415,13 @@ export default function FloodSummary({
   corridor?: CorridorIncidents | null;
   rescueSummary?: RescueSummary | null;
   rescueFetchedAt?: string | null;
+  /** `chapters` renders the topic navigator (below the map). `rest` is background and place notes. */
+  section?: 'chapters' | 'rest' | 'all';
 }) {
   const t = (key: keyof typeof T) => T[key][lang];
+  const [chapter, setChapter] = useState<
+    'reported' | 'damage' | 'response' | 'toll' | 'portal' | 'lists'
+  >('reported');
   const nameLists = sitrep.name_lists;
   const missingFound = sitrep.missing_found;
   const infrastructure = sitrep.infrastructure;
@@ -389,22 +476,62 @@ export default function FloodSummary({
         }];
 
   /** The reviewed figures' own dateline and sources, printed under a section. */
-  const ReviewedSource = ({ note }: { note?: boolean | 'damage' }) => (
-    <p className="fl-note">
-      {t('reviewedAsOf')}{' '}
-      {(lang === 'ne' ? sitrep.as_of_label_ne || sitrep.as_of_label_en : sitrep.as_of_label_en) || '—'}
-      {(sitrep.sources || []).map((src, i) => (
-        <React.Fragment key={i}>
-          {' · '}
-          <a href={src.url} target="_blank" rel="noopener noreferrer">
-            {src.label} &#8599;
-          </a>
-        </React.Fragment>
-      ))}
-      {note === 'damage' && <span className="fl-blank"> {t('damageNote')}</span>}
-      {note === true && <span className="fl-blank"> {t('noLiveFeed')}</span>}
-    </p>
-  );
+  const ReviewedSource = ({ note, compact }: { note?: boolean | 'damage'; compact?: boolean }) => {
+    const asOf =
+      (lang === 'ne' ? sitrep.as_of_label_ne || sitrep.as_of_label_en : sitrep.as_of_label_en) || '—';
+    const sources = sitrep.sources || [];
+
+    if (compact) {
+      return (
+        <div className="fl-prov">
+          <p className="fl-prov-row">
+            <span>
+              {t('reviewedShort')} {asOf}
+            </span>
+          </p>
+          {sources.length > 0 && (
+            <details className="fl-prov-sources">
+              <summary>
+                {sources.length} {t('sourcesN')}
+              </summary>
+              <ul>
+                {sources.map((src, i) => (
+                  <li key={i}>
+                    <a href={src.url} target="_blank" rel="noopener noreferrer">
+                      {src.label} &#8599;
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )}
+          {note === true && <p className="fl-prov-note">{t('noLiveFeed')}</p>}
+          {note === 'damage' && (
+            <details className="fl-prov-sources">
+              <summary>{lang === 'ne' ? 'यी तथ्यांकबारे' : 'About these figures'}</summary>
+              <p className="fl-prov-note">{t('damageNote')}</p>
+            </details>
+          )}
+        </div>
+      );
+    }
+
+    return (
+      <p className="fl-note">
+        {t('reviewedAsOf')} {asOf}
+        {sources.map((src, i) => (
+          <React.Fragment key={i}>
+            {' · '}
+            <a href={src.url} target="_blank" rel="noopener noreferrer">
+              {src.label} &#8599;
+            </a>
+          </React.Fragment>
+        ))}
+        {note === 'damage' && <span className="fl-blank"> {t('damageNote')}</span>}
+        {note === true && <span className="fl-blank"> {t('noLiveFeed')}</span>}
+      </p>
+    );
+  };
 
   const LBody = (o: { body_en?: string | string[]; body_ne?: string | string[] } | null | undefined): string[] => {
     if (!o) return [];
@@ -412,10 +539,326 @@ export default function FloodSummary({
     return Array.isArray(val) ? (val as string[]) : [];
   };
 
+  const chapters: { id: typeof chapter; label: string; stat: string | null }[] = [
+    {
+      id: 'reported',
+      label: t('reportedTitle'),
+      stat:
+        headlineValue(sitrep, 'deaths') != null
+          ? figure(headlineValue(sitrep, 'deaths')!)
+          : corridor?.totals?.incidentCount != null
+            ? figure(corridor.totals.incidentCount)
+            : null,
+    },
+    ...(infrastructure?.items && infrastructure.items.length > 0
+      ? [{
+          id: 'damage' as const,
+          label:
+            (lang === 'ne'
+              ? infrastructure.title_ne || infrastructure.title_en
+              : infrastructure.title_en) || t('infrastructure'),
+          stat: (() => {
+            const bridges = infrastructure.items.find(i => i.id === 'bridges');
+            return bridges ? figure(bridges.value, bridges.suffix) : null;
+          })(),
+        }]
+      : []),
+    ...(responseCards.length > 0
+      ? [{
+          id: 'response' as const,
+          label: t('responseTitle'),
+          stat: (() => {
+            const deployed = responseCards.find(b => b.id === 'deployed');
+            return deployed ? figure(deployed.total, deployed.suffix) : null;
+          })(),
+        }]
+      : []),
+    ...(peopleCards.length > 0
+      ? [{
+          id: 'toll' as const,
+          label: t('peopleTitle'),
+          stat: (() => {
+            const deaths = peopleCards.find(b => b.id === 'deaths');
+            return deaths ? figure(deaths.total, deaths.suffix) : null;
+          })(),
+        }]
+      : []),
+    ...(portalCards.length > 0 && portal
+      ? [{
+          id: 'portal' as const,
+          label: t('portalTitle'),
+          stat:
+            portal.persons.lost != null
+              ? figure(portal.persons.lost)
+              : portal.requests.total != null
+                ? figure(portal.requests.total)
+                : null,
+        }]
+      : []),
+    ...(nameLists?.lists?.length || missingFound
+      ? [{
+          id: 'lists' as const,
+          label: t('nameLists'),
+          stat: (() => {
+            const ndrrma = nameLists?.lists?.find(l => l.id === 'ndrrma');
+            const val = rescueSummary?.total ?? ndrrma?.value;
+            return val != null ? val.toLocaleString() : null;
+          })(),
+        }]
+      : []),
+  ];
+  const active = chapters.some(c => c.id === chapter) ? chapter : chapters[0]?.id || 'reported';
+  const showChapters = section === 'chapters' || section === 'all';
+  const showRest = section === 'rest' || section === 'all';
+  const activeChapter = chapters.find(c => c.id === active);
+
+  const chaptersBlock = chapters.length > 0 && (
+        <section className={`fl-sec fl-desk-chapters${section === 'chapters' ? ' fl-desk-chapters-lead' : ''}`}>
+          <header className="fl-desk-chapters-head">
+            <span>{t('chapterKicker')}</span>
+            <h2>{t('chapterTitle')}</h2>
+            <p>{t('chapterHint')}</p>
+          </header>
+          <div className="fl-desk-nav" role="tablist" aria-label={t('chapterTitle')}>
+            {chapters.map(c => {
+              const Icon = CHAPTER_ICONS[c.id];
+              return (
+              <button
+                key={c.id}
+                type="button"
+                role="tab"
+                className="fl-desk-tab"
+                id={`fl-desk-tab-${c.id}`}
+                aria-selected={active === c.id}
+                aria-controls={`fl-desk-panel-${c.id}`}
+                tabIndex={active === c.id ? 0 : -1}
+                onClick={() => setChapter(c.id)}
+              >
+                <span className="fl-desk-tab-icon" aria-hidden="true">
+                  <Icon size={16} strokeWidth={1.75} />
+                </span>
+                <span className="fl-desk-tab-label">{c.label}</span>
+                {c.stat && <em className="fl-desk-tab-badge">{c.stat}</em>}
+              </button>
+            );
+            })}
+          </div>
+
+          <div className="fl-desk-panel">
+            <div className="fl-desk-panel-head">
+              <h3>{activeChapter?.label || t('reportedTitle')}</h3>
+            </div>
+            <div className="fl-desk-panel-body">
+          {active === 'reported' && (
+            <div
+              id="fl-desk-panel-reported"
+              role="tabpanel"
+              aria-labelledby="fl-desk-tab-reported"
+            >
+              <FloodReportedTiles
+                corridor={corridor}
+                sitrep={sitrep}
+                lang={lang}
+                scope="headline"
+                showHeading={false}
+                compactFootnote
+              />
+            </div>
+          )}
+
+          {active === 'damage' && infrastructure?.items && infrastructure.items.length > 0 && (
+            <div
+              id="fl-desk-panel-damage"
+              role="tabpanel"
+              aria-labelledby="fl-desk-tab-damage"
+            >
+              <div className="fl-damage-grid">
+                {infrastructure.items.map((item, i) => (
+                  <DamageCard key={item.id || i} item={item} lang={lang} />
+                ))}
+              </div>
+              <ReviewedSource note="damage" compact />
+              <p className="fl-note">
+                <Link href="/bhotekoshi-flood/damage">{t('fullGrading')} →</Link>
+              </p>
+            </div>
+          )}
+
+          {active === 'response' && responseCards.length > 0 && (
+            <div
+              id="fl-desk-panel-response"
+              role="tabpanel"
+              aria-labelledby="fl-desk-tab-response"
+            >
+              <p className="fl-note fl-note-tight">{t('tapHint')}</p>
+              <div className="fl-figs">
+                {responseCards.map(b => (
+                  <BreakdownCard key={b.id} breakdown={b} lang={lang} />
+                ))}
+              </div>
+              <ReviewedSource compact />
+            </div>
+          )}
+
+          {active === 'toll' && peopleCards.length > 0 && (
+            <div
+              id="fl-desk-panel-toll"
+              role="tabpanel"
+              aria-labelledby="fl-desk-tab-toll"
+            >
+              <p className="fl-note fl-note-tight">{t('tapHint')}</p>
+              <div className="fl-figs">
+                {peopleCards.map(b => (
+                  <BreakdownCard key={b.id} breakdown={b} lang={lang} />
+                ))}
+              </div>
+              {separateCards.length > 0 && (
+                <>
+                  <h4 className="fl-minor">{t('countedSeparately')}</h4>
+                  <div className="fl-figs">
+                    {separateCards.map(b => (
+                      <BreakdownCard key={b.id} breakdown={b} lang={lang} />
+                    ))}
+                  </div>
+                </>
+              )}
+              <ReviewedSource compact />
+            </div>
+          )}
+
+          {active === 'portal' && portalCards.length > 0 && portal && (
+            <div
+              id="fl-desk-panel-portal"
+              role="tabpanel"
+              aria-labelledby="fl-desk-tab-portal"
+              className="fl-portal fl-portal-wide"
+            >
+              <p className="fl-note fl-note-tight">{t('portalIntroShort')}</p>
+              <div className="fl-figs">
+                {portalCards.map(b => (
+                  <BreakdownCard key={b.id} breakdown={b} lang={lang} />
+                ))}
+              </div>
+              <div className="fl-prov">
+                <p className="fl-prov-row">
+                  <span>
+                    {t('portalRead')} {ageFrom(portal.fetchedAt, lang)}
+                  </span>
+                  <a href={portal.source.url} target="_blank" rel="noopener noreferrer">
+                    {portal.source.label} &#8599;
+                  </a>
+                </p>
+                <p className="fl-prov-note">{t('doNotAddTabs')}</p>
+              </div>
+            </div>
+          )}
+
+          {active === 'lists' && (nameLists?.lists?.length || missingFound) && (
+            <div
+              id="fl-desk-panel-lists"
+              role="tabpanel"
+              aria-labelledby="fl-desk-tab-lists"
+            >
+              {nameLists?.lists && nameLists.lists.length > 0 && (
+                <>
+              <div className="fl-listcards">
+                {nameLists.lists.map(liveList).map(list => {
+                  const inner = (
+                    <>
+                      <dd>{list.value.toLocaleString()}</dd>
+                      <dt>
+                        {label(list, lang)}
+                        {list.live && <ScrapedDot lang={lang} />}
+                      </dt>
+                      <small>{t('people')}</small>
+                    </>
+                  );
+                  return list.href ? (
+                    <Link key={list.id} href={list.href} className="linked">
+                      {inner}
+                      <span className="fl-listcard-go">{t('seeList')} &rarr;</span>
+                    </Link>
+                  ) : (
+                    <div key={list.id}>{inner}</div>
+                  );
+                })}
+              </div>
+              <p className="fl-fig-warn">
+                <b>{t('doNotMerge')}</b>{' '}
+                {lang === 'ne' ? nameLists.do_not_merge_ne || nameLists.do_not_merge_en : nameLists.do_not_merge_en}
+              </p>
+              {rescueSummary && (
+                <p className="fl-prov-row">
+                  <span>
+                    {t('liveRead')} {ageFrom(rescueFetchedAt, lang)}
+                  </span>
+                  <a href="https://ndrrma.gov.np/np/rasuwa/rescue" target="_blank" rel="noopener noreferrer">
+                    NDRRMA &#8599;
+                  </a>
+                </p>
+              )}
+              <ReviewedSource compact />
+                </>
+              )}
+
+              {missingFound && (
+                <>
+                  <h4 className="fl-minor">
+                    {lang === 'ne' ? missingFound.title_ne || missingFound.title_en : missingFound.title_en}
+                  </h4>
+                  <div className="fl-split">
+                    <div>
+                      <h4 className="fl-minor">{t('missing')}</h4>
+                      <ul className="fl-fig-list">
+                        {[
+                          ...(missingFound.missing || []),
+                          ...portalRow('portal-lost', portal?.persons.lostOpen, T.portalOpenLost),
+                        ].map(item => (
+                          <ValueRow key={item.id} item={item} lang={lang} />
+                        ))}
+                      </ul>
+                    </div>
+                    <div>
+                      <h4 className="fl-minor">
+                        {t('found')}
+                        {missingFound.found_total ? ` · ${missingFound.found_total.toLocaleString()}` : ''}
+                      </h4>
+                      <ul className="fl-fig-list">
+                        {[
+                          ...(missingFound.found || []).map(liveList),
+                          ...portalRow('portal-found', portal?.persons.found, T.portalFound),
+                        ].map(item => (
+                          <ValueRow key={item.id} item={item} lang={lang} />
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                  <p className="fl-fig-warn">
+                    <b>{t('doNotMerge')}</b>{' '}
+                    {lang === 'ne' ? missingFound.do_not_merge_ne || missingFound.do_not_merge_en : missingFound.do_not_merge_en}
+                  </p>
+                  {portal && (
+                    <p className="fl-prov-row">
+                      <span>
+                        {t('liveRead')} {ageFrom(portal.fetchedAt, lang)}
+                      </span>
+                      <a href={portal.source.url} target="_blank" rel="noopener noreferrer">
+                        {portal.source.label} &#8599;
+                      </a>
+                    </p>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+            </div>
+          </div>
+        </section>
+  );
+
   return (
     <>
-      {/* If the arithmetic broke, the reader is told before they read a number. */}
-      {discrepancies.length > 0 && (
+      {showRest && discrepancies.length > 0 && (
         <aside className="fl-standfirst" role="alert">
           <span>{lang === 'ne' ? 'चेतावनी' : 'Warning'}</span>
           <p>
@@ -425,123 +868,9 @@ export default function FloodSummary({
         </aside>
       )}
 
-      {/* BIPAD's live register beside the reviewed damage record.
-          Incident counts still come from the scrape. Deaths, uncontacted,
-          injured, houses and bridges use the reviewed sitrep when it has
-          them, because BIPAD stores unfilled loss as zeros. */}
-      <section className="fl-sec">
-        <div className="fl-split">
-          <div>
-            <FloodReportedTiles corridor={corridor} sitrep={sitrep} lang={lang} scope="headline" />
+      {showChapters && chaptersBlock}
 
-          </div>
-
-          <div>
-            {infrastructure?.items && infrastructure.items.length > 0 && (
-              <>
-                <div className="fl-sec-head">
-                  <span>{lang === 'ne' ? 'संरचना' : 'Damage'}</span>
-                  <h2>{lang === 'ne' ? infrastructure.title_ne || infrastructure.title_en : infrastructure.title_en}</h2>
-                </div>
-                <ul className="fl-fig-list fl-fig-wide">
-                  {infrastructure.items.map((item, i) => (
-                    <ValueRow key={i} item={item} lang={lang} />
-                  ))}
-                </ul>
-                {/* These are deliberately NOT swapped for BIPAD's live counts.
-                    BIPAD stores an unfilled loss record as zeros, and most of
-                    this corridor's incidents are still awaiting figures — so
-                    the live read says nought bridges destroyed where the
-                    reviewed record says eighty. Printing that here would not be
-                    fresher, it would be wrong. The entered-so-far figures sit
-                    in the left column, under their own caveat. */}
-                <ReviewedSource note="damage" />
-                <p className="fl-note">
-                  <Link href="/bhotekoshi-flood/damage">{t('fullGrading')} →</Link>
-                </p>
-              </>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* Personnel, air rescue and families — each group under its own total,
-          so army/police/APF are not read as extra casualties and evacuated
-          families are not mixed into the death toll. Tap a card for the split. */}
-      {responseCards.length > 0 && (
-        <section className="fl-sec">
-          <div className="fl-sec-head">
-            <span>{t('responseKicker')}</span>
-            <h2>{t('responseTitle')}</h2>
-          </div>
-          <p className="fl-note">{t('tapHint')}</p>
-          <div className="fl-figs">
-            {responseCards.map(b => (
-              <BreakdownCard key={b.id} breakdown={b} lang={lang} />
-            ))}
-          </div>
-          <ReviewedSource />
-        </section>
-      )}
-
-      {peopleCards.length > 0 && (
-        <section className="fl-sec">
-          <div className="fl-sec-head">
-            <span>{t('peopleKicker')}</span>
-            <h2>{t('peopleTitle')}</h2>
-          </div>
-          <p className="fl-note">{t('tapHint')}</p>
-          <div className="fl-figs">
-            {peopleCards.map(b => (
-              <BreakdownCard key={b.id} breakdown={b} lang={lang} />
-            ))}
-          </div>
-          {separateCards.length > 0 && (
-            <>
-              <h4 className="fl-minor">{t('countedSeparately')}</h4>
-              <div className="fl-figs">
-                {separateCards.map(b => (
-                  <BreakdownCard key={b.id} breakdown={b} lang={lang} />
-                ))}
-              </div>
-            </>
-          )}
-          <ReviewedSource />
-        </section>
-      )}
-
-      {/* What the public filed, on its own full-width row.
-          The portal counts reports rather than people, so its figures sit under
-          their own heading with the caveat attached, never mixed into the
-          figures above where a reader might sum across them. */}
-      {portalCards.length > 0 && portal && (
-        <section className="fl-sec">
-          <div className="fl-portal fl-portal-wide">
-                <div className="fl-sec-head">
-                  <span>{lang === 'ne' ? 'पोर्टल' : 'Portal'}</span>
-                  <h2>{t('portalTitle')}</h2>
-                </div>
-                <p className="fl-note">{t('portalIntro')}</p>
-
-                <div className="fl-figs">
-                  {portalCards.map(b => (
-                    <BreakdownCard key={b.id} breakdown={b} lang={lang} />
-                  ))}
-                </div>
-
-                <p className="fl-note">
-                  {t('portalRead')} {ageFrom(portal.fetchedAt, lang)}
-                  {' · '}
-                  <a href={portal.source.url} target="_blank" rel="noopener noreferrer">
-                    {portal.source.label} &#8599;
-                  </a>
-                </p>
-              </div>
-        </section>
-      )}
-
-      {/* Background and On the ground side-by-side in a grid */}
-      {(whatHappened || (sitrep.notes && sitrep.notes.length > 0)) && (
+      {showRest && (whatHappened || (sitrep.notes && sitrep.notes.length > 0)) && (
         <section className="fl-sec">
           <div className="fl-split">
             <div>
@@ -589,104 +918,6 @@ export default function FloodSummary({
         </section>
       )}
 
-      {nameLists?.lists && nameLists.lists.length > 0 && (
-        <section className="fl-sec">
-          <div className="fl-sec-head">
-            <span>{lang === 'ne' ? 'नामावली' : 'Lists'}</span>
-            <h2>{lang === 'ne' ? nameLists.title_ne || nameLists.title_en : nameLists.title_en}</h2>
-            <em>{nameLists.lists.length}</em>
-          </div>
-          <div className="fl-listcards">
-            {nameLists.lists.map(liveList).map(list => {
-              const inner = (
-                <>
-                  <dd>{list.value.toLocaleString()}</dd>
-                  <dt>
-                    {label(list, lang)}
-                    {list.live && <ScrapedDot lang={lang} />}
-                  </dt>
-                  <small>{t('people')}</small>
-                </>
-              );
-              return list.href ? (
-                <Link key={list.id} href={list.href} className="linked">
-                  {inner}
-                  <span className="fl-listcard-go">{t('seeList')} &rarr;</span>
-                </Link>
-              ) : (
-                <div key={list.id}>{inner}</div>
-              );
-            })}
-          </div>
-          <p className="fl-fig-warn">
-            <b>{t('doNotMerge')}</b>{' '}
-            {lang === 'ne' ? nameLists.do_not_merge_ne || nameLists.do_not_merge_en : nameLists.do_not_merge_en}
-          </p>
-          {/* Two datelines, because these rows do not share one: the NDRRMA
-              card is re-read every ten minutes, the rest move only on a
-              content edit. */}
-          {rescueSummary && (
-            <p className="fl-note">
-              {t('liveRead')} {ageFrom(rescueFetchedAt, lang)}
-              {' · '}
-              <a href="https://ndrrma.gov.np/np/rasuwa/rescue" target="_blank" rel="noopener noreferrer">
-                NDRRMA &#8599;
-              </a>
-            </p>
-          )}
-          <ReviewedSource />
-        </section>
-      )}
-
-      {missingFound && (
-        <section className="fl-sec">
-          <div className="fl-sec-head">
-            <span>{lang === 'ne' ? 'खोजी' : 'Search'}</span>
-            <h2>{lang === 'ne' ? missingFound.title_ne || missingFound.title_en : missingFound.title_en}</h2>
-          </div>
-          <div className="fl-split">
-            <div>
-              <h4 className="fl-minor">{t('missing')}</h4>
-              <ul className="fl-fig-list">
-                {[
-                  ...(missingFound.missing || []),
-                  ...portalRow('portal-lost', portal?.persons.lostOpen, T.portalOpenLost),
-                ].map(item => (
-                  <ValueRow key={item.id} item={item} lang={lang} />
-                ))}
-              </ul>
-            </div>
-            <div>
-              <h4 className="fl-minor">
-                {t('found')}
-                {missingFound.found_total ? ` · ${missingFound.found_total.toLocaleString()}` : ''}
-              </h4>
-              <ul className="fl-fig-list">
-                {[
-                  ...(missingFound.found || []).map(liveList),
-                  ...portalRow('portal-found', portal?.persons.found, T.portalFound),
-                ].map(item => (
-                  <ValueRow key={item.id} item={item} lang={lang} />
-                ))}
-              </ul>
-            </div>
-          </div>
-          <p className="fl-fig-warn">
-            <b>{t('doNotMerge')}</b>{' '}
-            {lang === 'ne' ? missingFound.do_not_merge_ne || missingFound.do_not_merge_en : missingFound.do_not_merge_en}
-          </p>
-          {portal && (
-            <p className="fl-note">
-              {t('liveRead')} {ageFrom(portal.fetchedAt, lang)}
-              {' · '}
-              <a href={portal.source.url} target="_blank" rel="noopener noreferrer">
-                {portal.source.label} &#8599;
-              </a>
-            </p>
-          )}
-          <ReviewedSource />
-        </section>
-      )}
     </>
   );
 }

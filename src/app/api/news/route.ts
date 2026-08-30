@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { cacheFor, noStore } from '@/lib/http-cache';
 import { proxyUrlFor } from '@/lib/news-media';
-import type { NewsItem, NewsResponse } from '@/types';
+import type { NewsBundleResponse, NewsItem, NewsResponse } from '@/types';
 import { errorMessage } from '@/types';
 
 /**
@@ -26,56 +26,80 @@ const NEWS_CACHE_TTL_MS = 4 * 60 * 1000;
 const NEWS_CACHE_TTL_S = NEWS_CACHE_TTL_MS / 1000;
 const newsCache = new Map<string, { data?: NewsResponse; pending?: Promise<NewsResponse>; at: number }>();
 
+/** Matches the dashboard panels so a bundle fill is enough for every rail. */
+const BUNDLE_TOPICS: Array<{ topic: string; limit: number; sourceCap: number }> = [
+  { topic: 'all', limit: 48, sourceCap: 12 },
+  { topic: 'earthquake', limit: 24, sourceCap: 8 },
+  { topic: 'flood', limit: 28, sourceCap: 8 },
+  { topic: 'weather', limit: 28, sourceCap: 8 },
+  { topic: 'wildfire', limit: 24, sourceCap: 8 },
+  { topic: 'airquality', limit: 24, sourceCap: 8 },
+  { topic: 'climate', limit: 24, sourceCap: 8 },
+  { topic: 'relief', limit: 28, sourceCap: 8 },
+];
+
+async function loadTopic(topic: string, window: string, limit: number, sourceCap: number): Promise<NewsResponse> {
+  const key = `${topic}|${window}|${limit}|${sourceCap}`;
+  const hit = newsCache.get(key);
+
+  if (hit && Date.now() - hit.at < NEWS_CACHE_TTL_MS && hit.data) {
+    return hit.data;
+  }
+
+  if (hit?.pending) {
+    return hit.pending;
+  }
+
+  const { fetchTopicNews } = await import('@/apis/sources/nepal-news.mjs');
+  const pending = fetchTopicNews({ topic, window, limit, sourceCap });
+  newsCache.set(key, { pending, at: 0 });
+  try {
+    const data = await pending;
+    newsCache.set(key, { data, at: Date.now() });
+    return data;
+  } catch (err) {
+    newsCache.delete(key);
+    throw err;
+  }
+}
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-    const topic = (searchParams.get('topic') || 'all').toLowerCase();
     const window = searchParams.get('window') || '24h';
-    const limit = Number(searchParams.get('limit')) || 30;
-    const sourceCap = Number(searchParams.get('sourceCap')) || 10;
 
-    const key = `${topic}|${window}|${limit}|${sourceCap}`;
-    const hit = newsCache.get(key);
-
-    if (hit && Date.now() - hit.at < NEWS_CACHE_TTL_MS && hit.data) {
-      const response = NextResponse.json(withSignedImages(hit.data));
-      response.headers.set('X-Atlas-Cache', 'hit');
+    if (searchParams.get('bundle') === '1') {
+      const entries = await Promise.all(
+        BUNDLE_TOPICS.map(async spec => {
+          const data = withSignedImages(await loadTopic(spec.topic, window, spec.limit, spec.sourceCap));
+          return [spec.topic, data] as const;
+        }),
+      );
+      const body: NewsBundleResponse = {
+        window,
+        timestamp: new Date().toISOString(),
+        topics: Object.fromEntries(entries),
+      };
+      const response = NextResponse.json(body);
+      response.headers.set('X-Atlas-Cache', 'bundle');
       return cacheFor(response, { edge: NEWS_CACHE_TTL_S });
     }
 
-    if (hit?.pending) {
-      try {
-        const data = await hit.pending;
-        return cacheFor(NextResponse.json(withSignedImages(data)), { edge: NEWS_CACHE_TTL_S });
-      } catch {
-        return noStore(NextResponse.json(
-          { error: 'News aggregation failed', topic, items: [] },
-          { status: 502 }
-        ));
-      }
-    }
+    const topic = (searchParams.get('topic') || 'all').toLowerCase();
+    const limit = Number(searchParams.get('limit')) || 30;
+    const sourceCap = Number(searchParams.get('sourceCap')) || 10;
 
-    const { fetchTopicNews } = await import('@/apis/sources/nepal-news.mjs');
-    const pending = fetchTopicNews({ topic, window, limit, sourceCap });
-    newsCache.set(key, { pending, at: 0 });
-
-    const data = await pending;
-    newsCache.set(key, { data, at: Date.now() });
-
-    const response = NextResponse.json(withSignedImages(data));
-    response.headers.set('X-Atlas-Cache', 'miss');
-    // The expensive one: fifteen feeds fanned out, nine seconds on a cold
-    // isolate. Four minutes at the edge is the difference between paying that
-    // once and paying it for every reader who opens the dashboard.
+    const data = withSignedImages(await loadTopic(topic, window, limit, sourceCap));
+    const response = NextResponse.json(data);
+    response.headers.set('X-Atlas-Cache', newsCache.get(`${topic}|${window}|${limit}|${sourceCap}`)?.at ? 'hit' : 'miss');
     return cacheFor(response, { edge: NEWS_CACHE_TTL_S });
   } catch (err) {
     const { searchParams } = new URL(req.url);
     const topic = (searchParams.get('topic') || 'all').toLowerCase();
-    newsCache.delete(`${topic}|${searchParams.get('window') || '24h'}|${searchParams.get('limit') || 30}|${searchParams.get('sourceCap') || 10}`);
     console.error('[Next.js News API] Failed:', errorMessage(err));
     return noStore(NextResponse.json(
-      { error: 'News aggregation failed', topic: topic, items: [], count: 0 },
-      { status: 502 }
+      { error: 'News aggregation failed', topic, items: [], count: 0 },
+      { status: 502 },
     ));
   }
 }

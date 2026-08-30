@@ -75,24 +75,28 @@ export default function FloodMediaView() {
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
+      const [newsRes, videoRes, galleryRes] = await Promise.all([
+        fetch('/api/news?topic=flood&window=48h&limit=40&sourceCap=8').catch(() => null),
+        fetch('/api/flood/videos').catch(() => null),
+        fetch('/api/flood/gallery').catch(() => null),
+      ]);
       try {
-        const res = await fetch('/api/news?topic=flood&window=48h&limit=40&sourceCap=8');
-        if (res.ok && !cancelled) {
-          const j = await res.json();
+        if (newsRes?.ok && !cancelled) {
+          const j = await newsRes.json();
           setNews(Array.isArray(j.items) ? j.items : []);
+        } else if (!cancelled) {
+          setNews([]);
         }
       } catch {
         if (!cancelled) setNews([]);
       }
       try {
-        const res = await fetch('/api/flood/videos');
-        if (res.ok && !cancelled) setVideoFeed(await res.json());
+        if (videoRes?.ok && !cancelled) setVideoFeed(await videoRes.json());
       } catch {
         /* the press section stands on its own */
       }
       try {
-        const res = await fetch('/api/flood/gallery');
-        if (res.ok && !cancelled) setGallery(await res.json());
+        if (galleryRes?.ok && !cancelled) setGallery(await galleryRes.json());
       } catch {
         /* the galleries are optional */
       }

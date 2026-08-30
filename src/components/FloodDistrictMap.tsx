@@ -67,6 +67,8 @@ interface Props {
   /** Kept for the ground-reports page, which only cares about photographs. */
   onPhotoSelect?: (id: string) => void;
   lang: 'en' | 'ne';
+  /** English district names to emphasise. Used by the /sandbox/ask map coupling. */
+  highlightDistricts?: string[];
 }
 
 const SEVERE = '#ff4d5c';
@@ -219,7 +221,24 @@ function clusterOverlays(pins: OverlayPin[], gap: number): OverlayStack[] {
   }));
 }
 
-export default function FloodDistrictMap({ points = [], photos = [], gauges = [], onSelect, onPhotoSelect, lang }: Props) {
+function stacksEqual(a: OverlayStack[], b: OverlayStack[]): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    const left = a[i];
+    const right = b[i];
+    if (
+      left.id !== right.id
+      || left.x !== right.x
+      || left.y !== right.y
+      || left.items.length !== right.items.length
+    ) {
+      return false;
+    }
+  }
+  return true;
+}
+
+export default function FloodDistrictMap({ points = [], photos = [], gauges = [], onSelect, onPhotoSelect, lang, highlightDistricts = [] }: Props) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const stageRef = useRef<HTMLDivElement | null>(null);
   const wrapRef = useRef<HTMLDivElement | null>(null);
@@ -265,6 +284,7 @@ export default function FloodDistrictMap({ points = [], photos = [], gauges = []
     const stage = stageRef.current;
     if (!canvas || !stage || !geo) return;
     const ne = lang === 'ne';
+    const highlight = new Set(highlightDistricts.map(n => n.trim().toLowerCase()).filter(Boolean));
 
     const draw = () => {
       const dpr = window.devicePixelRatio || 1;
@@ -310,7 +330,9 @@ export default function FloodDistrictMap({ points = [], photos = [], gauges = []
 
       const districtHits: Array<{ name: string; status: string; path: Path2D }> = [];
       for (const f of geo.features) {
-        const severe = f.properties.status === 'severe';
+        const named = `${f.properties.name_en || ''}`.toLowerCase();
+        const lit = highlight.has(named);
+        const severe = f.properties.status === 'severe' || lit;
         const path = new Path2D();
         for (const ring of ringsOf(f.geometry)) {
           ring.forEach(([lon, lat], i) => {
@@ -518,7 +540,7 @@ export default function FloodDistrictMap({ points = [], photos = [], gauges = []
 
       hitRef.current = hits;
       stageSizeRef.current = { w, h };
-      setStacks(stacks);
+      setStacks(prev => (stacksEqual(prev, stacks) ? prev : stacks));
     };
 
     drawRef.current = draw;
@@ -526,7 +548,7 @@ export default function FloodDistrictMap({ points = [], photos = [], gauges = []
     const ro = new ResizeObserver(draw);
     ro.observe(stage);
     return () => ro.disconnect();
-  }, [geo, points, photos, gauges, lang]);
+  }, [geo, points, photos, gauges, lang, highlightDistricts]);
 
   const applyView = (next: View, paintButtons = true) => {
     const stage = stageRef.current;

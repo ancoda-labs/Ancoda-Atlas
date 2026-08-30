@@ -15,8 +15,9 @@ import FloodOfficial from '@/app/bhotekoshi-flood/_components/FloodOfficial';
 import { useFloodLang } from '@/hooks/use-flood-lang';
 import { ageFrom } from '@/lib/relative-time';
 import FloodFooter from '@/components/FloodFooter';
+import { useFloodDesk } from '@/app/bhotekoshi-flood/_components/FloodDeskProvider';
 import { districtPinForText } from '@/apis/utils/flood-scope.mjs';
-import type { FloodDeskPayload, FloodPhoto, FloodPhotoFeed, NewsItem } from '@/types';
+import type { FloodPhoto, FloodPhotoFeed, NewsItem } from '@/types';
 import { DESK_POLL_MS, nextUpdateLabel, useTick } from '@/hooks/use-desk-refresh';
 
 /** A few kilometres of scatter so several stories in one district do not stack. */
@@ -86,7 +87,7 @@ const T = {
 
 export default function BhotekoshiFloodView() {
   const [lang, setLang] = useFloodLang();
-  const [data, setData] = useState<FloodDeskPayload | null>(null);
+  const { desk: data } = useFloodDesk();
   const [photoFeed, setPhotoFeed] = useState<FloodPhotoFeed | null>(null);
   const [newsItems, setNewsItems] = useState<NewsItem[] | null>(null);
   const [selection, setSelection] = useState<MapSelection | null>(null);
@@ -105,23 +106,21 @@ export default function BhotekoshiFloodView() {
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
+      const [photosRes, newsRes] = await Promise.all([
+        fetch('/api/flood/photos').catch(() => null),
+        fetch('/api/news?topic=flood&window=24h&limit=28&sourceCap=8').catch(() => null),
+      ]);
       try {
-        const res = await fetch('/api/flood');
-        if (res.ok && !cancelled) setData(await res.json());
-      } catch (err) {
-        console.error('[Flood overview] load failed', err);
-      }
-      try {
-        const res = await fetch('/api/flood/photos');
-        if (res.ok && !cancelled) setPhotoFeed(await res.json());
+        if (photosRes?.ok && !cancelled) setPhotoFeed(await photosRes.json());
       } catch {
         /* the map stands on its own without ground reports */
       }
       try {
-        const res = await fetch('/api/news?topic=flood&window=24h&limit=28&sourceCap=8');
-        if (res.ok && !cancelled) {
-          const j = await res.json();
+        if (newsRes?.ok && !cancelled) {
+          const j = await newsRes.json();
           setNewsItems(Array.isArray(j.items) ? j.items : []);
+        } else if (!cancelled) {
+          setNewsItems([]);
         }
       } catch {
         if (!cancelled) setNewsItems([]);
@@ -359,31 +358,44 @@ export default function BhotekoshiFloodView() {
           </div>
         </section>
 
-        {safety && (
-          <aside className="fl-standfirst" role="note">
-            <div>
-              <span style={{ display: 'block' }}>{t('safetyNotice')}</span>
-              <img
-                src="/images/nepal-police.png"
-                alt="Nepal Police"
-                style={{ height: '80px', width: 'auto', display: 'block', marginTop: '16px' }}
-              />
-            </div>
-            <p>{safety}</p>
-          </aside>
-        )}
-
-        {/* The summary of everything. */}
         {sitrep ? (
-          <FloodSummary
-            sitrep={sitrep}
-            lang={lang}
-            whatHappened={data?.whatHappened || null}
-            portal={data?.portal || null}
-            corridor={data?.corridor || null}
-            rescueSummary={data?.rescueSummary || null}
-            rescueFetchedAt={data?.rescueFetchedAt || null}
-          />
+          <>
+            <FloodSummary
+              section="chapters"
+              sitrep={sitrep}
+              lang={lang}
+              whatHappened={null}
+              portal={data?.portal || null}
+              corridor={data?.corridor || null}
+              rescueSummary={data?.rescueSummary || null}
+              rescueFetchedAt={data?.rescueFetchedAt || null}
+            />
+
+            {safety && (
+              <aside className="fl-standfirst" role="note">
+                <div>
+                  <span style={{ display: 'block' }}>{t('safetyNotice')}</span>
+                  <img
+                    src="/images/nepal-police.png"
+                    alt="Nepal Police"
+                    style={{ height: '80px', width: 'auto', display: 'block', marginTop: '16px' }}
+                  />
+                </div>
+                <p>{safety}</p>
+              </aside>
+            )}
+
+            <FloodSummary
+              section="rest"
+              sitrep={sitrep}
+              lang={lang}
+              whatHappened={data?.whatHappened || null}
+              portal={data?.portal || null}
+              corridor={data?.corridor || null}
+              rescueSummary={data?.rescueSummary || null}
+              rescueFetchedAt={data?.rescueFetchedAt || null}
+            />
+          </>
         ) : (
           <p className="fl-empty">{t('loading')}</p>
         )}

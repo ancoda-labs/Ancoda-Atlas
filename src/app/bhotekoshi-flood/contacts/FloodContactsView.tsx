@@ -5,9 +5,10 @@ import FloodShell from '@/components/FloodShell';
 import FloodWarehouses from '@/app/bhotekoshi-flood/_components/FloodWarehouses';
 import { useFloodLang } from '@/hooks/use-flood-lang';
 import { ageFrom } from '@/lib/relative-time';
-import type { BipadContact, BipadDistrictContacts, FloodDeskPayload, FloodDistrictContacts, FloodOfficialFeed } from '@/types';
+import type { BipadContact, BipadDistrictContacts, FloodDistrictContacts, FloodOfficialFeed } from '@/types';
 import { useDeskRefresh } from '@/hooks/use-desk-refresh';
 import { useJumpSection } from '@/hooks/use-jump-section';
+import { useFloodDesk } from '@/app/bhotekoshi-flood/_components/FloodDeskProvider';
 import {
   COLLAPSED_BUCKETS,
   normalizePhone,
@@ -53,7 +54,6 @@ const T = {
     en: 'District-level numbers are not published here yet. Atlas will not show an emergency number it has not checked against an official source — a wrong number costs someone the minutes they had. Use the national lines above, which are verified, or contact your District Administration Office directly.',
     ne: 'जिल्लास्तरीय नम्बर अझै यहाँ प्रकाशित गरिएको छैन। आधिकारिक स्रोतबाट नजाँचिएको आपतकालीन नम्बर एट्लसले देखाउँदैन — गलत नम्बरले संकटमा परेको मानिसको बहुमूल्य समय खेर जान्छ। माथिका प्रमाणित राष्ट्रिय नम्बर प्रयोग गर्नुहोस्, वा सिधै जिल्ला प्रशासन कार्यालयलाई सम्पर्क गर्नुहोस्।',
   },
-  loading: { en: 'Loading…', ne: 'लोड हुँदै…' },
   verifiedOn: { en: 'Numbers last checked', ne: 'नम्बर अन्तिम जाँचिएको' },
   source: { en: 'Source', ne: 'स्रोत' },
   portalTitle: { en: 'From the OPMCM rescue portal', ne: 'प्रधानमन्त्री कार्यालयको उद्धार पोर्टलबाट' },
@@ -72,6 +72,7 @@ const T = {
   read: { en: 'Read', ne: 'पढिएको' },
   distJump: { en: 'Jump to a district', ne: 'जिल्लामा जानुहोस्' },
   uniqueLines: { en: 'unique lines', ne: 'फरक नम्बर' },
+  loading: { en: 'Loading…', ne: 'लोड हुँदै…' },
 };
 
 const BUCKET: Record<ContactBucket, { en: string; ne: string }> = {
@@ -200,7 +201,7 @@ function DistrictDirectory({
 
 export default function FloodContactsView() {
   const [lang, setLang] = useFloodLang();
-  const [data, setData] = useState<FloodDeskPayload | null>(null);
+  const { desk: data } = useFloodDesk();
   // Three hundred rows, and only this page wants them, so they ride their own
   // route rather than the desk payload every page loads.
   const [official, setOfficial] = useState<FloodOfficialFeed<BipadDistrictContacts> | null>(null);
@@ -210,12 +211,6 @@ export default function FloodContactsView() {
   // Emergency numbers are the last thing that should go stale on an open tab.
   useDeskRefresh(
     React.useCallback(() => {
-      fetch('/api/flood')
-        .then(r => (r.ok ? r.json() : null))
-        .then(d => {
-          if (d) setData(d);
-        })
-        .catch(() => {});
       fetch('/api/flood/contacts')
         .then(r => (r.ok ? r.json() : null))
         .then(d => {
@@ -280,43 +275,37 @@ export default function FloodContactsView() {
           <h2>{t('national')}</h2>
         </div>
 
-        {!data ? (
-          <p className="fl-empty">{t('loading')}</p>
-        ) : (
+        <div className="fl-calls">
+          {primary.map(line => (
+            <a key={line.id} href={`tel:${line.number}`}>
+              <PhoneIcon />
+              <b>{line.number}</b>
+              <span>{label(line)}</span>
+              <em>{t('tapToCall')}</em>
+            </a>
+          ))}
+        </div>
+
+        {secondary.length > 0 && (
           <>
-            <div className="fl-calls">
-              {primary.map(line => (
+            <h4 className="fl-minor">{t('otherLines')}</h4>
+            <div className="fl-calls-more">
+              {secondary.map(line => (
                 <a key={line.id} href={`tel:${line.number}`}>
-                  <PhoneIcon />
                   <b>{line.number}</b>
                   <span>{label(line)}</span>
-                  <em>{t('tapToCall')}</em>
                 </a>
               ))}
             </div>
-
-            {secondary.length > 0 && (
-              <>
-                <h4 className="fl-minor">{t('otherLines')}</h4>
-                <div className="fl-calls-more">
-                  {secondary.map(line => (
-                    <a key={line.id} href={`tel:${line.number}`}>
-                      <b>{line.number}</b>
-                      <span>{label(line)}</span>
-                    </a>
-                  ))}
-                </div>
-              </>
-            )}
-
-            {data.helplines?.source_url && (
-              <p className="fl-note">
-                <a href={data.helplines.source_url} target="_blank" rel="noopener noreferrer">
-                  {t('source')} &#8599;
-                </a>
-              </p>
-            )}
           </>
+        )}
+
+        {data.helplines?.source_url && (
+          <p className="fl-note">
+            <a href={data.helplines.source_url} target="_blank" rel="noopener noreferrer">
+              {t('source')} &#8599;
+            </a>
+          </p>
         )}
       </section>
 

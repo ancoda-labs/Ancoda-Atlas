@@ -200,6 +200,13 @@ export interface NewsResponse {
   items: NewsItem[];
 }
 
+/** One dashboard open: every hazard panel, one round trip. */
+export interface NewsBundleResponse {
+  window: string;
+  timestamp: string;
+  topics: Record<string, NewsResponse>;
+}
+
 export interface NewsFeedItem {
   headline: string;
   source: string;

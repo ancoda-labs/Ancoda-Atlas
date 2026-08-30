@@ -8,6 +8,7 @@ import BhotekoshiFloodButton from '@/app/_components/BhotekoshiFloodButton';
 import FloodNewsTicker from '@/components/FloodNewsTicker';
 import type {
   HazardSnapshot,
+  NewsBundleResponse,
   NewsItem,
   WeatherAlert,
   FloodVideo,
@@ -313,9 +314,6 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
   useTick();
   const meta = D.meta || {};
 
-  // Boot sequence state
-  const [booting, setBooting] = useState(true);
-
   const [theme] = useAtlasTheme();
   const darkTheme = theme === 'dark';
   const [language, changeLanguage] = useFloodLang();
@@ -357,11 +355,6 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
     if (cachedPerf) {
       document.body.classList.add('low-perf');
     }
-  }, []);
-
-  // Run boot sequence logs on mount
-  useEffect(() => {
-    setTimeout(() => setBooting(false), 3500);
   }, []);
 
   // Subscribe to live events via SSE
@@ -408,40 +401,48 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
     }, []),
   );
 
-  // Fetch live hazard news on load & newsWindow changes
+  // One bundled payload. Eight topic routes on a high-RTT radio each pay
+  // 200–400ms before any RSS work starts.
   const fetchAllNews = async () => {
-    NEWS_PANELS.forEach(async (cfg) => {
-      setNewsCache((prev) => ({
-        ...prev,
-        [cfg.id]: { ...prev[cfg.id], status: prev[cfg.id].items.length ? 'stale' : 'loading' },
-      }));
-
-      try {
-        const url = `/api/news?topic=${cfg.topic}&window=${newsWindow}&limit=${cfg.limit}&sourceCap=${cfg.sourceCap}`;
-        const res = await fetch(url);
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        const data = (await res.json()) as { items?: NewsItem[] };
-        const items: NewsItem[] = Array.isArray(data.items) ? data.items : [];
-
-        let sortedItems = items;
-        if (cfg.priority) {
-          sortedItems = [...items].sort(
-            (a, b) => priorityScore(b) - priorityScore(a) || new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime()
-          );
-        }
-
-        setNewsCache((prev) => ({
-          ...prev,
-          [cfg.id]: { items: sortedItems, status: 'live' },
-        }));
-      } catch (err) {
-        console.error(`[News load failed for ${cfg.id}]:`, errorMessage(err));
-        setNewsCache((prev) => ({
-          ...prev,
-          [cfg.id]: { ...prev[cfg.id], status: prev[cfg.id].items.length ? 'stale' : 'error' },
-        }));
+    setNewsCache(prev => {
+      const next = { ...prev };
+      for (const cfg of NEWS_PANELS) {
+        next[cfg.id] = { ...next[cfg.id], status: next[cfg.id].items.length ? 'stale' : 'loading' };
       }
+      return next;
     });
+
+    try {
+      const res = await fetch(`/api/news?bundle=1&window=${newsWindow}`);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const bundle = (await res.json()) as NewsBundleResponse;
+      const topics = bundle.topics || {};
+
+      setNewsCache(prev => {
+        const next = { ...prev };
+        for (const cfg of NEWS_PANELS) {
+          const items: NewsItem[] = Array.isArray(topics[cfg.topic]?.items) ? topics[cfg.topic].items : [];
+          const sortedItems = cfg.priority
+            ? [...items].sort(
+                (a, b) =>
+                  priorityScore(b) - priorityScore(a) ||
+                  new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime(),
+              )
+            : items;
+          next[cfg.id] = { items: sortedItems, status: 'live' };
+        }
+        return next;
+      });
+    } catch (err) {
+      console.error('[News bundle load failed]:', errorMessage(err));
+      setNewsCache(prev => {
+        const next = { ...prev };
+        for (const cfg of NEWS_PANELS) {
+          next[cfg.id] = { ...next[cfg.id], status: next[cfg.id].items.length ? 'stale' : 'error' };
+        }
+        return next;
+      });
+    }
   };
 
   useEffect(() => {
@@ -568,16 +569,6 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
     alertLevel === 'CRITICAL' ? 'ACT NOW'
     : alertLevel === 'ELEVATED' ? 'PAY ATTENTION'
     : 'NO MAJOR SIGNALS';
-
-  if (booting) {
-    return (
-      <div id="boot" suppressHydrationWarning>
-        <div className="logo-ring" suppressHydrationWarning>
-          <span className="logo-text">ATLAS</span>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div id="main" className="p-3" lang={language} suppressHydrationWarning>

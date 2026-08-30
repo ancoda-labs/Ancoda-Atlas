@@ -55,6 +55,24 @@ declare module '*/lib/llm/index.mjs' {
   export function createLLMProvider(cfg: AtlasConfig['llm']): LLMProviderLike | null;
 }
 
+declare module '*/lib/llm/tarka.mjs' {
+  export class TarkaProvider {
+    constructor(config: { apiKey?: string | null; model?: string | null; baseUrl?: string | null });
+    name: string;
+    model: string | null;
+    get isConfigured(): boolean;
+    complete(
+      systemPrompt: string,
+      userMessage: string,
+      opts?: { maxTokens?: number; timeout?: number; json?: boolean },
+    ): Promise<{
+      text: string;
+      usage: { inputTokens: number; outputTokens: number };
+      model: string;
+    }>;
+  }
+}
+
 declare module '*/lib/llm/ideas.mjs' {
   import type { HazardRead, HazardSnapshot, LLMProviderLike, SweepDelta } from '@/types';
   export function generateLLMIdeas(

@@ -7,11 +7,11 @@ import FloodReportedTiles from '@/app/bhotekoshi-flood/_components/FloodReported
 import { useFloodLang } from '@/hooks/use-flood-lang';
 import { ageFrom } from '@/lib/relative-time';
 import { DESK_POLL_MS } from '@/hooks/use-desk-refresh';
+import { useFloodDesk } from '@/app/bhotekoshi-flood/_components/FloodDeskProvider';
 import type {
   BipadAlert,
   BipadIncident,
   CorridorIncidents,
-  FloodDeskPayload,
   FloodOfficialFeed,
   HelpRequest,
   PersonMapPoint,
@@ -123,8 +123,8 @@ function sourceLabel(source: string | null, lang: 'en' | 'ne'): string {
 
 export default function FloodSituationView() {
   const [lang, setLang] = useFloodLang();
+  const { desk } = useFloodDesk();
   const [data, setData] = useState<Payload | null>(null);
-  const [desk, setDesk] = useState<FloodDeskPayload | null>(null);
   const t = (key: keyof typeof T) => T[key][lang];
 
   useEffect(() => {
@@ -137,19 +137,7 @@ export default function FloodSituationView() {
         })
         .catch(() => {});
     load();
-    // The gauge panel comes from the main desk payload, which is cached separately.
-    const loadDesk = () =>
-      fetch('/api/flood')
-        .then(r => (r.ok ? r.json() : null))
-        .then(d => {
-          if (!cancelled && d) setDesk(d);
-        })
-        .catch(() => {});
-    loadDesk();
-    const id = setInterval(() => {
-      load();
-      loadDesk();
-    }, DESK_POLL_MS);
+    const id = setInterval(load, DESK_POLL_MS);
     return () => {
       cancelled = true;
       clearInterval(id);
