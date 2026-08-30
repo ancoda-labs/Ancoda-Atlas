@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getFloodStore } from '@/lib/flood-cron';
 import { loadFloodContent } from '@/lib/flood';
+import { mergeSitrep } from '@/lib/sitrep-merge';
 import { cacheFor, noStore } from '@/lib/http-cache';
 import type {
   BipadAlert,
@@ -22,7 +23,8 @@ export const dynamic = 'force-dynamic';
 // register is filled in over hours and days, and an unfilled loss record is
 // stored as zeros — so the totals here describe what has been entered, and
 // carry the count of incidents still awaiting figures alongside them. The
-// authoritative toll lives in reviewed content, sourced to NDRRMA and Police.
+// corridor death toll is the reviewed sitrep with a live bulletin overlay when
+// that scrape's district split adds up — BIPAD is not that number.
 
 const CACHE_TTL_MS = 3 * 60 * 1000;
 const CACHE_TTL_S = CACHE_TTL_MS / 1000;
@@ -35,7 +37,7 @@ interface SituationPayload {
   personPoints: FloodOfficialFeed<PersonMapPoint> | null;
   /** The portal's newest filings — help asked for, and help offered. */
   latest: PortalActivity | null;
-  /** Reviewed NDRRMA / MoHA figures for the tile grid — not a BIPAD scrape. */
+  /** Reviewed sitrep with the live bulletin overlay when that scrape succeeded. */
   sitrep: SitrepContent | null;
   generatedAt: string;
 }
@@ -61,7 +63,7 @@ async function build(since: string): Promise<SituationPayload> {
   const personPoints = pointFeed
     ? { items: pointFeed.points, error: pointFeed.error, source: pointFeed.source, fetchedAt: pointFeed.fetchedAt }
     : null;
-  const sitrep = loadFloodContent().sitrep;
+  const sitrep = mergeSitrep(loadFloodContent().sitrep, getFloodStore().sitrep);
   return { corridor, alerts, helpRequests, personPoints, latest, sitrep, generatedAt: new Date().toISOString() };
 }
 
@@ -71,7 +73,7 @@ export async function GET(req: NextRequest) {
 
   // The refresher covers the default window; an explicit `since` still fetches.
   const store = getFloodStore();
-  const sitrep = loadFloodContent().sitrep;
+  const sitrep = mergeSitrep(loadFloodContent().sitrep, store.sitrep);
   if (store.corridor && since === EVENT_START) {
     const res = NextResponse.json({
       corridor: store.corridor,
@@ -124,7 +126,7 @@ export async function GET(req: NextRequest) {
         helpRequests: null,
         personPoints: null,
         latest: null,
-        sitrep: loadFloodContent().sitrep,
+        sitrep: mergeSitrep(loadFloodContent().sitrep, getFloodStore().sitrep),
         generatedAt: new Date().toISOString(),
       },
       { status: 200 },
