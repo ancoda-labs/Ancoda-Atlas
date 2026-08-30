@@ -121,5 +121,5 @@
       "url": "https://www.dhm.gov.np/"
     }
   ],
-  "_comment_status": "Point `status` drives how the map draws it. 'entry' = where the flood crossed into Nepal. 'confirmed' = the water is confirmed to have reached here. 'estimated' = downstream reach that is projected or at risk, drawn dashed and labelled as an estimate — never as an observation. Downstream 'confirmed' points below Devghat are justified by the Nepal Police district death toll in sitrep.json (Chitwan 178, Nawalparasi East 110), which cannot be true unless the water arrived. Do not promote a point to 'confirmed' without that kind of basis."
+  "_comment_status": "Point `status` drives how the map draws it. 'entry' = where the flood crossed into Nepal. 'confirmed' = the water is confirmed to have reached here. 'estimated' = downstream reach that is projected or at risk, drawn dashed and labelled as an estimate — never as an observation. Downstream 'confirmed' points below Devghat are justified by the Nepal Police district death toll in sitrep.json (Chitwan 264, Nawalparasi East 194, Nawalparasi West 120 as of 14 Bhadra 15:00), which cannot be true unless the water arrived. Do not promote a point to 'confirmed' without that kind of basis."
 }

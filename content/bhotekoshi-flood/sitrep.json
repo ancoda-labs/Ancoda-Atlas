@@ -1,17 +1,19 @@
 {
   "id": "sitrep",
-  "_comment": "Figures for the Rasuwa-Bhotekoshi flood, from NDRRMA / Ministry of Home Affairs, 14 Bhadra 13:00. Compiled from that government statement as published on the Rasuwa flood bulletin (nirajbhusal.github.io/rasuwa-flood-bulletin) — the bulletin is someone else's aggregation; the government statement is the source. These are reviewed content and are served exactly as written - there is no longer a live scrape laying newer figures over them, so a stale number here is a stale number on the page. The overview also shows live government figures beside this grid (BIPAD corridor incidents, NDRRMA rescued-persons totals, OPMCM portal counters); those come straight from the portals and are never merged into these numbers. Two rules govern edits. (1) Never sum across groups that the source keeps apart - the `exclusive` flags and `do_not_merge` notes exist because several of these counts overlap, and adding them would invent casualties. (2) Every breakdown must sum to its own stated total; lib/flood.ts re-adds them at load and the page shows a warning if either stops reconciling.",
-  "as_of": "2026-08-30T13:00:00+05:45",
-  "as_of_label_en": "14 Bhadra, 13:00 (NDRRMA / MoHA)",
-  "as_of_label_ne": "१४ भदौ, १३:०० (एनडीआरआरएमए / गृह)",
+  "_comment": "Figures for the Rasuwa-Bhotekoshi flood. Deaths are Nepal Police, 14 Bhadra 15:00, as published by Nepal News (district split 264+194+120+58+52+50+37+13 = 788). Uncontacted, injured, deployed and the NDRRMA rescued graphic remain the NDRRMA / MoHA 14 Bhadra 13:00 statement. The Rasuwa flood bulletin is someone else's aggregation of earlier graphics — do not copy it over a newer police total. These are reviewed content and are served exactly as written - there is no longer a live scrape laying newer figures over them, so a stale number here is a stale number on the page. The overview also shows live government figures beside this grid (BIPAD corridor incidents, NDRRMA rescued-persons totals, OPMCM portal counters); those come straight from the portals and are never merged into these numbers. Two rules govern edits. (1) Never sum across groups that the source keeps apart - the `exclusive` flags and `do_not_merge` notes exist because several of these counts overlap, and adding them would invent casualties. (2) Every breakdown must sum to its own stated total; lib/flood.ts re-adds them at load and the page shows a warning if either stops reconciling.",
+  "as_of": "2026-08-30T15:00:00+05:45",
+  "as_of_label_en": "14 Bhadra, 15:00 (Nepal Police deaths; NDRRMA missing)",
+  "as_of_label_ne": "१४ भदौ, १५:०० (नेपाल प्रहरी मृत्यु; एनडीआरआरएमए सम्पर्कविहीन)",
   "sources": [
+    { "label": "Nepal Police via Nepal News (14 Bhadra 15:00)", "url": "https://english.nepalnews.com/s/nation/bhote-koshi-flood-death-toll-reaches-788/" },
+    { "label": "Nepal Police via Onlinekhabar (14 Bhadra 15:00)", "url": "https://www.onlinekhabar.com/2026/08/2007105/rasuwa-flood-788-deaths-confirmed-so-far" },
     { "label": "NDRRMA / MoHA", "url": "https://ndrrma.gov.np/np/rasuwa" },
     { "label": "NDRRMA rescued-persons register", "url": "https://ndrrma.gov.np/np/rasuwa/rescue" },
     { "label": "Rasuwa flood bulletin (compilation)", "url": "https://nirajbhusal.github.io/rasuwa-flood-bulletin/" }
   ],
 
   "headline": [
-    { "id": "deaths", "value": 752, "tone": "critical", "label_en": "Deaths", "label_ne": "मृत्यु", "source": "NDRRMA / MoHA" },
+    { "id": "deaths", "value": 788, "tone": "critical", "label_en": "Deaths", "label_ne": "मृत्यु", "source": "Nepal Police" },
     { "id": "injured", "value": 239, "tone": "warning", "label_en": "Injured", "label_ne": "घाइते", "source": "NDRRMA / MoHA" },
     { "id": "uncontacted", "value": 2502, "tone": "critical", "label_en": "Uncontacted", "label_ne": "सम्पर्कविहीन", "source": "NDRRMA / MoHA" },
     { "id": "heli", "value": 1976, "tone": "positive", "label_en": "Rescued by air", "label_ne": "हवाई उद्धार", "source": "SitRep-6" },
@@ -21,20 +23,20 @@
   "breakdowns": [
     {
       "id": "deaths",
-      "total": 752,
+      "total": 788,
       "title_en": "Deaths",
       "title_ne": "मृत्यु",
       "tone": "critical",
-      "caption_en": "NDRRMA / MoHA, 14 Bhadra 13:00, by district",
-      "caption_ne": "एनडीआरआरएमए / गृह, १४ भदौ १३:००, जिल्लाअनुसार",
+      "caption_en": "Nepal Police, 14 Bhadra 15:00, by district. Earlier NDRRMA 13:00 was 752; 09:00 was 734.",
+      "caption_ne": "नेपाल प्रहरी, १४ भदौ १५:००, जिल्लाअनुसार। अघिल्लो एनडीआरआरएमए १३:०० मा ७५२; ०९:०० मा ७३४।",
       "items": [
-        { "label_en": "Chitwan", "label_ne": "चितवन", "value": 259 },
-        { "label_en": "Nawalparasi East", "label_ne": "नवलपरासी पूर्व", "value": 184 },
-        { "label_en": "Nawalparasi West", "label_ne": "नवलपरासी पश्चिम", "value": 100 },
+        { "label_en": "Chitwan", "label_ne": "चितवन", "value": 264 },
+        { "label_en": "Nawalparasi East", "label_ne": "नवलपरासी पूर्व", "value": 194 },
+        { "label_en": "Nawalparasi West", "label_ne": "नवलपरासी पश्चिम", "value": 120 },
         { "label_en": "Gorkha", "label_ne": "गोरखा", "value": 58 },
         { "label_en": "Nuwakot", "label_ne": "नुवाकोट", "value": 52 },
         { "label_en": "Dhading", "label_ne": "धादिङ", "value": 50 },
-        { "label_en": "Tanahun", "label_ne": "तनहुँ", "value": 36 },
+        { "label_en": "Tanahun", "label_ne": "तनहुँ", "value": 37 },
         { "label_en": "Rasuwa", "label_ne": "रसुवा", "value": 13 }
       ]
     },
