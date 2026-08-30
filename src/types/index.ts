@@ -1026,7 +1026,9 @@ export interface CorridorTotals {
   missing: number;
   injured: number;
   affected: number;
+  familiesAffected: number;
   familiesEvacuated: number;
+  familiesRelocated: number;
   housesDestroyed: number;
   bridgesDestroyed: number;
   roadsDestroyed: number;
@@ -1087,6 +1089,8 @@ export interface SitrepValue extends Bilingual<'label'>, Bilingual<'note'>, Bili
    * what stops a reader, or a later edit, from adding it in.
    */
   exclusive?: boolean;
+  /** True when a scrape currently supplies this figure. Shown as a pulse, not the word "live". */
+  live?: boolean;
 }
 
 export interface SitrepHeadline extends Bilingual<'label'>, Bilingual<'unit'> {
@@ -1095,6 +1099,8 @@ export interface SitrepHeadline extends Bilingual<'label'>, Bilingual<'unit'> {
   suffix?: string;
   tone: 'critical' | 'warning' | 'positive';
   source: string;
+  /** True when the Rasuwa flood bulletin scrape currently overlays this tile. */
+  live?: boolean;
 }
 
 /**
@@ -1127,6 +1133,8 @@ export interface SitrepBreakdown
    * reconciliation check must not treat a difference as an error.
    */
   no_total_check?: boolean;
+  /** True when this group currently comes from the bulletin scrape. */
+  live?: boolean;
 }
 
 export interface SitrepNote extends Bilingual<'title'>, Bilingual<'body'> {
@@ -1138,6 +1146,8 @@ export interface SitrepNameList extends Bilingual<'label'> {
   value: number;
   /** Set when Atlas holds the actual names, so the card can link through. */
   href?: string;
+  /** True when a scrape currently supplies this row. */
+  live?: boolean;
 }
 
 /** A breakdown whose parts stopped adding up to its stated total. */

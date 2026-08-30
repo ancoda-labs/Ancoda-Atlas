@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { ageFrom } from '@/lib/relative-time';
+import { useTick } from '@/hooks/use-desk-refresh';
 import type { Lang } from '@/hooks/use-flood-lang';
 import type { CorridorIncidents, SitrepContent, SitrepHeadline, SitrepValue } from '@/types';
 import sitrepJson from '../../../../content/bhotekoshi-flood/sitrep.json';
@@ -12,10 +13,13 @@ import sitrepJson from '../../../../content/bhotekoshi-flood/sitrep.json';
 // have a filled loss record, how many are still waiting, families evacuated.
 // That register is days behind the national toll — it stores blanks as zeros —
 // so deaths, uncontacted, injured, air rescue, deployed, houses and bridges are
-// the reviewed sitrep with a live bulletin overlay when that scrape's parts add
+// the reviewed sitrep with a bulletin overlay when that scrape's parts add
 // up. Deaths never go down. BIPAD's
 // entered-so-far count is printed under those tiles so the lag stays visible.
 // The two sources are never added together.
+//
+// The heading carries last-update, not a LIVE stamp. A pulse on a tile means
+// that figure currently comes from a scrape; houses and bridges never get one.
 
 const bundledSitrep = sitrepJson as SitrepContent;
 
@@ -30,14 +34,22 @@ const T = {
   heli: { en: 'Rescued by air', ne: 'हवाई उद्धार' },
   deployed: { en: 'Personnel deployed', ne: 'परिचालित जनशक्ति' },
   evacuated: { en: 'Families evacuated', ne: 'स्थानान्तरित परिवार' },
+  affectedFamilies: { en: 'Families affected', ne: 'प्रभावित परिवार' },
+  relocated: { en: 'Families relocated', ne: 'पुनर्स्थापित परिवार' },
   houses: { en: 'Houses destroyed', ne: 'भत्किएका घर' },
   bridges: { en: 'Bridges destroyed', ne: 'भत्किएका पुल' },
   bipadEntered: { en: 'BIPAD register', ne: 'बिपद् अभिलेख' },
   read: { en: 'Read', ne: 'पढिएको' },
+  updated: { en: 'Updated', ne: 'अद्यावधिक' },
   asOf: { en: 'Reviewed as of', ne: 'जाँचिएको, मिति' },
+  scraped: { en: 'Updates automatically', ne: 'स्वतः अद्यावधिक' },
   caveat: {
-    en: 'Incident counts and families evacuated are BIPAD’s live corridor register — scraping continues. Deaths, uncontacted, injured, air rescue and deployed staff are reviewed figures with a live overlay from the Rasuwa flood bulletin when that scrape’s parts add up. Deaths never go down. Houses and bridges are NDRRMA / Copernicus. Do not add the two together.',
-    ne: 'दर्ता घटना र स्थानान्तरित परिवार बिपद्को प्रत्यक्ष करिडोर अभिलेख हुन् — स्क्रेप जारी छ। मृत्यु, सम्पर्कविहीन, घाइते, हवाई उद्धार र जनशक्ति जाँचिएका तथ्यांक हुन्, रसुवा बाढी बुलेटिनको प्रत्यक्ष ओभरलेसहित जब भागहरू जोडिन्छन्। मृत्यु घट्दैन। घर र पुल एनडीआरआरएमए / कोपर्निकसका हुन्। दुईथरी जोड्नुहोस् नहोस्।',
+    en: 'Incident counts and families come from BIPAD’s corridor register and refresh on the desk cycle. Deaths, uncontacted, injured, air rescue and deployed staff are reviewed figures, overlaid from the Rasuwa flood bulletin when that scrape’s parts add up. Deaths never go down. Houses and bridges are NDRRMA / Copernicus. Do not add the two together.',
+    ne: 'दर्ता घटना र परिवार बिपद्को करिडोर अभिलेख हुन् र डेस्क चक्रमा ताजा हुन्छन्। मृत्यु, सम्पर्कविहीन, घाइते, हवाई उद्धार र जनशक्ति जाँचिएका तथ्यांक हुन्, रसुवा बाढी बुलेटिनबाट ओभरले हुन्छ जब भागहरू जोडिन्छन्। मृत्यु घट्दैन। घर र पुल एनडीआरआरएमए / कोपर्निकसका हुन्। दुईथरी जोड्नुहोस् नहोस्।',
+  },
+  caveatHeadline: {
+    en: 'Incident counts and families come from BIPAD’s corridor register and refresh on the desk cycle. Deaths, uncontacted and injured are reviewed figures, overlaid from the Rasuwa flood bulletin when that scrape’s parts add up. Deaths never go down. Personnel, air rescue and damage sit in their own sections. Do not add the register and the official toll together.',
+    ne: 'दर्ता घटना र परिवार बिपद्को करिडोर अभिलेख हुन् र डेस्क चक्रमा ताजा हुन्छन्। मृत्यु, सम्पर्कविहीन र घाइते जाँचिएका तथ्यांक हुन्, रसुवा बाढी बुलेटिनबाट ओभरले हुन्छ जब भागहरू जोडिन्छन्। मृत्यु घट्दैन। जनशक्ति, हवाई उद्धार र क्षति आ-आफ्नै खण्डमा छन्। अभिलेख र आधिकारिक क्षति नजोड्नुहोस्।',
   },
 };
 
@@ -45,9 +57,8 @@ function headline(sitrep: SitrepContent | null | undefined, id: string): SitrepH
   return (sitrep?.headline || []).find(h => h.id === id);
 }
 
-function breakdownTotal(sitrep: SitrepContent | null | undefined, id: string): number | undefined {
-  const row = (sitrep?.breakdowns || []).find(b => b.id === id);
-  return row?.total;
+function breakdownRow(sitrep: SitrepContent | null | undefined, id: string) {
+  return (sitrep?.breakdowns || []).find(b => b.id === id);
 }
 
 function infra(sitrep: SitrepContent | null | undefined, id: string, en: string): SitrepValue | undefined {
@@ -61,13 +72,40 @@ function reviewed(
 ): SitrepHeadline | undefined {
   const fromHeadline = headline(sitrep, headlineId);
   if (fromHeadline) return fromHeadline;
-  const total = breakdownId ? breakdownTotal(sitrep, breakdownId) : undefined;
-  if (total == null) return undefined;
-  return { id: headlineId, value: total, tone: 'warning', source: '', label_en: '', label_ne: '' };
+  const row = breakdownId ? breakdownRow(sitrep, breakdownId) : undefined;
+  if (row?.total == null) return undefined;
+  return {
+    id: headlineId,
+    value: row.total,
+    tone: 'warning',
+    source: '',
+    label_en: '',
+    label_ne: '',
+    live: row.live,
+  };
 }
 
 function n(value: number | null | undefined, suffix?: string): string {
   return `${(value ?? 0).toLocaleString()}${suffix || ''}`;
+}
+
+function newestIso(...candidates: Array<string | null | undefined>): string | null {
+  let best: string | null = null;
+  let bestMs = -Infinity;
+  for (const iso of candidates) {
+    if (!iso) continue;
+    const ms = new Date(iso).getTime();
+    if (Number.isNaN(ms) || ms <= bestMs) continue;
+    best = iso;
+    bestMs = ms;
+  }
+  return best;
+}
+
+/** A pulse, not the word "live" — only on figures a scrape currently supplies. */
+export function ScrapedDot({ lang }: { lang: Lang }) {
+  const label = lang === 'ne' ? T.scraped.ne : T.scraped.en;
+  return <i className="fl-scraped-dot" title={label} aria-label={label} />;
 }
 
 function BipadUnder({ value, lang }: { value: number | null | undefined; lang: Lang }) {
@@ -79,21 +117,56 @@ function BipadUnder({ value, lang }: { value: number | null | undefined; lang: L
   );
 }
 
+function Tile({
+  value,
+  label,
+  tone,
+  scraped,
+  lang,
+  children,
+}: {
+  value: string;
+  label: string;
+  tone?: string;
+  scraped?: boolean;
+  lang: Lang;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div className={[tone ? `t-${tone}` : '', scraped ? 'scraped' : ''].filter(Boolean).join(' ') || undefined}>
+      <dd>
+        {value}
+        {scraped && <ScrapedDot lang={lang} />}
+      </dd>
+      <dt>{label}</dt>
+      {children}
+    </div>
+  );
+}
+
 export default function FloodReportedTiles({
   lang,
   corridor,
   sitrep,
   showHeading = true,
+  scope = 'all',
 }: {
   lang: Lang;
   corridor?: CorridorIncidents | null;
   sitrep?: SitrepContent | null;
   showHeading?: boolean;
+  /**
+   * `headline` is the overview scan: incidents, the official toll, families.
+   * Response splits and infrastructure live in their own sections there.
+   * `all` keeps the situation-page register, which still prints every tile.
+   */
+  scope?: 'all' | 'headline';
 }) {
+  useTick();
   const t = (key: keyof typeof T) => T[key][lang];
   const totals = corridor?.totals ?? null;
   // Bundled sitrep is the fallback so the bulletin toll is on the page even
-  // before the live corridor scrape answers. Reviewed figures win; BIPAD
+  // before the corridor scrape answers. Reviewed figures win; BIPAD
   // zeros are never the headline number.
   const figures = sitrep || bundledSitrep;
   const deaths = reviewed(figures, 'deaths', 'deaths');
@@ -103,6 +176,13 @@ export default function FloodReportedTiles({
   const deployed = reviewed(figures, 'deployed', 'deployed');
   const houses = infra(figures, 'houses', 'Houses destroyed')?.value;
   const bridges = infra(figures, 'bridges', 'Bridges')?.value;
+  const lastAt = newestIso(corridor?.fetchedAt, figures.as_of);
+  const lastLabel = lastAt
+    ? ageFrom(lastAt, lang)
+    : (lang === 'ne' ? figures.as_of_label_ne || figures.as_of_label_en : figures.as_of_label_en) || '—';
+
+  const showResponse = scope === 'all';
+  const showDamage = scope === 'all';
 
   if (!totals && deaths == null) return null;
 
@@ -110,7 +190,9 @@ export default function FloodReportedTiles({
     <>
       {showHeading && (
         <div className="fl-sec-head">
-          <span>{lang === 'ne' ? 'प्रत्यक्ष' : 'Live'}</span>
+          <span className="fl-updated">
+            {t('updated')} {lastLabel}
+          </span>
           <h2>{t('title')}</h2>
         </div>
       )}
@@ -118,72 +200,70 @@ export default function FloodReportedTiles({
       <div className="fl-tiles">
         {totals && (
           <>
-            <div>
-              <dd>{n(totals.incidentCount)}</dd>
-              <dt>{t('incidents')}</dt>
-            </div>
-            <div>
-              <dd>{n(totals.incidentsWithFigures)}</dd>
-              <dt>{t('withFigures')}</dt>
-            </div>
-            <div className="t-warning">
-              <dd>{n(totals.incidentsAwaitingFigures)}</dd>
-              <dt>{t('awaiting')}</dt>
-            </div>
+            <Tile value={n(totals.incidentCount)} label={t('incidents')} scraped lang={lang} />
+            <Tile value={n(totals.incidentsWithFigures)} label={t('withFigures')} scraped lang={lang} />
+            <Tile
+              value={n(totals.incidentsAwaitingFigures)}
+              label={t('awaiting')}
+              tone="warning"
+              scraped
+              lang={lang}
+            />
           </>
         )}
         {deaths != null && (
-          <div className={`t-${deaths.tone}`}>
-            <dd>{n(deaths.value)}</dd>
-            <dt>{t('deaths')}</dt>
+          <Tile value={n(deaths.value)} label={t('deaths')} tone={deaths.tone} scraped={deaths.live} lang={lang}>
             <BipadUnder value={totals?.deaths} lang={lang} />
-          </div>
+          </Tile>
         )}
         {missing != null && (
-          <div className={`t-${missing.tone}`}>
-            <dd>{n(missing.value)}</dd>
-            <dt>{t('missing')}</dt>
+          <Tile value={n(missing.value)} label={t('missing')} tone={missing.tone} scraped={missing.live} lang={lang}>
             <BipadUnder value={totals?.missing} lang={lang} />
-          </div>
+          </Tile>
         )}
         {injured != null && (
-          <div className={`t-${injured.tone}`}>
-            <dd>{n(injured.value)}</dd>
-            <dt>{t('injured')}</dt>
+          <Tile value={n(injured.value)} label={t('injured')} tone={injured.tone} scraped={injured.live} lang={lang}>
             <BipadUnder value={totals?.injured} lang={lang} />
-          </div>
-        )}
-        {heli != null && (
-          <div className={`t-${heli.tone}`}>
-            <dd>{n(heli.value, heli.suffix)}</dd>
-            <dt>{t('heli')}</dt>
-          </div>
-        )}
-        {deployed != null && (
-          <div className={`t-${deployed.tone}`}>
-            <dd>{n(deployed.value, deployed.suffix)}</dd>
-            <dt>{t('deployed')}</dt>
-          </div>
+          </Tile>
         )}
         {totals && (
-          <div>
-            <dd>{n(totals.familiesEvacuated)}</dd>
-            <dt>{t('evacuated')}</dt>
-          </div>
+          <>
+            <Tile value={n(totals.familiesEvacuated)} label={t('evacuated')} scraped lang={lang} />
+            {(totals.familiesAffected ?? 0) > 0 && (
+              <Tile value={n(totals.familiesAffected)} label={t('affectedFamilies')} scraped lang={lang} />
+            )}
+            {(totals.familiesRelocated ?? 0) > 0 && (
+              <Tile value={n(totals.familiesRelocated)} label={t('relocated')} scraped lang={lang} />
+            )}
+          </>
         )}
-        {houses != null && (
-          <div>
-            <dd>{n(houses)}</dd>
-            <dt>{t('houses')}</dt>
+        {showResponse && heli != null && (
+          <Tile
+            value={n(heli.value, heli.suffix)}
+            label={t('heli')}
+            tone={heli.tone}
+            scraped={heli.live}
+            lang={lang}
+          />
+        )}
+        {showResponse && deployed != null && (
+          <Tile
+            value={n(deployed.value, deployed.suffix)}
+            label={t('deployed')}
+            tone={deployed.tone}
+            scraped={deployed.live}
+            lang={lang}
+          />
+        )}
+        {showDamage && houses != null && (
+          <Tile value={n(houses)} label={t('houses')} lang={lang}>
             <BipadUnder value={totals?.housesDestroyed} lang={lang} />
-          </div>
+          </Tile>
         )}
-        {bridges != null && (
-          <div>
-            <dd>{n(bridges)}</dd>
-            <dt>{t('bridges')}</dt>
+        {showDamage && bridges != null && (
+          <Tile value={n(bridges)} label={t('bridges')} lang={lang}>
             <BipadUnder value={totals?.bridgesDestroyed} lang={lang} />
-          </div>
+          </Tile>
         )}
       </div>
 
@@ -211,7 +291,7 @@ export default function FloodReportedTiles({
             {' · '}
           </>
         )}
-        <span className="fl-blank">{t('caveat')}</span>
+        <span className="fl-blank">{scope === 'headline' ? t('caveatHeadline') : t('caveat')}</span>
       </p>
     </>
   );

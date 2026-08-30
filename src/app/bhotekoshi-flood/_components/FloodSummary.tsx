@@ -9,13 +9,14 @@ import type {
   SitrepNameList,
   SitrepValue,
   CorridorIncidents,
+  CorridorTotals,
   FloodContent,
   RescuePortalStats,
   RescueSummary,
   PortalCount,
 } from '@/types';
 import { ageFrom } from '@/lib/relative-time';
-import FloodReportedTiles from '@/app/bhotekoshi-flood/_components/FloodReportedTiles';
+import FloodReportedTiles, { ScrapedDot } from '@/app/bhotekoshi-flood/_components/FloodReportedTiles';
 
 // The summary of everything, as it appears under the map on the overview.
 //
@@ -33,10 +34,23 @@ import FloodReportedTiles from '@/app/bhotekoshi-flood/_components/FloodReported
 // over.
 
 const T = {
-  tapHint: { en: 'Tap a figure for the district split', ne: 'जिल्लागत विवरणका लागि थिच्नुहोस्' },
+  tapHint: { en: 'Tap a figure for the split', ne: 'विवरणका लागि थिच्नुहोस्' },
   doNotMerge: { en: 'Do not add these together', ne: 'यी संख्या नजोड्नुहोस्' },
   notInTotal: { en: 'Counted separately, not in the total above', ne: 'छुट्टै गनिएको, माथिको जम्मामा छैन' },
   infrastructure: { en: 'Infrastructure damage', ne: 'भौतिक संरचना क्षति' },
+  responseKicker: { en: 'Response', ne: 'प्रतिकार्य' },
+  responseTitle: { en: 'Who is responding', ne: 'को-को खटिएका छन्' },
+  peopleKicker: { en: 'People', ne: 'मानिस' },
+  peopleTitle: { en: 'How the toll breaks down', ne: 'क्षतिको विवरण' },
+  countedSeparately: { en: 'Counted separately', ne: 'छुट्टै गनिएको' },
+  familiesCaption: {
+    en: 'BIPAD’s corridor register, entered so far. Most incidents still have blank loss records — this is not a national displaced figure, and these rows are not added together.',
+    ne: 'बिपद्को करिडोर अभिलेख, हालसम्म प्रविष्ट। अधिकांश घटनामा क्षति रेकर्ड अझै खाली छ — यो राष्ट्रिय विस्थापित संख्या होइन, र यी पङ्क्ति जोडिँदैनन्।',
+  },
+  familiesEvacuated: { en: 'Families evacuated', ne: 'स्थानान्तरित परिवार' },
+  familiesAffected: { en: 'Families affected', ne: 'प्रभावित परिवार' },
+  familiesRelocated: { en: 'Families relocated', ne: 'पुनर्स्थापित परिवार' },
+  peopleAffected: { en: 'People affected', ne: 'प्रभावित व्यक्ति' },
   nameLists: { en: 'Published name lists', ne: 'प्रकाशित नामावली' },
   missingFound: { en: 'Missing and found', ne: 'हराएका र भेटिएका' },
   missing: { en: 'Reported missing', ne: 'हराएको जनाइएको' },
@@ -66,7 +80,6 @@ const T = {
     en: 'SitRep-3 still holds the 80 bridges and 40 km of paved road. Towers are NDRRMA 13 Bhadra 18:30. Houses are Copernicus EMSR927 — a mapped area of interest, not the national sitrep. None of this is BIPAD’s register, and these collections are not added together.',
     ne: 'सिटरेप-३ मा अझै ८० पुल र ४० कि.मी. पक्की सडक छन्। टावर एनडीआरआरएमए १३ भदौ १८:३० का हुन्। घर कोपर्निकस EMSR927 हुन् — नक्साको क्षेत्र, राष्ट्रिय सिटरेप होइन। यो बिपद्को अभिलेख होइन, र यी संकलन जोडिँदैनन्।',
   },
-  liveRow: { en: 'live', ne: 'प्रत्यक्ष' },
   portalOpenLost: { en: 'OPMCM portal, open reports', ne: 'प्रधानमन्त्री कार्यालय पोर्टल, खुला विवरण' },
   portalFound: { en: 'OPMCM portal, reported found', ne: 'प्रधानमन्त्री कार्यालय पोर्टल, भेटिएको जनाइएको' },
 };
@@ -86,7 +99,10 @@ function ValueRow({ item, lang }: { item: SitrepValue; lang: Lang }) {
   const unit = lang === 'ne' ? item.unit_ne || item.unit_en : item.unit_en;
   return (
     <li>
-      <span>{label(item, lang)}</span>
+      <span>
+        {label(item, lang)}
+        {item.live && <ScrapedDot lang={lang} />}
+      </span>
       <b>
         {figure(item.value, item.suffix)}
         {unit ? ` ${unit}` : ''}
@@ -102,9 +118,12 @@ function BreakdownCard({ breakdown, lang }: { breakdown: SitrepBreakdown; lang: 
   const warn = lang === 'ne' ? breakdown.do_not_merge_ne || breakdown.do_not_merge_en : breakdown.do_not_merge_en;
 
   return (
-    <div className={`fl-fig t-${breakdown.tone} ${open ? 'open' : ''}`}>
+    <div className={`fl-fig t-${breakdown.tone} ${open ? 'open' : ''}${breakdown.live ? ' scraped' : ''}`}>
       <button type="button" onClick={() => setOpen(v => !v)} aria-expanded={open}>
-        <dd>{figure(breakdown.total, breakdown.suffix)}</dd>
+        <dd>
+          {figure(breakdown.total, breakdown.suffix)}
+          {breakdown.live && <ScrapedDot lang={lang} />}
+        </dd>
         <dt>
           {lang === 'ne' ? breakdown.title_ne || breakdown.title_en : breakdown.title_en}
           <i aria-hidden="true">{open ? '−' : '+'}</i>
@@ -141,6 +160,47 @@ function BreakdownCard({ breakdown, lang }: { breakdown: SitrepBreakdown; lang: 
       )}
     </div>
   );
+}
+
+const PEOPLE_IDS = ['deaths', 'injured', 'uncontacted'];
+const RESPONSE_IDS = ['deployed', 'air-rescue'];
+const SEPARATE_IDS = ['police-treated', 'tourists', 'security-uncontacted', 'timure-customs'];
+
+function pickBreakdowns(sitrep: SitrepContent, ids: string[]): SitrepBreakdown[] {
+  const byId = new Map((sitrep.breakdowns || []).map(b => [b.id, b]));
+  return ids.flatMap(id => {
+    const row = byId.get(id);
+    return row ? [row] : [];
+  });
+}
+
+/** BIPAD's family figures as one card, so evacuated sits with affected and relocated. */
+function familiesCard(totals: CorridorTotals): SitrepBreakdown {
+  const row = (
+    value: number | null | undefined,
+    label_en: string,
+    label_ne: string,
+    keepZero = false,
+  ): SitrepValue[] =>
+    value == null || (!keepZero && value === 0) ? [] : [{ value, label_en, label_ne }];
+
+  return {
+    id: 'families',
+    total: totals.familiesEvacuated ?? 0,
+    tone: 'warning',
+    live: true,
+    no_total_check: true,
+    title_en: T.familiesEvacuated.en,
+    title_ne: T.familiesEvacuated.ne,
+    caption_en: T.familiesCaption.en,
+    caption_ne: T.familiesCaption.ne,
+    items: [
+      ...row(totals.familiesEvacuated, T.familiesEvacuated.en, T.familiesEvacuated.ne, true),
+      ...row(totals.familiesAffected, T.familiesAffected.en, T.familiesAffected.ne),
+      ...row(totals.familiesRelocated, T.familiesRelocated.en, T.familiesRelocated.ne),
+      ...row(totals.affected, T.peopleAffected.en, T.peopleAffected.ne),
+    ],
+  };
 }
 
 /**
@@ -280,6 +340,12 @@ export default function FloodSummary({
   // A portal that failed its last read still has its previous figures behind
   // it; one that has never answered has nothing to draw.
   const portalCards = portal ? portalBreakdowns(portal) : [];
+  const peopleCards = pickBreakdowns(sitrep, PEOPLE_IDS);
+  const responseCards = [
+    ...pickBreakdowns(sitrep, RESPONSE_IDS),
+    ...(corridor?.totals ? [familiesCard(corridor.totals)] : []),
+  ];
+  const separateCards = pickBreakdowns(sitrep, SEPARATE_IDS);
 
   /**
    * The reviewed lists, with the one figure that has a live source replaced.
@@ -291,9 +357,9 @@ export default function FloodSummary({
    * (`id: 'ndrrma'`), its value comes from the live register instead; every
    * other row has no live source and is shown exactly as reviewed.
    */
-  const liveList = <T extends { id: string; value: number }>(item: T): T => {
+  const liveList = <T extends { id: string; value: number; live?: boolean }>(item: T): T => {
     if (item.id !== 'ndrrma' || rescueSummary?.total == null) return item;
-    return { ...item, value: rescueSummary.total };
+    return { ...item, value: rescueSummary.total, live: true };
   };
 
   /**
@@ -302,8 +368,8 @@ export default function FloodSummary({
    * Appended rather than merged into the reviewed rows: the OPMCM portal is a
    * separate collection from the forms and helplines listed beside it, the same
    * person can be filed in several of them, and the section's own warning is
-   * that these are never added together. Each row is marked live so a reader
-   * can see which figure moves on its own and which waits for an edit.
+   * that these are never added together. A pulse on the row marks the scrape
+   * without writing "live" next to the label.
    */
   const portalRow = (
     id: string,
@@ -315,8 +381,9 @@ export default function FloodSummary({
       : [{
           id,
           value,
-          label_en: `${label.en} · ${T.liveRow.en}`,
-          label_ne: `${label.ne} · ${T.liveRow.ne}`,
+          label_en: label.en,
+          label_ne: label.ne,
+          live: true,
         }];
 
   /** The reviewed figures' own dateline and sources, printed under a section. */
@@ -363,7 +430,7 @@ export default function FloodSummary({
       <section className="fl-sec">
         <div className="fl-split">
           <div>
-            <FloodReportedTiles corridor={corridor} sitrep={sitrep} lang={lang} />
+            <FloodReportedTiles corridor={corridor} sitrep={sitrep} lang={lang} scope="headline" />
 
           </div>
 
@@ -392,6 +459,51 @@ export default function FloodSummary({
           </div>
         </div>
       </section>
+
+      {/* Personnel, air rescue and families — each group under its own total,
+          so army/police/APF are not read as extra casualties and evacuated
+          families are not mixed into the death toll. Tap a card for the split. */}
+      {responseCards.length > 0 && (
+        <section className="fl-sec">
+          <div className="fl-sec-head">
+            <span>{t('responseKicker')}</span>
+            <h2>{t('responseTitle')}</h2>
+          </div>
+          <p className="fl-note">{t('tapHint')}</p>
+          <div className="fl-figs">
+            {responseCards.map(b => (
+              <BreakdownCard key={b.id} breakdown={b} lang={lang} />
+            ))}
+          </div>
+          <ReviewedSource />
+        </section>
+      )}
+
+      {peopleCards.length > 0 && (
+        <section className="fl-sec">
+          <div className="fl-sec-head">
+            <span>{t('peopleKicker')}</span>
+            <h2>{t('peopleTitle')}</h2>
+          </div>
+          <p className="fl-note">{t('tapHint')}</p>
+          <div className="fl-figs">
+            {peopleCards.map(b => (
+              <BreakdownCard key={b.id} breakdown={b} lang={lang} />
+            ))}
+          </div>
+          {separateCards.length > 0 && (
+            <>
+              <h4 className="fl-minor">{t('countedSeparately')}</h4>
+              <div className="fl-figs">
+                {separateCards.map(b => (
+                  <BreakdownCard key={b.id} breakdown={b} lang={lang} />
+                ))}
+              </div>
+            </>
+          )}
+          <ReviewedSource />
+        </section>
+      )}
 
       {/* What the public filed, on its own full-width row.
           The portal counts reports rather than people, so its figures sit under
@@ -484,7 +596,10 @@ export default function FloodSummary({
               const inner = (
                 <>
                   <dd>{list.value.toLocaleString()}</dd>
-                  <dt>{label(list, lang)}</dt>
+                  <dt>
+                    {label(list, lang)}
+                    {list.live && <ScrapedDot lang={lang} />}
+                  </dt>
                   <small>{t('people')}</small>
                 </>
               );

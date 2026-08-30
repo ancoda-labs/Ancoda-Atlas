@@ -1615,6 +1615,10 @@ body.low-perf .logo-ring::before, body.low-perf .logo-ring::after, body.low-perf
 }
 .fl-sec-head em.ok { color: var(--green); }
 .fl-sec-head em.warn { color: var(--amber); }
+.fl-sec-head > span.fl-updated {
+  color: var(--ink-3);
+  letter-spacing: 0.08em;
+}
 .fl-minor {
   margin: 40px 0 14px; font-family: var(--mono); font-size: 10.5px;
   font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase;
@@ -2474,10 +2478,30 @@ body.low-perf .logo-ring::before, body.low-perf .logo-ring::after, body.low-perf
   gap: 1px; margin: 34px 0 0; background: var(--rule);
   border: 1px solid var(--rule);
 }
-.fl-tiles > div { padding: 18px 18px 16px; background: var(--paper); }
+.fl-tiles > div { position: relative; padding: 18px 18px 16px; background: var(--paper); }
 .fl-tiles dd {
   margin: 0; font-family: var(--serif); font-size: 32px; line-height: 1;
   font-weight: 600; color: var(--ink); letter-spacing: -0.01em;
+}
+.fl-scraped-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--green) 18%, transparent);
+  animation: pulse-blink 1.5s ease-in-out infinite;
+  flex: none;
+}
+.fl-tiles .fl-scraped-dot {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}
+.fl-fig-list .fl-scraped-dot,
+.fl-listcards .fl-scraped-dot {
+  margin-left: 8px;
+  vertical-align: middle;
 }
 .fl-tiles .t-critical dd { color: var(--red); }
 .fl-tiles .t-warning dd { color: #b06f00; }
@@ -2747,8 +2771,14 @@ body.low-perf .logo-ring::before, body.low-perf .logo-ring::after, body.low-perf
 }
 .fl-fig > button:hover { background: var(--paper-2); }
 .fl-fig dd {
+  position: relative;
   margin: 0; font-family: var(--serif); font-size: 34px; line-height: 1;
   font-weight: 600; color: var(--ink); letter-spacing: -0.01em;
+}
+.fl-fig .fl-scraped-dot {
+  position: static;
+  margin-left: 8px;
+  vertical-align: super;
 }
 .fl-fig.t-critical dd { color: var(--red); }
 .fl-fig.t-warning dd { color: #b06f00; }

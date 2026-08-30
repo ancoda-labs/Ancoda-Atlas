@@ -69,7 +69,7 @@ function overlayHeadline(
   if (!headlineId || !headlines?.length) return headlines;
   return headlines.map(h =>
     h.id === headlineId
-      ? { ...h, value: live.total, suffix: live.suffix || h.suffix, source: sourceLabel, tone: live.tone }
+      ? { ...h, value: live.total, suffix: live.suffix || h.suffix, source: sourceLabel, tone: live.tone, live: true }
       : h,
   );
 }
@@ -100,13 +100,13 @@ export function mergeSitrep(reviewed: SitrepContent | null, live: BulletinSitrep
     overlaid = true;
     if (b.id === 'deaths') deathsOverlaid = true;
     headlines = overlayHeadline(headlines, replacement, live.source.label);
-    return replacement;
+    return { ...replacement, live: true };
   });
 
   for (const b of live.breakdowns) {
     if (seen.has(b.id) || reviewedById.has(b.id)) continue;
     if (!shouldOverlay(undefined, b)) continue;
-    breakdowns.push(b);
+    breakdowns.push({ ...b, live: true });
     overlaid = true;
     if (b.id === 'deaths') deathsOverlaid = true;
     headlines = overlayHeadline(headlines, b, live.source.label);

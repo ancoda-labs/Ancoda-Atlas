@@ -50,8 +50,8 @@ const T = {
   },
   caveatTitle: { en: 'Read these figures carefully', ne: 'यी तथ्यांक ध्यानपूर्वक पढ्नुहोस्' },
   caveat: {
-    en: 'Incident counts are the BIPAD live register for this corridor. Deaths, uncontacted, injured, houses and bridges in the tiles are reviewed figures — deaths overlay from the Rasuwa flood bulletin when that scrape’s district split adds up, and never go down. BIPAD still scrapes every incident, but most loss records there are still zeros. Do not add the register and the official toll together.',
-    ne: 'घटना संख्या यो करिडोरको बिपद् प्रत्यक्ष अभिलेख हो। टाइलका मृत्यु, सम्पर्कविहीन, घाइते, घर र पुल जाँचिएका तथ्यांक हुन् — मृत्यु रसुवा बाढी बुलेटिनबाट ओभरले हुन्छ जब जिल्ला विभाजन जोडिन्छ, र घट्दैन। बिपद्ले हरेक घटना अझै स्क्रेप गर्छ, तर त्यहाँका अधिकांश क्षति रेकर्ड अझै शून्य छन्। अभिलेख र आधिकारिक क्षति नजोड्नुहोस्।',
+    en: 'Incident counts are BIPAD’s corridor register and refresh on the desk cycle. Deaths, uncontacted, injured, houses and bridges in the tiles are reviewed figures — deaths overlay from the Rasuwa flood bulletin when that scrape’s district split adds up, and never go down. BIPAD still reads every incident, but most loss records there are still zeros. Do not add the register and the official toll together.',
+    ne: 'घटना संख्या यो करिडोरको बिपद् अभिलेख हो र डेस्क चक्रमा ताजा हुन्छ। टाइलका मृत्यु, सम्पर्कविहीन, घाइते, घर र पुल जाँचिएका तथ्यांक हुन् — मृत्यु रसुवा बाढी बुलेटिनबाट ओभरले हुन्छ जब जिल्ला विभाजन जोडिन्छ, र घट्दैन। बिपद्ले हरेक घटना अझै पढ्छ, तर त्यहाँका अधिकांश क्षति रेकर्ड अझै शून्य छन्। अभिलेख र आधिकारिक क्षति नजोड्नुहोस्।',
   },
   alertsTitle: { en: 'Live alerts', ne: 'प्रत्यक्ष चेतावनी' },
   alertsHint: {
@@ -109,6 +109,8 @@ function damageLine(incident: BipadIncident, lang: 'en' | 'ne'): { text: string;
   add(loss.housesAffected, 'houses damaged', 'घर प्रभावित');
   add(loss.bridgesDestroyed, 'bridges lost', 'पुल भत्किएको');
   add(loss.familiesEvacuated, 'families evacuated', 'परिवार स्थानान्तरित');
+  add(loss.familiesAffected, 'families affected', 'प्रभावित परिवार');
+  add(loss.familiesRelocated, 'families relocated', 'पुनर्स्थापित परिवार');
   add(loss.livestockLost, 'livestock lost', 'पशुधन नोक्सान');
   return { text: parts.length ? parts.join(' · ') : T.none[lang], counted: true };
 }
