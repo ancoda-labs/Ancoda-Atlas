@@ -22,18 +22,18 @@ function deaths(total, items, extra = {}) {
 
 function reviewed() {
   return {
-    as_of: '2026-08-30T15:00:00+05:45',
-    as_of_label_en: '14 Bhadra, 15:00 (Nepal Police deaths; NDRRMA missing)',
+    as_of: '2026-08-30T17:45:00+05:45',
+    as_of_label_en: '14 Bhadra, 17:45 (Nepal Police deaths; NDRRMA evening rescue)',
     headline: [
-      { id: 'deaths', value: 788, tone: 'critical', source: 'Nepal Police', label_en: 'Deaths', label_ne: 'मृत्यु' },
+      { id: 'deaths', value: 794, tone: 'critical', source: 'Nepal Police', label_en: 'Deaths', label_ne: 'मृत्यु' },
       { id: 'uncontacted', value: 2502, tone: 'critical', source: 'NDRRMA / MoHA', label_en: 'Uncontacted', label_ne: 'सम्पर्कविहीन' },
     ],
     breakdowns: [
-      deaths(788, [
+      deaths(794, [
         { label_en: 'Chitwan', value: 264 },
-        { label_en: 'Nawalparasi East', value: 194 },
+        { label_en: 'Nawalparasi East', value: 197 },
         { label_en: 'Nawalparasi West', value: 120 },
-        { label_en: 'Gorkha', value: 58 },
+        { label_en: 'Gorkha', value: 61 },
         { label_en: 'Nuwakot', value: 52 },
         { label_en: 'Dhading', value: 50 },
         { label_en: 'Tanahun', value: 37 },
@@ -80,7 +80,7 @@ test('a higher reconciling death toll replaces the reviewed one and the headline
   assert.ok(merged.sources.some(s => s.url === source.url));
 });
 
-test('a lower bulletin death toll does not overwrite Police 788', () => {
+test('a lower bulletin death toll does not overwrite Police 794', () => {
   const live = {
     breakdowns: [
       deaths(752, [
@@ -101,16 +101,35 @@ test('a lower bulletin death toll does not overwrite Police 788', () => {
     fetchedAt: '2026-08-30T13:00:00.000Z',
   };
   const merged = mergeSitrep(reviewed(), live);
-  assert.equal(merged.breakdowns.find(b => b.id === 'deaths').total, 788);
-  assert.equal(merged.headline.find(h => h.id === 'deaths').value, 788);
+  assert.equal(merged.breakdowns.find(b => b.id === 'deaths').total, 794);
+  assert.equal(merged.headline.find(h => h.id === 'deaths').value, 794);
   assert.equal(merged.as_of_label_en, reviewed().as_of_label_en);
 });
 
 test('a death panel whose districts do not add up is left as reviewed', () => {
   assert.equal(
     shouldOverlay(
-      deaths(788, [{ label_en: 'Chitwan', value: 264 }]),
+      deaths(794, [{ label_en: 'Chitwan', value: 264 }]),
       deaths(810, [{ label_en: 'Chitwan', value: 264 }, { label_en: 'East', value: 194 }]),
+    ),
+    false,
+  );
+});
+
+test('an overlapping air-rescue panel whose parts do not add up is left as reviewed', () => {
+  assert.equal(
+    shouldOverlay(
+      { id: 'air-rescue', total: 1976, items: [{ label_en: 'Citizens rescued', value: 1552 }] },
+      {
+        id: 'air-rescue',
+        total: 9435,
+        no_total_check: true,
+        items: [
+          { label_en: 'NDRRMA 18:00 rescued', value: 9435 },
+          { label_en: 'Army heli', value: 3321 },
+          { label_en: 'SitRep-6 heli', value: 1976 },
+        ],
+      },
     ),
     false,
   );
@@ -125,5 +144,5 @@ test('a failed scrape leaves the reviewed sitrep standing', () => {
     source,
     fetchedAt: '2026-08-30T16:00:00.000Z',
   });
-  assert.equal(merged.headline.find(h => h.id === 'deaths').value, 788);
+  assert.equal(merged.headline.find(h => h.id === 'deaths').value, 794);
 });

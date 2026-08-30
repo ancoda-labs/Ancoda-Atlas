@@ -1,0 +1,137 @@
+{
+  "id": "relief-needed",
+  "_comment": "NDRRMA SitRep #06 demand list (11 Bhadra 22:00) and the emergency-warehouse drop-off contacts published with it. These are what is still asked for — not cargo already sent, and not the cash in the Prime Minister's fund. The bulletin at nirajbhusal.github.io is someone else's compilation; NDRRMA is the source. IOM SitRep #1 independently records the same 8,692-household / 8,692-tent request as received from NDRRMA on 26 August. Two rules: (1) never add these quantities onto the Rs 6.55 billion; (2) reproduce the published figures, including dal at 8,693 rather than 8,692. Medicine was published without a quantity.",
+  "as_of": "2026-08-27T22:00:00+05:45",
+  "as_of_label_en": "11 Bhadra, 22:00 (NDRRMA SitRep #06 — demand list)",
+  "as_of_label_ne": "११ भदौ, राति २२:०० (एनडीआरआरएमए सिटरेप #०६ — माग सूची)",
+  "sources": [
+    { "label": "NDRRMA SitRep #06 (via Rasuwa flood bulletin)", "url": "https://nirajbhusal.github.io/rasuwa-flood-bulletin/need.html" },
+    { "label": "IOM Nepal Flood SitRep #1 (NDRRMA request, 26 Aug 2026)", "url": "https://asiapacific.iom.int/sites/g/files/tmzbdl671/files/documents/2026-08/iom-nepal-flood-response-sitrep-1.pdf" },
+    { "label": "NDRRMA / Rasuwa", "url": "https://ndrrma.gov.np/np/rasuwa" }
+  ],
+
+  "headline": [
+    { "id": "households", "value": 8692, "tone": "warning", "label_en": "Households the list is sized for", "label_ne": "माग सूचीका परिवार", "source": "NDRRMA SitRep #06" },
+    { "id": "people", "value": 43460, "tone": "warning", "label_en": "People those households cover", "label_ne": "ती परिवारका व्यक्ति", "source": "NDRRMA / IOM" },
+    { "id": "bridges", "value": 30, "tone": "warning", "label_en": "Bailey bridges, 50–70 m", "label_ne": "बेली पुल, ५०–७० मि", "source": "NDRRMA SitRep #06" }
+  ],
+
+  "groups": [
+    {
+      "id": "shelter",
+      "title_en": "Shelter",
+      "title_ne": "आश्रय",
+      "items": [
+        { "id": "tents", "label_en": "Tents", "label_ne": "टेन्ट", "value": 8692 },
+        { "id": "tarpaulins", "label_en": "Tarpaulins", "label_ne": "टार्पोलिन", "value": 8692 },
+        { "id": "rope", "label_en": "Rope", "label_ne": "डोरि", "value": 8692, "unit_en": "rolls", "unit_ne": "रोल", "detail_en": "Total 26,076", "detail_ne": "जम्मा २६,०७६" },
+        { "id": "blankets", "label_en": "Blankets", "label_ne": "कम्बल", "value": 39114 },
+        { "id": "plastic-sheet", "label_en": "Black plastic / sheeting", "label_ne": "कालो प्लास्टिक / सिट", "value": 8692, "unit_en": "rolls", "unit_ne": "रोल", "detail_en": "Total 17,384", "detail_ne": "जम्मा १७,३८४" },
+        { "id": "sleeping-bags", "label_en": "Sleeping bags", "label_ne": "स्लिपिङ ब्याग", "value": 39114 },
+        { "id": "sleeping-mats", "label_en": "Sleeping mats / P-foam", "label_ne": "स्लिपिङ म्याट / पी-फोम", "value": 39114 }
+      ]
+    },
+    {
+      "id": "kitchen",
+      "title_en": "Kitchen",
+      "title_ne": "भान्सा",
+      "items": [
+        { "id": "kitchen-sets", "label_en": "Kitchen sets", "label_ne": "किचन सेट", "value": 8692, "unit_en": "families", "unit_ne": "परिवार" },
+        { "id": "gas", "label_en": "Gas + cylinder", "label_ne": "ग्यास + सिलिन्डर", "value": 8692 },
+        { "id": "buckets", "label_en": "Plastic buckets", "label_ne": "प्लास्टिक बाल्टिन", "value": 8692, "detail_en": "Total 26,076", "detail_ne": "जम्मा २६,०७६" },
+        { "id": "mugs", "label_en": "Plastic mugs", "label_ne": "प्लास्टिक मग", "value": 8692, "detail_en": "Total 43,460", "detail_ne": "जम्मा ४३,४६०" },
+        { "id": "water-containers", "label_en": "Water containers", "label_ne": "पानी भाँडो", "value": 8692 }
+      ]
+    },
+    {
+      "id": "hygiene",
+      "title_en": "Hygiene",
+      "title_ne": "सरसफाइ",
+      "items": [
+        { "id": "baby-kits-0-2", "label_en": "Baby kits, 0–2 years", "label_ne": "बेबी किट ०–२ वर्ष", "value": 1955 },
+        { "id": "baby-kits-3-5", "label_en": "Baby kits, 3–5 years", "label_ne": "बेबी किट ३–५ वर्ष", "value": 1955 },
+        { "id": "dignity-kits", "label_en": "Adolescent / dignity kits", "label_ne": "किशोरी / डिग्निटी किट", "value": 3130 },
+        { "id": "slippers", "label_en": "Slippers", "label_ne": "चप्पल", "value": 39114 },
+        { "id": "clothing", "label_en": "Essential clothing", "label_ne": "आवश्यक लुगा", "value": 39114 },
+        { "id": "hygiene-kits", "label_en": "Hygiene kits", "label_ne": "हाइजिन किट", "value": 3130 },
+        { "id": "piyush", "label_en": "Piyush (water treatment)", "label_ne": "पियूष", "value": 8692, "detail_en": "Total 26,076", "detail_ne": "जम्मा २६,०७६" },
+        { "id": "family-hygiene", "label_en": "Family hygiene kits", "label_ne": "पारिवारिक हाइजिन किट", "value": 8692 },
+        { "id": "soap", "label_en": "Soap / laundry soap", "label_ne": "साबुन / लुगा धुने साबुन", "value": 39114, "detail_en": "Total 78,228", "detail_ne": "जम्मा ७८,२२८" },
+        { "id": "pads", "label_en": "Sanitary pads", "label_ne": "स्यानिटरी प्याड", "value": 3130 },
+        { "id": "toothbrush", "label_en": "Toothbrush / toothpaste", "label_ne": "टूथब्रस / टूथपेस्ट", "value": 39114, "detail_en": "Total 78,228", "detail_ne": "जम्मा ७८,२२८" },
+        { "id": "towels", "label_en": "Towels", "label_ne": "तौलिया", "value": 39114 },
+        { "id": "medicine", "label_en": "Medicine", "label_ne": "औषधि", "unspecified": true, "detail_en": "Quantity not published", "detail_ne": "परिमाण नखुलेको" }
+      ]
+    },
+    {
+      "id": "lighting",
+      "title_en": "Lighting",
+      "title_ne": "उज्यालो",
+      "items": [
+        { "id": "solar-panels", "label_en": "Solar panels", "label_ne": "सोलार प्यानल", "value": 8692 },
+        { "id": "solar-lamps", "label_en": "Solar lamps", "label_ne": "सोलार बत्ती", "value": 8692 },
+        { "id": "batteries", "label_en": "Batteries", "label_ne": "ब्याट्री", "value": 8692 }
+      ]
+    },
+    {
+      "id": "food",
+      "title_en": "Food",
+      "title_ne": "खाद्यान्न",
+      "items": [
+        { "id": "heb", "label_en": "High-energy biscuits", "label_ne": "उच्च ऊर्जा बिस्कुट", "value": 39114, "unit_en": "packs", "unit_ne": "प्याक", "detail_en": "Total 782,280", "detail_ne": "जम्मा ७,८२,२८०" },
+        { "id": "rte", "label_en": "Ready-to-eat food", "label_ne": "तयार खाना", "value": 39114, "unit_en": "packs", "unit_ne": "प्याक", "detail_en": "Total 782,280", "detail_ne": "जम्मा ७,८२,२८०" },
+        { "id": "rice", "label_en": "Rice", "label_ne": "चामल", "value": 8692, "detail_en": "× 30 kg each", "detail_ne": "× ३० केजी" },
+        { "id": "dal", "label_en": "Lentils (dal)", "label_ne": "दाल", "value": 8693, "detail_en": "× 20 kg · published 8,693", "detail_ne": "× २० केजी · स्रोत ८,६९३" },
+        { "id": "potatoes", "label_en": "Potatoes", "label_ne": "आलु", "value": 8692, "detail_en": "× 60 kg each", "detail_ne": "× ६० केजी" },
+        { "id": "oil", "label_en": "Cooking oil", "label_ne": "पकाउने तेल", "value": 8692, "unit_en": "litres", "unit_ne": "लि.", "detail_en": "Total 26,076", "detail_ne": "जम्मा २६,०७६" },
+        { "id": "salt", "label_en": "Salt", "label_ne": "नुन", "value": 8692, "unit_en": "packs", "unit_ne": "प्याक", "detail_en": "Total 26,076", "detail_ne": "जम्मा २६,०७६" },
+        { "id": "soybeans", "label_en": "Soybeans", "label_ne": "भटमास", "value": 8692, "detail_en": "× 5 kg each", "detail_ne": "× ५ केजी" },
+        { "id": "chiura", "label_en": "Beaten rice (chiura)", "label_ne": "चिउरा", "value": 8692, "detail_en": "× 5 kg each", "detail_ne": "× ५ केजी" },
+        { "id": "dried-fruit", "label_en": "Dried fruit", "label_ne": "सुकेको फल", "value": 8692, "unit_en": "kg", "unit_ne": "केजी", "detail_en": "Total 17,384", "detail_ne": "जम्मा १७,३८४" }
+      ]
+    },
+    {
+      "id": "transport",
+      "title_en": "Emergency transport",
+      "title_ne": "आपत्कालीन यातायात",
+      "items": [
+        { "id": "bailey", "label_en": "Bailey bridges, 50–70 m", "label_ne": "बेली पुल ५०–७० मि", "value": 30 }
+      ]
+    }
+  ],
+
+  "warehouses": [
+    {
+      "id": "tia",
+      "name_en": "Tribhuvan International Airport, emergency warehouse",
+      "name_ne": "त्रिभुवन अन्तर्राष्ट्रिय विमानस्थल, आपत्कालीन गोदामघर",
+      "contacts": [
+        { "name_en": "Purushottam Bhandari", "name_ne": "पुरुषोत्तम भण्डारी", "phone": "9851147494" },
+        { "name_en": "Chandra Bahadur Thapa", "name_ne": "चन्द्र बहादुर थापा", "phone": "9851084220" },
+        { "name_en": "Niranjan Niraula", "name_ne": "निरञ्जन निरौला", "phone": "9843468991" }
+      ]
+    },
+    {
+      "id": "battar",
+      "name_en": "Maithili Barrack, Battar, Nuwakot (Rasuwa and Nuwakot)",
+      "name_ne": "मैथली ब्यारेक, बट्टार नुवाकोट (रसुवा र नुवाकोट)",
+      "contacts": [
+        { "name_en": "Dipendra Paudel", "name_ne": "दिपेन्द्र पौडेल", "phone": "9856067770" },
+        { "name_en": "Prakash Dhungana", "name_ne": "प्रकाश ढुंगाना", "phone": "9860659938" },
+        { "name_en": "Shyam Babu Kattel", "name_ne": "श्याम बाबु कट्टेल", "phone": "9846046000" },
+        { "name_en": "Yubaraj Bhandari", "name_ne": "युवराज भण्डारी", "phone": "9846106929" },
+        { "name_en": "Shekhar Babu Thokar", "name_ne": "शेखर बाबु ठोकर", "phone": "9854045497" }
+      ]
+    },
+    {
+      "id": "samakhusi",
+      "name_en": "Nepal Police Disaster Response and Training Centre, Samakhusi",
+      "name_ne": "नेपाल प्रहरी विपद् प्रतिकार्य तथा तालिम केन्द्र, सामाखुसी",
+      "contacts": [
+        { "name_en": "Police inspector", "name_ne": "प्रहरी निरीक्षक", "phone": "9851283611" }
+      ]
+    }
+  ],
+  "warehouse_note_en": "Goods can also be coordinated with the relevant District Administration Office and local governments. These drop-off numbers are reproduced from NDRRMA SitRep #06; Atlas has not rung them.",
+  "warehouse_note_ne": "सम्बन्धित जिल्ला प्रशासन कार्यालय र स्थानीय तहसँग पनि समन्वय गरी सामग्री उपलब्ध गराउन सकिन्छ। यी बुझाउने नम्बर एनडीआरआरएमए सिटरेप #०६ बाट जस्ताको तस्तै हुन्; एट्लसले फोन गरेर जाँचेको छैन।"
+}

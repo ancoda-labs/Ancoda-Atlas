@@ -4,9 +4,19 @@ import React, { useEffect, useState } from 'react';
 import FloodShell from '@/components/FloodShell';
 import { useFloodLang } from '@/hooks/use-flood-lang';
 import type { Lang } from '@/hooks/use-flood-lang';
-import type { FloodBank, FloodDeskPayload, FloodOfficialFeed, PortalDonationChannel, SitrepBreakdown, SitrepValue } from '@/types';
+import type {
+  FloodBank,
+  FloodDeskPayload,
+  FloodOfficialFeed,
+  PortalDonationChannel,
+  ReliefNeedItem,
+  SitrepBreakdown,
+  SitrepValue,
+} from '@/types';
 import { ageFrom } from '@/lib/relative-time';
 import { useDeskRefresh } from '@/hooks/use-desk-refresh';
+import { useJumpSection } from '@/hooks/use-jump-section';
+import FloodWarehouses from '@/app/bhotekoshi-flood/_components/FloodWarehouses';
 
 // Giving, on its own page.
 //
@@ -17,13 +27,17 @@ import { useDeskRefresh } from '@/hooks/use-desk-refresh';
 // organisations appear, and the QR dialog tells the reader to check the payee
 // name their own banking app shows before they confirm. Nothing on this page is
 // auto-published — every account here came through a reviewed content edit.
+//
+// The three things a reader actually came for sit first, numbered, and linked
+// from a jump strip: the authorized QR, what has reached that fund, and the
+// in-kind demand list with the warehouses that will take goods.
 
 const T = {
   kicker: { en: 'Give', ne: 'सहयोग' },
   title: { en: 'Give safely', ne: 'सुरक्षित रूपमा सहयोग गर्नुहोस्' },
   standfirst: {
-    en: 'Atlas never handles money. Every account below is a government fund or a recognised organisation, and every link goes to their own page.',
-    ne: 'एट्लसले कुनै रकम लिँदैन। तल दिइएका सबै खाता सरकारी कोष वा मान्यताप्राप्त संस्थाका हुन्, र हरेक लिंक तिनकै पृष्ठमा जान्छ।',
+    en: 'Three things, in that order: the authorized government QR, what has already reached that fund, and the goods NDRRMA is still asking for. Atlas never handles money.',
+    ne: 'तीन कुरा, त्यही क्रममा: आधिकारिक सरकारी QR, त्यो कोषमा आइसकेको रकम, र एनडीआरआरएमए अझै मागिरहेको सामग्री। एट्लसले कुनै रकम लिँदैन।',
   },
   warn: {
     en: 'Do not send money to personal QR codes or personal accounts. Give only through the government funds and recognised organisations below.',
@@ -52,11 +66,23 @@ const T = {
   wallet: { en: 'Wallet', ne: 'वालेट' },
   orgsVerified: { en: 'Organisations checked', ne: 'संस्था जाँचिएको' },
   orgsAgainst: { en: 'against', ne: 'स्रोत' },
-  receivedKicker: { en: 'Received', ne: 'प्राप्त' },
+  jumpLabel: { en: 'On this page', ne: 'यस पृष्ठमा' },
+  jumpHint: { en: 'Tap a box to jump', ne: 'जान बाकस थिच्नुहोस्' },
+  jumpGive: { en: 'Give with the authorized QR', ne: 'आधिकारिक QR बाट सहयोग' },
+  jumpGiveSub: { en: "Prime Minister's Disaster Relief Fund", ne: 'प्रधानमन्त्री दैवी प्रकोप उद्धार कोष' },
+  jumpReceived: { en: 'What has reached the fund', ne: 'कोषमा आएको रकम' },
+  jumpReceivedSub: { en: 'Cash already in the nine banks', ne: 'नौ बैंकमा आइसकेको नगद' },
+  jumpNeeded: { en: 'Relief goods and warehouses', ne: 'राहत सामग्री र गोदाम' },
+  jumpNeededSub: { en: 'Demand list · where to deliver', ne: 'माग सूची · कहाँ बुझाउने' },
+  giveKicker: { en: '1 · Give', ne: '१ · सहयोग' },
+  giveTitle: { en: 'Authorized QR', ne: 'आधिकारिक QR' },
+  authorized: { en: 'Government of Nepal', ne: 'नेपाल सरकार' },
+  authorizedBadge: { en: 'Authorized government fund', ne: 'आधिकारिक सरकारी कोष' },
+  receivedKicker: { en: '2 · Received', ne: '२ · प्राप्त' },
   receivedTitle: { en: 'What has reached the Prime Minister’s fund', ne: 'प्रधानमन्त्री कोषमा आएको रकम' },
   receivedIntro: {
-    en: 'Balances the Ministry of Finance published for the Prime Minister’s Disaster Relief Fund, nine banks, 12 Bhadra. This is cash already in those accounts — not a pledge, and not Atlas. Give through the accounts below.',
-    ne: 'अर्थ मन्त्रालयले प्रधानमन्त्री दैवी प्रकोप उद्धार कोषका नौ बैंकमा १२ भदौ प्रकाशित गरेको मौज्दात। यो ती खातामा आइसकेको नगद हो — घोषणा होइन, एट्लस होइन। तलका खातामार्फत सहयोग गर्नुहोस्।',
+    en: 'Balances the Ministry of Finance published for the Prime Minister’s Disaster Relief Fund, nine banks, 12 Bhadra. This is cash already in those accounts — not a pledge, and not Atlas. Give through the accounts above.',
+    ne: 'अर्थ मन्त्रालयले प्रधानमन्त्री दैवी प्रकोप उद्धार कोषका नौ बैंकमा १२ भदौ प्रकाशित गरेको मौज्दात। यो ती खातामा आइसकेको नगद हो — घोषणा होइन, एट्लस होइन। माथिका खातामार्फत सहयोग गर्नुहोस्।',
   },
   receivedAsOf: { en: 'Figures as of', ne: 'तथ्यांक मिति' },
   doNotAdd: { en: 'Do not add these together', ne: 'यी संख्या नजोड्नुहोस्' },
@@ -70,6 +96,28 @@ const T = {
     en: 'These figures no longer add up and have not been corrected yet. Treat the group totals as provisional.',
     ne: 'यी तथ्यांक मिल्दैनन् र अझै सच्याइएको छैन। समूहका जम्मा संख्यालाई अस्थायी मान्नुहोस्।',
   },
+  neededKicker: { en: '3 · Goods', ne: '३ · सामग्री' },
+  neededTitle: { en: 'Relief goods needed and emergency warehouses', ne: 'राहत सामग्री आवश्यक र आपत्कालीन गोदाम' },
+  neededIntro: {
+    en: 'NDRRMA SitRep #06 demand list. This is what is still asked for — not cargo already sent, and not the cash in the Prime Minister’s fund.',
+    ne: 'एनडीआरआरएमए सिटरेप #०६ को माग सूची। पठाइएको सामग्री होइन, प्रधानमन्त्री कोषको नगद पनि होइन।',
+  },
+  neededWarn: {
+    en: 'Do not add these quantities onto the Rs 6.55 billion. The list will be updated as NDRRMA republishes it.',
+    ne: 'यी परिमाण ६ अर्ब ५५ करोडमाथि नजोड्नुहोस्। एनडीआरआरएमए नयाँ सूची निकालेपछि यो अद्यावधिक हुनेछ।',
+  },
+  warehousesTitle: { en: 'Emergency warehouses', ne: 'आपत्कालीन गोदाम' },
+  warehousesIntro: {
+    en: 'In-kind goods can be handed in here. Tap a number to call.',
+    ne: 'सामग्री यहाँ बुझाउन सकिन्छ। फोन गर्न नम्बर थिच्नुहोस्।',
+  },
+  needScroll: { en: 'Scroll the list', ne: 'सूची स्क्रोल गर्नुहोस्' },
+  needPackNote: {
+    en: 'Grey notes are pack size or product weight from the sitrep, not extra items. Dal is published as 8,693 — one off the 8,692 households.',
+    ne: 'खैरो नोट सिटरेपको प्याक वा तौल हो, थप सामग्री होइन। दाल ८,६९३ छ — परिवार ८,६९२ भन्दा एक बढी।',
+  },
+  otherWays: { en: 'Other ways to give', ne: 'सहयोगका अन्य माध्यम' },
+  notListed: { en: 'Not listed', ne: 'नखुलेको' },
 };
 
 /** "kathmandupost.com" — a source link the reader can recognise at a glance. */
@@ -129,6 +177,23 @@ function ValueRow({ item, lang }: { item: SitrepValue; lang: Lang }) {
       <span>{itemLabel(item, lang)}</span>
       <b>{money(item.value, unit)}</b>
       {detail && <small>{detail}</small>}
+    </li>
+  );
+}
+
+function NeedRow({ item, lang }: { item: ReliefNeedItem; lang: Lang }) {
+  const detail = lang === 'ne' ? item.detail_ne || item.detail_en : item.detail_en;
+  const unit = lang === 'ne' ? item.unit_ne || item.unit_en : item.unit_en;
+  const qty = item.unspecified
+    ? T.notListed[lang]
+    : `${(item.value ?? 0).toLocaleString('en-IN')}${unit ? ` ${unit}` : ''}`;
+  return (
+    <li>
+      <span>{itemLabel(item, lang)}</span>
+      <b>
+        {qty}
+        {detail ? <small>{detail}</small> : null}
+      </b>
     </li>
   );
 }
@@ -220,7 +285,7 @@ export default function FloodDonateView() {
     }, []),
   );
 
-  // The portal's own channels ride on their own route: the QR codes arrive as
+  // The portal's channels ride on their own route: the QR codes arrive as
   // inline images and would otherwise bloat the payload every desk page loads.
   useDeskRefresh(
     React.useCallback(() => {
@@ -299,10 +364,16 @@ export default function FloodDonateView() {
     .sort()
     .pop();
 
+  const onJump = useJumpSection(['give', 'received', 'needed']);
+
   const primaryFund = data?.bankAccounts?.funds?.[0] || null;
   const heroBank = primaryFund?.banks?.find(b => b.qr) || null;
   const otherBanks = primaryFund ? primaryFund.banks.filter(b => b !== heroBank) : [];
   const secondaryFunds = (data?.bankAccounts?.funds || []).slice(1);
+  const received = data?.reliefReceived;
+  const needed = data?.reliefNeeded;
+  const pmInFund = received?.headline?.find(h => h.id === 'pm-fund');
+  const needHouseholds = needed?.headline?.find(h => h.id === 'households');
 
   const BankRow = ({ bank, fundName }: { bank: FloodBank; fundName: string }) => (
     <tr>
@@ -331,84 +402,39 @@ export default function FloodDonateView() {
 
   return (
     <FloodShell lang={lang} setLang={setLang} kicker={t('kicker')} title={t('title')} standfirst={t('standfirst')}>
-      {data?.reliefReceived && (
-        <section className="fl-sec fl-received">
-          {(data.reliefReceived.discrepancies || []).length > 0 && (
-            <aside className="fl-standfirst" role="alert">
-              <span>{lang === 'ne' ? 'चेतावनी' : 'Warning'}</span>
-              <p>
-                {t('discrepancy')}{' '}
-                {data.reliefReceived.discrepancies!.map(d => `${d.id}: ${d.stated} ≠ ${d.summed}`).join(' · ')}
-              </p>
-            </aside>
-          )}
-          <div className="fl-sec-head">
-            <span>{t('receivedKicker')}</span>
-            <h2>{t('receivedTitle')}</h2>
-          </div>
-          <p className="fl-note">{t('receivedIntro')}</p>
-          {data.reliefReceived.headline && data.reliefReceived.headline.length > 0 && (
-            <div className="fl-tiles">
-              {data.reliefReceived.headline.map(h => {
-                const unit = lang === 'ne' ? h.unit_ne || h.unit_en : h.unit_en;
-                return (
-                  <div key={h.id} className={`t-${h.tone}`}>
-                    <dd>
-                      <Figure value={h.value} unit={unit} />
-                    </dd>
-                    <dt>{lang === 'ne' ? h.label_ne || h.label_en : h.label_en}</dt>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-          <p className="fl-fig-warn">
-            <b>{t('doNotAdd')}</b> {t('receivedWarn')}
-          </p>
-          {data.reliefReceived.breakdowns && data.reliefReceived.breakdowns.length > 0 && (
-            <div className="fl-figs">
-              {data.reliefReceived.breakdowns.map(b => (
-                <BreakdownCard key={b.id} breakdown={b} lang={lang} />
-              ))}
-            </div>
-          )}
-          {data.reliefReceived.exclusive && data.reliefReceived.exclusive.length > 0 && (
-            <>
-              <h4 className="fl-minor">{t('notInFund')}</h4>
-              <div className="fl-listcards">
-                {data.reliefReceived.exclusive.map(item => {
-                  const unit = lang === 'ne' ? item.unit_ne || item.unit_en : item.unit_en;
-                  const detail = lang === 'ne' ? item.detail_ne || item.detail_en : item.detail_en;
-                  return (
-                    <div key={item.id || item.label_en}>
-                      <dd>
-                        <Figure value={item.value} unit={unit} />
-                      </dd>
-                      <dt>{itemLabel(item, lang)}</dt>
-                      {detail && <small>{detail}</small>}
-                    </div>
-                  );
-                })}
-              </div>
-            </>
-          )}
-          <p className="fl-note">
-            {t('receivedAsOf')}{' '}
-            {(lang === 'ne'
-              ? data.reliefReceived.as_of_label_ne || data.reliefReceived.as_of_label_en
-              : data.reliefReceived.as_of_label_en) || '—'}
-            {(data.reliefReceived.sources || []).map((src, i) => (
-              <a key={i} href={src.url} target="_blank" rel="noopener noreferrer">
-                {' · '}
-                {src.label} &#8599;
-              </a>
-            ))}
-          </p>
-        </section>
-      )}
+      <nav className="fl-jump" aria-label={t('jumpLabel')}>
+        <p className="fl-jump-kicker">{t('jumpHint')}</p>
+        <a href="#give" className={onJump === 'give' ? 'on' : undefined}>
+          <b>1</b>
+          <strong>{t('jumpGive')}</strong>
+          <span>{t('jumpGiveSub')}</span>
+        </a>
+        <a href="#received" className={onJump === 'received' ? 'on' : undefined}>
+          <b>2</b>
+          <strong>{t('jumpReceived')}</strong>
+          <span>
+            {pmInFund
+              ? `${money(pmInFund.value, lang === 'ne' ? pmInFund.unit_ne || pmInFund.unit_en : pmInFund.unit_en)} · ${t('jumpReceivedSub')}`
+              : t('jumpReceivedSub')}
+          </span>
+        </a>
+        <a href="#needed" className={onJump === 'needed' ? 'on' : undefined}>
+          <b>3</b>
+          <strong>{t('jumpNeeded')}</strong>
+          <span>
+            {needHouseholds
+              ? `${needHouseholds.value.toLocaleString('en-IN')} ${lang === 'ne' ? 'परिवार' : 'households'} · ${t('jumpNeededSub')}`
+              : t('jumpNeededSub')}
+          </span>
+        </a>
+      </nav>
 
-      <section className="fl-sec">
-        <p className="fl-warn">{t('warn')}</p>
+      <section id="give" className="fl-sec">
+        <div className="fl-sec-head">
+          <span>{t('giveKicker')}</span>
+          <h2>{t('giveTitle')}</h2>
+          <em className="ok">{t('authorized')}</em>
+        </div>
 
         {!data ? (
           <p className="fl-empty">{t('loading')}</p>
@@ -416,17 +442,20 @@ export default function FloodDonateView() {
           <>
             {primaryFund && heroBank && (
               <div className="fl-hero">
-                <button
-                  className="fl-hero-qr"
-                  onClick={() => setQrOpen({ src: heroBank.qr || '', payee: heroBank.qr_payee || L(primaryFund, 'name') })}
-                  aria-label={t('scanQr')}
-                >
-                  <img src={heroBank.qr || undefined} alt="" />
-                </button>
+                <div className="fl-hero-qr-wrap">
+                  <button
+                    className="fl-hero-qr"
+                    onClick={() => setQrOpen({ src: heroBank.qr || '', payee: heroBank.qr_payee || L(primaryFund, 'name') })}
+                    aria-label={t('scanQr')}
+                  >
+                    <img src={heroBank.qr || undefined} alt="" />
+                  </button>
+                  <p className="fl-hero-scan">{t('scanQr')}</p>
+                </div>
                 <div className="fl-hero-txt">
+                  <em className="fl-hero-badge">{t('authorizedBadge')}</em>
                   <h3>{L(primaryFund, 'name')}</h3>
                   <p className="fl-hero-bank">{L(heroBank, 'name')}</p>
-                  <p className="fl-hero-hint">{t('scanQr')}</p>
                   <span className="fl-lbl">{t('accountNo')}</span>
                   {heroBank.accounts.map(a => (
                     <CopyableAccount key={a} value={a} lang={lang} />
@@ -435,6 +464,7 @@ export default function FloodDonateView() {
                 </div>
               </div>
             )}
+            <p className="fl-warn">{t('warn')}</p>
 
             {primaryFund && otherBanks.length > 0 && (
               <>
@@ -470,10 +500,160 @@ export default function FloodDonateView() {
                 </a>
               </p>
             )}
+          </>
+        )}
+      </section>
 
-            {/* The portal's live listing, deliberately below the reviewed funds
-                and never merged into them: everything above came through a
-                content review, and this did not. */}
+      <section id="received" className="fl-sec fl-received">
+        <div className="fl-sec-head">
+          <span>{t('receivedKicker')}</span>
+          <h2>{t('receivedTitle')}</h2>
+        </div>
+        {!received ? (
+          <p className="fl-empty">{t('loading')}</p>
+        ) : (
+          <>
+            {(received.discrepancies || []).length > 0 && (
+              <aside className="fl-standfirst" role="alert">
+                <span>{lang === 'ne' ? 'चेतावनी' : 'Warning'}</span>
+                <p>
+                  {t('discrepancy')}{' '}
+                  {received.discrepancies!.map(d => `${d.id}: ${d.stated} ≠ ${d.summed}`).join(' · ')}
+                </p>
+              </aside>
+            )}
+            <p className="fl-note">{t('receivedIntro')}</p>
+            {received.headline && received.headline.length > 0 && (
+              <div className="fl-tiles">
+                {received.headline.map(h => {
+                  const unit = lang === 'ne' ? h.unit_ne || h.unit_en : h.unit_en;
+                  return (
+                    <div key={h.id} className={`t-${h.tone}`}>
+                      <dd>
+                        <Figure value={h.value} unit={unit} />
+                      </dd>
+                      <dt>{lang === 'ne' ? h.label_ne || h.label_en : h.label_en}</dt>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            <p className="fl-fig-warn">
+              <b>{t('doNotAdd')}</b> {t('receivedWarn')}
+            </p>
+            {received.breakdowns && received.breakdowns.length > 0 && (
+              <div className="fl-figs">
+                {received.breakdowns.map(b => (
+                  <BreakdownCard key={b.id} breakdown={b} lang={lang} />
+                ))}
+              </div>
+            )}
+            {received.exclusive && received.exclusive.length > 0 && (
+              <>
+                <h4 className="fl-minor">{t('notInFund')}</h4>
+                <div className="fl-listcards">
+                  {received.exclusive.map(item => {
+                    const unit = lang === 'ne' ? item.unit_ne || item.unit_en : item.unit_en;
+                    const detail = lang === 'ne' ? item.detail_ne || item.detail_en : item.detail_en;
+                    return (
+                      <div key={item.id || item.label_en}>
+                        <dd>
+                          <Figure value={item.value} unit={unit} />
+                        </dd>
+                        <dt>{itemLabel(item, lang)}</dt>
+                        {detail && <small>{detail}</small>}
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+            <p className="fl-note">
+              {t('receivedAsOf')}{' '}
+              {(lang === 'ne' ? received.as_of_label_ne || received.as_of_label_en : received.as_of_label_en) || '—'}
+              {(received.sources || []).map((src, i) => (
+                <a key={i} href={src.url} target="_blank" rel="noopener noreferrer">
+                  {' · '}
+                  {src.label} &#8599;
+                </a>
+              ))}
+            </p>
+          </>
+        )}
+      </section>
+
+      <section id="needed" className="fl-sec fl-needed">
+        <div className="fl-sec-head">
+          <span>{t('neededKicker')}</span>
+          <h2>{t('neededTitle')}</h2>
+        </div>
+        {!needed ? (
+          <p className="fl-empty">{t('loading')}</p>
+        ) : (
+          <>
+            <p className="fl-note">{t('neededIntro')}</p>
+            {needed.headline && needed.headline.length > 0 && (
+              <div className="fl-tiles">
+                {needed.headline.map(h => (
+                  <div key={h.id} className={`t-${h.tone}`}>
+                    <dd>
+                      <Figure value={h.value} />
+                    </dd>
+                    <dt>{lang === 'ne' ? h.label_ne || h.label_en : h.label_en}</dt>
+                  </div>
+                ))}
+              </div>
+            )}
+            <p className="fl-fig-warn">
+              <b>{t('doNotAdd')}</b> {t('neededWarn')}
+            </p>
+            <p className="fl-need-scroll-hint">{t('needScroll')}</p>
+            <div className="fl-need-groups" tabIndex={0} aria-label={t('needScroll')}>
+              {(needed.groups || []).map(group => (
+                <div key={group.id} className="fl-need-group">
+                  <h3>{lang === 'ne' ? group.title_ne || group.title_en : group.title_en}</h3>
+                  <ul className="fl-fig-list">
+                    {group.items.map(item => (
+                      <NeedRow key={item.id} item={item} lang={lang} />
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+            <p className="fl-note">{t('needPackNote')}</p>
+            <div id="warehouses" className="fl-wh-block">
+              <div className="fl-sec-head">
+                <span>{lang === 'ne' ? 'बुझाउने' : 'Drop-off'}</span>
+                <h3>{t('warehousesTitle')}</h3>
+                <em>{(needed.warehouses || []).length}</em>
+              </div>
+              <p className="fl-note">{t('warehousesIntro')}</p>
+              <FloodWarehouses warehouses={needed.warehouses || []} lang={lang} />
+              <p className="fl-note">{L(needed, 'warehouse_note')}</p>
+            </div>
+            <p className="fl-note">
+              {t('receivedAsOf')}{' '}
+              {(lang === 'ne' ? needed.as_of_label_ne || needed.as_of_label_en : needed.as_of_label_en) || '—'}
+              {(needed.sources || []).map((src, i) => (
+                <a key={i} href={src.url} target="_blank" rel="noopener noreferrer">
+                  {' · '}
+                  {src.label} &#8599;
+                </a>
+              ))}
+            </p>
+          </>
+        )}
+      </section>
+
+      <section className="fl-sec">
+        <div className="fl-sec-head">
+          <span>{lang === 'ne' ? 'अन्य' : 'Also'}</span>
+          <h2>{t('otherWays')}</h2>
+        </div>
+        {!data ? (
+          <p className="fl-empty">{t('loading')}</p>
+        ) : (
+          <>
             {portalChannels.length > 0 && (
               <>
                 <h4 className="fl-minor">{t('portalTitle')}</h4>
@@ -492,9 +672,7 @@ export default function FloodDonateView() {
                           <td>
                             {channel.accountName && <span className="fl-lbl">{channel.accountName}</span>}
                             {channel.accountNumber && <CopyableAccount value={channel.accountNumber} lang={lang} />}
-                            {channel.walletId && (
-                              <CopyableAccount value={channel.walletId} lang={lang} />
-                            )}
+                            {channel.walletId && <CopyableAccount value={channel.walletId} lang={lang} />}
                             {channel.walletName && !channel.walletId && (
                               <span className="fl-swift">
                                 {t('wallet')} {channel.walletName}
@@ -541,10 +719,6 @@ export default function FloodDonateView() {
                 </li>
               ))}
             </ul>
-            {/* Provenance for the list, the same as every other section on the
-                desk carries. On a giving page it matters more than most: a
-                reader is about to send money to a name they were shown here,
-                and is entitled to see who checked it and when. */}
             {(orgSources.length > 0 || orgsVerifiedOn) && (
               <p className="fl-note">
                 {t('orgsVerified')}
@@ -553,12 +727,7 @@ export default function FloodDonateView() {
                   <>
                     {` · ${t('orgsAgainst')} `}
                     {orgSources.map(f => (
-                      <a
-                        key={f.id}
-                        href={f.source_verification_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
+                      <a key={f.id} href={f.source_verification_url} target="_blank" rel="noopener noreferrer">
                         {hostOf(f.source_verification_url)} &#8599;
                       </a>
                     ))}
@@ -575,6 +744,7 @@ export default function FloodDonateView() {
           <div onClick={e => e.stopPropagation()}>
             <img src={qrOpen.src} alt={`QR code for ${qrOpen.payee}`} />
             <p className="fl-payee">{qrOpen.payee}</p>
+            <p className="fl-hero-scan">{t('scanQr')}</p>
             <p className="fl-note">{t('checkPayee')}</p>
             <button onClick={() => setQrOpen(null)}>{t('close')}</button>
           </div>

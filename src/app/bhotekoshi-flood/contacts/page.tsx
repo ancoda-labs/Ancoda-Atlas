@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 export const metadata: Metadata = {
   title: 'Who to call · Rasuwa–Bhotekoshi Flood · Ancoda Atlas',
   description:
-    'Verified emergency numbers for the Rasuwa–Bhotekoshi flood — national rescue, police and ambulance lines, free from any phone in Nepal.',
+    'Verified national emergency numbers, NDRRMA warehouse drop-off lines, and district contacts for the Rasuwa–Bhotekoshi flood.',
 };
 
 export default function ContactsPage() {

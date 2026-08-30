@@ -342,6 +342,28 @@ declare module '*/apis/sources/bulletin-sitrep.mjs' {
   export function getBulletinSitrep(): Promise<BulletinSitrep>;
 }
 
+declare module '*/apis/sources/bulletin-damage.mjs' {
+  import type { BulletinDamage, DamageGradeRow, DamageImage, SitrepHeadline } from '@/types';
+  export function parseDamageFigure(
+    raw: unknown,
+  ): { value: number; suffix?: string; approximate?: boolean } | null;
+  export function plantsTableHtml(html: string): string | null;
+  export function parseCopernicusTable(html: string, dict?: { ne?: Record<string, string>; en?: Record<string, string> }): DamageGradeRow[];
+  export function parseCopernicusKpis(html: string, dict?: { ne?: Record<string, string>; en?: Record<string, string> }): SitrepHeadline[];
+  export function classifyCopernicusMap(src: string): 'overview' | 'detail' | 'infographic' | null;
+  export function parseBulletinFigures(html: string): Array<{
+    id: string;
+    src: string;
+    href: string | null;
+    alt: string;
+    caption_en: string | null;
+    caption_ne: string | null;
+  }>;
+  export function collectCopernicusMaps(html: string, photosHtml?: string, listed?: string[]): DamageImage[];
+  export function parseAoiPhotos(html: string): DamageImage[];
+  export function getBulletinDamage(): Promise<BulletinDamage>;
+}
+
 declare module '*/apis/sources/ndrrma-bulletin.mjs' {
   import type { SourceRef } from '@/types';
   export interface NdrrmaBulletinRaw {

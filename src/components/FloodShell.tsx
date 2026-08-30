@@ -32,6 +32,7 @@ const NAV: NavItem[] = [
   // looking for a way to help and find a fake QR code somewhere else.
   { href: '/bhotekoshi-flood/donate', en: 'Donate', ne: 'सहयोग' },
   { href: '/bhotekoshi-flood/situation', en: 'Situation', ne: 'अवस्था' },
+  { href: '/bhotekoshi-flood/damage', en: 'Damage', ne: 'क्षति' },
   { href: '/bhotekoshi-flood/rescue', en: 'Rescued', ne: 'उद्धार' },
   { href: '/bhotekoshi-flood/media', en: 'Coverage', ne: 'समाचार' },
   { href: '/bhotekoshi-flood/contacts', en: 'Contacts', ne: 'सम्पर्क' },
