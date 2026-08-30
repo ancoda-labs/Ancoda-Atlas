@@ -175,7 +175,7 @@ export default function BhotekoshiFloodView() {
     .map(item => {
       const located = districtPinForText(item.title);
       const pin = located || { district: 'Rasuwa', lat: 28.1167, lon: 85.3000 };
-      const { dLat, dLon } = jitter(item.link, located ? 0.06 : 0.08);
+      const { dLat, dLon } = jitter(item.link, located ? 0.025 : 0.03);
       return {
         id: `news:${item.link}`,
         lat: pin.lat + dLat,
