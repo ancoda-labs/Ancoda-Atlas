@@ -591,7 +591,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
   }
 
   return (
-    <div id="main" className="p-3" suppressHydrationWarning>
+    <div id="main" className="p-3" lang={language} suppressHydrationWarning>
       {/* Topbar */}
       <div className="topbar">
         <div className="top-left">

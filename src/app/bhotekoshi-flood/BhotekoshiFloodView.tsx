@@ -208,7 +208,7 @@ export default function BhotekoshiFloodView() {
   ];
 
   return (
-    <div className="fl">
+    <div className="fl" lang={lang}>
       <div className="fl-rail">
         <div className="fl-wrap" style={{ paddingTop: '8px', paddingBottom: '8px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '18px', flexWrap: 'wrap', marginBottom: marquee ? '6px' : '0' }}>
