@@ -622,6 +622,8 @@ export interface RescueRegister {
   persons: RescuedPerson[];
   summary: RescueSummary | null;
   locations: { rescued: RescuePlace[]; stationed: RescuePlace[] };
+  /** Lines NDRRMA publishes above the register itself. Empty if unread. */
+  messages?: Array<{ title: string | null; titleNe: string | null }>;
   error: string | null;
   source: SourceRef;
   fetchedAt: string;

@@ -72,7 +72,7 @@ const T = {
     ne: 'एनडीआरआरएमए सूचीमा अहिले पहुँच भएन। सिधै पोर्टल हेर्नुहोस्।',
   },
   updated: { en: 'Register read', ne: 'सूची पढिएको' },
-  openPortal: { en: 'Open the NDRRMA portal', ne: 'एनडीआरआरएमए पोर्टल खोल्नुहोस्' },
+  openPortal: { en: 'Open the NDRRMA Rasuwa register', ne: 'एनडीआरआरएमए रसुवा सूची खोल्नुहोस्' },
   correctionTitle: { en: 'Something wrong on this list?', ne: 'यो सूचीमा केही गलत छ?' },
   correctionIntro: {
     en: 'Atlas cannot edit the government record, but it will pass a correction on. Tell us what is wrong and we will raise it with NDRRMA.',
@@ -214,7 +214,7 @@ export default function FloodRescueView() {
       if (filter === 'nepali' && p.nationality !== 'nepali') return false;
       if (filter === 'foreign' && p.nationality === 'nepali') return false;
       if (!needle) return true;
-      const haystack = fold(`${p.name || ''} ${p.nameNe || ''} ${p.country || ''} ${p.rescuedAt?.title || ''} ${p.rescuedAt?.titleNe || ''} ${p.stationedAt?.title || ''} ${p.stationedAt?.titleNe || ''}`);
+      const haystack = fold(`${p.name || ''} ${p.nameNe || ''} ${p.country || ''} ${p.rescuedAt?.title || ''} ${p.rescuedAt?.titleNe || ''} ${p.stationedAt?.title || ''} ${p.stationedAt?.titleNe || ''} ${p.remarks || ''}`);
       return haystack.includes(needle);
     });
   }, [persons, q, filter]);
@@ -281,6 +281,19 @@ export default function FloodRescueView() {
           ))}
         </div>
       ) : null}
+
+      {(data?.messages?.length ?? 0) > 0 && (
+        <section className="fl-sec">
+          <div className="fl-sec-head">
+            <span>{lang === 'ne' ? 'एनडीआरआरएमए' : 'NDRRMA'}</span>
+            <h2>{lang === 'ne' ? 'सूचीबारे' : 'About this register'}</h2>
+          </div>
+          {(data?.messages || []).map((msg, i) => {
+            const line = bilingual(lang, msg.title, msg.titleNe);
+            return line ? <p className="fl-place-note" key={i}>{line}</p> : null;
+          })}
+        </section>
+      )}
 
       {(notices?.items?.length ?? 0) > 0 && (
         <section className="fl-sec">
@@ -382,8 +395,8 @@ export default function FloodRescueView() {
                       <td className="num" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {p.age ?? '—'}
                       </td>
-                      <td style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {bilingual(lang, p.rescuedAt?.title, p.rescuedAt?.titleNe) || '—'}
+                      <td style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={p.remarks || undefined}>
+                        {bilingual(lang, p.rescuedAt?.title, p.rescuedAt?.titleNe) || p.remarks || '—'}
                       </td>
                       <td style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {bilingual(lang, p.stationedAt?.title, p.stationedAt?.titleNe) || '—'}
@@ -428,7 +441,7 @@ export default function FloodRescueView() {
 
         <p className="fl-note">
           {t('updated')} {data ? ageFrom(data.fetchedAt, lang) : '—'} ·{' '}
-          <a href={data?.source?.url || 'https://ndrrma.gov.np/np/rescue'} target="_blank" rel="noopener noreferrer">
+          <a href={data?.source?.url || 'https://ndrrma.gov.np/np/rasuwa/rescue'} target="_blank" rel="noopener noreferrer">
             {t('openPortal')} &#8599;
           </a>
         </p>

@@ -23,6 +23,15 @@ Please include:
 - proof of concept if available
 - any suggested remediation
 
+## Reporting Wrong Hazard Data
+
+If Atlas is showing the wrong picture during an event — gauges, earthquakes,
+news, sitrep figures, map pins, a translated brief that does not match the
+headlines — open a public GitHub issue with the **Data accuracy** template.
+That is the right path for those reports.
+
+Payment details and helplines stay on this email, not on GitHub.
+
 ## Reporting a Bad Donation Link or Account Number
 
 This is not a conventional security bug, but it has the same consequences, so it

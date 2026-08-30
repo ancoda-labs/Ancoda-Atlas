@@ -93,8 +93,14 @@ declare module '*/apis/utils/flood-scope.mjs' {
   export const EVENT_START: string;
   /** The districts the desk covers, with the ids BIPAD files them under. */
   export const AFFECTED_DISTRICTS: ReadonlyArray<{ id: number; en: string; ne: string }>;
+  export const DISTRICT_PINS: Record<string, { lat: number; lon: number }>;
   export const CORRIDOR_BBOX: { minLat: number; maxLat: number; minLon: number; maxLon: number };
   export function inCorridor(lat: number | null, lon: number | null): boolean;
+  export function districtPinForText(text: string | null | undefined): {
+    district: string;
+    lat: number;
+    lon: number;
+  } | null;
 }
 
 declare module '*/apis/utils/nepal.mjs' {
@@ -172,6 +178,7 @@ declare module '*/apis/sources/ndrrma.mjs' {
   export function getRescuedPersons(): Promise<RescuedPerson[]>;
   export function getRescueSummary(): Promise<RescueSummary>;
   export function getRescueLocations(): Promise<{ rescued: RescuePlace[]; stationed: RescuePlace[] }>;
+  export function getRescueMessages(): Promise<Array<{ title: string | null; titleNe: string | null }>>;
   export function getRescueRegister(): Promise<RescueRegister>;
 }
 

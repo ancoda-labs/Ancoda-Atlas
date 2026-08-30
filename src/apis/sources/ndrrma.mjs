@@ -1,14 +1,17 @@
 // NDRRMA rescue portal — the official rescued-persons register.
 //
 // The National Disaster Risk Reduction and Management Authority publishes the
-// rescue register behind ndrrma.gov.np/np/rescue as an open JSON API. It is the
-// government's own reunification list, which is why Atlas reads it directly
-// rather than transcribing the screenshots and handwritten sheets that
-// circulate during a response — a transcription is one more place for a name to
-// be misspelled, and a misspelled name is a family that does not find someone.
+// Rasuwa flood register behind ndrrma.gov.np/np/rasuwa/rescue as an open JSON
+// API (the same list also answers at /np/rescue). It is the government's own
+// reunification list, which is why Atlas reads it directly rather than
+// transcribing the screenshots and handwritten sheets that circulate during a
+// response — a transcription is one more place for a name to be misspelled, and
+// a misspelled name is a family that does not find someone.
 //
 // Every record here describes a named living person. Nothing in this module
-// invents, merges or infers: a field the portal leaves null stays null.
+// invents, merges or infers: a field the portal leaves null stays null. The
+// headline "rescued" graphic on the Rasuwa update page is a different count
+// and is not folded into this register.
 
 import { safeFetch } from '../utils/fetch.mjs';
 
@@ -51,17 +54,26 @@ async function collect(path, maxPages = 20) {
   return out;
 }
 
+function text(value) {
+  return typeof value === 'string' && value.trim() ? value.trim() : null;
+}
+
 function place(node) {
   if (!node) return null;
   const coords = node.centroid?.coordinates;
   return {
     id: node.id,
-    title: node.title || null,
-    titleNe: node.title_ne || null,
+    title: text(node.title),
+    titleNe: text(node.title_ne),
     lat: Array.isArray(coords) ? coords[1] ?? null : null,
     lon: Array.isArray(coords) ? coords[0] ?? null : null,
   };
 }
+
+const SOURCE = {
+  label: 'NDRRMA Rasuwa flood update',
+  url: 'https://ndrrma.gov.np/np/rasuwa/rescue',
+};
 
 /**
  * The full rescued-persons register.
@@ -75,22 +87,38 @@ export async function getRescuedPersons() {
     const rows = await collect('rescues/rescued-persons/');
     return rows.map(r => ({
       id: r.id,
-      name: r.name || null,
-      nameNe: r.name_ne || null,
+      name: text(r.name),
+      nameNe: text(r.name_ne),
       age: typeof r.age === 'number' ? r.age : null,
-      gender: r.gender || null,
-      nationality: r.nationality || null,
+      gender: text(r.gender),
+      nationality: text(r.nationality),
       // The portal states nationality as 'nepali' or 'foreign' and names the
       // country separately. Both are carried: "foreign" alone tells a reader
       // looking for a relative almost nothing, and the register holds people
       // from eleven countries.
-      country: r.country || null,
-      rescuedOn: r.rescued_date || null,
+      country: text(r.country),
+      rescuedOn: text(r.rescued_date),
       rescuedAt: place(r.rescued_location),
       stationedAt: place(r.stationed_location),
-      status: r.status ? { id: r.status.id, title: r.status.title, titleNe: r.status.title_ne } : null,
-      remarks: r.remarks || null,
+      status: r.status ? { id: r.status.id, title: r.status.title, titleNe: text(r.status.title_ne) } : null,
+      remarks: text(r.remarks),
     }));
+  });
+}
+
+/**
+ * The two lines NDRRMA puts above its own register — that it holds verified
+ * names only, and that new names are added as they are confirmed. Carried
+ * through so the rescue page can say the same thing the authority does.
+ */
+export async function getRescueMessages() {
+  return cached('messages', async () => {
+    const data = await getJson('rescues/messages/');
+    if (data?.error) throw new Error(data.error);
+    const rows = Array.isArray(data?.results) ? data.results : Array.isArray(data) ? data : [];
+    return rows
+      .map(r => ({ title: text(r.title), titleNe: text(r.title_ne) }))
+      .filter(m => m.title || m.titleNe);
   });
 }
 
@@ -128,12 +156,15 @@ export async function getRescueLocations() {
  * for a relative, and the page must be able to tell them apart.
  */
 export async function getRescueRegister() {
-  const [persons, summary, locations] = await Promise.allSettled([
+  const [persons, summary, locations, messages] = await Promise.allSettled([
     getRescuedPersons(),
     getRescueSummary(),
     getRescueLocations(),
+    getRescueMessages(),
   ]);
 
+  // Notices above the register are optional flavour. A missing messages
+  // endpoint must not hide the names — that is the page's actual job.
   const errors = [persons, summary, locations]
     .filter(r => r.status === 'rejected')
     .map(r => String(r.reason?.message || r.reason));
@@ -142,11 +173,9 @@ export async function getRescueRegister() {
     persons: persons.status === 'fulfilled' ? persons.value : [],
     summary: summary.status === 'fulfilled' ? summary.value : null,
     locations: locations.status === 'fulfilled' ? locations.value : { rescued: [], stationed: [] },
+    messages: messages.status === 'fulfilled' ? messages.value : [],
     error: errors.length ? errors.join('; ') : null,
-    source: {
-      label: 'NDRRMA rescue portal',
-      url: 'https://ndrrma.gov.np/np/rescue',
-    },
+    source: SOURCE,
     fetchedAt: new Date().toISOString(),
   };
 }

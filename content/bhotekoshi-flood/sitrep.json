@@ -2,10 +2,11 @@
   "id": "sitrep",
   "_comment": "Figures for the Rasuwa-Bhotekoshi flood, from NDRRMA / Ministry of Home Affairs, 14 Bhadra 13:00. Compiled from that government statement as published on the Rasuwa flood bulletin (nirajbhusal.github.io/rasuwa-flood-bulletin) — the bulletin is someone else's aggregation; the government statement is the source. These are reviewed content and are served exactly as written - there is no longer a live scrape laying newer figures over them, so a stale number here is a stale number on the page. The overview also shows live government figures beside this grid (BIPAD corridor incidents, NDRRMA rescued-persons totals, OPMCM portal counters); those come straight from the portals and are never merged into these numbers. Two rules govern edits. (1) Never sum across groups that the source keeps apart - the `exclusive` flags and `do_not_merge` notes exist because several of these counts overlap, and adding them would invent casualties. (2) Every breakdown must sum to its own stated total; lib/flood.ts re-adds them at load and the page shows a warning if either stops reconciling.",
   "as_of": "2026-08-30T13:00:00+05:45",
-  "as_of_label_en": "14 Bhadau, 13:00 (NDRRMA / MoHA)",
+  "as_of_label_en": "14 Bhadra, 13:00 (NDRRMA / MoHA)",
   "as_of_label_ne": "१४ भदौ, १३:०० (एनडीआरआरएमए / गृह)",
   "sources": [
-    { "label": "NDRRMA / MoHA", "url": "https://ndrrma.gov.np/" },
+    { "label": "NDRRMA / MoHA", "url": "https://ndrrma.gov.np/np/rasuwa" },
+    { "label": "NDRRMA rescued-persons register", "url": "https://ndrrma.gov.np/np/rasuwa/rescue" },
     { "label": "Rasuwa flood bulletin (compilation)", "url": "https://nirajbhusal.github.io/rasuwa-flood-bulletin/" }
   ],
 
@@ -226,10 +227,10 @@
   "name_lists": {
     "title_en": "Published name lists",
     "title_ne": "प्रकाशित नामावली",
-    "do_not_merge_en": "Nine lists, published separately by different offices. The same person can appear on more than one, so they are never added into a single rescue total. The official injured figure stays 239. NDRRMA's graphic of 8,730 rescued is a separate count from these lists.",
-    "do_not_merge_ne": "नौ सूची, फरक-फरक कार्यालयले छुट्टै प्रकाशित गरेका। एउटै व्यक्ति एकभन्दा बढी सूचीमा पर्न सक्छ, त्यसैले यी एउटै उद्धार जम्मामा जोडिँदैनन्। आधिकारिक घाइते संख्या २३९ नै रहन्छ। एनडीआरआरएमएको उद्धार ग्राफिक ८,७३० यी सूचीभन्दा छुट्टै गणना हो।",
+    "do_not_merge_en": "Eight lists, published separately by different offices. The same person can appear on more than one, so they are never added into a single rescue total. The official injured figure stays 239. NDRRMA's graphic of 8,730 rescued is a separate count from these named lists.",
+    "do_not_merge_ne": "आठ सूची, फरक-फरक कार्यालयले छुट्टै प्रकाशित गरेका। एउटै व्यक्ति एकभन्दा बढी सूचीमा पर्न सक्छ, त्यसैले यी एउटै उद्धार जम्मामा जोडिँदैनन्। आधिकारिक घाइते संख्या २३९ नै रहन्छ। एनडीआरआरएमएको उद्धार ग्राफिक ८,७३० यी नामावलीभन्दा छुट्टै गणना हो।",
     "lists": [
-      { "id": "ndrrma", "value": 529, "label_en": "NDRRMA rescued", "label_ne": "एनडीआरआरएमए उद्धार", "href": "/bhotekoshi-flood/rescue" },
+      { "id": "ndrrma", "value": 2189, "label_en": "NDRRMA rescued", "label_ne": "एनडीआरआरएमए उद्धार", "href": "/bhotekoshi-flood/rescue" },
       { "id": "injured-ktm", "value": 88, "label_en": "Injured, Kathmandu", "label_ne": "घाइते, काठमाडौँ" },
       { "id": "rasuwa-timure", "value": 73, "label_en": "Rasuwa / Timure", "label_ne": "रसुवा / टिमुरे" },
       { "id": "trishuli-1", "value": 63, "label_en": "Trishuli-1", "label_ne": "त्रिशूली-१" },
@@ -251,12 +252,11 @@
       { "id": "madhesh-police", "value": 30, "label_en": "Madhesh Police", "label_ne": "मधेश प्रहरी", "note_en": "2 rescued", "note_ne": "२ जना उद्धार" }
     ],
     "found": [
-      { "id": "ndrrma", "value": 529, "label_en": "NDRRMA rescued", "label_ne": "एनडीआरआरएमए उद्धार" },
+      { "id": "ndrrma", "value": 2189, "label_en": "NDRRMA rescued", "label_ne": "एनडीआरआरएमए उद्धार", "href": "/bhotekoshi-flood/rescue" },
       { "id": "rasuwa-timure", "value": 73, "label_en": "Rasuwa / Timure", "label_ne": "रसुवा / टिमुरे" },
       { "id": "trishuli-1", "value": 63, "label_en": "Trishuli-1", "label_ne": "त्रिशूली-१" },
       { "id": "form", "value": 42, "label_en": "Reported found via form", "label_ne": "फारमबाट भेटिएको" },
       { "id": "indian", "value": 21, "label_en": "Indian nationals", "label_ne": "भारतीय नागरिक" }
-    ],
-    "found_total": 727
+    ]
   }
 }

@@ -55,7 +55,7 @@ const T = {
   receivedKicker: { en: 'Received', ne: 'प्राप्त' },
   receivedTitle: { en: 'What has reached the Prime Minister’s fund', ne: 'प्रधानमन्त्री कोषमा आएको रकम' },
   receivedIntro: {
-    en: 'Balances the Ministry of Finance published for the Prime Minister’s Disaster Relief Fund, nine banks, 12 Bhadau. This is cash already in those accounts — not a pledge, and not Atlas. Give through the accounts below.',
+    en: 'Balances the Ministry of Finance published for the Prime Minister’s Disaster Relief Fund, nine banks, 12 Bhadra. This is cash already in those accounts — not a pledge, and not Atlas. Give through the accounts below.',
     ne: 'अर्थ मन्त्रालयले प्रधानमन्त्री दैवी प्रकोप उद्धार कोषका नौ बैंकमा १२ भदौ प्रकाशित गरेको मौज्दात। यो ती खातामा आइसकेको नगद हो — घोषणा होइन, एट्लस होइन। तलका खातामार्फत सहयोग गर्नुहोस्।',
   },
   receivedAsOf: { en: 'Figures as of', ne: 'तथ्यांक मिति' },

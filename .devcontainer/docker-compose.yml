@@ -1,0 +1,46 @@
+# Dev-container compose: same *roles* as the root docker-compose.yml
+# (Node Atlas process + MinIO), but a bind-mounted workspace instead of the
+# production Dockerfile. Supabase stays hosted and optional, as in production.
+#
+# MinIO credentials here are local-only defaults so Codespaces can start
+# without a .env. They are not production secrets.
+
+services:
+  app:
+    image: mcr.microsoft.com/devcontainers/javascript-node:22
+    volumes:
+      - ..:/workspaces/${localWorkspaceFolderBasename}:cached
+    command: sleep infinity
+    environment:
+      PORT: "3117"
+      MINIO_ENDPOINT: minio:9000
+      MINIO_PUBLIC_ENDPOINT: localhost:9000
+      MINIO_SECURE: "false"
+      MINIO_BUCKET: atlas
+      MINIO_ROOT_USER: atlas
+      MINIO_ROOT_PASSWORD: atlas-devcontainer
+    ports:
+      - "3117:3117"
+    depends_on:
+      minio:
+        condition: service_healthy
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: atlas
+      MINIO_ROOT_PASSWORD: atlas-devcontainer
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  minio_data:

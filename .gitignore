@@ -20,10 +20,9 @@ output/
 Thumbs.db
 desktop.ini
 
-# Local agent files (Next.js may rewrite CLAUDE.md)
+# Local agent files (Next.js may rewrite CLAUDE.md; AGENTS.md is tracked)
 .claude/
 CLAUDE.md
-AGENTS.md
 
 # Playwright
 .playwright-cli/

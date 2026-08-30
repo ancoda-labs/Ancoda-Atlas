@@ -5,6 +5,7 @@ import NepalSignalsMap from '@/app/_components/NepalSignalsMap';
 import { nextUpdateLabel, useDeskRefresh, useTick } from '@/hooks/use-desk-refresh';
 import { ageFrom } from '@/lib/relative-time';
 import BhotekoshiFloodButton from '@/app/_components/BhotekoshiFloodButton';
+import FloodNewsTicker from '@/components/FloodNewsTicker';
 import type {
   HazardSnapshot,
   NewsItem,
@@ -654,20 +655,11 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
         </div>
       </div>
 
-      <section className="flood-news-ticker" aria-label={copy('floodNews', language)}>
-        <span className="flood-news-label"><span className="blink" />{copy('floodNews', language)}</span>
-        <div className="flood-news-track">
-          {floodTickerItems.length > 0 ? (
-            [...floodTickerItems, ...floodTickerItems].map((item, index) => (
-              <a key={`${item.link}-${index}`} href={item.link} target="_blank" rel="noopener noreferrer">
-                {cleanText(item.title)} <span>· {item.source}</span>
-              </a>
-            ))
-          ) : (
-            <span>{newsCache['flood-news']?.status === 'loading' ? copy('loadingNews', language) : copy('noFloodNews', language)}</span>
-          )}
-        </div>
-      </section>
+      <FloodNewsTicker
+        lang={language}
+        items={floodTickerItems}
+        status={newsCache['flood-news']?.status}
+      />
 
       <section className="dashboard-intro" aria-labelledby="dashboard-title">
         <div>
