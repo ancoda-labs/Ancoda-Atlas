@@ -3,7 +3,8 @@
 import React from 'react';
 import type { MapSelection } from '@/components/FloodDistrictMap';
 import type { Lang } from '@/hooks/use-flood-lang';
-import { ageFrom, ageLabel, orientationTransform } from '@/lib/relative-time';
+import { ageFrom, ageLabel } from '@/lib/relative-time';
+import { orientationTransform } from '@/lib/photo-orientation';
 import type { FloodGauge, FloodPathPoint, FloodPhoto } from '@/types';
 
 // What opens when someone clicks the map.

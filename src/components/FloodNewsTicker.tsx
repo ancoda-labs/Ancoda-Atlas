@@ -31,11 +31,11 @@ interface Props {
 }
 
 export default function FloodNewsTicker({ lang, items: givenItems, status: givenStatus }: Props) {
-  const [fetched, setFetched] = useState<NewsItem[] | null>(givenItems ? null : []);
-  const [status, setStatus] = useState<'loading' | 'live' | 'error'>(givenItems ? 'live' : 'loading');
+  const [fetched, setFetched] = useState<NewsItem[] | null>(givenItems !== undefined ? null : []);
+  const [status, setStatus] = useState<'loading' | 'live' | 'error'>(givenItems !== undefined ? 'live' : 'loading');
 
   useEffect(() => {
-    if (givenItems) return;
+    if (givenItems !== undefined) return;
     let cancelled = false;
     const load = async () => {
       try {
@@ -58,8 +58,8 @@ export default function FloodNewsTicker({ lang, items: givenItems, status: given
     };
   }, [givenItems]);
 
-  const items = (givenItems || fetched || []).slice(0, 8);
-  const loading = givenItems ? givenStatus === 'loading' : status === 'loading';
+  const items = (givenItems ?? fetched ?? []).slice(0, 8);
+  const loading = givenItems !== undefined ? givenStatus === 'loading' : status === 'loading';
 
   return (
     <section className="flood-news-ticker" aria-label={T.label[lang]}>
@@ -67,16 +67,18 @@ export default function FloodNewsTicker({ lang, items: givenItems, status: given
         <span className="blink" />
         {T.label[lang]}
       </span>
-      <div className="flood-news-track">
-        {items.length > 0 ? (
-          [...items, ...items].map((item, index) => (
-            <a key={`${item.link}-${index}`} href={item.link} target="_blank" rel="noopener noreferrer">
-              {cleanText(item.title)} <span>· {item.source}</span>
-            </a>
-          ))
-        ) : (
-          <span>{loading ? T.loading[lang] : T.empty[lang]}</span>
-        )}
+      <div className="flood-news-viewport">
+        <div className="flood-news-track">
+          {items.length > 0 ? (
+            [...items, ...items].map((item, index) => (
+              <a key={`${item.link}-${index}`} href={item.link} target="_blank" rel="noopener noreferrer">
+                {cleanText(item.title)} <span>· {item.source}</span>
+              </a>
+            ))
+          ) : (
+            <span>{loading ? T.loading[lang] : T.empty[lang]}</span>
+          )}
+        </div>
       </div>
     </section>
   );
