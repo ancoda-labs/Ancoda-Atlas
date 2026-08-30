@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import FloodThemeToggle from '@/components/FloodThemeToggle';
 import FloodReportButton from '@/components/FloodReportButton';
+import FloodNewsTicker from '@/components/FloodNewsTicker';
 import type { Lang } from '@/hooks/use-flood-lang';
 import type { FloodDeskPayload } from '@/types';
 
@@ -156,6 +157,7 @@ export default function FloodShell({ lang, setLang, kicker, title, standfirst, c
               </span>
             )}
           </p>
+          <FloodNewsTicker lang={lang} />
         </div>
       </header>
 

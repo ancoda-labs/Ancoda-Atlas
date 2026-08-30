@@ -7,6 +7,7 @@ import FloodThemeToggle from '@/components/FloodThemeToggle';
 import type { MapPhoto, MapSelection } from '@/components/FloodDistrictMap';
 import FloodMapDialog from '@/components/FloodMapDialog';
 import FloodReportButton from '@/components/FloodReportButton';
+import FloodNewsTicker from '@/components/FloodNewsTicker';
 import FloodAiInsights from '@/app/bhotekoshi-flood/_components/FloodAiInsights';
 import { FloodNav } from '@/components/FloodShell';
 import FloodSummary from '@/app/bhotekoshi-flood/_components/FloodSummary';
@@ -212,6 +213,7 @@ export default function BhotekoshiFloodView() {
               </span>
             )}
           </p>
+          <FloodNewsTicker lang={lang} />
         </div>
       </header>
 

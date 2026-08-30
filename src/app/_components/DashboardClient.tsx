@@ -5,6 +5,7 @@ import NepalSignalsMap from '@/app/_components/NepalSignalsMap';
 import { nextUpdateLabel, useDeskRefresh, useTick } from '@/hooks/use-desk-refresh';
 import { ageFrom } from '@/lib/relative-time';
 import BhotekoshiFloodButton from '@/app/_components/BhotekoshiFloodButton';
+import FloodNewsTicker from '@/components/FloodNewsTicker';
 import type {
   HazardSnapshot,
   NewsItem,
@@ -126,9 +127,6 @@ const DASHBOARD_COPY = {
     en: 'A plain-language view of earthquakes, rain, fires, air quality, and active response signals.',
     ne: 'भूकम्प, वर्षा, आगलागी, वायु गुणस्तर र सक्रिय उद्धारसम्बन्धी सरल जानकारी।',
   },
-  floodNews: { en: 'Bhotekoshi flood news', ne: 'भोटेकोशी बाढी समाचार' },
-  loadingNews: { en: 'Looking for the latest flood updates…', ne: 'पछिल्लो बाढी अपडेट खोजिँदैछ…' },
-  noFloodNews: { en: 'No Bhotekoshi flood updates in the current feed.', ne: 'हालको फिडमा भोटेकोशी बाढीसम्बन्धी अपडेट छैन।' },
   liveUpdates: { en: 'Live updates', ne: 'प्रत्यक्ष अपडेट' },
   liveFeed: { en: 'Live hazard feed', ne: 'प्रत्यक्ष विपद् फिड' },
   showUpdates: { en: 'Show updates from', ne: 'अपडेटको समय' },
@@ -654,20 +652,11 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
         </div>
       </div>
 
-      <section className="flood-news-ticker" aria-label={copy('floodNews', language)}>
-        <span className="flood-news-label"><span className="blink" />{copy('floodNews', language)}</span>
-        <div className="flood-news-track">
-          {floodTickerItems.length > 0 ? (
-            [...floodTickerItems, ...floodTickerItems].map((item, index) => (
-              <a key={`${item.link}-${index}`} href={item.link} target="_blank" rel="noopener noreferrer">
-                {cleanText(item.title)} <span>· {item.source}</span>
-              </a>
-            ))
-          ) : (
-            <span>{newsCache['flood-news']?.status === 'loading' ? copy('loadingNews', language) : copy('noFloodNews', language)}</span>
-          )}
-        </div>
-      </section>
+      <FloodNewsTicker
+        lang={language}
+        items={floodTickerItems}
+        status={newsCache['flood-news']?.status}
+      />
 
       <section className="dashboard-intro" aria-labelledby="dashboard-title">
         <div>
