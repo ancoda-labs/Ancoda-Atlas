@@ -336,6 +336,12 @@ declare module '*/apis/sources/rescue-portal.mjs' {
   }>;
 }
 
+declare module '*/apis/sources/bulletin-sitrep.mjs' {
+  import type { BulletinSitrep } from '@/types';
+  export function parseBulletinFigure(raw: unknown): { value: number; suffix?: string } | null;
+  export function getBulletinSitrep(): Promise<BulletinSitrep>;
+}
+
 declare module '*/apis/sources/ndrrma-bulletin.mjs' {
   import type { SourceRef } from '@/types';
   export interface NdrrmaBulletinRaw {

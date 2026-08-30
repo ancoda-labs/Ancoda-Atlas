@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { loadFloodContent, fetchCorridorGauges } from '@/lib/flood';
+import { mergeSitrep } from '@/lib/sitrep-merge';
 import { getFloodStore, isFloodRefreshRunning } from '@/lib/flood-cron';
 import { cacheFor, noStore } from '@/lib/http-cache';
 import type { FloodDeskPayload } from '@/types';
@@ -58,9 +59,17 @@ async function build(): Promise<FloodDeskPayload> {
       corridor = null;
     }
   }
+  const liveSitrep =
+    store.sitrep ??
+    (isFloodRefreshRunning()
+      ? null
+      : await import('@/apis/sources/bulletin-sitrep.mjs')
+          .then(m => m.getBulletinSitrep())
+          .catch(() => null));
   return {
     ...content,
     river: river ?? { gauges: [], error: null, fetchedAt: new Date().toISOString() },
+    sitrep: mergeSitrep(content.sitrep, liveSitrep),
     // The corridor tally and NDRRMA's rescued-persons totals ride along so the
     // overview can put live government figures beside the reviewed toll. The
     // rescue register itself does not: it is two thousand names, and the page

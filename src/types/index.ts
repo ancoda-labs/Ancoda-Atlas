@@ -1147,6 +1147,23 @@ export interface SitrepDiscrepancy {
   summed: number;
 }
 
+/**
+ * The headline figures as the Rasuwa flood bulletin currently states them.
+ *
+ * Same shape as the reviewed breakdowns it stands in for, so the overview
+ * renders either without knowing which it got. Empty with an error set means
+ * the scrape failed and the reviewed figures should stay on the page.
+ */
+export interface BulletinSitrep {
+  breakdowns: SitrepBreakdown[];
+  /** The bulletin's own dateline, e.g. "14 Bhadra". */
+  asOfLabelEn: string | null;
+  asOfLabelNe: string | null;
+  error: string | null;
+  source: SourceRef;
+  fetchedAt: string;
+}
+
 export interface SitrepContent {
   as_of?: string;
   as_of_label_en?: string;
@@ -1194,6 +1211,11 @@ export interface FloodDeskStore {
   portal: RescuePortalStats | null;
   videos: VideoFeed | null;
   news: NewsItem[];
+  /**
+   * Live corridor toll from the Rasuwa flood bulletin. Overlay onto reviewed
+   * sitrep; a failed read leaves the reviewed figures standing.
+   */
+  sitrep: BulletinSitrep | null;
   /** NDRRMA national Daily Disaster Bulletin — newest first. */
   dailyBulletin: FloodOfficialFeed<NdrrmaBulletin> | null;
   /** NDRRMA press notes, for the Coverage page. */

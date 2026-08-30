@@ -36,6 +36,7 @@ export async function GET() {
       rescued: store.rescue?.persons.length ?? 0,
       videos: store.videos?.videos.length ?? 0,
       news: store.news.length,
+      sitrep: store.sitrep?.breakdowns.length ?? 0,
       dailyBulletin: store.dailyBulletin?.items.length ?? 0,
       pressReleases: store.pressReleases?.items.length ?? 0,
       advisories: store.advisories?.items.length ?? 0,

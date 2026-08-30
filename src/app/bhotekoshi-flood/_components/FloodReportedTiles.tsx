@@ -12,7 +12,8 @@ import sitrepJson from '../../../../content/bhotekoshi-flood/sitrep.json';
 // have a filled loss record, how many are still waiting, families evacuated.
 // That register is days behind the national toll — it stores blanks as zeros —
 // so deaths, uncontacted, injured, air rescue, deployed, houses and bridges are
-// the reviewed NDRRMA / MoHA (and Copernicus) figures from the sitrep. BIPAD's
+// the reviewed sitrep with a live bulletin overlay when that scrape's parts add
+// up. Deaths never go down. BIPAD's
 // entered-so-far count is printed under those tiles so the lag stays visible.
 // The two sources are never added together.
 
@@ -35,8 +36,8 @@ const T = {
   read: { en: 'Read', ne: 'पढिएको' },
   asOf: { en: 'Reviewed as of', ne: 'जाँचिएको, मिति' },
   caveat: {
-    en: 'Incident counts and families evacuated are BIPAD’s live corridor register — scraping continues. Deaths, uncontacted, injured, air rescue, deployed staff, houses and bridges are the NDRRMA / MoHA (and Copernicus) figures as compiled on the Rasuwa flood bulletin. Do not add the two together.',
-    ne: 'दर्ता घटना र स्थानान्तरित परिवार बिपद्को प्रत्यक्ष करिडोर अभिलेख हुन् — स्क्रेप जारी छ। मृत्यु, सम्पर्कविहीन, घाइते, हवाई उद्धार, जनशक्ति, घर र पुल रसुवा बाढी बुलेटिनमा संकलित एनडीआरआरएमए / गृह (र कोपर्निकस) तथ्यांक हुन्। दुईथरी जोड्नुहोस् नहोस्।',
+    en: 'Incident counts and families evacuated are BIPAD’s live corridor register — scraping continues. Deaths, uncontacted, injured, air rescue and deployed staff are reviewed figures with a live overlay from the Rasuwa flood bulletin when that scrape’s parts add up. Deaths never go down. Houses and bridges are NDRRMA / Copernicus. Do not add the two together.',
+    ne: 'दर्ता घटना र स्थानान्तरित परिवार बिपद्को प्रत्यक्ष करिडोर अभिलेख हुन् — स्क्रेप जारी छ। मृत्यु, सम्पर्कविहीन, घाइते, हवाई उद्धार र जनशक्ति जाँचिएका तथ्यांक हुन्, रसुवा बाढी बुलेटिनको प्रत्यक्ष ओभरलेसहित जब भागहरू जोडिन्छन्। मृत्यु घट्दैन। घर र पुल एनडीआरआरएमए / कोपर्निकसका हुन्। दुईथरी जोड्नुहोस् नहोस्।',
   },
 };
 

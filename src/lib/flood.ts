@@ -20,11 +20,10 @@ import type {
   GeoCollection,
   RiverGauges,
   FloodReliefReceived,
-  SitrepBreakdown,
   SitrepContent,
-  SitrepDiscrepancy,
 } from '@/types';
 import { errorMessage } from '@/types';
+import { reconcile } from '@/lib/sitrep-merge';
 
 // ─── Reviewed content ───────────────────────────────────────────────────────
 //
@@ -183,38 +182,8 @@ export function loadFloodContent(): FloodContent {
   };
 }
 
-/**
- * Re-add every breakdown and report the ones that no longer close.
- *
- * These numbers are compiled by hand from police briefings and NDRRMA reports,
- * under time pressure, during an emergency — whether they reach Atlas through a
- * reviewed edit or through the bulletin scrape. The commonest way that goes
- * wrong is a district being updated without its total, leaving a page that says
- * 469 dead above a list of districts summing to 471. Rather than trust either
- * source, every breakdown is re-added and any that no longer reconciles is
- * reported to the UI, which shows the discrepancy instead of hiding it.
- *
- * Groups whose parts overlap rather than partition the total opt out with
- * `no_total_check`; for them the arithmetic was never meant to close.
- */
-export function reconcile(breakdowns: SitrepBreakdown[] | undefined): SitrepDiscrepancy[] {
-  const discrepancies: SitrepDiscrepancy[] = [];
-  for (const breakdown of breakdowns ?? []) {
-    if (breakdown.no_total_check) continue;
-    const summed = (breakdown.items ?? []).reduce((acc, item) => acc + (item.value || 0), 0);
-    if (summed !== breakdown.total) {
-      discrepancies.push({ id: breakdown.id, stated: breakdown.total, summed });
-    }
-  }
-
-  if (discrepancies.length) {
-    console.error(
-      '[Flood] SitRep figures do not reconcile:',
-      discrepancies.map(d => `${d.id} states ${d.stated}, parts sum to ${d.summed}`).join('; '),
-    );
-  }
-  return discrepancies;
-}
+/** Re-add every sitrep breakdown. Lives next to the live overlay so both share one check. */
+export { reconcile } from '@/lib/sitrep-merge';
 
 function loadSitrep(): SitrepContent {
   const sitrep = content<SitrepContent>(sitrepJson);
