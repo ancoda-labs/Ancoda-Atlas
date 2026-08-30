@@ -166,6 +166,27 @@ The image build installs all platform-specific optional dependencies required by
 Next.js and skips local Git hooks, which are only configured on developer
 machines by `npm install`.
 
+### Why not a serverless or edge runtime
+
+Atlas needs a host that runs a long-lived Node process with a writable disk. It
+is not deployable to Cloudflare Workers, or to any other edge-serverless
+runtime, and adapters such as OpenNext cannot bridge the gap — the build fails
+while bundling, and the parts that did bundle would not work:
+
+- **A native binary.** Rescue-register OCR rasterizes official PDFs through
+  `@napi-rs/canvas`, which ships a platform-specific `.node` Skia binary. Edge
+  runtimes execute no native modules, and no bundler setting changes that.
+- **A writable filesystem.** The sweeper and the flood desk persist each cycle
+  to `runs/`, and the dashboard reads `runs/dashboard.json` when its in-memory
+  copy is cold. Edge runtimes have no writable disk.
+- **Background schedulers.** The hazard sweep and the flood refresh are
+  `setInterval` loops owned by the server process. Edge runtimes keep no process
+  alive between requests.
+
+Any container or VM host works: Docker Compose as above, or the published image
+on a container platform. Use the `runs/` volume so sweep state survives a
+restart.
+
 ---
 
 ## What You Get
