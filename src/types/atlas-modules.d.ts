@@ -167,6 +167,58 @@ declare module '*/lib/news-digest.mjs' {
   ): Promise<{ draft: DigestDraft; model: string | null; translated: boolean }>;
 }
 
+declare module '*/lib/rescue-ocr-utils.mjs' {
+  import type { PublicRescueOcrDocument, RescueOcrDocument, RescueOcrRecord } from '@/types';
+  export function parseRescueOcrRecords(
+    text: string,
+    opts?: { pageMin?: number; pageMax?: number },
+  ): RescueOcrRecord[];
+  export function summarizeRescueOcrRecords(records: RescueOcrRecord[]): {
+    total: number;
+    nepali: number;
+    foreign: number;
+    unknown: number;
+  };
+  export function assertNdrrmaDocumentUrl(value: string): URL;
+  export function publicRescueOcrDocument(document: RescueOcrDocument): PublicRescueOcrDocument;
+  export function publicRescueOcrDocument(document: null): null;
+  export function publicRescueOcrDocument(
+    document: RescueOcrDocument | null,
+  ): PublicRescueOcrDocument | null;
+  export function rescueOcrCsv(
+    document: RescueOcrDocument | PublicRescueOcrDocument,
+    opts?: { includeSensitive?: boolean },
+  ): string;
+}
+
+declare module '*/lib/llm/tarka-ocr.mjs' {
+  export function isTarkaOcrConfigured(): boolean;
+}
+
+declare module '*/lib/rescue-ocr.mjs' {
+  import type { RescueOcrDocument } from '@/types';
+  export const MAX_RESCUE_DOCUMENT_BYTES: number;
+  export const MAX_RESCUE_DOCUMENT_PAGES: number;
+  export function isTarkaOcrConfigured(): boolean;
+  export function fetchNdrrmaRescueDocument(url: string): Promise<{
+    bytes: Buffer;
+    sourceUrl: string;
+    sourceDocument: string;
+  }>;
+  export function ingestRescueDocument(input: {
+    bytes: Buffer;
+    sourceUrl?: string | null;
+    sourceDocument?: string | null;
+    eventId?: string;
+    previous?: RescueOcrDocument | null;
+  }): Promise<RescueOcrDocument>;
+  export function ingestRescueDocumentFromUrl(input: {
+    url: string;
+    eventId?: string;
+    previous?: RescueOcrDocument | null;
+  }): Promise<RescueOcrDocument>;
+}
+
 declare module '*/apis/sources/ndrrma.mjs' {
   import type { RescuePlace, RescuedPerson, RescueRegister, RescueSummary } from '@/types';
   export function getRescuedPersons(): Promise<RescuedPerson[]>;

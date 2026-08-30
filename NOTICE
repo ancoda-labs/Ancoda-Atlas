@@ -61,6 +61,7 @@ Live data services
     ReliefWeb (UN OCHA)                         humanitarian reporting
     Humanitarian Data Exchange (HDX)            ReliefWeb fallback datasets
     BIPAD Portal (NDRRMA, Government of Nepal)  river gauge telemetry
+    Tarka                                      OCR and document inference
     Nepali news publishers                      hazard reporting via public RSS
 
 

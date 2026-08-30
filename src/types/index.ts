@@ -616,6 +616,57 @@ export interface RescueSummary {
   byStatus: Array<{ id: number; title: string; titleNe: string | null; count: number }>;
 }
 
+/** One row machine-read from an official rescue document. */
+export interface RescueOcrRecord {
+  id: string;
+  name: string;
+  nationality: 'nepali' | 'foreign' | null;
+  country: string | null;
+  age: number | null;
+  gender: string | null;
+  /** Retained only in the operator response and private desk store. */
+  passport_or_id: string | null;
+  /** Retained only in the operator response and private desk store. */
+  contact: string | null;
+  rescue_location: string | null;
+  destination_or_hospital: string | null;
+  status: string | null;
+  rescue_date: string | null;
+  report_timestamp: string | null;
+  remarks: string | null;
+  source_page: number | null;
+  review_status: 'unverified_ocr';
+}
+
+export interface RescueOcrSummary {
+  total: number;
+  nepali: number;
+  foreign: number;
+  unknown: number;
+}
+
+/** The admin-only extraction result, including any identity/contact columns. */
+export interface RescueOcrDocument {
+  event_id: string;
+  source_document: string;
+  source_url: string | null;
+  source_sha256: string;
+  extracted_at: string;
+  model: string;
+  page_count: number;
+  processed_pages: number;
+  complete: boolean;
+  warnings: string[];
+  summary: RescueOcrSummary;
+  records: RescueOcrRecord[];
+}
+
+/** The public Rescued-tab/export row. Sensitive identity fields are removed. */
+export type PublicRescueOcrRecord = Omit<RescueOcrRecord, 'passport_or_id' | 'contact'>;
+export type PublicRescueOcrDocument = Omit<RescueOcrDocument, 'records'> & {
+  records: PublicRescueOcrRecord[];
+};
+
 export interface RescueRegister {
   persons: RescuedPerson[];
   summary: RescueSummary | null;
@@ -623,6 +674,8 @@ export interface RescueRegister {
   error: string | null;
   source: SourceRef;
   fetchedAt: string;
+  /** OCR-derived official attachment, kept separate from the portal register. */
+  ocrDocument?: PublicRescueOcrDocument | null;
 }
 
 // ─── OPMCM rescue portal counters ───────────────────────────────────────────
@@ -1169,6 +1222,8 @@ export interface FloodDeskStore {
   corridor: CorridorIncidents | null;
   alerts: BipadAlert[];
   rescue: RescueRegister | null;
+  /** Full operator-side OCR extraction; public routes strip identity fields. */
+  ocrRescue: RescueOcrDocument | null;
   portal: RescuePortalStats | null;
   videos: VideoFeed | null;
   news: NewsItem[];
