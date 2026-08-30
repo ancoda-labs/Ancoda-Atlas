@@ -15,6 +15,8 @@ import type {
   BipadPayload,
 } from '@/types';
 import { errorMessage } from '@/types';
+import { useFloodLang } from '@/hooks/use-flood-lang';
+import FloodFooter from '@/components/FloodFooter';
 
 interface PanelState {
   items: NewsItem[];
@@ -314,7 +316,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
 
   // Custom visual quality modes
   const [darkTheme, setDarkTheme] = useState(false);
-  const [language, setLanguage] = useState<'en' | 'ne'>('en');
+  const [language, changeLanguage] = useFloodLang();
   const [newsWindow, setNewsWindow] = useState('24h');
   const [glossaryOpen, setGlossaryOpen] = useState(false);
   const [bipadData, setBipadData] = useState<BipadPayload | null>(null);
@@ -351,8 +353,6 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
   useEffect(() => {
     const cachedPerf = localStorage.getItem('atlas_low_perf') === 'true';
     const cachedTheme = localStorage.getItem('atlas_theme') === 'dark';
-    const cachedLanguage = localStorage.getItem('atlas_language');
-    if (cachedLanguage === 'en' || cachedLanguage === 'ne') setLanguage(cachedLanguage);
     setDarkTheme(cachedTheme);
     if (cachedPerf) {
       document.body.classList.add('low-perf');
@@ -495,10 +495,6 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
     document.body.classList.toggle('dark-theme', target);
   };
 
-  const changeLanguage = (next: 'en' | 'ne') => {
-    setLanguage(next);
-    localStorage.setItem('atlas_language', next);
-  };
 
   // The two media rails.
   //
@@ -840,6 +836,8 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
           )}
         </div>
       </section>
+
+      <FloodFooter />
 
       {/* Video player. YouTube's own embed — Atlas hosts no video. */}
       {playing && (

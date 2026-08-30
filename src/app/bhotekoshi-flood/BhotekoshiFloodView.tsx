@@ -14,6 +14,7 @@ import FloodSummary from '@/app/bhotekoshi-flood/_components/FloodSummary';
 import FloodOfficial from '@/app/bhotekoshi-flood/_components/FloodOfficial';
 import { useFloodLang } from '@/hooks/use-flood-lang';
 import { ageFrom } from '@/lib/relative-time';
+import FloodFooter from '@/components/FloodFooter';
 import { districtPinForText } from '@/apis/utils/flood-scope.mjs';
 import type { FloodDeskPayload, FloodPhoto, FloodPhotoFeed, NewsItem } from '@/types';
 import { DESK_POLL_MS, nextUpdateLabel, useTick } from '@/hooks/use-desk-refresh';
@@ -408,11 +409,7 @@ export default function BhotekoshiFloodView() {
           onClose={() => setSelection(null)}
         />
 
-        <footer className="fl-foot">
-          {lang === 'ne'
-            ? 'एट्लस निगरानी उपकरण हो, चेतावनी प्रणाली होइन। कदम चाल्नुअघि डीएचएम, एनडीआरआरएमए वा प्रहरीको आधिकारिक सूचना पुष्टि गर्नुहोस्।'
-            : 'Atlas is a monitoring aid, not a warning system. Confirm with DHM, NDRRMA or the Police before acting.'}
-        </footer>
+        <FloodFooter />
       </main>
     </div>
   );

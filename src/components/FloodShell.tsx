@@ -10,6 +10,7 @@ import FloodReportButton from '@/components/FloodReportButton';
 import FloodNewsTicker from '@/components/FloodNewsTicker';
 import type { Lang } from '@/hooks/use-flood-lang';
 import type { FloodDeskPayload } from '@/types';
+import FloodFooter from '@/components/FloodFooter';
 
 // The frame every flood-desk page sits in.
 //
@@ -173,11 +174,7 @@ export default function FloodShell({ lang, setLang, kicker, title, standfirst, c
       <main className="fl-wrap">
         {children}
 
-        <footer className="fl-foot">
-          {lang === 'ne'
-            ? 'एट्लस निगरानी उपकरण हो, चेतावनी प्रणाली होइन। कदम चाल्नुअघि डीएचएम, एनडीआरआरएमए वा प्रहरीको आधिकारिक सूचना पुष्टि गर्नुहोस्।'
-            : 'Atlas is a monitoring aid, not a warning system. Confirm with DHM, NDRRMA or the Police before acting.'}
-        </footer>
+        <FloodFooter />
       </main>
     </div>
   );

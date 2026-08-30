@@ -1,6 +1,6 @@
 {
   "id": "site",
-  "report_contact_email": "",
+  "report_contact_email": "research@ancodalabs.com",
   "_comment_report_contact_email": "Spec §5 requires a visible 'report a problem with this listing' action. Set this to a monitored inbox BEFORE launch. While it is empty the report link is hidden rather than rendered dead.",
   "brand_en": "Rasuwa–Bhotekoshi Flood",
   "brand_ne": "रसुवा–भोटेकोशी बाढी",
