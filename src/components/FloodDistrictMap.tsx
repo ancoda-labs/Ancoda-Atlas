@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import type { AffectedDistrictProps, FloodGauge, GeoCollection, Geometry, PhotoGeoSource } from '@/types';
+import { orientationTransform } from '@/lib/photo-orientation';
 
 // The flood corridor map.
 //
@@ -29,6 +30,15 @@ export interface MapPhoto {
   lon: number;
   geoSource: PhotoGeoSource;
   label: string;
+  /** When set, the pin is the photograph itself rather than a coloured dot. */
+  url?: string;
+  orientation?: number;
+  /** Ground reports vs press photographs — drawn differently, labelled differently. */
+  layer?: 'ground' | 'news';
+  /** Press items open the outlet's page; ground reports open the map dialog. */
+  href?: string;
+  /** Overrides the default hover subtitle. */
+  sub?: string;
 }
 
 export interface MapPathPoint {
@@ -62,7 +72,21 @@ const AFFECTED = '#ffb020';
 const CONFIRMED = '#ff4d5c';
 const ESTIMATED = '#ffb020';
 const PHOTO = '#7ce0b4';
+const NEWS = '#6ec8ff';
 const ENTRY = '#6ec8ff';
+
+interface OverlayPin {
+  id: string;
+  x: number;
+  y: number;
+  url: string;
+  orientation?: number;
+  layer: 'ground' | 'news';
+  href?: string;
+  title: string;
+  sub: string;
+  approximate: boolean;
+}
 
 const GAUGE_COLOUR: Record<string, string> = {
   danger: '#ff4d5c',
@@ -134,6 +158,7 @@ export default function FloodDistrictMap({ points = [], photos = [], gauges = []
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const [geo, setGeo] = useState<GeoCollection<AffectedDistrictProps> | null>(null);
   const [hover, setHover] = useState<Hover | null>(null);
+  const [overlays, setOverlays] = useState<OverlayPin[]>([]);
   const districtHitRef = useRef<Array<{ name: string; status: string; path: Path2D }>>([]);
   const hitRef = useRef<Hit[]>([]);
 
@@ -184,6 +209,7 @@ export default function FloodDistrictMap({ points = [], photos = [], gauges = []
       // The corridor now runs past the district polygons, so the downstream
       // points have to widen the frame or they fall off the edge.
       for (const p of points) stretch(p.lng, p.lat);
+      for (const photo of photos) stretch(photo.lon, photo.lat);
 
       const pad = 20;
       const lonScale = Math.cos((((minY + maxY) / 2) * Math.PI) / 180);
@@ -343,43 +369,86 @@ export default function FloodDistrictMap({ points = [], photos = [], gauges = []
         });
       }
 
-      // ── Ground reports ──
+      // ── Ground reports and press photographs ──
+      const nextOverlays: OverlayPin[] = [];
       for (const photo of photos) {
         const [ptx, pty] = project(photo.lon, photo.lat);
-        const approximate = photo.geoSource === 'district';
-        // The approximate halo is drawn at the true centre; only the pin moves.
-        const { x, y } = deOverlap(ptx, pty, placed, approximate ? 10 : 13);
+        const layer = photo.layer === 'news' ? 'news' : 'ground';
+        const approximate = photo.geoSource === 'district' || layer === 'news';
+        const hasImage = Boolean(photo.url);
+        const { x, y } = deOverlap(ptx, pty, placed, hasImage ? 22 : approximate ? 10 : 13);
         placed.push({ x, y });
+        const halo = layer === 'news' ? 'rgba(110, 200, 255, 0.20)' : 'rgba(124, 224, 180, 0.16)';
+        const haloStroke = layer === 'news' ? 'rgba(110, 200, 255, 0.50)' : 'rgba(124, 224, 180, 0.45)';
         if (approximate) {
           ctx.beginPath();
-          ctx.arc(ptx, pty, 15, 0, Math.PI * 2);
-          ctx.fillStyle = 'rgba(124, 224, 180, 0.16)';
+          ctx.arc(ptx, pty, hasImage ? 20 : 15, 0, Math.PI * 2);
+          ctx.fillStyle = halo;
           ctx.fill();
-          ctx.strokeStyle = 'rgba(124, 224, 180, 0.45)';
+          ctx.strokeStyle = haloStroke;
           ctx.lineWidth = 1;
           ctx.setLineDash([3, 3]);
           ctx.stroke();
           ctx.setLineDash([]);
         }
-        ctx.beginPath();
-        ctx.arc(x, y, approximate ? 3.5 : 5.5, 0, Math.PI * 2);
-        ctx.fillStyle = PHOTO;
-        ctx.strokeStyle = '#08120e';
-        ctx.lineWidth = 1.5;
-        ctx.fill();
-        ctx.stroke();
+        const sub = photo.sub
+          || (layer === 'news'
+          ? (ne ? 'समाचारको तस्बिर — जिल्ला शीर्षकबाट' : 'Press photograph — district from the headline')
+          : approximate
+            ? (ne ? 'जिल्ला अनुसार अनुमानित स्थान' : 'Approximate — district only')
+            : (ne ? 'जनताको तस्बिर — खोल्न थिच्नुहोस्' : 'Ground report — click to open'));
 
-        hits.push({
-          selection: { kind: 'photo', id: photo.id },
-          title: photo.label,
-          sub: approximate
-            ? ne ? 'जिल्ला अनुसार अनुमानित स्थान' : 'Approximate — district only'
-            : ne ? 'जनताको तस्बिर — खोल्न थिच्नुहोस्' : 'Ground report — click to open',
-          x, y, r: approximate ? 15 : 9,
-        });
+        if (hasImage && photo.url) {
+          nextOverlays.push({
+            id: photo.id,
+            x, y,
+            url: photo.url,
+            orientation: photo.orientation,
+            layer,
+            href: photo.href,
+            title: photo.label,
+            sub,
+            approximate,
+          });
+          // Press photographs are links on the overlay, not dialog targets.
+          if (layer === 'ground') {
+            hits.push({
+              selection: { kind: 'photo', id: photo.id },
+              title: photo.label,
+              sub,
+              x, y, r: 20,
+            });
+          }
+        } else {
+          ctx.beginPath();
+          ctx.arc(x, y, approximate ? 3.5 : 5.5, 0, Math.PI * 2);
+          ctx.fillStyle = layer === 'news' ? NEWS : PHOTO;
+          ctx.strokeStyle = '#08120e';
+          ctx.lineWidth = 1.5;
+          ctx.fill();
+          ctx.stroke();
+          hits.push({
+            selection: { kind: 'photo', id: photo.id },
+            title: photo.label,
+            sub,
+            x, y, r: approximate ? 15 : 9,
+          });
+        }
       }
 
       hitRef.current = hits;
+      setOverlays(prev => {
+        if (
+          prev.length === nextOverlays.length
+          && prev.every((pin, i) => {
+            const next = nextOverlays[i];
+            return pin.id === next.id && pin.x === next.x && pin.y === next.y && pin.url === next.url;
+          })
+        ) {
+          return prev;
+        }
+        return nextOverlays;
+      });
     };
 
     draw();
@@ -476,8 +545,65 @@ export default function FloodDistrictMap({ points = [], photos = [], gauges = []
           </>
         )}
         {gauges.length > 0 && <span><i className="sq" style={{ background: GAUGE_COLOUR.normal }} />{ne ? 'डीएचएम मापन केन्द्र' : 'DHM gauge'}</span>}
-        {photos.length > 0 && <span><i style={{ background: PHOTO, borderRadius: '50%' }} />{ne ? 'जनताका तस्बिर' : 'Ground reports'}</span>}
+        {photos.some(p => (p.layer || 'ground') === 'ground') && (
+          <span><i style={{ background: PHOTO, borderRadius: '50%' }} />{ne ? 'जनताका तस्बिर' : 'Ground reports'}</span>
+        )}
+        {photos.some(p => p.layer === 'news') && (
+          <span><i style={{ background: NEWS, borderRadius: '50%' }} />{ne ? 'समाचारका तस्बिर' : 'Press photos'}</span>
+        )}
       </div>
+      {overlays.map(pin => {
+        const className = `flood-map-shot${pin.layer === 'news' ? ' news' : ''}${pin.approximate ? ' approx' : ''}`;
+        const style: React.CSSProperties = {
+          left: pin.x,
+          top: pin.y,
+        };
+        const img = (
+          <img
+            src={pin.url}
+            alt=""
+            onError={e => {
+              e.currentTarget.style.display = 'none';
+            }}
+            style={pin.orientation ? { transform: orientationTransform(pin.orientation) } : undefined}
+          />
+        );
+        const onEnter = () => setHover({ title: pin.title, sub: pin.sub, x: pin.x, y: pin.y });
+        if (pin.href) {
+          return (
+            <a
+              key={pin.id}
+              className={className}
+              style={style}
+              href={pin.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={pin.title}
+              onMouseEnter={onEnter}
+              onMouseLeave={() => setHover(null)}
+            >
+              {img}
+            </a>
+          );
+        }
+        return (
+          <button
+            key={pin.id}
+            type="button"
+            className={className}
+            style={style}
+            aria-label={pin.title}
+            onMouseEnter={onEnter}
+            onMouseLeave={() => setHover(null)}
+            onClick={() => {
+              if (onPhotoSelect) onPhotoSelect(pin.id);
+              onSelect?.({ kind: 'photo', id: pin.id });
+            }}
+          >
+            {img}
+          </button>
+        );
+      })}
     </div>
   );
 }
