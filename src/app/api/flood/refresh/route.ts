@@ -34,6 +34,7 @@ export async function GET() {
       incidents: store.corridor?.incidents.length ?? 0,
       alerts: store.alerts.length,
       rescued: store.rescue?.persons.length ?? 0,
+      ocrRescued: store.ocrRescue?.records.length ?? 0,
       videos: store.videos?.videos.length ?? 0,
       news: store.news.length,
       dailyBulletin: store.dailyBulletin?.items.length ?? 0,
