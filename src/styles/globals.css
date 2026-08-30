@@ -1918,7 +1918,7 @@ body.low-perf .logo-ring::before, body.low-perf .logo-ring::after, body.low-perf
   padding: 9px 10px;
   text-align: left;
   text-decoration: none;
-  color: inherit;
+  color: var(--on-dark);
   background: transparent;
   border: 0;
   cursor: pointer;
@@ -1940,7 +1940,7 @@ body.low-perf .logo-ring::before, body.low-perf .logo-ring::after, body.low-perf
   font-size: 13px;
   font-weight: 650;
   line-height: 1.35;
-  color: #fff;
+  color: var(--on-dark);
 }
 .flood-map-stack-list em {
   display: block;
@@ -3989,6 +3989,19 @@ body:not(.dark-theme) .fl-official dd,
 body:not(.dark-theme) .fl-gauges td.num b,
 body:not(.dark-theme) .fl-calls b {
   color: #19302d;
+}
+
+/* The photograph list sits on the dark map in both themes. The rule above
+   would otherwise paint those headlines as page ink. */
+body:not(.dark-theme) .flood-map-stack-list,
+body:not(.dark-theme) .flood-map-stack-list a,
+body:not(.dark-theme) .flood-map-stack-list li > button,
+body:not(.dark-theme) .flood-map-stack-list strong,
+body:not(.dark-theme) .flood-map-stack-list p {
+  color: var(--on-dark);
+}
+body:not(.dark-theme) .flood-map-stack-list em {
+  color: #d5dee6;
 }
 
 body:not(.dark-theme) .fl-prose p,
