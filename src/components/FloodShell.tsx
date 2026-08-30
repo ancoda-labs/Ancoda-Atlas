@@ -124,9 +124,11 @@ export default function FloodShell({ lang, setLang, kicker, title, standfirst, c
         <div className="fl-wrap">
           <div className="fl-mast-top">
             <Link href="/">&larr; {lang === 'ne' ? 'एट्लसमा फर्कनुहोस्' : 'Back to Atlas'}</Link>
-            <div className="fl-lang">
-              <button className={lang === 'en' ? 'on' : ''} onClick={() => setLang('en')}>English</button>
-              <button className={lang === 'ne' ? 'on' : ''} onClick={() => setLang('ne')}>नेपाली</button>
+            <div className="fl-mast-controls">
+              <div className="fl-lang">
+                <button className={lang === 'en' ? 'on' : ''} onClick={() => setLang('en')}>English</button>
+                <button className={lang === 'ne' ? 'on' : ''} onClick={() => setLang('ne')}>नेपाली</button>
+              </div>
               <FloodThemeToggle lang={lang} />
             </div>
           </div>
