@@ -2818,6 +2818,54 @@ body.low-perf .logo-ring::before, body.low-perf .logo-ring::after, body.low-perf
 .fl-nav a:hover { color: var(--ink); background: var(--paper-2); }
 .fl-nav a.on { color: var(--ink); border-bottom-color: var(--red); }
 
+/* Devanagari sits optically smaller than Latin at the same px, and English
+   uppercase tracking does nothing useful to it. Nepali is a first-class
+   language on this desk — सारांश / सहयोग have to be as easy to scan as
+   Overview / Donate. Numbers stay the size they are. */
+.fl[lang="ne"] .fl-nav a {
+  font-size: 15px;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  font-weight: 600;
+}
+.fl[lang="ne"] .fl-eyebrow,
+.fl[lang="ne"] .fl-sec-head > span,
+.fl[lang="ne"] .fl-sec-head em,
+.fl[lang="ne"] .fl-minor,
+.fl[lang="ne"] .fl-dist-more summary,
+.fl[lang="ne"] .fl-jump-kicker,
+.fl[lang="ne"] .fl-rail-tag {
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-transform: none;
+}
+.fl[lang="ne"] .fl-mast-top a,
+.fl[lang="ne"] .fl-dateline,
+.fl[lang="ne"] .fl-freshness,
+.fl[lang="ne"] .fl-lang button {
+  font-size: 14px;
+}
+.fl[lang="ne"] .fl-jump strong { font-size: 17px; }
+.fl[lang="ne"] .fl-jump span,
+.fl[lang="ne"] .fl-dist-toc a { font-size: 13.5px; }
+.fl[lang="ne"] .fl-note,
+.fl[lang="ne"] .fl-calls-more span { font-size: 15px; }
+.fl[lang="ne"] .fl-sec-head h2 { font-size: clamp(28px, 3.6vw, 36px); }
+.fl[lang="ne"] .fl-mast h1 { font-size: clamp(40px, 7vw, 70px); }
+
+html[lang="ne"] .eyebrow {
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: none;
+}
+html[lang="ne"] .intro-copy { font-size: 16px; line-height: 1.6; }
+html[lang="ne"] .regime-chip {
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-transform: none;
+}
+html[lang="ne"] .language-toggle button { font-size: 12px; }
+
 /* --- Figure tiles --- */
 .fl-tiles {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));

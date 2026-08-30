@@ -50,6 +50,10 @@ export function useFloodLang(): [Lang, (next: Lang) => void] {
     };
   }, []);
 
+  useEffect(() => {
+    document.documentElement.lang = lang === 'ne' ? 'ne' : 'en';
+  }, [lang]);
+
   const setLanguage = useCallback((next: Lang) => {
     setLang(next);
     try {
