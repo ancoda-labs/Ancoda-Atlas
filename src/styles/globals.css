@@ -1871,7 +1871,7 @@ body.low-perf .logo-ring::before, body.low-perf .logo-ring::after, body.low-perf
   top: 8px;
   right: auto;
   bottom: 8px;
-  width: 268px;
+  width: 240px;
 }
 .flood-map-stack-list p {
   display: flex;

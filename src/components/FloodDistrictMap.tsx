@@ -725,8 +725,10 @@ export default function FloodDistrictMap({ points = [], photos = [], gauges = []
   const open = stacks.find(s => s.id === openStack && s.items.length > 1) || null;
   const stageW = stageSizeRef.current.w;
   const stageH = stageSizeRef.current.h;
-  const listSide = stageW >= 560;
-  const listW = open && listSide ? Math.min(268, Math.round(stageW * 0.36)) : 0;
+  // The overview map sits in a 60% column of a 1000px wrap, so the stage is
+  // ~550px wide. 560 sent the headline list to the bottom of the map.
+  const listSide = stageW >= 400;
+  const listW = open && listSide ? Math.min(240, Math.round(stageW * 0.42)) : 0;
   const listH = open && !listSide ? Math.min(176, Math.max(120, Math.round(stageH * 0.38))) : 0;
   const origin = open ? { x: open.x, y: open.y } : { x: 0, y: 0 };
   const spiderBounds = {
