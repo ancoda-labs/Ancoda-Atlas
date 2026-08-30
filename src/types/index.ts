@@ -420,6 +420,8 @@ export interface FloodContent {
     districts?: FloodDistrictContacts[];
   } | null;
   sitrep: SitrepContent | null;
+  /** Cash in the Prime Minister's fund, and pledges that must not be added to it. */
+  reliefReceived: FloodReliefReceived | null;
   funds: FloodOrg[];
 }
 
@@ -1072,6 +1074,8 @@ export interface VideoFeed {
 // change on the page without someone having looked at them.
 
 export interface SitrepValue extends Bilingual<'label'>, Bilingual<'note'>, Bilingual<'detail'>, Bilingual<'unit'> {
+  /** Stable key when the same figure is reused on the live tiles. */
+  id?: string;
   value: number;
   /** Rendered after the number, e.g. the "+" in "13,248+". */
   suffix?: string;
@@ -1083,12 +1087,28 @@ export interface SitrepValue extends Bilingual<'label'>, Bilingual<'note'>, Bili
   exclusive?: boolean;
 }
 
-export interface SitrepHeadline extends Bilingual<'label'> {
+export interface SitrepHeadline extends Bilingual<'label'>, Bilingual<'unit'> {
   id: string;
   value: number;
   suffix?: string;
   tone: 'critical' | 'warning' | 'positive';
   source: string;
+}
+
+/**
+ * Cash received into the Prime Minister's Disaster Relief Fund, and parallel
+ * pledges that the source keeps apart from that total.
+ */
+export interface FloodReliefReceived {
+  as_of?: string;
+  as_of_label_en?: string;
+  as_of_label_ne?: string;
+  sources?: SourceRef[];
+  headline?: SitrepHeadline[];
+  breakdowns?: SitrepBreakdown[];
+  /** Pledges, in-kind cargo and other collections that are not the PM fund. */
+  exclusive?: SitrepValue[];
+  discrepancies?: SitrepDiscrepancy[];
 }
 
 export interface SitrepBreakdown

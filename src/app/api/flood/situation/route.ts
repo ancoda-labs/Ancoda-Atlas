@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getFloodStore } from '@/lib/flood-cron';
+import { loadFloodContent } from '@/lib/flood';
 import { cacheFor, noStore } from '@/lib/http-cache';
 import type {
   BipadAlert,
@@ -9,6 +10,7 @@ import type {
   HelpRequest,
   PersonMapPoint,
   PortalActivity,
+  SitrepContent,
 } from '@/types';
 import { errorMessage } from '@/types';
 
@@ -33,6 +35,8 @@ interface SituationPayload {
   personPoints: FloodOfficialFeed<PersonMapPoint> | null;
   /** The portal's newest filings — help asked for, and help offered. */
   latest: PortalActivity | null;
+  /** Reviewed NDRRMA / MoHA figures for the tile grid — not a BIPAD scrape. */
+  sitrep: SitrepContent | null;
   generatedAt: string;
 }
 
@@ -57,7 +61,8 @@ async function build(since: string): Promise<SituationPayload> {
   const personPoints = pointFeed
     ? { items: pointFeed.points, error: pointFeed.error, source: pointFeed.source, fetchedAt: pointFeed.fetchedAt }
     : null;
-  return { corridor, alerts, helpRequests, personPoints, latest, generatedAt: new Date().toISOString() };
+  const sitrep = loadFloodContent().sitrep;
+  return { corridor, alerts, helpRequests, personPoints, latest, sitrep, generatedAt: new Date().toISOString() };
 }
 
 export async function GET(req: NextRequest) {
@@ -66,6 +71,7 @@ export async function GET(req: NextRequest) {
 
   // The refresher covers the default window; an explicit `since` still fetches.
   const store = getFloodStore();
+  const sitrep = loadFloodContent().sitrep;
   if (store.corridor && since === EVENT_START) {
     const res = NextResponse.json({
       corridor: store.corridor,
@@ -73,6 +79,7 @@ export async function GET(req: NextRequest) {
       helpRequests: store.helpRequests,
       personPoints: store.personPoints,
       latest: store.latestActivity,
+      sitrep,
       generatedAt: store.lastRunAt || new Date().toISOString(),
     });
     res.headers.set('X-Atlas-Cache', 'cron');
@@ -117,6 +124,7 @@ export async function GET(req: NextRequest) {
         helpRequests: null,
         personPoints: null,
         latest: null,
+        sitrep: loadFloodContent().sitrep,
         generatedAt: new Date().toISOString(),
       },
       { status: 200 },

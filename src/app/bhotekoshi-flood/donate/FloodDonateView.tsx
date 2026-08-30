@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import FloodShell from '@/components/FloodShell';
 import { useFloodLang } from '@/hooks/use-flood-lang';
 import type { Lang } from '@/hooks/use-flood-lang';
-import type { FloodBank, FloodDeskPayload, FloodOfficialFeed, PortalDonationChannel } from '@/types';
+import type { FloodBank, FloodDeskPayload, FloodOfficialFeed, PortalDonationChannel, SitrepBreakdown, SitrepValue } from '@/types';
 import { ageFrom } from '@/lib/relative-time';
 import { useDeskRefresh } from '@/hooks/use-desk-refresh';
 
@@ -52,6 +52,24 @@ const T = {
   wallet: { en: 'Wallet', ne: 'वालेट' },
   orgsVerified: { en: 'Organisations checked', ne: 'संस्था जाँचिएको' },
   orgsAgainst: { en: 'against', ne: 'स्रोत' },
+  receivedKicker: { en: 'Received', ne: 'प्राप्त' },
+  receivedTitle: { en: 'What has reached the Prime Minister’s fund', ne: 'प्रधानमन्त्री कोषमा आएको रकम' },
+  receivedIntro: {
+    en: 'Balances the Ministry of Finance published for the Prime Minister’s Disaster Relief Fund, nine banks, 12 Bhadau. This is cash already in those accounts — not a pledge, and not Atlas. Give through the accounts below.',
+    ne: 'अर्थ मन्त्रालयले प्रधानमन्त्री दैवी प्रकोप उद्धार कोषका नौ बैंकमा १२ भदौ प्रकाशित गरेको मौज्दात। यो ती खातामा आइसकेको नगद हो — घोषणा होइन, एट्लस होइन। तलका खातामार्फत सहयोग गर्नुहोस्।',
+  },
+  receivedAsOf: { en: 'Figures as of', ne: 'तथ्यांक मिति' },
+  doNotAdd: { en: 'Do not add these together', ne: 'यी संख्या नजोड्नुहोस्' },
+  receivedWarn: {
+    en: 'The amount already in the fund before the flood is inside the 6.55 billion, not on top of it. Foreign pledges, the World Bank package and in-kind cargo are not this fund.',
+    ne: 'विपद्अघिको मौज्दात ६ अर्ब ५५ करोडभित्र छ, माथि होइन। वैदेशिक घोषणा, विश्व बैंक प्याकेज र सामग्री यो कोष होइनन्।',
+  },
+  notInRupee: { en: 'Counted separately, not in the rupee total', ne: 'छुट्टै गनिएको, नेपाली जम्मामा छैन' },
+  notInFund: { en: 'Not in the Prime Minister’s fund', ne: 'प्रधानमन्त्री कोषमा होइन' },
+  discrepancy: {
+    en: 'These figures no longer add up and have not been corrected yet. Treat the group totals as provisional.',
+    ne: 'यी तथ्यांक मिल्दैनन् र अझै सच्याइएको छैन। समूहका जम्मा संख्यालाई अस्थायी मान्नुहोस्।',
+  },
 };
 
 /** "kathmandupost.com" — a source link the reader can recognise at a glance. */
@@ -62,6 +80,103 @@ function hostOf(url: string | undefined): string {
   } catch {
     return url;
   }
+}
+
+/** NPR in the grouping the source published; other currencies as written internationally. */
+function amount(value: number, unit?: string): string {
+  const npr = unit === 'NPR' || unit === 'रु.';
+  if (npr && value >= 1_000_000_000 && value % 1_000_000_000 === 0) {
+    return `${(value / 1_000_000_000).toLocaleString('en-IN')} bn`;
+  }
+  return value.toLocaleString(npr ? 'en-IN' : 'en-US', {
+    maximumFractionDigits: Number.isInteger(value) ? 0 : 1,
+  });
+}
+
+/** Short label that sits in front of the figure so the unit is not missed. */
+function unitPrefix(unit?: string): string {
+  if (!unit) return '';
+  if (unit === 'NPR') return 'Rs';
+  if (unit === 'tonnes') return 't';
+  return unit;
+}
+
+function money(value: number, unit?: string): string {
+  const n = amount(value, unit);
+  const prefix = unitPrefix(unit);
+  return prefix ? `${prefix} ${n}` : n;
+}
+
+function Figure({ value, unit }: { value: number; unit?: string }) {
+  const prefix = unitPrefix(unit);
+  return (
+    <>
+      {prefix ? <em>{prefix} </em> : null}
+      {amount(value, unit)}
+    </>
+  );
+}
+
+function itemLabel(item: { label_en?: string; label_ne?: string }, lang: Lang): string {
+  return (lang === 'ne' ? item.label_ne || item.label_en : item.label_en) || '';
+}
+
+function ValueRow({ item, lang }: { item: SitrepValue; lang: Lang }) {
+  const detail = lang === 'ne' ? item.detail_ne || item.detail_en : item.detail_en;
+  const unit = lang === 'ne' ? item.unit_ne || item.unit_en : item.unit_en;
+  return (
+    <li>
+      <span>{itemLabel(item, lang)}</span>
+      <b>{money(item.value, unit)}</b>
+      {detail && <small>{detail}</small>}
+    </li>
+  );
+}
+
+function BreakdownCard({ breakdown, lang }: { breakdown: SitrepBreakdown; lang: Lang }) {
+  const [open, setOpen] = useState(false);
+  const caption = lang === 'ne' ? breakdown.caption_ne || breakdown.caption_en : breakdown.caption_en;
+  const warn = lang === 'ne' ? breakdown.do_not_merge_ne || breakdown.do_not_merge_en : breakdown.do_not_merge_en;
+  const unit = breakdown.items[0] && (lang === 'ne' ? breakdown.items[0].unit_ne || breakdown.items[0].unit_en : breakdown.items[0].unit_en);
+
+  return (
+    <div className={`fl-fig t-${breakdown.tone} ${open ? 'open' : ''}`}>
+      <button type="button" onClick={() => setOpen(v => !v)} aria-expanded={open}>
+        <dd>
+          <Figure value={breakdown.total} unit={unit} />
+        </dd>
+        <dt>
+          {lang === 'ne' ? breakdown.title_ne || breakdown.title_en : breakdown.title_en}
+          <i aria-hidden="true">{open ? '−' : '+'}</i>
+        </dt>
+      </button>
+      {open && (
+        <div className="fl-fig-body">
+          {caption && <p className="fl-fig-cap">{caption}</p>}
+          <ul className="fl-fig-list">
+            {breakdown.items.map((item, i) => (
+              <ValueRow key={i} item={item} lang={lang} />
+            ))}
+          </ul>
+          {breakdown.aside && breakdown.aside.length > 0 && (
+            <>
+              <p className="fl-fig-aside-label">{T.notInRupee[lang]}</p>
+              <ul className="fl-fig-list fl-fig-aside">
+                {breakdown.aside.map((item, i) => (
+                  <ValueRow key={i} item={item} lang={lang} />
+                ))}
+              </ul>
+            </>
+          )}
+          {warn && (
+            <p className="fl-fig-warn">
+              <b>{T.doNotAdd[lang]}</b> {warn}
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
 
 function CopyableAccount({ value, lang }: { value: string; lang: Lang }) {
@@ -216,6 +331,82 @@ export default function FloodDonateView() {
 
   return (
     <FloodShell lang={lang} setLang={setLang} kicker={t('kicker')} title={t('title')} standfirst={t('standfirst')}>
+      {data?.reliefReceived && (
+        <section className="fl-sec fl-received">
+          {(data.reliefReceived.discrepancies || []).length > 0 && (
+            <aside className="fl-standfirst" role="alert">
+              <span>{lang === 'ne' ? 'चेतावनी' : 'Warning'}</span>
+              <p>
+                {t('discrepancy')}{' '}
+                {data.reliefReceived.discrepancies!.map(d => `${d.id}: ${d.stated} ≠ ${d.summed}`).join(' · ')}
+              </p>
+            </aside>
+          )}
+          <div className="fl-sec-head">
+            <span>{t('receivedKicker')}</span>
+            <h2>{t('receivedTitle')}</h2>
+          </div>
+          <p className="fl-note">{t('receivedIntro')}</p>
+          {data.reliefReceived.headline && data.reliefReceived.headline.length > 0 && (
+            <div className="fl-tiles">
+              {data.reliefReceived.headline.map(h => {
+                const unit = lang === 'ne' ? h.unit_ne || h.unit_en : h.unit_en;
+                return (
+                  <div key={h.id} className={`t-${h.tone}`}>
+                    <dd>
+                      <Figure value={h.value} unit={unit} />
+                    </dd>
+                    <dt>{lang === 'ne' ? h.label_ne || h.label_en : h.label_en}</dt>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          <p className="fl-fig-warn">
+            <b>{t('doNotAdd')}</b> {t('receivedWarn')}
+          </p>
+          {data.reliefReceived.breakdowns && data.reliefReceived.breakdowns.length > 0 && (
+            <div className="fl-figs">
+              {data.reliefReceived.breakdowns.map(b => (
+                <BreakdownCard key={b.id} breakdown={b} lang={lang} />
+              ))}
+            </div>
+          )}
+          {data.reliefReceived.exclusive && data.reliefReceived.exclusive.length > 0 && (
+            <>
+              <h4 className="fl-minor">{t('notInFund')}</h4>
+              <div className="fl-listcards">
+                {data.reliefReceived.exclusive.map(item => {
+                  const unit = lang === 'ne' ? item.unit_ne || item.unit_en : item.unit_en;
+                  const detail = lang === 'ne' ? item.detail_ne || item.detail_en : item.detail_en;
+                  return (
+                    <div key={item.id || item.label_en}>
+                      <dd>
+                        <Figure value={item.value} unit={unit} />
+                      </dd>
+                      <dt>{itemLabel(item, lang)}</dt>
+                      {detail && <small>{detail}</small>}
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
+          <p className="fl-note">
+            {t('receivedAsOf')}{' '}
+            {(lang === 'ne'
+              ? data.reliefReceived.as_of_label_ne || data.reliefReceived.as_of_label_en
+              : data.reliefReceived.as_of_label_en) || '—'}
+            {(data.reliefReceived.sources || []).map((src, i) => (
+              <a key={i} href={src.url} target="_blank" rel="noopener noreferrer">
+                {' · '}
+                {src.label} &#8599;
+              </a>
+            ))}
+          </p>
+        </section>
+      )}
+
       <section className="fl-sec">
         <p className="fl-warn">{t('warn')}</p>
 

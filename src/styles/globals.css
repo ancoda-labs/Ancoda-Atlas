@@ -1653,6 +1653,55 @@ body.low-perf .logo-ring::before, body.low-perf .logo-ring::after, body.low-perf
 }
 .fl-hero-bank { margin: 0 0 4px; font-size: 15px; color: var(--ink); }
 .fl-hero-hint { margin: 0 0 20px; font-size: 13px; color: var(--ink-2); }
+
+/* Cash already in the Prime Minister's fund. Own section, own grids: the
+   desk's 4-column tile mosaic would leave empty rule-coloured cells here. */
+.fl-received .fl-tiles {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 8px;
+}
+.fl-received .fl-tiles dd {
+  font-size: clamp(20px, 2.4vw, 28px);
+  font-variant-numeric: tabular-nums;
+}
+.fl-received dd em {
+  font-style: normal;
+  font-family: var(--mono);
+  font-size: 0.42em;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-right: 0.4em;
+  vertical-align: 0.18em;
+  opacity: 0.72;
+}
+.fl-received .fl-figs {
+  grid-template-columns: 1fr 1fr;
+  margin-top: 22px;
+}
+.fl-received .fl-listcards {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.fl-received .fl-listcards dd {
+  font-size: clamp(18px, 2vw, 24px);
+  font-variant-numeric: tabular-nums;
+}
+.fl-received .fl-listcards small {
+  display: block;
+  margin-top: 8px;
+  text-transform: none;
+  letter-spacing: 0.02em;
+  line-height: 1.45;
+}
+@media (max-width: 900px) {
+  .fl-received .fl-tiles,
+  .fl-received .fl-figs,
+  .fl-received .fl-listcards { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 620px) {
+  .fl-received .fl-tiles,
+  .fl-received .fl-figs { grid-template-columns: 1fr; }
+}
 .fl-lbl {
   display: block; margin-bottom: 7px; font-family: var(--mono);
   font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-3);
@@ -2124,6 +2173,11 @@ body.low-perf .logo-ring::before, body.low-perf .logo-ring::after, body.low-perf
 .fl-tiles dt {
   margin: 9px 0 0; font-family: var(--mono); font-size: 9.5px;
   letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3); line-height: 1.45;
+}
+.fl-tiles small {
+  display: block; margin-top: 7px;
+  font-family: var(--mono); font-size: 9px;
+  letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3);
 }
 
 /* --- Search and filters --- */
