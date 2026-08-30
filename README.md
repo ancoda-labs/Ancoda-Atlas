@@ -361,7 +361,7 @@ Set `LLM_PROVIDER` to one of: `anthropic`, `openai`, `gemini`, `codex`,
 | `ollama` | None (local) — `OLLAMA_BASE_URL` to move the host | llama3.1:8b |
 | `grok` | `LLM_API_KEY` | grok-4-latest |
 | `groq` | `LLM_API_KEY` | openai/gpt-oss-120b |
-| `tarka` | `LLM_API_KEY` | set explicitly |
+| `tarka` | `LLM_API_KEY` | himalaya-gemma-4-bf16 *(recommended; set explicitly)* |
 
 For Codex, run `npx @openai/codex login` to authenticate via your ChatGPT subscription.
 
@@ -1115,7 +1115,7 @@ Set `LLM_PROVIDER` to one of: `anthropic`, `openai`, `gemini`, `codex`,
 | `ollama` | None (local) — `OLLAMA_BASE_URL` to move the host | llama3.1:8b |
 | `grok` | `LLM_API_KEY` | grok-4-latest |
 | `groq` | `LLM_API_KEY` | openai/gpt-oss-120b |
-| `tarka` | `LLM_API_KEY` | set explicitly |
+| `tarka` | `LLM_API_KEY` | himalaya-gemma-4-bf16 *(recommended; set explicitly)* |
 
 For Codex, run `npx @openai/codex login` to authenticate via your ChatGPT subscription.
 
