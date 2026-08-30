@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { loadFloodContent, fetchCorridorGauges } from '@/lib/flood';
 import { mergeSitrep } from '@/lib/sitrep-merge';
-import { getFloodStore, isFloodRefreshRunning } from '@/lib/flood-cron';
+import { mergeDamage } from '@/lib/damage-merge';
+import { getFloodStore, isFloodRefreshRunning, proxyDamageMedia } from '@/lib/flood-cron';
 import { cacheFor, noStore } from '@/lib/http-cache';
 import type { FloodDeskPayload } from '@/types';
 import { errorMessage } from '@/types';
@@ -66,10 +67,18 @@ async function build(): Promise<FloodDeskPayload> {
       : await import('@/apis/sources/bulletin-sitrep.mjs')
           .then(m => m.getBulletinSitrep())
           .catch(() => null));
+  const liveDamage =
+    store.damage ??
+    (isFloodRefreshRunning()
+      ? null
+      : await import('@/apis/sources/bulletin-damage.mjs')
+          .then(m => m.getBulletinDamage())
+          .catch(() => null));
   return {
     ...content,
     river: river ?? { gauges: [], error: null, fetchedAt: new Date().toISOString() },
     sitrep: mergeSitrep(content.sitrep, liveSitrep),
+    damage: proxyDamageMedia(mergeDamage(content.damage, liveDamage)),
     // The corridor tally and NDRRMA's rescued-persons totals ride along so the
     // overview can put live government figures beside the reviewed toll. The
     // rescue register itself does not: it is two thousand names, and the page

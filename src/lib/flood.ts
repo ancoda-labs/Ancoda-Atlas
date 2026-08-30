@@ -3,9 +3,9 @@
 // Two kinds of data, kept separate on purpose:
 //
 //   Reviewed content (content/bhotekoshi-flood/*.json) — helplines, bank
-//   accounts, relief funds, what happened. Changes only through a reviewed
-//   edit, because disaster fundraising scams peak in the first days and an
-//   auto-published donation link would lend Atlas's credibility to one.
+//   accounts, relief funds, in-kind demand, what happened. Changes only through
+//   a reviewed edit, because disaster fundraising scams peak in the first days
+//   and an auto-published donation link would lend Atlas's credibility to one.
 //
 //   Live telemetry (BIPAD Portal) — river levels against each gauge's own
 //   warning and danger thresholds. Published automatically, always stamped
@@ -14,12 +14,14 @@
 import type {
   AffectedDistrictProps,
   FloodContent,
+  FloodDamageContent,
   FloodGauge,
   FloodOrg,
   GaugeLevel,
   GeoCollection,
   RiverGauges,
   FloodReliefReceived,
+  FloodReliefNeeded,
   SitrepContent,
 } from '@/types';
 import { errorMessage } from '@/types';
@@ -48,6 +50,8 @@ import bankAccountsJson from '../../content/bhotekoshi-flood/bank-accounts.json'
 import districtContactsJson from '../../content/bhotekoshi-flood/district-contacts.json';
 import sitrepJson from '../../content/bhotekoshi-flood/sitrep.json';
 import reliefReceivedJson from '../../content/bhotekoshi-flood/relief-received.json';
+import reliefNeededJson from '../../content/bhotekoshi-flood/relief-needed.json';
+import damageJson from '../../content/bhotekoshi-flood/damage.json';
 import districtGeoJson from '../../public/data/flood-affected-districts.json';
 
 import careNepalFund from '../../content/bhotekoshi-flood/relief-funds/care-nepal.json';
@@ -178,6 +182,8 @@ export function loadFloodContent(): FloodContent {
     districtContacts: content<FloodContent['districtContacts']>(districtContactsJson),
     sitrep: loadSitrep(),
     reliefReceived: loadReliefReceived(),
+    reliefNeeded: content<FloodReliefNeeded>(reliefNeededJson),
+    damage: content<FloodDamageContent>(damageJson),
     funds,
   };
 }

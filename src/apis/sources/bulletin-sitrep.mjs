@@ -17,8 +17,8 @@
 // group standing rather than publishing a scrape that does not close.
 //
 // Overlay never lowers the death toll: recovered-body counts in this disaster
-// only rise, and a compilation that lags Police must not put an older 752 back
-// over 788.
+// only rise, and a compilation that lags Police must not put an older 781 back
+// over 794.
 //
 // Numerals arrive in Devanagari and are parsed, not reformatted — ५७९ is 579,
 // and a value the page writes as "२००+" keeps its plus. A row whose value is a

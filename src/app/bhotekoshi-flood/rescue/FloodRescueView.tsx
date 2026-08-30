@@ -283,49 +283,13 @@ export default function FloodRescueView() {
       ) : null}
 
       {(data?.messages?.length ?? 0) > 0 && (
-        <section className="fl-sec">
-          <div className="fl-sec-head">
-            <span>{lang === 'ne' ? 'एनडीआरआरएमए' : 'NDRRMA'}</span>
-            <h2>{lang === 'ne' ? 'सूचीबारे' : 'About this register'}</h2>
-          </div>
+        <aside className="fl-register-about">
+          <span>{lang === 'ne' ? 'एनडीआरआरएमए · सूचीबारे' : 'NDRRMA · About this register'}</span>
           {(data?.messages || []).map((msg, i) => {
             const line = bilingual(lang, msg.title, msg.titleNe);
-            return line ? <p className="fl-place-note" key={i}>{line}</p> : null;
+            return line ? <p key={i}>{line}</p> : null;
           })}
-        </section>
-      )}
-
-      {(notices?.items?.length ?? 0) > 0 && (
-        <section className="fl-sec">
-          <div className="fl-sec-head">
-            <span>{lang === 'ne' ? 'सरकारी' : 'Official'}</span>
-            <h2>{lang === 'ne' ? 'एनडीआरआरएमएको सूचना' : 'NDRRMA notice'}</h2>
-          </div>
-          {(notices?.items || []).map(notice => {
-            const title = bilingual(lang, notice.title, notice.titleNe);
-            const body = bilingual(lang, notice.body, notice.bodyNe);
-            return (
-              <div className="fl-place-note" key={notice.id}>
-                <h3>{title}</h3>
-                {body && body !== title && <p>{body}</p>}
-                {notice.pdfUrl && (
-                  <p className="fl-note">
-                    <a href={notice.pdfUrl} target="_blank" rel="noopener noreferrer">
-                      {lang === 'ne' ? 'कागजात खोल्नुहोस् (PDF)' : 'Open the document (PDF)'} &#8599;
-                    </a>
-                  </p>
-                )}
-              </div>
-            );
-          })}
-          {/* No source link here: the notice's own document link sits directly
-              above, and a second link to the same authority under it read as a
-              different destination. The read time stays — a reader still needs
-              to know how fresh this is. */}
-          <p className="fl-note">
-            {lang === 'ne' ? 'पढिएको' : 'Read'} {notices ? ageFrom(notices.fetchedAt, lang) : '—'}
-          </p>
-        </section>
+        </aside>
       )}
 
       <section className="fl-sec">
@@ -446,6 +410,39 @@ export default function FloodRescueView() {
           </a>
         </p>
       </section>
+
+      {(notices?.items?.length ?? 0) > 0 && (
+        <section className="fl-sec">
+          <div className="fl-sec-head">
+            <span>{lang === 'ne' ? 'सरकारी' : 'Official'}</span>
+            <h2>{lang === 'ne' ? 'एनडीआरआरएमएको सूचना' : 'NDRRMA notice'}</h2>
+          </div>
+          {(notices?.items || []).map(notice => {
+            const title = bilingual(lang, notice.title, notice.titleNe);
+            const body = bilingual(lang, notice.body, notice.bodyNe);
+            return (
+              <div className="fl-place-note" key={notice.id}>
+                <h3>{title}</h3>
+                {body && body !== title && <p>{body}</p>}
+                {notice.pdfUrl && (
+                  <p className="fl-note">
+                    <a href={notice.pdfUrl} target="_blank" rel="noopener noreferrer">
+                      {lang === 'ne' ? 'कागजात खोल्नुहोस् (PDF)' : 'Open the document (PDF)'} &#8599;
+                    </a>
+                  </p>
+                )}
+              </div>
+            );
+          })}
+          {/* No source link here: the notice's own document link sits directly
+              above, and a second link to the same authority under it read as a
+              different destination. The read time stays — a reader still needs
+              to know how fresh this is. */}
+          <p className="fl-note">
+            {lang === 'ne' ? 'पढिएको' : 'Read'} {notices ? ageFrom(notices.fetchedAt, lang) : '—'}
+          </p>
+        </section>
+      )}
 
       {/* Two registers, side by side and never merged: NDRRMA's official one
           above and the Prime Minister's Office portal here. The same person can

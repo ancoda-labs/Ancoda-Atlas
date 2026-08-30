@@ -21,7 +21,7 @@ import { join } from 'path';
 import { fetchCorridorGauges } from './flood';
 import { proxyUrlFor } from './news-media';
 import { scheduleCatchup } from './news-digest-store';
-import type { FeedStatus, FloodDeskStore, NewsItem, OpmcmPersonRegister, OpmcmPersonReport } from '@/types';
+import type { DamageImage, FeedStatus, FloodDamageContent, FloodDeskStore, NewsItem, OpmcmPersonRegister, OpmcmPersonReport } from '@/types';
 import { errorMessage } from '@/types';
 
 const DEFAULT_INTERVAL_MINUTES = 10;
@@ -69,6 +69,7 @@ function emptyStore(): FloodDeskStore {
     videos: null,
     news: [],
     sitrep: null,
+    damage: null,
     dailyBulletin: null,
     pressReleases: null,
     advisories: null,
@@ -96,6 +97,26 @@ interface CronGlobal {
   __atlasFloodRunning?: boolean;
 }
 const g = globalThis as unknown as CronGlobal;
+
+function proxyBulletinImages(items?: DamageImage[]): DamageImage[] {
+  return (items ?? []).map(item => ({
+    ...item,
+    imageProxy: proxyUrlFor(item.src),
+  }));
+}
+
+/** Sign reviewed and live bulletin images so the desk never hotlinks them. */
+export function proxyDamageMedia(damage: FloodDamageContent | null): FloodDamageContent | null {
+  if (!damage?.copernicus) return damage;
+  return {
+    ...damage,
+    copernicus: {
+      ...damage.copernicus,
+      maps: proxyBulletinImages(damage.copernicus.maps),
+      photos: proxyBulletinImages(damage.copernicus.photos),
+    },
+  };
+}
 
 function runsDir(): string {
   const dir = join(process.cwd(), 'runs');
@@ -312,6 +333,24 @@ export async function runFloodRefresh(): Promise<FloodDeskStore> {
         },
         value => {
           store.sitrep = value;
+        },
+      ),
+
+      refresh(
+        'damage',
+        store,
+        async () => {
+          const { getBulletinDamage } = await import('@/apis/sources/bulletin-damage.mjs');
+          const live = await getBulletinDamage();
+          if (live.error || !live.rows.length) throw new Error(live.error || 'no Copernicus table');
+          return {
+            ...live,
+            maps: proxyBulletinImages(live.maps),
+            photos: proxyBulletinImages(live.photos),
+          };
+        },
+        value => {
+          store.damage = value;
         },
       ),
 

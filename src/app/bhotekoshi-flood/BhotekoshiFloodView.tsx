@@ -74,6 +74,8 @@ const T = {
   rescueSub: { en: 'Search the NDRRMA register by name', ne: 'एनडीआरआरएमए सूचीमा नाम खोज्नुहोस्' },
   situation: { en: 'Incident register', ne: 'घटना अभिलेख' },
   situationSub: { en: 'River levels, alerts and logged incidents', ne: 'नदीको सतह, चेतावनी र दर्ता घटना' },
+  damage: { en: 'Damage assessment', ne: 'क्षति मूल्यांकन' },
+  damageSub: { en: 'Copernicus EMSR927 and the NEA notice', ne: 'कोपर्निकस EMSR927 र प्राधिकरण सूचना' },
   report: { en: 'Ground reports', ne: 'जनताका तस्बिर' },
   reportSub: { en: 'Photographs from the affected districts', ne: 'प्रभावित जिल्लाका तस्बिर' },
   coverage: { en: 'Coverage', ne: 'समाचार' },
@@ -200,6 +202,7 @@ export default function BhotekoshiFloodView() {
     { href: '/bhotekoshi-flood/donate', title: t('donate'), sub: t('donateSub') },
     { href: '/bhotekoshi-flood/rescue', title: t('rescue'), sub: t('rescueSub') },
     { href: '/bhotekoshi-flood/situation', title: t('situation'), sub: t('situationSub') },
+    { href: '/bhotekoshi-flood/damage', title: t('damage'), sub: t('damageSub') },
     { href: '/bhotekoshi-flood/media', title: t('coverage'), sub: t('coverageSub') },
     { href: '/bhotekoshi-flood/contacts', title: t('contacts'), sub: t('contactsSub') },
   ];

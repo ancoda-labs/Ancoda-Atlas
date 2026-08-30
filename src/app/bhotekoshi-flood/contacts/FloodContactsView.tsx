@@ -1,11 +1,13 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import FloodShell from '@/components/FloodShell';
+import FloodWarehouses from '@/app/bhotekoshi-flood/_components/FloodWarehouses';
 import { useFloodLang } from '@/hooks/use-flood-lang';
 import { ageFrom } from '@/lib/relative-time';
 import type { BipadDistrictContacts, FloodDeskPayload, FloodDistrictContacts, FloodOfficialFeed } from '@/types';
 import { useDeskRefresh } from '@/hooks/use-desk-refresh';
+import { useJumpSection } from '@/hooks/use-jump-section';
 
 // Every number a person in trouble might need, on one page.
 //
@@ -20,10 +22,23 @@ const T = {
   kicker: { en: 'Contacts', ne: 'सम्पर्क' },
   title: { en: 'Who to call', ne: 'कसलाई फोन गर्ने' },
   standfirst: {
-    en: 'These numbers are free from any phone in Nepal. Tap one to call.',
-    ne: 'नेपालभित्र यी नम्बर कुनै पनि फोनबाट निःशुल्क छन्। फोन गर्न थिच्नुहोस्।',
+    en: 'National emergency lines first, then the warehouses that take in-kind goods, then district offices. Tap a number to call.',
+    ne: 'पहिले राष्ट्रिय आपतकालीन नम्बर, त्यसपछि सामग्री बुझाउने गोदाम, अनि जिल्ला कार्यालय। फोन गर्न नम्बर थिच्नुहोस्।',
   },
+  jumpLabel: { en: 'On this page', ne: 'यस पृष्ठमा' },
+  jumpHint: { en: 'Tap a box to jump', ne: 'जान बाकस थिच्नुहोस्' },
+  jumpNational: { en: 'National emergency lines', ne: 'राष्ट्रिय आपतकालीन नम्बर' },
+  jumpNationalSub: { en: 'Free from any phone in Nepal', ne: 'नेपालभित्र कुनै पनि फोनबाट निःशुल्क' },
+  jumpWarehouses: { en: 'Emergency warehouses', ne: 'आपत्कालीन गोदाम' },
+  jumpWarehousesSub: { en: 'Where to hand in goods', ne: 'सामग्री कहाँ बुझाउने' },
+  jumpDistricts: { en: 'District offices', ne: 'जिल्ला कार्यालय' },
+  jumpDistrictsSub: { en: 'DAO, BIPAD, rescue portal', ne: 'जिप्रका, बिपद्, उद्धार पोर्टल' },
   national: { en: 'National emergency lines', ne: 'राष्ट्रिय आपतकालीन नम्बर' },
+  warehousesTitle: { en: 'Emergency warehouses', ne: 'आपत्कालीन गोदाम' },
+  warehousesIntro: {
+    en: 'In-kind goods can be handed in here. Same drop-off list as on Donate. Tap a number to call.',
+    ne: 'सामग्री यहाँ बुझाउन सकिन्छ। सहयोग पृष्ठकै बुझाउने सूची। फोन गर्न नम्बर थिच्नुहोस्।',
+  },
   otherLines: { en: 'Other national lines', ne: 'अन्य राष्ट्रिय नम्बर' },
   districts: { en: 'District contacts', ne: 'जिल्ला सम्पर्क' },
   tapToCall: { en: 'Tap to call', ne: 'फोन गर्न थिच्नुहोस्' },
@@ -81,6 +96,7 @@ export default function FloodContactsView() {
   // route rather than the desk payload every page loads.
   const [official, setOfficial] = useState<FloodOfficialFeed<BipadDistrictContacts> | null>(null);
   const t = (key: keyof typeof T) => T[key][lang];
+  const onJump = useJumpSection(['national', 'warehouses', 'districts']);
 
   // Emergency numbers are the last thing that should go stale on an open tab.
   useDeskRefresh(
@@ -112,11 +128,40 @@ export default function FloodContactsView() {
   const label = (o: { label_en?: string; label_ne?: string }) =>
     (lang === 'ne' ? o.label_ne || o.label_en : o.label_en) || '';
 
+  const warehouses = data?.reliefNeeded?.warehouses || [];
+  const warehouseNote =
+    lang === 'ne'
+      ? data?.reliefNeeded?.warehouse_note_ne || data?.reliefNeeded?.warehouse_note_en
+      : data?.reliefNeeded?.warehouse_note_en;
+
   return (
     <FloodShell lang={lang} setLang={setLang} kicker={t('kicker')} title={t('title')} standfirst={t('standfirst')}>
-      <section className="fl-sec">
+      <nav className="fl-jump" aria-label={t('jumpLabel')}>
+        <p className="fl-jump-kicker">{t('jumpHint')}</p>
+        <a href="#national" className={onJump === 'national' ? 'on' : undefined}>
+          <b>1</b>
+          <strong>{t('jumpNational')}</strong>
+          <span>{t('jumpNationalSub')}</span>
+        </a>
+        <a href="#warehouses" className={onJump === 'warehouses' ? 'on' : undefined}>
+          <b>2</b>
+          <strong>{t('jumpWarehouses')}</strong>
+          <span>
+            {warehouses.length
+              ? `${warehouses.length} ${lang === 'ne' ? 'ठाउँ' : 'sites'} · ${t('jumpWarehousesSub')}`
+              : t('jumpWarehousesSub')}
+          </span>
+        </a>
+        <a href="#districts" className={onJump === 'districts' ? 'on' : undefined}>
+          <b>3</b>
+          <strong>{t('jumpDistricts')}</strong>
+          <span>{t('jumpDistrictsSub')}</span>
+        </a>
+      </nav>
+
+      <section id="national" className="fl-sec">
         <div className="fl-sec-head">
-          <span>{lang === 'ne' ? 'तत्काल' : 'Immediate'}</span>
+          <span>{lang === 'ne' ? '१ · तत्काल' : '1 · Immediate'}</span>
           <h2>{t('national')}</h2>
         </div>
 
@@ -160,9 +205,33 @@ export default function FloodContactsView() {
         )}
       </section>
 
-      <section className="fl-sec">
+      {warehouses.length > 0 && (
+        <section id="warehouses" className="fl-sec fl-wh-sec">
+          <div className="fl-sec-head">
+            <span>{lang === 'ne' ? '२ · बुझाउने' : '2 · Drop-off'}</span>
+            <h2>{t('warehousesTitle')}</h2>
+            <em>{warehouses.length}</em>
+          </div>
+          <p className="fl-note">{t('warehousesIntro')}</p>
+          <FloodWarehouses warehouses={warehouses} lang={lang} />
+          {warehouseNote && <p className="fl-note">{warehouseNote}</p>}
+          {data?.reliefNeeded?.sources && data.reliefNeeded.sources.length > 0 && (
+            <p className="fl-note">
+              {t('source')}
+              {data.reliefNeeded.sources.map((src, i) => (
+                <a key={i} href={src.url} target="_blank" rel="noopener noreferrer">
+                  {' · '}
+                  {src.label} &#8599;
+                </a>
+              ))}
+            </p>
+          )}
+        </section>
+      )}
+
+      <section id="districts" className="fl-sec">
         <div className="fl-sec-head">
-          <span>{lang === 'ne' ? 'जिल्ला' : 'District'}</span>
+          <span>{lang === 'ne' ? '३ · जिल्ला' : '3 · District'}</span>
           <h2>{t('districts')}</h2>
           {districts.length > 0 && <em>{districts.length}</em>}
         </div>

@@ -6,7 +6,9 @@
   "as_of_label_ne": "१२ भदौ (अर्थ मन्त्रालय / प्रधानमन्त्री दैवी प्रकोप उद्धार कोष)",
   "sources": [
     { "label": "Prime Minister's Office appeal (PDF)", "url": "https://opmcm.gov.np/content/586/heartfelt-appeal/" },
-    { "label": "Rasuwa flood bulletin (compilation)", "url": "https://nirajbhusal.github.io/rasuwa-flood-bulletin/donate.html#aid" }
+    { "label": "Rasuwa flood bulletin (compilation)", "url": "https://nirajbhusal.github.io/rasuwa-flood-bulletin/donate.html#aid" },
+    { "label": "UAE $10m pledge (Rising Nepal / RSS, 30 Aug)", "url": "https://risingnepaldaily.com/news/85819" },
+    { "label": "UAE $10m pledge (Khaleej Times)", "url": "https://www.khaleejtimes.com/uae/uae-10-million-aid-nepal-floods-landslide-victims" }
   ],
 
   "headline": [
@@ -43,19 +45,20 @@
     },
     {
       "id": "foreign-pledges",
-      "total": 19590000,
+      "total": 29590000,
       "title_en": "Foreign pledges in US dollars",
       "title_ne": "वैदेशिक घोषणा · अमेरिकी डलर",
       "tone": "warning",
-      "caption_en": "UK $6.79m + US $3.6m + OCHA $3.2m + South Korea $1m + ADB $5m. These are pledges, not cash in the Prime Minister's fund.",
-      "caption_ne": "बेलायत $६.७९ मि. + अमेरिका $३.६ मि. + ओसीएचए $३.२ मि. + दक्षिण कोरिया $१ मि. + एडीबी $५ मि.। घोषणा हुन्, प्रधानमन्त्री कोषमा आएको नगद होइनन्।",
-      "do_not_merge_en": "Not added to the Rs 6.55 billion. World Bank Rs 25 billion and the IFRC CHF 25 million appeal are separate lines, not inside this $19.59 million. ADB $5m is a pledge, not cash received.",
-      "do_not_merge_ne": "रु. ६ अर्ब ५५ करोडमा जोडिँदैन। विश्व बैंक २५ अर्ब र आईएफआरसी CHF २५ मिलियन अपिल यो $१९.५९ मिलियनभित्र होइनन्। एडीबी $५ मिलियन घोषणा हो, आएको नगद होइन।",
+      "caption_en": "UK $6.79m + US $3.6m + OCHA $3.2m + South Korea $1m + ADB $5m + UAE $10m. These are pledges, not cash in the Prime Minister's fund.",
+      "caption_ne": "बेलायत $६.७९ मि. + अमेरिका $३.६ मि. + ओसीएचए $३.२ मि. + दक्षिण कोरिया $१ मि. + एडीबी $५ मि. + युएई $१० मि.। घोषणा हुन्, प्रधानमन्त्री कोषमा आएको नगद होइनन्।",
+      "do_not_merge_en": "Not added to the Rs 6.55 billion. World Bank Rs 25 billion and the IFRC CHF 25 million appeal are separate lines, not inside this $29.59 million. ADB $5m and UAE $10m are pledges, not cash received. UAE's 83-tonne flight is inside the $10m package, not on top of it.",
+      "do_not_merge_ne": "रु. ६ अर्ब ५५ करोडमा जोडिँदैन। विश्व बैंक २५ अर्ब र आईएफआरसी CHF २५ मिलियन अपिल यो $२९.५९ मिलियनभित्र होइनन्। एडीबी $५ मिलियन र युएई $१० मिलियन घोषणा हुन्, आएको नगद होइनन्। युएईको ८३ टन उडान $१० मिलियनभित्र छ, माथि होइन।",
       "items": [
         { "label_en": "United Kingdom (FCDO)", "label_ne": "युनाइटेड किंगडम (एफसीडीओ)", "value": 6790000, "unit_en": "USD", "unit_ne": "USD" },
         { "label_en": "United States", "label_ne": "संयुक्त राज्य अमेरिका", "value": 3600000, "unit_en": "USD", "unit_ne": "USD" },
         { "label_en": "UN OCHA (CERF)", "label_ne": "संयुक्त राष्ट्र ओसीएचए (सीईआरएफ)", "value": 3200000, "unit_en": "USD", "unit_ne": "USD" },
         { "label_en": "Asian Development Bank (pledge)", "label_ne": "एसियाली विकास बैंक (एडीबी)", "value": 5000000, "unit_en": "USD", "unit_ne": "USD" },
+        { "label_en": "United Arab Emirates (UAE Aid)", "label_ne": "संयुक्त अरब एमिरेट्स (युएई एड)", "value": 10000000, "unit_en": "USD", "unit_ne": "USD" },
         { "label_en": "South Korea", "label_ne": "दक्षिण कोरिया", "value": 1000000, "unit_en": "USD", "unit_ne": "USD" }
       ]
     }
