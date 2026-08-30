@@ -15,7 +15,7 @@
 
 import { LLMProvider } from './provider.mjs';
 
-const DEFAULT_BASE_URL = 'https://tarka.rest/v2';
+const DEFAULT_BASE_URL = 'https://tarka.rest/v1';
 
 export class TarkaProvider extends LLMProvider {
   constructor(config) {
@@ -50,20 +50,27 @@ export class TarkaProvider extends LLMProvider {
       throw new Error('Tarka: LLM_MODEL is not set. Pick an id from ' + `${this.baseUrl}/models`);
     }
 
+    const body = {
+      model: this.model,
+      max_tokens: opts.maxTokens || 4096,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userMessage },
+      ],
+    };
+
+    // Tarka's local utility models can answer a JSON prompt as plain text
+    // unless the OpenAI-compatible response constraint is explicit. Atlas uses
+    // this for translations and digests, where malformed JSON is discarded.
+    if (opts.json) body.response_format = { type: 'json_object' };
+
     const res = await fetch(`${this.baseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${this.apiKey}`,
       },
-      body: JSON.stringify({
-        model: this.model,
-        max_tokens: opts.maxTokens || 4096,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userMessage },
-        ],
-      }),
+      body: JSON.stringify(body),
       signal: AbortSignal.timeout(opts.timeout || 60000),
     });
 

@@ -1246,7 +1246,11 @@ export interface MemoryManagerLike {
 export interface LLMProviderLike {
   readonly isConfigured: boolean;
   readonly name?: string;
-  complete(system: string, user: string, opts?: { maxTokens?: number; timeout?: number }): Promise<{ text: string }>;
+  complete(
+    system: string,
+    user: string,
+    opts?: { maxTokens?: number; timeout?: number; json?: boolean },
+  ): Promise<{ text: string }>;
 }
 
 export interface AlerterLike {
@@ -1358,4 +1362,3 @@ export interface BipadPayload {
   incidents: BipadIncident[];
   earthquakes: BipadEarthquake[];
 }
-
