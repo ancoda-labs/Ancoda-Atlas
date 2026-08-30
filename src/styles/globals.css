@@ -2964,6 +2964,50 @@ body.low-perf .logo-ring::before, body.low-perf .logo-ring::after, body.low-perf
   background: rgba(255, 176, 32, 0.07); max-width: 74ch;
 }
 
+.fl-dist-toc {
+  display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 10px;
+}
+.fl-dist-toc a {
+  display: inline-flex; align-items: baseline; gap: 8px;
+  padding: 8px 12px; border: 1px solid var(--rule); background: var(--paper);
+  text-decoration: none; color: var(--ink);
+  font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.02em;
+}
+.fl-dist-toc a:hover,
+.fl-dist-toc a:focus-visible { border-color: var(--red); color: var(--red); }
+.fl-dist-toc em {
+  font-style: normal; font-size: 10px; color: var(--ink-3); font-variant-numeric: tabular-nums;
+}
+
+.fl-dist[id] { scroll-margin-top: 118px; }
+.fl-dist { margin-top: 34px; padding-top: 4px; border-top: 1px solid var(--rule); }
+.fl-dist:first-of-type { border-top: 0; margin-top: 18px; }
+.fl-dist > h3 {
+  margin: 0 0 4px; font-family: var(--serif); font-weight: 400;
+  font-size: 26px; letter-spacing: -0.02em; color: var(--ink-strong);
+  display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;
+}
+.fl-dist > h3 em {
+  font-family: var(--mono); font-style: normal; font-size: 11px;
+  letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3);
+}
+.fl-dist .fl-minor { margin-top: 22px; }
+.fl-dist .fl-calls-more {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 8px;
+}
+.fl-dist .fl-calls-more a {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 4px;
+}
+.fl-dist-more { margin: 14px 0 0; border-top: 1px solid var(--rule); }
+.fl-dist-more summary {
+  cursor: pointer; padding: 12px 0;
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--ink-3);
+}
+.fl-dist-more summary:hover { color: var(--ink); }
+.fl-dist-more .fl-calls-more { margin-bottom: 8px; }
+
 
 /* --- Overview: map leads the page --- */
 .fl-sec-map { padding-top: 34px; }
@@ -4582,7 +4626,8 @@ body:not(.dark-theme) .fl .fl-top,
 body:not(.dark-theme) .fl .fl-wire > a,
 body:not(.dark-theme) .fl .fl-gauges,
 body:not(.dark-theme) .fl .fl-official,
-body:not(.dark-theme) .fl .fl-calls-more a {
+body:not(.dark-theme) .fl .fl-calls-more a,
+body:not(.dark-theme) .fl .fl-dist-toc a {
   border-color: #d3dfdb;
 }
 
