@@ -1,20 +1,14 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
-
-type Lang = 'en' | 'ne';
+import { useFloodLang } from '@/hooks/use-flood-lang';
 
 // Entry point to the flood response desk. The desk itself lives at its own
 // route so it can be shared, linked and opened directly by someone who has
 // never seen the Atlas dashboard.
 export default function BhotekoshiFloodButton() {
-  const [lang, setLang] = useState<Lang>('en');
-
-  useEffect(() => {
-    const saved = localStorage.getItem('atlas_language');
-    if (saved === 'ne' || saved === 'en') setLang(saved);
-  }, []);
+  const [lang] = useFloodLang();
 
   return (
     <Link className="flood-cta" href="/bhotekoshi-flood">
