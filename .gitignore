@@ -3,7 +3,6 @@ node_modules/
 
 # Environment (contains API keys)
 .env
-apis/.env
 
 # Runtime data
 runs/
@@ -25,7 +24,6 @@ desktop.ini
 .claude/
 CLAUDE.md
 
-
 # Playwright
 .playwright-cli/
 
@@ -33,20 +31,12 @@ CLAUDE.md
 *.log
 npm-debug.log*
 
-
-# Package lock (optional — remove this line if you want deterministic installs)
-# package-lock.json
-
 # Backup files
 *.bak
 
 # Local maintainer notes
 MAINTAINER_DECISIONS.local.md
 
-# Local deploy config
-dashboard/public/vercel.json
-
 # Next.js build output
 .next/
 *.tsbuildinfo
-

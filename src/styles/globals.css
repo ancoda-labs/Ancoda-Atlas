@@ -3036,6 +3036,8 @@ body.low-perf .flood-cta-dot { animation: none; }
   align-items: center;
   gap: 7px;
   flex: none;
+  position: relative;
+  z-index: 1;
   color: var(--accent2);
   font-family: var(--mono);
   font-size: 9px;
@@ -3050,9 +3052,16 @@ body.low-perf .flood-cta-dot { animation: none; }
   background: var(--accent2);
 }
 
+.flood-news-viewport {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  overflow: hidden;
+}
+
 .flood-news-track {
   display: flex;
-  min-width: 0;
+  width: max-content;
   gap: 42px;
   white-space: nowrap;
   animation: flood-news-scroll 55s linear infinite;
@@ -3379,7 +3388,7 @@ body.low-perf .flood-cta-dot { animation: none; }
   padding: 8px 10px;
 }
 
-.flood-news-track {
+.flood-news-viewport {
   width: 100%;
 }
 
@@ -4403,6 +4412,8 @@ body.dark-theme .fl {
 .fl-freshness span { color: var(--ink-3); }
 
 .fl .flood-news-ticker {
+  flex-direction: row;
+  align-items: center;
   margin: 12px 0 0;
   background: var(--paper-2);
   border-color: var(--rule);
@@ -4421,7 +4432,6 @@ body.dark-theme .fl {
     gap: 6px;
     padding: 8px 10px;
   }
-  .fl .flood-news-track { width: 100%; }
 }
 
 /* Freshness pill in the dashboard masthead. */

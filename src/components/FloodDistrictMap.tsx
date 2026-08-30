@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import type { AffectedDistrictProps, FloodGauge, GeoCollection, Geometry, PhotoGeoSource } from '@/types';
-import { orientationTransform } from '@/lib/relative-time';
+import { orientationTransform } from '@/lib/photo-orientation';
 
 // The flood corridor map.
 //
