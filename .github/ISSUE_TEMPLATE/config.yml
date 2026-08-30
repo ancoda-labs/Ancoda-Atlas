@@ -5,7 +5,10 @@ contact_links:
     about: Report security issues privately instead of opening a public issue.
   - name: Report a problem with a relief fund or helpline
     url: mailto:research@ancodalabs.com
-    about: Wrong account number, dead donation link, or a fund that should not be listed. Treated as urgent.
+    about: Wrong account number, dead donation link, or a fund that should not be listed. Treated as urgent. Do not file this in public.
+  - name: Atlas is showing the wrong hazard data
+    url: https://github.com/ancoda-labs/Ancoda-Atlas/issues/new?template=data_accuracy.md
+    about: Gauges, quakes, news, sitrep figures, or a brief that does not match the headlines. Use during a live event.
   - name: Contributing guide
-    url: https://github.com/ancodalabs/atlas/blob/main/CONTRIBUTING.md
+    url: https://github.com/ancoda-labs/Ancoda-Atlas/blob/main/CONTRIBUTING.md
     about: Scope rules, how to add a hazard source, and how contributions are licensed.
