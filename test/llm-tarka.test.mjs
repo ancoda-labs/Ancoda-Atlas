@@ -4,7 +4,7 @@ import { TarkaProvider } from '../src/lib/llm/tarka.mjs';
 import { createLLMProvider } from '../src/lib/llm/index.mjs';
 
 test('TarkaProvider uses the v1 catalogue by default', async () => {
-  const provider = new TarkaProvider({ apiKey: 'tk_test', model: 'himalaya-gemma-4-q4' });
+  const provider = new TarkaProvider({ apiKey: 'tk_test', model: 'himalaya-gemma-4-bf16' });
   const originalFetch = globalThis.fetch;
   let requestedUrl = '';
   globalThis.fetch = async (url, options) => {
@@ -12,12 +12,12 @@ test('TarkaProvider uses the v1 catalogue by default', async () => {
     assert.equal(options.headers.Authorization, 'Bearer tk_test');
     return {
       ok: true,
-      json: async () => ({ data: [{ id: 'himalaya-gemma-4-q4' }] }),
+      json: async () => ({ data: [{ id: 'himalaya-gemma-4-bf16' }] }),
     };
   };
 
   try {
-    assert.deepEqual(await provider.listModels(), ['himalaya-gemma-4-q4']);
+    assert.deepEqual(await provider.listModels(), ['himalaya-gemma-4-bf16']);
     assert.equal(requestedUrl, 'https://tarka.rest/v1/models');
   } finally {
     globalThis.fetch = originalFetch;
@@ -25,7 +25,7 @@ test('TarkaProvider uses the v1 catalogue by default', async () => {
 });
 
 test('TarkaProvider requests constrained JSON when a caller needs it', async () => {
-  const provider = new TarkaProvider({ apiKey: 'tk_test', model: 'himalaya-gemma-4-q4' });
+  const provider = new TarkaProvider({ apiKey: 'tk_test', model: 'himalaya-gemma-4-bf16' });
   const originalFetch = globalThis.fetch;
   let requestBody = null;
   globalThis.fetch = async (url, options) => {
@@ -34,7 +34,7 @@ test('TarkaProvider requests constrained JSON when a caller needs it', async () 
     return {
       ok: true,
       json: async () => ({
-        model: 'himalaya-gemma-4-q4',
+        model: 'himalaya-gemma-4-bf16',
         choices: [{ message: { content: '{"headline":"Flood update"}' } }],
         usage: { prompt_tokens: 12, completion_tokens: 5 },
       }),
@@ -58,7 +58,7 @@ test('TarkaProvider leaves unconstrained completions unchanged', async () => {
   const provider = createLLMProvider({
     provider: 'tarka',
     apiKey: 'tk_test',
-    model: 'himalaya-gemma-4-q4',
+    model: 'himalaya-gemma-4-bf16',
     baseUrl: null,
   });
   assert.ok(provider instanceof TarkaProvider);
