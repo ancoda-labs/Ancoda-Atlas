@@ -146,6 +146,23 @@ export function extractiveDigest(items, lang) {
   return extractiveDraft(items, lang);
 }
 
+/**
+ * Identify which of the two wire languages an extractive draft is written in.
+ *
+ * Headlines arrive in Nepali and English regardless of the label passed to
+ * extractiveDigest: that label only chooses its boilerplate. The script in the
+ * actual text is therefore the honest fallback when translation fails.
+ */
+export function detectDigestLanguage(draft) {
+  const body = [draft.headline, ...draft.bullets].join(' ');
+  return /[\u0900-\u097F]/.test(body) ? 'ne' : 'en';
+}
+
+/** The language the caller may truthfully put on the returned draft. */
+export function resolveDigestLanguage(draft, requestedLang, translated) {
+  return translated ? requestedLang : detectDigestLanguage(draft);
+}
+
 const TRANSLATE_PROMPT = `You are a translator for Ancoda Atlas, a Nepal natural-hazard monitoring desk.
 
 You translate. You do not write, summarise, shorten, expand or comment.
@@ -183,7 +200,11 @@ Translate this brief into ${target}. Return only the JSON object.
 ${JSON.stringify(draft)}`;
 
   try {
-    const { text } = await provider.complete(TRANSLATE_PROMPT, user, { maxTokens: 900, timeout: 45_000 });
+    const { text } = await provider.complete(TRANSLATE_PROMPT, user, {
+      maxTokens: 900,
+      timeout: 45_000,
+      json: true,
+    });
     const parsed = extractJson(text);
     const headline = clean(parsed?.headline, 80);
     const summary = clean(parsed?.summary, 600);
@@ -231,6 +252,7 @@ export async function draftDigest(provider, items, lang, windowLabel = '', langu
       const { text } = await provider.complete(SYSTEM_PROMPT, buildUserPrompt(items, lang, windowLabel, languageName), {
         maxTokens: 700,
         timeout: 45_000,
+        json: true,
       });
       const parsed = extractJson(text);
       const headline = clean(parsed?.headline, 80);

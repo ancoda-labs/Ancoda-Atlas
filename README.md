@@ -361,7 +361,7 @@ Set `LLM_PROVIDER` to one of: `anthropic`, `openai`, `gemini`, `codex`,
 | `ollama` | None (local) — `OLLAMA_BASE_URL` to move the host | llama3.1:8b |
 | `grok` | `LLM_API_KEY` | grok-4-latest |
 | `groq` | `LLM_API_KEY` | openai/gpt-oss-120b |
-| `tarka` | `LLM_API_KEY` + `LLM_BASE_URL` | set explicitly |
+| `tarka` | `LLM_API_KEY` | set explicitly |
 
 For Codex, run `npx @openai/codex login` to authenticate via your ChatGPT subscription.
 
@@ -641,7 +641,7 @@ route and every news panel.
 | `LLM_API_KEY` | — | API key (not needed for codex or ollama) |
 | `LLM_MODEL` | per-provider default | Override model selection |
 | `LLM_REASONING_EFFORT` | provider default | `low` / `medium` / `high` for reasoning models |
-| `LLM_BASE_URL` | — | Override a gateway provider's host (tarka) |
+| `LLM_BASE_URL` | `https://tarka.rest/v1` | Override the Tarka API base URL |
 | `OLLAMA_BASE_URL` | `http://localhost:11434` | Ollama host |
 | `NEXT_PUBLIC_SUPABASE_URL` | disabled | Community layer database |
 | `SUPABASE_SECRET_KEY` | — | Supabase secret key (**not** the publishable one) |
@@ -1115,7 +1115,7 @@ Set `LLM_PROVIDER` to one of: `anthropic`, `openai`, `gemini`, `codex`,
 | `ollama` | None (local) — `OLLAMA_BASE_URL` to move the host | llama3.1:8b |
 | `grok` | `LLM_API_KEY` | grok-4-latest |
 | `groq` | `LLM_API_KEY` | openai/gpt-oss-120b |
-| `tarka` | `LLM_API_KEY` + `LLM_BASE_URL` | set explicitly |
+| `tarka` | `LLM_API_KEY` | set explicitly |
 
 For Codex, run `npx @openai/codex login` to authenticate via your ChatGPT subscription.
 
@@ -1395,7 +1395,7 @@ route and every news panel.
 | `LLM_API_KEY` | — | API key (not needed for codex or ollama) |
 | `LLM_MODEL` | per-provider default | Override model selection |
 | `LLM_REASONING_EFFORT` | provider default | `low` / `medium` / `high` for reasoning models |
-| `LLM_BASE_URL` | — | Override a gateway provider's host (tarka) |
+| `LLM_BASE_URL` | `https://tarka.rest/v1` | Override the Tarka API base URL |
 | `OLLAMA_BASE_URL` | `http://localhost:11434` | Ollama host |
 | `NEXT_PUBLIC_SUPABASE_URL` | disabled | Community layer database |
 | `SUPABASE_SECRET_KEY` | — | Supabase secret key (**not** the publishable one) |

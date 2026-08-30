@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { extractiveDigest, translateDigest } from '@/lib/news-digest.mjs';
+import {
+  detectDigestLanguage,
+  extractiveDigest,
+  resolveDigestLanguage,
+  translateDigest,
+} from '@/lib/news-digest.mjs';
 import type { DigestDraft } from '@/lib/news-digest.mjs';
 import { cacheFor, noStore } from '@/lib/http-cache';
 import { findLanguage, isWireLanguage } from '@/lib/nepal-languages';
@@ -57,11 +62,7 @@ async function loadProvider(): Promise<LLMProviderLike | null> {
  * actually written in is the only thing that settles it.
  */
 function needsTranslation(draft: DigestDraft, lang: string): boolean {
-  const body = [draft.headline, ...draft.bullets].join(' ');
-  const hasDevanagari = /[\u0900-\u097F]/.test(body);
-  if (lang === 'ne') return !hasDevanagari;
-  if (lang === 'en') return hasDevanagari;
-  return true;
+  return !isWireLanguage(lang) || detectDigestLanguage(draft) !== lang;
 }
 
 async function build(langCode: string): Promise<FloodInsightFeed> {
@@ -94,13 +95,15 @@ async function build(langCode: string): Promise<FloodInsightFeed> {
   const sourceLang = isWireLanguage(writable.code) ? writable.code : 'ne';
   const drafted = extractiveDigest(items, sourceLang);
 
-  const { draft, model, translated } = needsTranslation(drafted, writable.code)
+  const translationNeeded = needsTranslation(drafted, writable.code);
+  const { draft, model, translated } = translationNeeded
     ? await translateDigest(provider, drafted, writable.code, writable.english)
     : { draft: drafted, model: null, translated: false };
 
-  // A translation that failed leaves Nepali on the page, and saying so is the
-  // same statement the picker already makes about a language it cannot write.
-  const lang = translated || sourceLang === writable.code ? writable.code : sourceLang;
+  // A failed translation leaves the extractive wire text on the page. Report
+  // its actual language instead of echoing the requested code: otherwise the
+  // picker can say English while every headline remains in Devanagari.
+  const lang = resolveDigestLanguage(drafted, writable.code, translated);
 
   const sources: DigestSource[] = items.slice(0, 8).map(i => ({
     title: i.title,

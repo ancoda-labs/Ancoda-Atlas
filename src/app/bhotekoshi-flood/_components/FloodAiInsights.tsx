@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Check, ChevronsUpDown } from 'lucide-react';
 import type { FloodInsightFeed } from '@/types';
 import { ageFrom } from '@/lib/relative-time';
@@ -60,9 +60,13 @@ const T = {
   noLanguage: { en: 'No language found.', ne: 'भाषा भेटिएन।' },
   // Covers both reasons a language can be unavailable: no model at all, or no
   // model that writes it reliably. Either way the outcome is what is stated.
-  fellBack: {
-    en: 'This brief is in Nepali. It could not be written in',
-    ne: 'यो संक्षेप नेपालीमा छ। यसलाई यो भाषामा लेख्न सकिएन:',
+  fellBackIn: {
+    en: 'This brief is in',
+    ne: 'यो संक्षेप यस भाषामा छ:',
+  },
+  fellBackFrom: {
+    en: 'It could not be written in',
+    ne: 'यसलाई यो भाषामा लेख्न सकिएन:',
   },
   viaNepali: { en: 'via Nepali', ne: 'नेपालीमार्फत' },
 };
@@ -81,22 +85,32 @@ export default function FloodAiInsights({ lang }: Props) {
   // picking a language here then overrides it until they pick again.
   useEffect(() => setBriefLang(lang), [lang]);
 
-  const load = useCallback(async (code: string) => {
-    try {
-      const res = await fetch(`/api/flood/insights?lang=${encodeURIComponent(code)}`);
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      setFeed(await res.json());
-    } catch {
-      setFeed({ insight: null, hasModel: false, reason: 'unavailable' });
-    }
-  }, []);
-
   useEffect(() => {
+    const controller = new AbortController();
+    const load = async () => {
+      try {
+        const res = await fetch(
+          `/api/flood/insights?lang=${encodeURIComponent(briefLang)}`,
+          { signal: controller.signal },
+        );
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const nextFeed: FloodInsightFeed = await res.json();
+        if (!controller.signal.aborted) setFeed(nextFeed);
+      } catch {
+        if (!controller.signal.aborted) {
+          setFeed({ insight: null, hasModel: false, reason: 'unavailable' });
+        }
+      }
+    };
+
     setFeed(null);
-    load(briefLang);
-    const id = setInterval(() => load(briefLang), DESK_POLL_MS);
-    return () => clearInterval(id);
-  }, [briefLang, load]);
+    void load();
+    const id = setInterval(load, DESK_POLL_MS);
+    return () => {
+      controller.abort();
+      clearInterval(id);
+    };
+  }, [briefLang]);
 
   const insight = feed?.insight ?? null;
   const hasModel = feed?.hasModel ?? false;
@@ -153,6 +167,7 @@ export default function FloodAiInsights({ lang }: Props) {
                         key={l.code}
                         value={`${l.native} ${l.english} ${l.code}`}
                         onSelect={() => {
+                          setFeed(null);
                           setBriefLang(l.code);
                           setLangOpen(false);
                         }}
@@ -190,8 +205,8 @@ export default function FloodAiInsights({ lang }: Props) {
         <div className="fl-insights-body">
           {insight.fellBackFrom && (
             <p className="fl-insights-note" role="note">
-              {t('fellBack')}{' '}
-              <b>{findLanguage(insight.fellBackFrom).native}</b>
+              {t('fellBackIn')} <b>{findLanguage(insight.lang).native}</b>.{' '}
+              {t('fellBackFrom')} <b>{findLanguage(insight.fellBackFrom).native}</b>
             </p>
           )}
 

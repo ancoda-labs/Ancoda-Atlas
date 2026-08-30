@@ -150,6 +150,14 @@ declare module '*/lib/news-digest.mjs' {
     items: Array<Pick<NewsItem, 'title' | 'source'> & Partial<NewsItem>>,
     lang: string,
   ): DigestDraft;
+  /** Detect the actual Nepali or English wire language from the draft text. */
+  export function detectDigestLanguage(draft: DigestDraft): 'en' | 'ne';
+  /** Resolve the language that may truthfully label the returned draft. */
+  export function resolveDigestLanguage(
+    draft: DigestDraft,
+    requestedLang: string,
+    translated: boolean,
+  ): string;
   /** Carry a finished brief into another language, changing nothing else. */
   export function translateDigest(
     provider: LLMProviderLike | null,
@@ -408,5 +416,3 @@ declare module '*/apis/utils/fetch.mjs' {
   export function today(): string;
   export function daysAgo(n: number): string;
 }
-
-
