@@ -509,7 +509,7 @@ export default function FloodSummary({
             <p className="fl-note">
               {t('liveRead')} {ageFrom(rescueFetchedAt, lang)}
               {' · '}
-              <a href="https://ndrrma.gov.np/np/rescue" target="_blank" rel="noopener noreferrer">
+              <a href="https://ndrrma.gov.np/np/rasuwa/rescue" target="_blank" rel="noopener noreferrer">
                 NDRRMA &#8599;
               </a>
             </p>

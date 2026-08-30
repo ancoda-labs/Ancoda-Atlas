@@ -1754,8 +1754,31 @@ body.low-perf .logo-ring::before, body.low-perf .logo-ring::after, body.low-perf
 .fl-split { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 42px; align-items: start; }
 .flood-map { position: relative; background: #080b10; border: 1px solid var(--rule); }
 .flood-map canvas { display: block; width: 100%; cursor: crosshair; }
+.flood-map-shot {
+  position: absolute;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  margin: 0;
+  border: 2px solid #7ce0b4;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #08120e;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+  z-index: 2;
+}
+.flood-map-shot.news { border-color: #6ec8ff; }
+.flood-map-shot.approx { border-style: dashed; }
+.flood-map-shot img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 .flood-map-tip {
-  position: absolute; pointer-events: none; z-index: 3; padding: 7px 10px;
+  position: absolute; pointer-events: none; z-index: 4; padding: 7px 10px;
   background: rgba(6,9,13,0.97); border: 1px solid var(--rule-2);
   display: flex; flex-direction: column; gap: 1px; white-space: nowrap;
 }
@@ -4205,6 +4228,28 @@ body.dark-theme .fl {
 }
 .fl-freshness b { font-weight: 700; color: var(--ink-2); }
 .fl-freshness span { color: var(--ink-3); }
+
+.fl .flood-news-ticker {
+  margin: 12px 0 0;
+  background: var(--paper-2);
+  border-color: var(--rule);
+}
+.fl .flood-news-label { color: var(--blue); }
+.fl .flood-news-label .blink { background: var(--blue); }
+.fl .flood-news-track a,
+.fl .flood-news-track > span { color: var(--ink); }
+.fl .flood-news-track a span { color: var(--ink-3); }
+.fl .flood-news-track a:hover { color: var(--blue); }
+
+@media (max-width: 720px) {
+  .fl .flood-news-ticker {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    padding: 8px 10px;
+  }
+  .fl .flood-news-track { width: 100%; }
+}
 
 /* Freshness pill in the dashboard masthead. */
 .meta-pill.fresh-pill { display: inline-flex; align-items: center; gap: 7px; }

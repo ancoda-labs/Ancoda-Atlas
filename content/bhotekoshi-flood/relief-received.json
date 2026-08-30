@@ -2,7 +2,7 @@
   "id": "relief-received",
   "_comment": "Cash in the Prime Minister's Disaster Relief Fund, from the Ministry of Finance nine-bank table as compiled on the Rasuwa flood bulletin donate page. The bulletin is someone else's aggregation; the government statement is the source. These are reviewed content. Two rules: (1) the pre-disaster balance is already inside the 6.55 billion — never add it again; (2) foreign pledges, in-kind cargo and the IFRC DREF are not this fund and are never added to it. lib/flood.ts re-adds the bank rows at load.",
   "as_of": "2026-08-28T00:00:00+05:45",
-  "as_of_label_en": "12 Bhadau (Ministry of Finance / PM Disaster Relief Fund)",
+  "as_of_label_en": "12 Bhadra (Ministry of Finance / PM Disaster Relief Fund)",
   "as_of_label_ne": "१२ भदौ (अर्थ मन्त्रालय / प्रधानमन्त्री दैवी प्रकोप उद्धार कोष)",
   "sources": [
     { "label": "Prime Minister's Office appeal (PDF)", "url": "https://opmcm.gov.np/content/586/heartfelt-appeal/" },
@@ -22,7 +22,7 @@
       "title_en": "By bank",
       "title_ne": "बैंकअनुसार",
       "tone": "positive",
-      "caption_en": "Nine banks, 12 Bhadau. Rs 6.55 billion = 4.38 billion collected after the flood plus 2.17 billion already held. The USD line is a separate label.",
+      "caption_en": "Nine banks, 12 Bhadra. Rs 6.55 billion = 4.38 billion collected after the flood plus 2.17 billion already held. The USD line is a separate label.",
       "caption_ne": "नौ बैंक, १२ भदौ। रु. ६ अर्ब ५५ करोड = विपद्पछि ४ अर्ब ३८ करोड + मौज्दात २ अर्ब १७ करोड। डलर छुट्टै लेबल हो।",
       "do_not_merge_en": "The 2.17 billion already in the fund is inside the 6.55 billion, not on top of it. USD 680,618 is not part of the Nepali-rupee total. Foreign pledges, World Bank Rs 25 billion and the IFRC appeal are not this fund.",
       "do_not_merge_ne": "विपद्अघिको २ अर्ब १७ करोड ६ अर्ब ५५ करोडभित्र छ, माथि होइन। डलर ६,८०,६१८ नेपाली जम्मामा होइन। वैदेशिक घोषणा, विश्व बैंक २५ अर्ब र आईएफआरसी अपिल यो कोष होइनन्।",
