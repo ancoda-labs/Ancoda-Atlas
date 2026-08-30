@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import type { AffectedDistrictProps, FloodGauge, GeoCollection, Geometry, PhotoGeoSource } from '@/types';
 import { orientationTransform } from '@/lib/photo-orientation';
+import { fitLeaves, separateLeaves, spiderOffsets } from '@/lib/spiderfy';
 
 // The flood corridor map.
 //
@@ -13,8 +14,9 @@ import { orientationTransform } from '@/lib/photo-orientation';
 // district bbox — over two degrees of Nepal the distortion is not visible.
 //
 // Press photographs and ground reports land on the same few districts, so the
-// overview is a cluster at 1×. Zoom (wheel, pinch, +/−) and pan (drag) are
-// how a reader pulls that cluster apart without leaving the page.
+// overview is a cluster at 1×. Tap a stack to spiderfy it (a ring, or a spiral
+// once the pile is large) and scroll the headline list; zoom still splits
+// clusters that are only near each other, not on top of each other.
 //
 // The map draws four things, and the distinction between the first two is the
 // one that matters most:
@@ -184,26 +186,37 @@ interface OverlayStack {
   items: OverlayPin[];
 }
 
-/** Group pins that would sit on top of each other at this zoom into one stack. */
+/**
+ * Group pins that would sit on top of each other at this zoom into one stack.
+ * Neighbour-of-neighbour counts: a jittered Rasuwa pile is one pin, not five
+ * overlapping ones that then spill into the brief beside the map.
+ */
 function clusterOverlays(pins: OverlayPin[], gap: number): OverlayStack[] {
-  const used = new Set<number>();
-  const stacks: OverlayStack[] = [];
-  for (let i = 0; i < pins.length; i++) {
-    if (used.has(i)) continue;
-    const items = [pins[i]];
-    used.add(i);
-    for (let j = i + 1; j < pins.length; j++) {
-      if (used.has(j)) continue;
+  const n = pins.length;
+  const parent = pins.map((_, i) => i);
+  const find = (i: number): number => (parent[i] === i ? i : (parent[i] = find(parent[i])));
+  for (let i = 0; i < n; i++) {
+    for (let j = i + 1; j < n; j++) {
       if (Math.hypot(pins[j].x - pins[i].x, pins[j].y - pins[i].y) < gap) {
-        items.push(pins[j]);
-        used.add(j);
+        const a = find(i);
+        const b = find(j);
+        if (a !== b) parent[a] = b;
       }
     }
-    const x = items.reduce((s, p) => s + p.x, 0) / items.length;
-    const y = items.reduce((s, p) => s + p.y, 0) / items.length;
-    stacks.push({ id: items.map(p => p.id).join('|'), x, y, items });
   }
-  return stacks;
+  const groups = new Map<number, OverlayPin[]>();
+  for (let i = 0; i < n; i++) {
+    const root = find(i);
+    const items = groups.get(root);
+    if (items) items.push(pins[i]);
+    else groups.set(root, [pins[i]]);
+  }
+  return [...groups.values()].map(items => ({
+    id: items.map(p => p.id).join('|'),
+    x: items.reduce((s, p) => s + p.x, 0) / items.length,
+    y: items.reduce((s, p) => s + p.y, 0) / items.length,
+    items,
+  }));
 }
 
 export default function FloodDistrictMap({ points = [], photos = [], gauges = [], onSelect, onPhotoSelect, lang }: Props) {
@@ -223,6 +236,7 @@ export default function FloodDistrictMap({ points = [], photos = [], gauges = []
   const districtHitRef = useRef<Array<{ name: string; status: string; path: Path2D }>>([]);
   const hitRef = useRef<Hit[]>([]);
   const skipClickRef = useRef(false);
+  const stageSizeRef = useRef({ w: 1, h: 1 });
 
   useEffect(() => {
     let cancelled = false;
@@ -236,6 +250,15 @@ export default function FloodDistrictMap({ points = [], photos = [], gauges = []
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (!openStack) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpenStack(null);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [openStack]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -475,12 +498,14 @@ export default function FloodDistrictMap({ points = [], photos = [], gauges = []
         }
       }
 
-      const stacks = clusterOverlays(nextOverlays, viewRef.current.zoom < 1.8 ? 64 : 48);
+      const stacks = clusterOverlays(nextOverlays, viewRef.current.zoom < 1.8 ? 80 : 56);
       for (const stack of stacks) {
-        const { x, y } = deOverlap(stack.x, stack.y, placed, stack.items.length > 1 ? 28 : 36);
-        stack.x = x;
-        stack.y = y;
-        placed.push({ x, y });
+        const many = stack.items.length > 1;
+        const r = many ? 30 : 28;
+        const { x, y } = deOverlap(stack.x, stack.y, placed, r);
+        stack.x = clamp(x, r, w - r);
+        stack.y = clamp(y, r, h - r);
+        placed.push({ x: stack.x, y: stack.y });
         if (stack.items.length === 1 && stack.items[0].layer === 'ground') {
           hits.push({
             selection: { kind: 'photo', id: stack.items[0].id },
@@ -492,6 +517,7 @@ export default function FloodDistrictMap({ points = [], photos = [], gauges = []
       }
 
       hitRef.current = hits;
+      stageSizeRef.current = { w, h };
       setStacks(stacks);
     };
 
@@ -533,6 +559,8 @@ export default function FloodDistrictMap({ points = [], photos = [], gauges = []
     const stage = stageRef.current;
     if (!stage) return;
     const onWheel = (e: WheelEvent) => {
+      const node = e.target;
+      if (node instanceof Element && node.closest('.flood-map-stack-list')) return;
       e.preventDefault();
       const rect = stage.getBoundingClientRect();
       zoomAtRef.current(e.clientX - rect.left, e.clientY - rect.top, e.deltaY > 0 ? 0.86 : 1.16);
@@ -694,6 +722,51 @@ export default function FloodDistrictMap({ points = [], photos = [], gauges = []
   };
 
   const ne = lang === 'ne';
+  const open = stacks.find(s => s.id === openStack && s.items.length > 1) || null;
+  const stageW = stageSizeRef.current.w;
+  const stageH = stageSizeRef.current.h;
+  const listSide = stageW >= 560;
+  const listW = open && listSide ? Math.min(268, Math.round(stageW * 0.36)) : 0;
+  const listH = open && !listSide ? Math.min(176, Math.max(120, Math.round(stageH * 0.38))) : 0;
+  const origin = open ? { x: open.x, y: open.y } : { x: 0, y: 0 };
+  const spiderBounds = {
+    w: stageW,
+    h: stageH,
+    pad: 28,
+    padLeft: listW ? listW + 18 : 28,
+    padRight: 48,
+    padBottom: listH ? listH + 12 : 28,
+  };
+  const spider = open
+    ? fitLeaves(
+        origin,
+        separateLeaves(fitLeaves(origin, spiderOffsets(open.items.length, 40), spiderBounds), 52),
+        spiderBounds,
+      )
+    : [];
+  const tipFlip = hover != null && hover.x > stageW * 0.55;
+
+  const shotBody = (pins: OverlayPin[], stacked: boolean) => (
+    <span className="flood-map-shot-stack" aria-hidden="true">
+      {pins.map((pin, i) => (
+        <img
+          key={pin.id}
+          src={pin.url}
+          alt=""
+          style={{
+            transform: [
+              orientationTransform(pin.orientation || 1),
+              stacked ? `rotate(${(i - 1) * 7}deg) translate(${(i - 1) * 3}px, ${(1 - i) * 2}px)` : undefined,
+            ].filter(Boolean).join(' ') || undefined,
+            zIndex: pins.length - i,
+          }}
+          onError={ev => {
+            ev.currentTarget.style.display = 'none';
+          }}
+        />
+      ))}
+    </span>
+  );
 
   return (
     <div className="flood-map" ref={wrapRef}>
@@ -708,62 +781,70 @@ export default function FloodDistrictMap({ points = [], photos = [], gauges = []
       >
         <canvas ref={canvasRef} onClick={onClick} />
         {hover && (
-          <div className="flood-map-tip" style={{ left: hover.x + 12, top: hover.y + 12 }}>
+          <div
+            className={`flood-map-tip${tipFlip ? ' flip' : ''}`}
+            style={{ left: hover.x + (tipFlip ? -12 : 12), top: Math.min(hover.y + 12, stageH - 64) }}
+          >
             <strong>{hover.title}</strong>
             {hover.sub && <span>{hover.sub}</span>}
           </div>
         )}
+        {open && (
+          <svg className="flood-map-spider" width={stageW} height={stageH} aria-hidden="true">
+            {spider.map((pt, i) => {
+              const pin = open.items[i];
+              if (!pin) return null;
+              return (
+                <line
+                  key={pin.id}
+                  x1={open.x}
+                  y1={open.y}
+                  x2={open.x + pt.x}
+                  y2={open.y + pt.y}
+                />
+              );
+            })}
+          </svg>
+        )}
         {stacks.map(stack => {
           const many = stack.items.length > 1;
+          const spidered = open?.id === stack.id;
           const top = stack.items[0];
           const news = stack.items.some(p => p.layer === 'news');
-          const className = `flood-map-shot${news ? ' news' : ''}${many ? ' stack' : ''}${top.approximate && !many ? ' approx' : ''}`;
-          const onEnter = () => {
-            if (many) return;
-            setHover({ title: top.title, sub: top.sub, x: stack.x, y: stack.y });
+          const className = `flood-map-shot${news ? ' news' : ''}${many ? ' stack' : ''}${spidered ? ' hub' : ''}${top.approximate && !many ? ' approx' : ''}`;
+          const onEnter = (x: number, y: number) => () => {
+            setHover({ title: top.title, sub: top.sub, x, y });
           };
-          const faces = many ? stack.items.slice(0, 3) : [top];
-          const body = (
-            <>
-              <span className="flood-map-shot-stack" aria-hidden="true">
-                {faces.map((pin, i) => (
-                  <img
-                    key={pin.id}
-                    src={pin.url}
-                    alt=""
-                    style={{
-                      transform: [
-                        orientationTransform(pin.orientation || 1),
-                        many ? `rotate(${(i - 1) * 7}deg) translate(${(i - 1) * 3}px, ${(1 - i) * 2}px)` : undefined,
-                      ].filter(Boolean).join(' ') || undefined,
-                      zIndex: faces.length - i,
-                    }}
-                    onError={ev => {
-                      ev.currentTarget.style.display = 'none';
-                    }}
-                  />
-                ))}
-              </span>
-              {many ? (
-                <em className="flood-map-shot-count">{stack.items.length}</em>
-              ) : (
-                <span className="flood-map-shot-cap">{top.title}</span>
-              )}
-            </>
-          );
-          if (many) {
+          if (many && !spidered) {
             return (
               <button
                 key={stack.id}
                 type="button"
                 className={className}
                 style={{ left: stack.x, top: stack.y }}
-                aria-expanded={openStack === stack.id}
+                aria-expanded={false}
                 aria-label={ne ? `${stack.items.length} तस्बिर` : `${stack.items.length} photographs`}
                 onPointerDown={e => e.stopPropagation()}
-                onClick={() => setOpenStack(openStack === stack.id ? null : stack.id)}
+                onClick={() => setOpenStack(stack.id)}
               >
-                {body}
+                {shotBody(stack.items.slice(0, 3), true)}
+                <em className="flood-map-shot-count">{stack.items.length}</em>
+              </button>
+            );
+          }
+          if (many && spidered) {
+            return (
+              <button
+                key={stack.id}
+                type="button"
+                className={className}
+                style={{ left: stack.x, top: stack.y }}
+                aria-expanded={true}
+                aria-label={ne ? 'थुप्रो बन्द गर्नुहोस्' : 'Close photograph stack'}
+                onPointerDown={e => e.stopPropagation()}
+                onClick={() => setOpenStack(null)}
+              >
+                <em className="flood-map-shot-count">{stack.items.length}</em>
               </button>
             );
           }
@@ -776,11 +857,11 @@ export default function FloodDistrictMap({ points = [], photos = [], gauges = []
                 href={top.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                onMouseEnter={onEnter}
+                onMouseEnter={onEnter(stack.x, stack.y)}
                 onMouseLeave={() => setHover(null)}
                 onPointerDown={e => e.stopPropagation()}
               >
-                {body}
+                {shotBody([top], false)}
               </a>
             );
           }
@@ -790,7 +871,7 @@ export default function FloodDistrictMap({ points = [], photos = [], gauges = []
               type="button"
               className={className}
               style={{ left: stack.x, top: stack.y }}
-              onMouseEnter={onEnter}
+              onMouseEnter={onEnter(stack.x, stack.y)}
               onMouseLeave={() => setHover(null)}
               onPointerDown={e => e.stopPropagation()}
               onClick={() => {
@@ -798,59 +879,97 @@ export default function FloodDistrictMap({ points = [], photos = [], gauges = []
                 onSelect?.({ kind: 'photo', id: top.id });
               }}
             >
-              {body}
+              {shotBody([top], false)}
             </button>
           );
         })}
-        {stacks.map(stack => {
-          if (openStack !== stack.id || stack.items.length < 2) return null;
-          const flip = stack.x > (stageRef.current?.clientWidth || 400) - 220;
-          const up = stack.y > (stageRef.current?.clientHeight || 400) * 0.55;
+        {open && spider.map((pt, i) => {
+          const pin = open.items[i];
+          if (!pin) return null;
+          const x = open.x + pt.x;
+          const y = open.y + pt.y;
+          const news = pin.layer === 'news';
+          const className = `flood-map-shot leaf${news ? ' news' : ''}${pin.approximate ? ' approx' : ''}`;
+          const onEnter = () => setHover({ title: pin.title, sub: pin.sub, x, y });
+          if (pin.href) {
+            return (
+              <a
+                key={`leaf-${pin.id}`}
+                className={className}
+                style={{ left: x, top: y }}
+                href={pin.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                onMouseEnter={onEnter}
+                onMouseLeave={() => setHover(null)}
+                onPointerDown={e => e.stopPropagation()}
+              >
+                {shotBody([pin], false)}
+              </a>
+            );
+          }
           return (
-            <div
-              key={`${stack.id}-list`}
-              className={`flood-map-stack-list${flip ? ' flip' : ''}${up ? ' up' : ''}`}
-              style={{ left: stack.x, top: stack.y }}
+            <button
+              key={`leaf-${pin.id}`}
+              type="button"
+              className={className}
+              style={{ left: x, top: y }}
+              onMouseEnter={onEnter}
+              onMouseLeave={() => setHover(null)}
               onPointerDown={e => e.stopPropagation()}
+              onClick={() => {
+                if (onPhotoSelect) onPhotoSelect(pin.id);
+                onSelect?.({ kind: 'photo', id: pin.id });
+              }}
             >
-              <p>
-                {ne ? `${stack.items.length} तस्बिर` : `${stack.items.length} photographs`}
-                <button type="button" onClick={() => setOpenStack(null)} aria-label={ne ? 'बन्द' : 'Close'}>×</button>
-              </p>
-              <ul>
-                {stack.items.map(pin => {
-                  const inner = (
-                    <>
-                      <img src={pin.url} alt="" />
-                      <span>
-                        <strong>{pin.title}</strong>
-                        <em>{pin.sub}</em>
-                      </span>
-                    </>
-                  );
-                  return (
-                    <li key={pin.id}>
-                      {pin.href ? (
-                        <a href={pin.href} target="_blank" rel="noopener noreferrer">{inner}</a>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (onPhotoSelect) onPhotoSelect(pin.id);
-                            onSelect?.({ kind: 'photo', id: pin.id });
-                            setOpenStack(null);
-                          }}
-                        >
-                          {inner}
-                        </button>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
+              {shotBody([pin], false)}
+            </button>
           );
         })}
+        {open && (
+          <div
+            className={`flood-map-stack-list${listSide ? ' side' : ''}`}
+            style={listSide ? { width: listW } : { height: listH }}
+            onPointerDown={e => e.stopPropagation()}
+            onWheel={e => e.stopPropagation()}
+          >
+            <p>
+              {ne ? `${open.items.length} तस्बिर` : `${open.items.length} photographs`}
+              <button type="button" onClick={() => setOpenStack(null)} aria-label={ne ? 'बन्द' : 'Close'}>×</button>
+            </p>
+            <ul>
+              {open.items.map(pin => {
+                const inner = (
+                  <>
+                    <img src={pin.url} alt="" />
+                    <span>
+                      <strong>{pin.title}</strong>
+                      <em>{pin.sub}</em>
+                    </span>
+                  </>
+                );
+                return (
+                  <li key={pin.id}>
+                    {pin.href ? (
+                      <a href={pin.href} target="_blank" rel="noopener noreferrer">{inner}</a>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (onPhotoSelect) onPhotoSelect(pin.id);
+                          onSelect?.({ kind: 'photo', id: pin.id });
+                          setOpenStack(null);
+                        }}
+                      >
+                        {inner}
+                      </button>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
         <div className="flood-map-zoom" role="group" aria-label={ne ? 'नक्सा जुम' : 'Map zoom'} onPointerDown={e => e.stopPropagation()}>
           <button type="button" onClick={() => zoomBy(1.4)} disabled={view.zoom >= MAX_ZOOM - 0.01} aria-label={ne ? 'ठूलो पार्नुहोस्' : 'Zoom in'}>+</button>
           <button type="button" onClick={() => zoomBy(1 / 1.4)} disabled={view.zoom <= MIN_ZOOM + 0.01} aria-label={ne ? 'सानो पार्नुहोस्' : 'Zoom out'}>−</button>
@@ -887,8 +1006,8 @@ export default function FloodDistrictMap({ points = [], photos = [], gauges = []
       </div>
       <p className="flood-map-zoom-hint">
         {ne
-          ? 'थुप्रो तस्बिर थिचेर सूची खोल्नुहोस्, वा + ले जुम गर्नुहोस्।'
-          : 'Tap a stacked pin to read the headlines, or use + to zoom in.'}
+          ? 'थुप्रो तस्बिर थिचेर फिँजाउनुहोस्। सूची स्क्रोल गरेर हरेक शीर्षक पढ्नुहोस्।'
+          : 'Tap a stacked pin to fan the photographs out. Scroll the list for every headline.'}
       </p>
     </div>
   );

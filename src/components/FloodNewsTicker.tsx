@@ -58,7 +58,7 @@ export default function FloodNewsTicker({ lang, items: givenItems, status: given
     };
   }, [givenItems]);
 
-  const items = (givenItems ?? fetched ?? []).slice(0, 8);
+  const items = (givenItems ?? fetched ?? []).slice(0, 20);
   const loading = givenItems !== undefined ? givenStatus === 'loading' : status === 'loading';
 
   return (
@@ -67,7 +67,7 @@ export default function FloodNewsTicker({ lang, items: givenItems, status: given
         <span className="blink" />
         {T.label[lang]}
       </span>
-      <div className="flood-news-viewport">
+      <div className="flood-news-viewport" tabIndex={0}>
         <div className="flood-news-track">
           {items.length > 0 ? (
             [...items, ...items].map((item, index) => (
