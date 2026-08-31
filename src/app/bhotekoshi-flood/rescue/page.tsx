@@ -4,9 +4,9 @@ import FloodRescueView from '@/app/bhotekoshi-flood/rescue/FloodRescueView';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'People rescued · Rasuwa–Bhotekoshi Flood · Ancoda Atlas',
+  title: 'Find someone · Rasuwa–Bhotekoshi Flood · Ancoda Atlas',
   description:
-    'The NDRRMA register of people rescued in the Rasuwa–Bhotekoshi flood, searchable by name, with the location each person was rescued from and where they were taken.',
+    'Search a name, place or age across the NDRRMA rescued register and missing-person reports filed with the Prime Minister’s Office. The two lists are not merged.',
 };
 
 export default function RescuePage() {

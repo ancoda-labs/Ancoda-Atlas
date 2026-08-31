@@ -1,13 +1,15 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import NepalSignalsMap from '@/app/_components/NepalSignalsMap';
+import dynamic from 'next/dynamic';
 import { nextUpdateLabel, useDeskRefresh, useTick } from '@/hooks/use-desk-refresh';
 import { ageFrom } from '@/lib/relative-time';
 import BhotekoshiFloodButton from '@/app/_components/BhotekoshiFloodButton';
 import FloodNewsTicker from '@/components/FloodNewsTicker';
+import AtlasMapPending from '@/components/AtlasMapPending';
 import type {
   HazardSnapshot,
+  NewsBundleResponse,
   NewsItem,
   WeatherAlert,
   FloodVideo,
@@ -19,6 +21,12 @@ import { useFloodLang } from '@/hooks/use-flood-lang';
 import { useAtlasTheme } from '@/hooks/use-atlas-theme';
 import FloodThemeToggle from '@/components/FloodThemeToggle';
 import FloodFooter from '@/components/FloodFooter';
+import { isConstrainedConnection, seedLowPerf, whenIdle } from '@/lib/connection-pref';
+
+const NepalSignalsMap = dynamic(() => import('@/app/_components/NepalSignalsMap'), {
+  ssr: false,
+  loading: () => <AtlasMapPending label="Nepal" />,
+});
 
 interface PanelState {
   items: NewsItem[];
@@ -313,9 +321,6 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
   useTick();
   const meta = D.meta || {};
 
-  // Boot sequence state
-  const [booting, setBooting] = useState(true);
-
   const [theme] = useAtlasTheme();
   const darkTheme = theme === 'dark';
   const [language, changeLanguage] = useFloodLang();
@@ -328,20 +333,27 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
     Object.fromEntries(NEWS_PANELS.map(p => [p.id, { items: [], status: 'loading' as const }])),
   );
 
-  // Fetch BIPAD data on load
+  // Fetch BIPAD after first paint. The map is itself deferred; this must not
+  // compete with the hazard snapshot already in the HTML.
   useEffect(() => {
-    async function fetchBipad() {
+    let cancelled = false;
+    const fetchBipad = async () => {
       try {
         const res = await fetch('/api/bipad');
-        if (res.ok) {
-          const data = await res.json();
-          setBipadData(data);
+        if (res.ok && !cancelled) {
+          setBipadData(await res.json());
         }
       } catch (err) {
         console.error('[DashboardClient] Failed to fetch BIPAD data:', err);
       }
-    }
-    fetchBipad();
+    };
+    const cancelIdle = whenIdle(() => {
+      if (!cancelled) fetchBipad();
+    }, isConstrainedConnection() ? 4000 : 1800);
+    return () => {
+      cancelled = true;
+      cancelIdle();
+    };
   }, []);
 
   // Broadcast coverage for the video rail, and the clip currently playing.
@@ -351,17 +363,9 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
   const photoRailRef = useRef<HTMLDivElement | null>(null);
   const videoRailRef = useRef<HTMLDivElement | null>(null);
 
-  // Load configuration from local storage
+  // Load configuration from local storage and the radio, not after the chrome.
   useEffect(() => {
-    const cachedPerf = localStorage.getItem('atlas_low_perf') === 'true';
-    if (cachedPerf) {
-      document.body.classList.add('low-perf');
-    }
-  }, []);
-
-  // Run boot sequence logs on mount
-  useEffect(() => {
-    setTimeout(() => setBooting(false), 3500);
+    seedLowPerf();
   }, []);
 
   // Subscribe to live events via SSE
@@ -408,52 +412,73 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
     }, []),
   );
 
-  // Fetch live hazard news on load & newsWindow changes
+  // One bundled payload. Eight topic routes on a high-RTT radio each pay
+  // 200–400ms before any RSS work starts.
   const fetchAllNews = async () => {
-    NEWS_PANELS.forEach(async (cfg) => {
-      setNewsCache((prev) => ({
-        ...prev,
-        [cfg.id]: { ...prev[cfg.id], status: prev[cfg.id].items.length ? 'stale' : 'loading' },
-      }));
-
-      try {
-        const url = `/api/news?topic=${cfg.topic}&window=${newsWindow}&limit=${cfg.limit}&sourceCap=${cfg.sourceCap}`;
-        const res = await fetch(url);
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        const data = (await res.json()) as { items?: NewsItem[] };
-        const items: NewsItem[] = Array.isArray(data.items) ? data.items : [];
-
-        let sortedItems = items;
-        if (cfg.priority) {
-          sortedItems = [...items].sort(
-            (a, b) => priorityScore(b) - priorityScore(a) || new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime()
-          );
-        }
-
-        setNewsCache((prev) => ({
-          ...prev,
-          [cfg.id]: { items: sortedItems, status: 'live' },
-        }));
-      } catch (err) {
-        console.error(`[News load failed for ${cfg.id}]:`, errorMessage(err));
-        setNewsCache((prev) => ({
-          ...prev,
-          [cfg.id]: { ...prev[cfg.id], status: prev[cfg.id].items.length ? 'stale' : 'error' },
-        }));
+    setNewsCache(prev => {
+      const next = { ...prev };
+      for (const cfg of NEWS_PANELS) {
+        next[cfg.id] = { ...next[cfg.id], status: next[cfg.id].items.length ? 'stale' : 'loading' };
       }
+      return next;
     });
+
+    try {
+      const res = await fetch(`/api/news?bundle=1&window=${newsWindow}`);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const bundle = (await res.json()) as NewsBundleResponse;
+      const topics = bundle.topics || {};
+
+      setNewsCache(prev => {
+        const next = { ...prev };
+        for (const cfg of NEWS_PANELS) {
+          const items: NewsItem[] = Array.isArray(topics[cfg.topic]?.items) ? topics[cfg.topic].items : [];
+          const sortedItems = cfg.priority
+            ? [...items].sort(
+                (a, b) =>
+                  priorityScore(b) - priorityScore(a) ||
+                  new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime(),
+              )
+            : items;
+          next[cfg.id] = { items: sortedItems, status: 'live' };
+        }
+        return next;
+      });
+    } catch (err) {
+      console.error('[News bundle load failed]:', errorMessage(err));
+      setNewsCache(prev => {
+        const next = { ...prev };
+        for (const cfg of NEWS_PANELS) {
+          next[cfg.id] = { ...next[cfg.id], status: next[cfg.id].items.length ? 'stale' : 'error' };
+        }
+        return next;
+      });
+    }
   };
 
+  const newsPrimed = useRef(false);
+
   useEffect(() => {
-    fetchAllNews();
-    const interval = setInterval(fetchAllNews, 5 * 60 * 1000);
-    return () => clearInterval(interval);
+    let interval: ReturnType<typeof setInterval> | undefined;
+    const start = () => {
+      fetchAllNews();
+      interval = setInterval(fetchAllNews, 5 * 60 * 1000);
+    };
+    const cancelIdle = newsPrimed.current
+      ? (start(), () => {})
+      : whenIdle(start, isConstrainedConnection() ? 4000 : 1800);
+    newsPrimed.current = true;
+    return () => {
+      cancelIdle();
+      if (interval) clearInterval(interval);
+    };
   }, [newsWindow]);
 
   // Broadcast clips. Same cadence as the news sweep; the route caches hard, so
   // a poll costs one request and usually answers from memory.
   useEffect(() => {
     let cancelled = false;
+    let interval: ReturnType<typeof setInterval> | undefined;
     const loadVideos = async () => {
       try {
         const res = await fetch('/api/flood/videos');
@@ -467,11 +492,17 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
         }
       }
     };
-    loadVideos();
-    const interval = setInterval(loadVideos, 5 * 60 * 1000);
+    const cancelIdle = whenIdle(
+      () => {
+        loadVideos();
+        interval = setInterval(loadVideos, 5 * 60 * 1000);
+      },
+      isConstrainedConnection() ? 4000 : 1800,
+    );
     return () => {
       cancelled = true;
-      clearInterval(interval);
+      cancelIdle();
+      if (interval) clearInterval(interval);
     };
   }, []);
 
@@ -568,16 +599,6 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
     alertLevel === 'CRITICAL' ? 'ACT NOW'
     : alertLevel === 'ELEVATED' ? 'PAY ATTENTION'
     : 'NO MAJOR SIGNALS';
-
-  if (booting) {
-    return (
-      <div id="boot" suppressHydrationWarning>
-        <div className="logo-ring" suppressHydrationWarning>
-          <span className="logo-text">ATLAS</span>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div id="main" className="p-3" lang={language} suppressHydrationWarning>

@@ -1,23 +1,25 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import FloodDistrictMap from '@/components/FloodDistrictMap';
-import FloodThemeToggle from '@/components/FloodThemeToggle';
 import type { MapPhoto, MapSelection } from '@/components/FloodDistrictMap';
 import FloodMapDialog from '@/components/FloodMapDialog';
 import FloodReportButton from '@/components/FloodReportButton';
 import FloodNewsTicker from '@/components/FloodNewsTicker';
-import FloodAiInsights from '@/app/bhotekoshi-flood/_components/FloodAiInsights';
 import { FloodNav } from '@/components/FloodShell';
 import FloodSummary from '@/app/bhotekoshi-flood/_components/FloodSummary';
 import FloodOfficial from '@/app/bhotekoshi-flood/_components/FloodOfficial';
 import { useFloodLang } from '@/hooks/use-flood-lang';
 import { ageFrom } from '@/lib/relative-time';
 import FloodFooter from '@/components/FloodFooter';
+import FloodThemeToggle from '@/components/FloodThemeToggle';
+import { useFloodDesk } from '@/app/bhotekoshi-flood/_components/FloodDeskProvider';
 import { districtPinForText } from '@/apis/utils/flood-scope.mjs';
-import type { FloodDeskPayload, FloodPhoto, FloodPhotoFeed, NewsItem } from '@/types';
+import type { FloodPhoto, FloodPhotoFeed, NewsItem } from '@/types';
 import { DESK_POLL_MS, nextUpdateLabel, useTick } from '@/hooks/use-desk-refresh';
+import { isConstrainedConnection, whenIdle } from '@/lib/connection-pref';
+import AtlasMapPending from '@/components/AtlasMapPending';
 
 /** A few kilometres of scatter so several stories in one district do not stack. */
 function jitter(seed: string, amp: number): { dLat: number; dLon: number } {
@@ -70,8 +72,8 @@ const T = {
   moreTitle: { en: 'The rest of the desk', ne: 'डेस्कका अन्य खण्ड' },
   donate: { en: 'Give safely', ne: 'सुरक्षित सहयोग' },
   donateSub: { en: 'Government funds and recognised organisations', ne: 'सरकारी कोष र मान्यताप्राप्त संस्था' },
-  rescue: { en: 'People rescued', ne: 'उद्धार भएका व्यक्ति' },
-  rescueSub: { en: 'Search the NDRRMA register by name', ne: 'एनडीआरआरएमए सूचीमा नाम खोज्नुहोस्' },
+  rescue: { en: 'Find someone', ne: 'कोही खोज्नुहोस्' },
+  rescueSub: { en: 'Search rescued names, and missing-person reports', ne: 'उद्धार नामावली र हराएका व्यक्तिका रिपोर्ट खोज्नुहोस्' },
   situation: { en: 'Incident register', ne: 'घटना अभिलेख' },
   situationSub: { en: 'River levels, alerts and logged incidents', ne: 'नदीको सतह, चेतावनी र दर्ता घटना' },
   damage: { en: 'Damage assessment', ne: 'क्षति मूल्यांकन' },
@@ -82,14 +84,25 @@ const T = {
   coverageSub: { en: 'Press and broadcast reporting', ne: 'छापा र प्रसारण समाचार' },
   contacts: { en: 'Who to call', ne: 'कसलाई फोन गर्ने' },
   contactsSub: { en: 'Verified emergency numbers', ne: 'प्रमाणित आपतकालीन नम्बर' },
+  mapPending: { en: 'Map of the affected districts', ne: 'प्रभावित जिल्लाको नक्सा' },
 };
+
+const FloodDistrictMap = dynamic(() => import('@/components/FloodDistrictMap'), {
+  ssr: false,
+  loading: () => <AtlasMapPending label="Map" />,
+});
+
+const FloodAiInsights = dynamic(() => import('@/app/bhotekoshi-flood/_components/FloodAiInsights'), {
+  ssr: false,
+});
 
 export default function BhotekoshiFloodView() {
   const [lang, setLang] = useFloodLang();
-  const [data, setData] = useState<FloodDeskPayload | null>(null);
+  const { desk: data } = useFloodDesk();
   const [photoFeed, setPhotoFeed] = useState<FloodPhotoFeed | null>(null);
   const [newsItems, setNewsItems] = useState<NewsItem[] | null>(null);
   const [selection, setSelection] = useState<MapSelection | null>(null);
+  const [heavyReady, setHeavyReady] = useState(false);
   useTick();
 
   const t = (key: keyof typeof T) => T[key][lang];
@@ -103,25 +116,28 @@ export default function BhotekoshiFloodView() {
   }, []);
 
   useEffect(() => {
+    return whenIdle(() => setHeavyReady(true), isConstrainedConnection() ? 4000 : 1800);
+  }, []);
+
+  useEffect(() => {
+    if (!heavyReady) return;
     let cancelled = false;
     const load = async () => {
+      const [photosRes, newsRes] = await Promise.all([
+        fetch('/api/flood/photos').catch(() => null),
+        fetch('/api/news?topic=flood&window=24h&limit=28&sourceCap=8').catch(() => null),
+      ]);
       try {
-        const res = await fetch('/api/flood');
-        if (res.ok && !cancelled) setData(await res.json());
-      } catch (err) {
-        console.error('[Flood overview] load failed', err);
-      }
-      try {
-        const res = await fetch('/api/flood/photos');
-        if (res.ok && !cancelled) setPhotoFeed(await res.json());
+        if (photosRes?.ok && !cancelled) setPhotoFeed(await photosRes.json());
       } catch {
         /* the map stands on its own without ground reports */
       }
       try {
-        const res = await fetch('/api/news?topic=flood&window=24h&limit=28&sourceCap=8');
-        if (res.ok && !cancelled) {
-          const j = await res.json();
+        if (newsRes?.ok && !cancelled) {
+          const j = await newsRes.json();
           setNewsItems(Array.isArray(j.items) ? j.items : []);
+        } else if (!cancelled) {
+          setNewsItems([]);
         }
       } catch {
         if (!cancelled) setNewsItems([]);
@@ -133,7 +149,7 @@ export default function BhotekoshiFloodView() {
       cancelled = true;
       clearInterval(id);
     };
-  }, []);
+  }, [heavyReady]);
 
   const L = (o: object | null | undefined, key: string): string => {
     if (!o) return '';
@@ -293,6 +309,7 @@ export default function BhotekoshiFloodView() {
           <div className="fl-sec-head">
             <span>{lang === 'ne' ? 'क्षेत्र' : 'Where'}</span>
           </div>
+          {heavyReady ? (
           <FloodDistrictMap
             points={(data?.floodPath?.points || []).map(p => ({
               id: p.id,
@@ -307,6 +324,9 @@ export default function BhotekoshiFloodView() {
             onSelect={setSelection}
             lang={lang}
           />
+          ) : (
+            <AtlasMapPending label={t('mapPending')} />
+          )}
           <p className="fl-note">{t('mapHint')}</p>
 
           {/* Where each layer of pins comes from.
@@ -355,38 +375,49 @@ export default function BhotekoshiFloodView() {
           </div>
 
           <div className="fl-overview-aside">
-            <FloodAiInsights lang={lang} />
+            {heavyReady ? <FloodAiInsights lang={lang} /> : null}
           </div>
         </section>
 
-        {safety && (
-          <aside className="fl-standfirst" role="note">
-            <div>
-              <span style={{ display: 'block' }}>{t('safetyNotice')}</span>
-              <img
-                src="/images/nepal-police.png"
-                alt="Nepal Police"
-                style={{ height: '80px', width: 'auto', display: 'block', marginTop: '16px' }}
-              />
-            </div>
-            <p>{safety}</p>
-          </aside>
-        )}
-
-        {/* The summary of everything. */}
         {sitrep ? (
-          <FloodSummary
-            sitrep={sitrep}
-            lang={lang}
-            whatHappened={data?.whatHappened || null}
-            portal={data?.portal || null}
-            corridor={data?.corridor || null}
-            rescueSummary={data?.rescueSummary || null}
-            rescueFetchedAt={data?.rescueFetchedAt || null}
-          />
-        ) : (
-          <p className="fl-empty">{t('loading')}</p>
-        )}
+          <>
+            <FloodSummary
+              section="chapters"
+              sitrep={sitrep}
+              lang={lang}
+              whatHappened={null}
+              portal={data?.portal || null}
+              corridor={data?.corridor || null}
+              rescueSummary={data?.rescueSummary || null}
+              rescueFetchedAt={data?.rescueFetchedAt || null}
+            />
+
+            {safety && (
+              <aside className="fl-standfirst" role="note">
+                <div>
+                  <span style={{ display: 'block' }}>{t('safetyNotice')}</span>
+                  <img
+                    src="/images/nepal-police.png"
+                    alt="Nepal Police"
+                    style={{ height: '80px', width: 'auto', display: 'block', marginTop: '16px' }}
+                  />
+                </div>
+                <p>{safety}</p>
+              </aside>
+            )}
+
+            <FloodSummary
+              section="rest"
+              sitrep={sitrep}
+              lang={lang}
+              whatHappened={data?.whatHappened || null}
+              portal={data?.portal || null}
+              corridor={data?.corridor || null}
+              rescueSummary={data?.rescueSummary || null}
+              rescueFetchedAt={data?.rescueFetchedAt || null}
+            />
+          </>
+        ) : null}
 
         <FloodOfficial govEfforts={data?.govEfforts} dailyBulletin={data?.dailyBulletin} lang={lang} />
 

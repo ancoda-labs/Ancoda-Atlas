@@ -47,11 +47,11 @@ export function reconcile(breakdowns: SitrepBreakdown[] | undefined): SitrepDisc
  * Whether a live panel is safe to lay over the reviewed group of the same id.
  *
  * Deaths never go down: this disaster's toll is recovered bodies, and a
- * compilation that has not caught up with Police would otherwise put 781 back
- * over 794. Other groups may fall (uncontacted, as people are found). A panel
- * whose parts do not add up to its stated total is left as reviewed — including
+ * compilation that has not caught up would otherwise put 794 back over 903.
+ * Other groups may fall (uncontacted, as people are found). A panel whose
+ * parts do not add up to its stated total is left as reviewed — including
  * overlapping air-rescue rows. The bulletin's air KPI has drifted to NDRRMA's
- * all-rescued graphic (9,435 air and ground); that must not replace the
+ * all-rescued graphic (10,451 air and ground); that must not replace the
  * SitRep helicopter tile. `no_total_check` only silences the page warning.
  */
 export function shouldOverlay(reviewed: SitrepBreakdown | undefined, live: SitrepBreakdown): boolean {
@@ -70,7 +70,7 @@ function overlayHeadline(
   if (!headlineId || !headlines?.length) return headlines;
   return headlines.map(h =>
     h.id === headlineId
-      ? { ...h, value: live.total, suffix: live.suffix || h.suffix, source: sourceLabel, tone: live.tone }
+      ? { ...h, value: live.total, suffix: live.suffix || h.suffix, source: sourceLabel, tone: live.tone, live: true }
       : h,
   );
 }
@@ -101,13 +101,13 @@ export function mergeSitrep(reviewed: SitrepContent | null, live: BulletinSitrep
     overlaid = true;
     if (b.id === 'deaths') deathsOverlaid = true;
     headlines = overlayHeadline(headlines, replacement, live.source.label);
-    return replacement;
+    return { ...replacement, live: true };
   });
 
   for (const b of live.breakdowns) {
     if (seen.has(b.id) || reviewedById.has(b.id)) continue;
     if (!shouldOverlay(undefined, b)) continue;
-    breakdowns.push(b);
+    breakdowns.push({ ...b, live: true });
     overlaid = true;
     if (b.id === 'deaths') deathsOverlaid = true;
     headlines = overlayHeadline(headlines, b, live.source.label);

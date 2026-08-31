@@ -75,7 +75,10 @@ test('a higher reconciling death toll replaces the reviewed one and the headline
   const merged = mergeSitrep(reviewed(), live);
   const deathsGroup = merged.breakdowns.find(b => b.id === 'deaths');
   assert.equal(deathsGroup.total, 800);
+  assert.equal(deathsGroup.live, true);
   assert.equal(merged.headline.find(h => h.id === 'deaths').value, 800);
+  assert.equal(merged.headline.find(h => h.id === 'deaths').live, true);
+  assert.equal(merged.headline.find(h => h.id === 'uncontacted').live, undefined);
   assert.equal(merged.discrepancies.length, 0);
   assert.ok(merged.sources.some(s => s.url === source.url));
 });
@@ -103,6 +106,7 @@ test('a lower bulletin death toll does not overwrite Police 794', () => {
   const merged = mergeSitrep(reviewed(), live);
   assert.equal(merged.breakdowns.find(b => b.id === 'deaths').total, 794);
   assert.equal(merged.headline.find(h => h.id === 'deaths').value, 794);
+  assert.equal(merged.headline.find(h => h.id === 'deaths').live, undefined);
   assert.equal(merged.as_of_label_en, reviewed().as_of_label_en);
 });
 

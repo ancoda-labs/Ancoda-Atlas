@@ -17,6 +17,13 @@ export const dynamic = 'force-dynamic';
 
 const CACHE_TTL_S = 300;
 
+function stripInlineQr(feed: FloodOfficialFeed<PortalDonationChannel>): FloodOfficialFeed<PortalDonationChannel> {
+  return {
+    ...feed,
+    items: feed.items.map(channel => ({ ...channel, qrData: null })),
+  };
+}
+
 function empty(error: string): FloodOfficialFeed<PortalDonationChannel> {
   return {
     items: [],
@@ -29,7 +36,7 @@ function empty(error: string): FloodOfficialFeed<PortalDonationChannel> {
 export async function GET() {
   const store = getFloodStore();
   if (store.donationChannels) {
-    const res = NextResponse.json(store.donationChannels);
+    const res = NextResponse.json(stripInlineQr(store.donationChannels));
     res.headers.set('X-Atlas-Cache', 'cron');
     return cacheFor(res, { edge: CACHE_TTL_S });
   }
@@ -39,7 +46,10 @@ export async function GET() {
     const { proxyUrlFor } = await import('@/lib/news-media');
     const feed = await getDonationChannels({ limit: 12 });
     const payload: FloodOfficialFeed<PortalDonationChannel> = {
-      items: feed.items.map(({ qrImage, ...rest }) => ({ ...rest, qrProxy: proxyUrlFor(qrImage) })),
+      items: feed.items.map(item => {
+        const { qrImage, ...rest } = item;
+        return { ...rest, qrData: null, qrProxy: proxyUrlFor(qrImage) };
+      }),
       error: feed.error,
       source: feed.source,
       fetchedAt: feed.fetchedAt,
