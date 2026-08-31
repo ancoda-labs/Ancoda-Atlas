@@ -11,8 +11,8 @@ import { useJumpSection } from '@/hooks/use-jump-section';
 // Copernicus EMSR927 grading for Syabrubesi / Timure, and the NEA 10 Bhadra
 // notice. Two numbers on this page that look addable are not: 433 is all
 // buildings in the mapped area, 392 is residential inside that; the ~450
-// people in the AOI are not added to uncontacted 2,502, and the 133+ NEA
-// hydropower workers are not added to hydropower 933 or to 2,502. Langtang
+// people in the AOI are not added to uncontacted 4,247, and the 133+ NEA
+// hydropower workers are not added to hydropower 933 or to 4,247. Langtang
 // 60 is inside the 133+. Copernicus 5 bridges in the AOI is not SitRep-3's
 // 80 national bridges.
 
@@ -70,7 +70,7 @@ const T = {
   hitTag: { en: 'Hit', ne: 'प्रभावित' },
   blankRemarks: { en: 'On the list, not marked hit', ne: 'सूचीमा, प्रभावित भनिएको छैन' },
   phones: { en: 'NEA phones', ne: 'प्राधिकरण फोन' },
-  exclusive: { en: 'Counted separately, not added to uncontacted 2,502 or hydropower 933', ne: 'छुट्टै गनिएको, सम्पर्कविहीन २,५०२ वा जलविद्युत् ९३३ माथि होइन' },
+  exclusive: { en: 'Counted separately, not added to uncontacted 4,247 or hydropower 933', ne: 'छुट्टै गनिएको, सम्पर्कविहीन ४,२४७ वा जलविद्युत् ९३३ माथि होइन' },
   langtangInside: { en: 'Inside the 133+, not on top of it', ne: '१३३+ भित्र, माथि होइन' },
 };
 
