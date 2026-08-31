@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import type { AffectedDistrictProps, FloodGauge, GeoCollection, Geometry, PhotoGeoSource } from '@/types';
 import { orientationTransform } from '@/lib/photo-orientation';
-import { clusterByTopic, spiderLayout, type OverlayLayer } from '@/lib/spiderfy';
+import { clusterByPlace, spiderLayout, type OverlayLayer } from '@/lib/spiderfy';
 
 // The flood corridor map.
 //
@@ -14,9 +14,8 @@ import { clusterByTopic, spiderLayout, type OverlayLayer } from '@/lib/spiderfy'
 // district bbox — over two degrees of Nepal the distortion is not visible.
 //
 // Press photographs, DHM station photos and ground reports land on the same
-// few districts, so the overview clusters each topic on its own. Tap a stack
-// to spiderfy it (a ring, or a spiral once the pile is large) inside the
-// map; zoom still splits clusters that are only near each other.
+// few districts. Press stacks sit on the district the headline names; DHM
+// thumbnails stay on the station. Tap a stack to spiderfy it inside the map.
 //
 // The map draws four things, and the distinction between the first two is the
 // one that matters most:
@@ -41,6 +40,8 @@ export interface MapPhoto {
   href?: string;
   /** Overrides the default hover subtitle. */
   sub?: string;
+  /** District or station name, used to keep thumbnails on that place. */
+  place?: string;
 }
 
 export interface MapPathPoint {
@@ -180,6 +181,8 @@ interface OverlayPin {
   title: string;
   sub: string;
   approximate: boolean;
+  /** District or station name — press stacks sit here, the list groups here. */
+  place?: string;
   /** When set, the pin opens the gauge dialog rather than a photograph. */
   gaugeId?: number;
 }
@@ -189,6 +192,20 @@ interface OverlayStack {
   x: number;
   y: number;
   items: OverlayPin[];
+}
+
+function groupPinsByPlace(pins: OverlayPin[]): Array<{ place: string; items: OverlayPin[] }> {
+  const groups = new Map<string, OverlayPin[]>();
+  const north = [...pins].sort((a, b) => a.y - b.y || a.x - b.x);
+  for (const pin of north) {
+    const key = pin.place || '';
+    const g = groups.get(key);
+    if (g) g.push(pin);
+    else groups.set(key, [pin]);
+  }
+  return [...groups.entries()]
+    .sort((a, b) => a[1][0].y - b[1][0].y)
+    .map(([place, items]) => ({ place, items }));
 }
 
 function stacksEqual(a: OverlayStack[], b: OverlayStack[]): boolean {
@@ -433,6 +450,7 @@ export default function FloodDistrictMap({ points = [], photos = [], gauges = []
             title,
             sub,
             approximate: false,
+            place: ne ? g.districtNe : g.district,
             gaugeId: g.id,
           });
           continue;
@@ -490,14 +508,17 @@ export default function FloodDistrictMap({ points = [], photos = [], gauges = []
           title: photo.label,
           sub,
           approximate,
+          place: photo.place,
         });
       }
 
-      const stacks: OverlayStack[] = clusterByTopic(nextOverlays, viewRef.current.zoom < 1.8 ? 72 : 52).map(items => ({
+      const coverFirst = (items: OverlayPin[]) =>
+        [...items].sort((a, b) => Number(Boolean(b.url)) - Number(Boolean(a.url)));
+      const stacks: OverlayStack[] = clusterByPlace(nextOverlays, viewRef.current.zoom < 1.8 ? 72 : 52).map(items => ({
         id: items.map(p => p.id).join('|'),
         x: items.reduce((s, p) => s + p.x, 0) / items.length,
         y: items.reduce((s, p) => s + p.y, 0) / items.length,
-        items,
+        items: coverFirst(items),
       }));
       for (const stack of stacks) {
         const many = stack.items.length > 1;
@@ -752,6 +773,7 @@ export default function FloodDistrictMap({ points = [], photos = [], gauges = []
     : focusLayer
       ? stacks.filter(s => s.items[0]?.layer === focusLayer).flatMap(s => s.items)
       : [];
+  const listGroups = groupPinsByPlace(listItems);
   const showList = listItems.length > 0;
   const listH = showList ? Math.min(152, Math.max(108, Math.round(stageH * 0.30))) : 0;
   const origin = open ? { x: open.x, y: open.y } : { x: 0, y: 0 };
@@ -858,9 +880,16 @@ export default function FloodDistrictMap({ points = [], photos = [], gauges = []
           const top = stack.items[0];
           const news = top.layer === 'news';
           const gauge = top.layer === 'gauge';
+          const placeLabel = top.place
+            ? (many ? `${top.place} · ${stack.items.length}` : top.place)
+            : null;
           const className = `flood-map-shot${news ? ' news' : ''}${gauge ? ' gauge' : ''}${many ? ' stack' : ''}${spidered ? ' hub' : ''}${top.approximate && !many ? ' approx' : ''}`;
           const onEnter = (x: number, y: number) => () => {
-            setHover({ title: top.title, sub: top.sub, x, y });
+            setHover({
+              title: placeLabel || top.title,
+              sub: many && top.place ? top.sub : top.sub,
+              x, y,
+            });
           };
           if (many && !spidered) {
             return (
@@ -870,7 +899,14 @@ export default function FloodDistrictMap({ points = [], photos = [], gauges = []
                 className={className}
                 style={{ left: stack.x, top: stack.y }}
                 aria-expanded={false}
-                aria-label={listTitle(top.layer, stack.items.length)}
+                aria-label={placeLabel || listTitle(top.layer, stack.items.length)}
+                onMouseEnter={() => setHover({
+                  title: placeLabel || top.title,
+                  sub: top.sub,
+                  x: stack.x,
+                  y: stack.y,
+                })}
+                onMouseLeave={() => setHover(null)}
                 onPointerDown={e => e.stopPropagation()}
                 onClick={() => {
                   setFocusLayer(top.layer);
@@ -994,7 +1030,9 @@ export default function FloodDistrictMap({ points = [], photos = [], gauges = []
           >
             <p>
               {open
-                ? listTitle(open.items[0].layer, open.items.length)
+                ? (open.items[0].place
+                  ? `${open.items[0].place} · ${open.items.length}`
+                  : listTitle(open.items[0].layer, open.items.length))
                 : focusLayer
                   ? listTitle(focusLayer, listItems.length)
                   : (ne ? 'विषय' : 'Topics')}
@@ -1010,38 +1048,45 @@ export default function FloodDistrictMap({ points = [], photos = [], gauges = []
               </button>
             </p>
             <ul>
-              {listItems.map(pin => {
-                const inner = (
-                  <>
-                    {pin.url ? (
-                      <img src={pin.url} alt="" onError={ev => { ev.currentTarget.style.display = 'none'; }} />
-                    ) : (
-                      <span className={`flood-map-shot-ph${pin.layer === 'news' ? ' news' : pin.layer === 'gauge' ? ' gauge' : ''}`} />
-                    )}
-                    <span>
-                      <strong>{pin.title}</strong>
-                      <em>{pin.sub}</em>
-                    </span>
-                  </>
-                );
-                return (
-                  <li key={pin.id}>
-                    {pin.href ? (
-                      <a href={pin.href} target="_blank" rel="noopener noreferrer">{inner}</a>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          activatePin(pin);
-                          setOpenStack(null);
-                        }}
-                      >
-                        {inner}
-                      </button>
-                    )}
-                  </li>
-                );
-              })}
+              {listGroups.map(group => (
+                <React.Fragment key={group.place || group.items[0]?.id}>
+                  {group.place && listGroups.length > 1 && (
+                    <li className="place">{group.place}</li>
+                  )}
+                  {group.items.map(pin => {
+                    const inner = (
+                      <>
+                        {pin.url ? (
+                          <img src={pin.url} alt="" onError={ev => { ev.currentTarget.style.display = 'none'; }} />
+                        ) : (
+                          <span className={`flood-map-shot-ph${pin.layer === 'news' ? ' news' : pin.layer === 'gauge' ? ' gauge' : ''}`} />
+                        )}
+                        <span>
+                          <strong>{pin.title}</strong>
+                          <em>{pin.sub}</em>
+                        </span>
+                      </>
+                    );
+                    return (
+                      <li key={pin.id}>
+                        {pin.href ? (
+                          <a href={pin.href} target="_blank" rel="noopener noreferrer">{inner}</a>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              activatePin(pin);
+                              setOpenStack(null);
+                            }}
+                          >
+                            {inner}
+                          </button>
+                        )}
+                      </li>
+                    );
+                  })}
+                </React.Fragment>
+              ))}
             </ul>
           </div>
         )}

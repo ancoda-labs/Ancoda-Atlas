@@ -15,20 +15,16 @@ import { ageFrom } from '@/lib/relative-time';
 import FloodFooter from '@/components/FloodFooter';
 import FloodThemeToggle from '@/components/FloodThemeToggle';
 import { useFloodDesk } from '@/app/bhotekoshi-flood/_components/FloodDeskProvider';
-import { districtPinForText } from '@/apis/utils/flood-scope.mjs';
+import { AFFECTED_DISTRICTS, districtPinForText } from '@/apis/utils/flood-scope.mjs';
 import type { FloodPhoto, FloodPhotoFeed, NewsItem } from '@/types';
 import { DESK_POLL_MS, nextUpdateLabel, useTick } from '@/hooks/use-desk-refresh';
 import { isConstrainedConnection, whenIdle } from '@/lib/connection-pref';
 import AtlasMapPending from '@/components/AtlasMapPending';
 import AtlasMark from '@/components/AtlasMark';
 
-/** A few kilometres of scatter so several stories in one district do not stack. */
-function jitter(seed: string, amp: number): { dLat: number; dLon: number } {
-  let h = 0;
-  for (let i = 0; i < seed.length; i++) h = ((h << 5) - h + seed.charCodeAt(i)) | 0;
-  const u = (Math.abs(h) % 10000) / 10000;
-  const v = (Math.abs((h * 13) | 0) % 10000) / 10000;
-  return { dLat: (u * 2 - 1) * amp, dLon: (v * 2 - 1) * amp };
+function districtName(en: string, lang: 'en' | 'ne'): string {
+  const row = AFFECTED_DISTRICTS.find(d => d.en === en);
+  return lang === 'ne' ? row?.ne || en : en;
 }
 
 // The overview of the Rasuwa–Bhotekoshi flood desk.
@@ -195,33 +191,35 @@ export default function BhotekoshiFloodView() {
       url: p.url,
       orientation: p.orientation,
       layer: 'ground',
+      place: p.district ? districtName(p.district, lang) : undefined,
     }));
   const newsPins: MapPhoto[] = (newsItems || [])
     .filter(item => item.link)
     .map(item => {
       const located = districtPinForText(item.title);
       const pin = located || { district: 'Rasuwa', lat: 28.1167, lon: 85.3000 };
-      const { dLat, dLon } = jitter(item.link, located ? 0.025 : 0.03);
+      const place = districtName(pin.district, lang);
       return {
         id: `news:${item.link}`,
-        lat: pin.lat + dLat,
-        lon: pin.lon + dLon,
+        lat: pin.lat,
+        lon: pin.lon,
         geoSource: 'district' as const,
         label: item.title,
         url: item.imageProxy || undefined,
         layer: 'news' as const,
         href: item.link,
+        place,
         sub: located
           ? (item.imageProxy
-            ? (lang === 'ne' ? 'समाचारको तस्बिर — जिल्ला शीर्षकबाट' : 'Press photograph — district from the headline')
-            : (lang === 'ne' ? 'समाचार — जिल्ला शीर्षकबाट' : 'Press — district from the headline'))
+            ? (lang === 'ne' ? `${place} — समाचारको तस्बिर` : `${place} — press photograph`)
+            : (lang === 'ne' ? `${place} — समाचार` : `${place} — press`))
           : (item.imageProxy
             ? (lang === 'ne'
-              ? 'समाचारको तस्बिर — शीर्षकमा जिल्ला नभएकाले रसुवामा राखिएको'
-              : 'Press photograph — headline named no district, shown in Rasuwa')
+              ? `${place} — शीर्षकमा जिल्ला नभएकाले यहाँ राखिएको`
+              : `${place} — headline named no district, shown here`)
             : (lang === 'ne'
-              ? 'समाचार — शीर्षकमा जिल्ला नभएकाले रसुवामा राखिएको'
-              : 'Press — headline named no district, shown in Rasuwa')),
+              ? `${place} — शीर्षकमा जिल्ला नभएकाले यहाँ राखिएको`
+              : `${place} — headline named no district, shown here`)),
       };
     })
     .slice(0, 24);

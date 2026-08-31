@@ -214,3 +214,41 @@ export function clusterByTopic<T extends { x: number; y: number; layer: OverlayL
   }
   return out;
 }
+
+/**
+ * Same topic split, but press pins that name a district stay on that
+ * district — they do not merge with a neighbour just because a wide overview
+ * gap puts them a few pixels apart. DHM stations only stack when they truly
+ * sit on top of each other.
+ */
+export function clusterByPlace<T extends { x: number; y: number; layer: OverlayLayer; place?: string }>(
+  pins: T[],
+  gap: number,
+): T[][] {
+  const out: T[][] = [];
+  for (const layer of TOPIC_ORDER) {
+    const subset = pins.filter(p => p.layer === layer);
+    if (!subset.length) continue;
+    if (layer === 'news') {
+      const byPlace = new Map<string, T[]>();
+      const rest: T[] = [];
+      for (const p of subset) {
+        const key = p.place?.trim();
+        if (!key) {
+          rest.push(p);
+          continue;
+        }
+        const group = byPlace.get(key);
+        if (group) group.push(p);
+        else byPlace.set(key, [p]);
+      }
+      out.push(...byPlace.values());
+      if (rest.length) out.push(...clusterOverlays(rest, gap));
+    } else if (layer === 'gauge') {
+      out.push(...clusterOverlays(subset, 14));
+    } else {
+      out.push(...clusterOverlays(subset, gap));
+    }
+  }
+  return out;
+}

@@ -7,6 +7,7 @@ import assert from 'node:assert/strict';
 import {
   CIRCLE_SPIRAL_SWITCHOVER,
   circleOffsets,
+  clusterByPlace,
   clusterByTopic,
   fitLeaves,
   separateLeaves,
@@ -81,4 +82,21 @@ test('clusterByTopic does not merge a DHM station with a headline', () => {
   );
   assert.equal(groups.length, 3);
   assert.ok(groups.every(g => g.every(p => p.layer === g[0].layer)));
+});
+
+test('clusterByPlace keeps Rasuwa and Nuwakot headlines on their districts', () => {
+  const groups = clusterByPlace(
+    [
+      { x: 10, y: 10, layer: 'news', place: 'Rasuwa' },
+      { x: 18, y: 12, layer: 'news', place: 'Rasuwa' },
+      { x: 22, y: 14, layer: 'news', place: 'Nuwakot' },
+      { x: 11, y: 11, layer: 'gauge', place: 'Rasuwa' },
+    ],
+    80,
+  );
+  const news = groups.filter(g => g[0].layer === 'news');
+  assert.equal(news.length, 2);
+  assert.equal(news.find(g => g[0].place === 'Rasuwa')?.length, 2);
+  assert.equal(news.find(g => g[0].place === 'Nuwakot')?.length, 1);
+  assert.equal(groups.filter(g => g[0].layer === 'gauge').length, 1);
 });

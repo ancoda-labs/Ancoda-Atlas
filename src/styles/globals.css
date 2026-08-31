@@ -2319,6 +2319,17 @@ body.low-perf .logo-ring::before, body.low-perf .logo-ring::after, body.low-perf
   scrollbar-color: rgba(110, 200, 255, 0.45) transparent;
 }
 .flood-map-stack-list li + li { border-top: 1px solid rgba(255,255,255,0.08); }
+.flood-map-stack-list li.place {
+  padding: 7px 10px 4px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8fd4ff;
+  border-top: 1px solid rgba(255,255,255,0.12);
+}
+.flood-map-stack-list li.place:first-child { border-top: 0; padding-top: 6px; }
+.flood-map-stack-list li.place + li { border-top: 0; }
 .flood-map-stack-list a,
 .flood-map-stack-list li > button {
   display: grid;
