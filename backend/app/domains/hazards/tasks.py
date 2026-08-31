@@ -17,15 +17,21 @@ from celery.signals import worker_ready
 from app.core import runs_store
 from app.core.celery_app import celery_app
 from app.core.config import settings
+from app.core.http import now_iso
 from app.core.logging import configure_logging, get_logger
 from app.domains.hazards.delta.memory import MemoryManager
 from app.domains.hazards.sweep import full_briefing
 from app.domains.hazards.synthesize import generate_ideas, synthesize
+from app.domains.stream import bus
 
 log = get_logger(__name__)
 
 
 async def _run_cycle() -> dict[str, Any]:
+    # Tell any open dashboard a cycle has started, so it can say "updating now"
+    # rather than reporting the last sweep as overdue while this one runs.
+    bus.publish_sync({"type": bus.SWEEP_START, "timestamp": now_iso()})
+
     # 1. Sweep every source.
     raw = await full_briefing()
     runs_store.write_json(runs_store.LATEST, raw)
@@ -46,6 +52,11 @@ async def _run_cycle() -> dict[str, Any]:
     # 5. Publish.
     runs_store.write_json(runs_store.DASHBOARD, synthesized)
     memory.prune_alerted_signals()
+
+    # The file is written; now tell the API replicas to re-read it. Published
+    # after the write, never before, or a listener races the bytes it is being
+    # told about.
+    bus.publish_sync({"type": bus.UPDATE, "timestamp": now_iso()})
 
     log.info(
         "sweep_cycle_complete",

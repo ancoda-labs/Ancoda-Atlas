@@ -20,6 +20,7 @@ from app.core.openapi_metadata import (
     TITLE,
     VERSION,
 )
+from app.domains.stream.routers import router as stream_router
 
 log = get_logger(__name__)
 
@@ -111,6 +112,9 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
 
 
 app.include_router(api_router, prefix=settings.API_PREFIX)
+# Not versioned: this is the path the dashboard already opens, and a stream
+# rather than a resource.
+app.include_router(stream_router)
 
 
 @app.get("/health", tags=["health"], summary="Liveness probe")
