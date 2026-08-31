@@ -15,6 +15,7 @@ import { ageFrom } from '@/lib/relative-time';
 import FloodFooter from '@/components/FloodFooter';
 import FloodThemeToggle from '@/components/FloodThemeToggle';
 import { useFloodDesk } from '@/app/bhotekoshi-flood/_components/FloodDeskProvider';
+import AtlasBrand from '@/components/AtlasBrand';
 import { districtPinForText } from '@/apis/utils/flood-scope.mjs';
 import type { FloodPhoto, FloodPhotoFeed, NewsItem } from '@/types';
 import { DESK_POLL_MS, nextUpdateLabel, useTick } from '@/hooks/use-desk-refresh';
@@ -44,7 +45,6 @@ function jitter(seed: string, amp: number): { dLat: number; dLon: number } {
 // tab of its own, so no single scroll has to carry all of it.
 
 const T = {
-  back: { en: 'Back to Atlas', ne: 'एट्लसमा फर्कनुहोस्' },
   title: { en: 'Rasuwa–Bhotekoshi Flood', ne: 'रसुवा–भोटेकोशी बाढी' },
   safetyNotice: { en: 'Safety notice', ne: 'सुरक्षा सूचना' },
   whereTitle: { en: 'Where the water went', ne: 'पानी कता गयो' },
@@ -215,19 +215,19 @@ export default function BhotekoshiFloodView() {
   const mapPhotos: MapPhoto[] = [...groundPins, ...newsPins];
 
   const sections: Array<{ href: string; title: string; sub: string }> = [
-    { href: '/bhotekoshi-flood/donate', title: t('donate'), sub: t('donateSub') },
     { href: '/bhotekoshi-flood/rescue', title: t('rescue'), sub: t('rescueSub') },
-    { href: '/bhotekoshi-flood/situation', title: t('situation'), sub: t('situationSub') },
-    { href: '/bhotekoshi-flood/damage', title: t('damage'), sub: t('damageSub') },
-    { href: '/bhotekoshi-flood/media', title: t('coverage'), sub: t('coverageSub') },
     { href: '/bhotekoshi-flood/contacts', title: t('contacts'), sub: t('contactsSub') },
+    { href: '/bhotekoshi-flood/donate', title: t('donate'), sub: t('donateSub') },
+    { href: '/bhotekoshi-flood/damage', title: t('damage'), sub: t('damageSub') },
+    { href: '/bhotekoshi-flood/situation', title: t('situation'), sub: t('situationSub') },
+    { href: '/bhotekoshi-flood/media', title: t('coverage'), sub: t('coverageSub') },
   ];
 
   return (
     <div className="fl" lang={lang}>
       <div className="fl-rail">
         <div className="fl-wrap" style={{ paddingTop: '8px', paddingBottom: '8px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '18px', flexWrap: 'wrap', marginBottom: marquee ? '6px' : '0' }}>
+          <div className="fl-rail-lines" style={{ marginBottom: marquee ? '6px' : '0' }}>
             <span className="fl-rail-tag">{lang === 'ne' ? 'आपतकालीन' : 'Emergency'}</span>
             {(data?.helplines?.lines || []).map(line => (
               <a key={line.id} href={`tel:${line.number}`} style={{ color: '#2a0508', textDecoration: 'none', fontSize: '13px', whiteSpace: 'nowrap' }}>
@@ -251,7 +251,7 @@ export default function BhotekoshiFloodView() {
       <header className="fl-mast fl-mast-sub" style={{ paddingBottom: '16px' }}>
         <div className="fl-wrap">
           <div className="fl-mast-top">
-            <Link href="/">&larr; {t('back')}</Link>
+            <AtlasBrand lang={lang} />
             <div className="fl-mast-controls">
               <div className="fl-lang">
                 <button className={lang === 'en' ? 'on' : ''} onClick={() => setLang('en')}>English</button>
@@ -301,9 +301,22 @@ export default function BhotekoshiFloodView() {
       </div>
 
       <main className="fl-wrap">
-        {/* The map leads: "where" is the first thing anyone asks. The brief sits
-            beside it rather than below, so "where" and "what is happening" are
-            one glance instead of two. */}
+        {/* Official figures first: a family opening this page needs the toll
+            before the map. The map is "where"; the tabs are "how many" —
+            and they must not be added across. */}
+        {sitrep ? (
+          <FloodSummary
+            section="chapters"
+            sitrep={sitrep}
+            lang={lang}
+            whatHappened={null}
+            portal={data?.portal || null}
+            corridor={data?.corridor || null}
+            rescueSummary={data?.rescueSummary || null}
+            rescueFetchedAt={data?.rescueFetchedAt || null}
+          />
+        ) : null}
+
         <section className="fl-sec fl-sec-map fl-overview-split">
           <div className="fl-overview-map">
           <div className="fl-sec-head">
@@ -381,17 +394,6 @@ export default function BhotekoshiFloodView() {
 
         {sitrep ? (
           <>
-            <FloodSummary
-              section="chapters"
-              sitrep={sitrep}
-              lang={lang}
-              whatHappened={null}
-              portal={data?.portal || null}
-              corridor={data?.corridor || null}
-              rescueSummary={data?.rescueSummary || null}
-              rescueFetchedAt={data?.rescueFetchedAt || null}
-            />
-
             {safety && (
               <aside className="fl-standfirst" role="note">
                 <div>

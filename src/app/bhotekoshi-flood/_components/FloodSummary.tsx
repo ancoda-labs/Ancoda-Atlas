@@ -34,7 +34,7 @@ import type {
 import { ageFrom } from '@/lib/relative-time';
 import FloodReportedTiles, { ScrapedDot } from '@/app/bhotekoshi-flood/_components/FloodReportedTiles';
 
-// The summary of everything, as it appears under the map on the overview.
+// The summary of everything, as it appears above the map on the overview.
 //
 // This component's real job is arithmetic hygiene. The figures it shows come
 // from several bodies counting different populations at different hours, and
@@ -415,7 +415,7 @@ export default function FloodSummary({
   corridor?: CorridorIncidents | null;
   rescueSummary?: RescueSummary | null;
   rescueFetchedAt?: string | null;
-  /** `chapters` renders the topic navigator (below the map). `rest` is background and place notes. */
+  /** `chapters` renders the topic navigator (above the map). `rest` is background and place notes. */
   section?: 'chapters' | 'rest' | 'all';
 }) {
   const t = (key: keyof typeof T) => T[key][lang];

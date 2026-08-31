@@ -56,10 +56,11 @@
   src: url('/fonts/GeistPixel-Square.woff2') format('woff2');
   font-style: normal;
   font-weight: 100 900;
-  /* Optional: on 2G the system stack (with Noto Sans Devanagari) paints first
-     and Geist never swaps in if it missed the first few hundred milliseconds. */
-  font-display: optional;
-  /* Geist has no Devanagari. Limit the range so Nepali text never waits on it. */
+  /* Swap: English/Latin is the pixel face as soon as the 28KB file arrives.
+     Optional was dropping Geist entirely whenever it missed the first paint. */
+  font-display: swap;
+  /* Geist has no Devanagari. Limit the range so Nepali paints in the system
+     stack (Noto Sans Devanagari) and never waits on this file. */
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
@@ -1429,6 +1430,13 @@ body.low-perf .logo-ring::before, body.low-perf .logo-ring::after, body.low-perf
   font-family: var(--mono); font-size: 10px; letter-spacing: 0.18em;
   text-transform: uppercase; opacity: 0.72; flex: none;
 }
+.fl-rail-lines {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
 .fl-rail-in a { color: #2a0508; text-decoration: none; font-size: 13px; white-space: nowrap; flex: none; }
 .fl-rail-in a b { font-family: var(--mono); font-size: 17px; font-weight: 700; margin-right: 6px; letter-spacing: 0.02em; }
 .fl-rail-in a:hover { text-decoration: underline; }
@@ -1467,6 +1475,26 @@ body.low-perf .logo-ring::before, body.low-perf .logo-ring::after, body.low-perf
   text-transform: uppercase; color: var(--ink-3); text-decoration: none;
 }
 .fl-mast-top a:hover { color: var(--blue); }
+.fl-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.fl-brand-logo {
+  display: block;
+  width: 108px;
+  height: auto;
+  object-fit: contain;
+  flex: none;
+}
+.fl-brand span {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
 .fl-lang { display: flex; gap: 2px; }
 .fl-lang button {
   background: none; border: 0; cursor: pointer; padding: 6px 10px;
@@ -1624,58 +1652,111 @@ body.low-perf .logo-ring::before, body.low-perf .logo-ring::after, body.low-perf
 }
 
 /* Numbered jumps so a reader does not have to hunt. They are the page's
-   table of contents — they have to look like buttons, not a static strip,
-   or people scroll past them. */
+   table of contents: index in its own square, title on its own line, a
+   count and a hint underneath — never "1National" jammed together. */
 .fl-jump {
-  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1px; margin: 16px 0 0; background: var(--rule); border: 1px solid var(--rule);
-  position: sticky; top: 47px; z-index: 90;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  margin: 16px 0 0;
+  background: var(--rule);
+  border: 1px solid var(--rule);
+  position: sticky;
+  top: 47px;
+  z-index: 90;
 }
 .fl-jump-kicker {
-  grid-column: 1 / -1; margin: 0; padding: 4px 12px;
-  background: var(--paper); border-bottom: 1px solid var(--rule);
-  font-family: var(--mono); font-size: 9px; font-weight: 500;
-  letter-spacing: 0.16em; text-transform: uppercase; color: var(--red);
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 8px 14px;
+  background: var(--paper);
+  border-bottom: 1px solid var(--rule);
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--red);
 }
 .fl-jump a {
-  display: block; position: relative;
-  padding: 8px 28px 8px 12px; background: var(--paper);
-  text-decoration: none; color: inherit; min-height: 0;
+  display: grid;
+  grid-template-columns: 1.75rem minmax(0, 1fr);
+  column-gap: 10px;
+  row-gap: 4px;
+  align-content: start;
+  min-width: 0;
+  min-height: 0;
+  padding: 12px 14px 14px;
+  background: var(--paper);
+  text-decoration: none;
+  color: inherit;
   cursor: pointer;
-}
-.fl-jump a::after {
-  content: '→';
-  position: absolute; right: 10px; top: 8px;
-  font-size: 14px; line-height: 1; color: var(--red);
-  transition: transform 0.12s ease;
 }
 .fl-jump a:hover,
 .fl-jump a:focus-visible { background: var(--paper-2); }
-.fl-jump a:hover::after,
-.fl-jump a:focus-visible::after { transform: translateX(3px); }
 .fl-jump a:hover strong,
 .fl-jump a:focus-visible strong { color: var(--red); }
 .fl-jump a:focus-visible { outline: 2px solid var(--red); outline-offset: -2px; }
 .fl-jump a.on {
   background: var(--paper-2);
-  box-shadow: inset 0 -2px 0 var(--red);
+  box-shadow: inset 3px 0 0 var(--red);
 }
 .fl-jump b {
-  display: inline; margin: 0 8px 0 0; font-family: var(--mono);
-  font-size: 10px; font-weight: 500; letter-spacing: 0.14em;
+  grid-column: 1;
+  grid-row: 1 / span 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  margin: 0;
+  border: 1px solid var(--rule);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  line-height: 1;
   color: var(--red);
 }
+.fl-jump a.on b {
+  border-color: var(--red);
+  background: var(--red);
+  color: #2a0508;
+}
 .fl-jump strong {
-  display: inline; font-family: var(--serif); font-size: 15px; font-weight: 400;
-  line-height: 1.2; letter-spacing: -0.01em; color: var(--ink-strong);
+  grid-column: 2;
+  display: block;
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  color: var(--ink-strong);
+}
+.fl-jump em {
+  grid-column: 2;
+  margin: 0;
+  font-family: var(--mono);
+  font-style: normal;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
 }
 .fl-jump span {
-  display: block; margin-top: 2px; font-size: 11px; color: var(--ink-2); line-height: 1.3;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  grid-column: 2;
+  display: block;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--ink-2);
 }
+.fl-jump-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .fl-jump + .fl-sec { padding-top: 20px; }
 .fl-jump-2 { grid-template-columns: 1fr 1fr; }
-.fl-sec[id] { scroll-margin-top: 118px; }
+.fl-sec[id] { scroll-margin-top: 156px; }
 
 /* Cash already in the Prime Minister's fund, and the in-kind demand list.
    Own grids: the desk's 4-column tile mosaic would leave empty rule-coloured
@@ -1760,7 +1841,7 @@ body.low-perf .logo-ring::before, body.low-perf .logo-ring::after, body.low-perf
 .fl-wh-block {
   margin-top: 36px; padding-top: 28px;
   border-top: 1px solid var(--rule);
-  scroll-margin-top: 118px;
+  scroll-margin-top: 156px;
 }
 .fl-wh-block .fl-sec-head { margin-bottom: 16px; }
 .fl-wh-block .fl-sec-head h3 {
@@ -1834,13 +1915,22 @@ body.low-perf .logo-ring::before, body.low-perf .logo-ring::after, body.low-perf
   .fl-need-groups,
   .fl-wh-grid { grid-template-columns: 1fr 1fr; }
 }
+@media (max-width: 820px) {
+  .fl-jump-4 { grid-template-columns: 1fr 1fr; }
+  .fl-jump { position: static; }
+  .fl-sec[id],
+  .fl-dist[id],
+  #portal,
+  .fl-wh-block { scroll-margin-top: 72px; }
+}
 @media (max-width: 620px) {
-  .fl-jump { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .fl-jump { grid-template-columns: 1fr; }
   .fl-jump-2 { grid-template-columns: 1fr 1fr; }
-  .fl-jump span { display: none; }
-  .fl-jump strong { font-size: 13px; }
-  .fl-jump a { padding: 7px 24px 7px 8px; }
-  .fl-jump a::after { right: 8px; top: 7px; }
+  .fl-jump-4 { grid-template-columns: 1fr 1fr; }
+  .fl-jump a { padding: 10px 12px 12px; }
+  .fl-jump strong { font-size: 14px; }
+  .fl-brand span { display: none; }
+  .fl-brand-logo { width: 96px; }
   .fl-received .fl-tiles,
   .fl-needed .fl-tiles,
   .fl-received .fl-figs,
@@ -2796,9 +2886,10 @@ html[lang="ne"] .fl-theme button {
   text-transform: none;
   letter-spacing: 0.02em;
 }
-.fl[lang="ne"] .fl-jump strong { font-size: 17px; }
-.fl[lang="ne"] .fl-jump span,
-.fl[lang="ne"] .fl-dist-toc a { font-size: 13.5px; }
+.fl[lang="ne"] .fl-jump strong { font-size: 16px; }
+.fl[lang="ne"] .fl-jump em { font-size: 13px; }
+.fl[lang="ne"] .fl-jump span { font-size: 14px; }
+.fl[lang="ne"] .fl-dist > summary strong { font-size: 20px; }
 .fl[lang="ne"] .fl-note,
 .fl[lang="ne"] .fl-calls-more span { font-size: 15px; }
 .fl[lang="ne"] .fl-sec-head h2 { font-size: clamp(28px, 3.6vw, 36px); }
@@ -2885,6 +2976,7 @@ html[lang="ne"] .language-toggle button { font-size: 12px; }
   color: var(--ink); font: inherit; font-size: 17px;
 }
 .fl-search:focus { outline: none; border-color: var(--red); }
+#fl-dist-q { max-width: none; }
 .fl-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 8px; }
 .fl-chips button {
   padding: 8px 16px; background: transparent; border: 1px solid var(--rule);
@@ -3045,34 +3137,58 @@ html[lang="ne"] .language-toggle button { font-size: 12px; }
   background: rgba(255, 176, 32, 0.07); max-width: 74ch;
 }
 
-.fl-dist-toc {
-  display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 10px;
+.fl-dist-list {
+  margin-top: 18px;
+  border-top: 1px solid var(--rule);
 }
-.fl-dist-toc a {
-  display: inline-flex; align-items: baseline; gap: 8px;
-  padding: 8px 12px; border: 1px solid var(--rule); background: var(--paper);
-  text-decoration: none; color: var(--ink);
-  font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.02em;
+.fl-dist[id] { scroll-margin-top: 156px; }
+#portal { scroll-margin-top: 156px; }
+.fl-dist {
+  margin: 0;
+  padding: 0;
+  border-bottom: 1px solid var(--rule);
 }
-.fl-dist-toc a:hover,
-.fl-dist-toc a:focus-visible { border-color: var(--red); color: var(--red); }
-.fl-dist-toc em {
-  font-style: normal; font-size: 10px; color: var(--ink-3); font-variant-numeric: tabular-nums;
+.fl-dist > summary {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  cursor: pointer;
+  list-style: none;
+  padding: 16px 2px;
+  color: var(--ink-strong);
 }
-
-.fl-dist[id] { scroll-margin-top: 118px; }
-.fl-dist { margin-top: 34px; padding-top: 4px; border-top: 1px solid var(--rule); }
-.fl-dist:first-of-type { border-top: 0; margin-top: 18px; }
-.fl-dist > h3 {
-  margin: 0 0 4px; font-family: var(--serif); font-weight: 400;
-  font-size: 26px; letter-spacing: -0.02em; color: var(--ink-strong);
-  display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;
+.fl-dist > summary::-webkit-details-marker,
+.fl-dist > summary::marker { display: none; content: ''; }
+.fl-dist > summary strong {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 22px;
+  letter-spacing: -0.02em;
 }
-.fl-dist > h3 em {
-  font-family: var(--mono); font-style: normal; font-size: 11px;
-  letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3);
+.fl-dist > summary em {
+  font-family: var(--mono);
+  font-style: normal;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  flex: none;
 }
+.fl-dist > summary::after {
+  content: '+';
+  font-family: var(--mono);
+  font-size: 18px;
+  line-height: 1;
+  color: var(--ink-3);
+  flex: none;
+}
+.fl-dist[open] > summary::after { content: '–'; }
+.fl-dist > summary:hover strong,
+.fl-dist[open] > summary strong { color: var(--red); }
+.fl-dist-body { padding: 4px 2px 22px; }
 .fl-dist .fl-minor { margin-top: 22px; }
+.fl-dist .fl-minor:first-child { margin-top: 8px; }
 .fl-dist .fl-calls-more {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 8px;
@@ -3090,7 +3206,7 @@ html[lang="ne"] .language-toggle button { font-size: 12px; }
 .fl-dist-more .fl-calls-more { margin-bottom: 8px; }
 
 
-/* --- Overview: map leads the page --- */
+/* Overview: official figures lead; the map follows. */
 .fl-sec-map { padding-top: 34px; }
 
 /* Overview split: the map takes 60% and the brief 40%, collapsing to one
@@ -3467,9 +3583,39 @@ body.low-perf .flood-cta-dot { animation: none; }
   .fl-orgs a { grid-template-columns: 1fr; gap: 5px; }
 }
 @media (max-width: 620px) {
-  .fl-wrap { padding: 0 16px; }
-  .fl-nav { gap: 0; margin-top: 18px; overflow-x: auto; flex-wrap: nowrap; }
-  .fl-nav a { padding: 10px 13px; white-space: nowrap; }
+  .fl-wrap {
+    padding: 0 max(16px, env(safe-area-inset-right, 0px));
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+  }
+  .fl-nav {
+    gap: 0;
+    margin-top: 0;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+  }
+  .fl-nav::-webkit-scrollbar { display: none; }
+  .fl-nav a { padding: 12px 14px; white-space: nowrap; flex: none; }
+  .fl-mast-top {
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 0 18px;
+  }
+  .fl-mast-controls { gap: 8px; }
+  .fl-theme button { padding: 6px 8px; font-size: 11px; }
+  .fl-rail-lines {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    gap: 14px;
+  }
+  .fl-rail-lines::-webkit-scrollbar { display: none; }
   .fl-tiles { grid-template-columns: 1fr 1fr; }
   .fl-figs { grid-template-columns: 1fr 1fr; }
   .fl-fig dd { font-size: 27px; }
@@ -4729,8 +4875,7 @@ body:not(.dark-theme) .fl .fl-top,
 body:not(.dark-theme) .fl .fl-wire > a,
 body:not(.dark-theme) .fl .fl-gauges,
 body:not(.dark-theme) .fl .fl-official,
-body:not(.dark-theme) .fl .fl-calls-more a,
-body:not(.dark-theme) .fl .fl-dist-toc a {
+body:not(.dark-theme) .fl .fl-calls-more a {
   border-color: #d3dfdb;
 }
 
