@@ -56,18 +56,18 @@ const T = {
   mapLayerGauges: { en: 'River gauges', ne: 'नदी मापन केन्द्र' },
   mapLayerPhotos: { en: 'Ground reports', ne: 'जनताका तस्बिर' },
   mapPhotoSource: {
-    en: 'Photographs sent in by the public, placed where each was taken',
-    ne: 'जनताले पठाएका तस्बिर, खिचिएकै स्थानमा राखिएको',
+    en: 'Public photographs, placed where each was taken.',
+    ne: 'जनताले पठाएका तस्बिर, खिचिएकै स्थानमा।',
   },
   mapLayerNews: { en: 'Press reporting', ne: 'समाचार' },
   mapNewsSource: {
-    en: 'Flood headlines, placed in the district the story names — not the camera’s GPS. A lead image shows when the outlet published one.',
-    ne: 'बाढी समाचार, शीर्षकमा लेखिएको जिल्लामा राखिएको — क्यामेराको जीपीएस होइन। आउटलेटले तस्बिर छापेको भए देखिन्छ।',
+    en: 'Headlines pinned to the district named in the story, not the camera’s GPS.',
+    ne: 'शीर्षकमा लेखिएको जिल्लामा राखिएको — क्यामेराको जीपीएस होइन।',
   },
   mapLayerDhm: { en: 'DHM station photographs', ne: 'डीएचएम मापन केन्द्रका तस्बिर' },
   mapDhmSource: {
-    en: 'Photographs of the gauge stations themselves, published by DHM. Not live cameras of the flood.',
-    ne: 'जल तथा मौसम विज्ञान विभागले प्रकाशित गरेका मापन केन्द्रकै तस्बिर। बाढीको प्रत्यक्ष क्यामेरा होइन।',
+    en: 'DHM station photos — not live flood cameras.',
+    ne: 'मापन केन्द्रकै तस्बिर — बाढीको प्रत्यक्ष क्यामेरा होइन।',
   },
   mapReviewed: { en: 'reviewed', ne: 'जाँचिएको' },
   mapRead: { en: 'read', ne: 'पढिएको' },
@@ -388,7 +388,7 @@ export default function BhotekoshiFloodView() {
                 </span>
               </p>
               {(data?.river?.gauges || []).some(g => g.photo) && (
-                <p className="fl-blank" style={{ marginTop: 6 }}>{t('mapDhmSource')}</p>
+                <p className="fl-blank">{t('mapDhmSource')}</p>
               )}
             </article>
             {groundPins.length > 0 && (

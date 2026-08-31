@@ -3486,7 +3486,7 @@ html[lang="ne"] .language-toggle button { font-size: 12px; }
 
 
 /* Overview: official figures lead; the map follows. */
-.fl-sec-map { padding-top: 16px; }
+.fl-sec-map { padding-top: 16px; padding-bottom: 28px; }
 
 /* Overview split: the map takes 60% and the brief 40%, collapsing to one
    column before the map gets too narrow to read district shapes in. */
@@ -3726,20 +3726,20 @@ html[lang="ne"] .language-toggle button { font-size: 12px; }
 
 /* --- Section links at the foot of the overview --- */
 .fl-sections {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(258px, 1fr));
-  gap: 1px; margin-top: 22px; background: var(--rule); border: 1px solid var(--rule);
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1px; margin-top: 16px; background: var(--rule); border: 1px solid var(--rule);
 }
 .fl-sections a {
-  display: block; padding: 20px 20px 18px; background: var(--paper);
+  display: block; padding: 12px 14px 11px; background: var(--paper);
   text-decoration: none; color: inherit;
 }
 .fl-sections a:hover { background: var(--paper-2); }
 .fl-sections strong {
-  display: block; font-family: var(--serif); font-size: 18px;
-  font-weight: 600; color: var(--ink); margin-bottom: 5px;
+  display: block; font-family: var(--serif); font-size: 16px;
+  font-weight: 600; color: var(--ink); margin-bottom: 3px;
 }
 .fl-sections a:hover strong { color: var(--blue); }
-.fl-sections span { font-size: 13.5px; color: var(--ink-2); line-height: 1.45; }
+.fl-sections span { font-size: 12.5px; color: var(--ink-2); line-height: 1.4; }
 
 
 .fl-tel { display: block; font-family: var(--mono); font-size: 13px; color: var(--blue); text-decoration: none; white-space: nowrap; }
@@ -5684,42 +5684,55 @@ body.dark-theme .fl {
   .fl-official-scroll { max-height: 320px; }
 }
 
-/* Per-layer provenance under the overview map, grouped by topic. */
+/* Per-layer provenance under the overview map — a compact source list,
+   not equal-height cards. */
 .fl-overview-map .atlas-map-pending {
   min-height: 340px;
   margin-bottom: 8px;
 }
 .fl-map-topics {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-top: 10px;
+  border-top: 1px solid var(--rule);
 }
 .fl-map-topic {
+  display: grid;
+  grid-template-columns: minmax(9.5rem, 34%) minmax(0, 1fr);
+  gap: 2px 14px;
+  align-items: baseline;
   min-width: 0;
-  padding: 12px 13px 13px;
-  border: 1px solid var(--rule);
-  background: var(--paper-2, var(--panel));
+  padding: 5px 0 6px;
+  border: 0;
+  border-bottom: 1px solid var(--rule);
+  background: transparent;
 }
 .fl-map-topic h3 {
-  margin: 0 0 6px;
+  margin: 0;
   font-family: var(--mono);
-  font-size: 10.5px;
+  font-size: 10px;
   font-weight: 650;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--ink-2);
+  line-height: 1.35;
 }
 .fl-map-topic p {
   margin: 0;
-  font-size: 12.5px;
-  line-height: 1.45;
+  font-size: 12px;
+  line-height: 1.4;
   color: var(--ink-3);
 }
+.fl-map-topic p + p { margin-top: 2px; }
 .fl-map-topic a { color: var(--ink); }
 .fl-map-topic .fl-blank { color: var(--ink-3); }
 @media (max-width: 620px) {
-  .fl-map-topics { grid-template-columns: 1fr; }
+  .fl-map-topic {
+    grid-template-columns: 1fr;
+    gap: 2px;
+    padding: 8px 0;
+  }
 }
 
 .fl-map-sources .fl-note { margin: 0 0 5px; font-size: 12px; }
