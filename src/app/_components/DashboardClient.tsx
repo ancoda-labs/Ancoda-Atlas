@@ -607,7 +607,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
         <div className="top-left">
           <img
             className="brand-logo"
-            src={darkTheme ? '/images/atlas-white.png' : '/images/atlas-black.png'}
+            src={darkTheme ? '/images/atlas-white-264.webp' : '/images/atlas-black-264.webp'}
             alt="ANCODA ATLAS"
             width={120}
             height={43}

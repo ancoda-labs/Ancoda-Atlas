@@ -10,6 +10,7 @@ import FloodReportButton from '@/components/FloodReportButton';
 import FloodNewsTicker from '@/components/FloodNewsTicker';
 import type { Lang } from '@/hooks/use-flood-lang';
 import FloodFooter from '@/components/FloodFooter';
+import AtlasMark from '@/components/AtlasMark';
 import { useFloodDesk } from '@/app/bhotekoshi-flood/_components/FloodDeskProvider';
 
 // The frame every flood-desk page sits in.
@@ -110,7 +111,11 @@ export default function FloodShell({ lang, setLang, kicker, title, standfirst, c
       <header className="fl-mast fl-mast-sub" style={{ paddingBottom: '16px' }}>
         <div className="fl-wrap">
           <div className="fl-mast-top">
-            <Link href="/">&larr; {lang === 'ne' ? 'एट्लसमा फर्कनुहोस्' : 'Back to Atlas'}</Link>
+            {/* Same mark, same place as the overview masthead. */}
+            <Link href="/" className="fl-mast-home">
+              <AtlasMark className="fl-mast-mark" />
+              <span>&larr; {lang === 'ne' ? 'एट्लसमा फर्कनुहोस्' : 'Back to Atlas'}</span>
+            </Link>
             <div className="fl-mast-controls">
               <div className="fl-lang">
                 <button className={lang === 'en' ? 'on' : ''} onClick={() => setLang('en')}>English</button>

@@ -20,6 +20,7 @@ import type { FloodPhoto, FloodPhotoFeed, NewsItem } from '@/types';
 import { DESK_POLL_MS, nextUpdateLabel, useTick } from '@/hooks/use-desk-refresh';
 import { isConstrainedConnection, whenIdle } from '@/lib/connection-pref';
 import AtlasMapPending from '@/components/AtlasMapPending';
+import AtlasMark from '@/components/AtlasMark';
 
 /** A few kilometres of scatter so several stories in one district do not stack. */
 function jitter(seed: string, amp: number): { dLat: number; dLon: number } {
@@ -251,7 +252,12 @@ export default function BhotekoshiFloodView() {
       <header className="fl-mast fl-mast-sub" style={{ paddingBottom: '16px' }}>
         <div className="fl-wrap">
           <div className="fl-mast-top">
-            <Link href="/">&larr; {t('back')}</Link>
+            {/* The publisher's mark sits above the section name, as on a
+                masthead. The desk is one page of Atlas, not its own site. */}
+            <Link href="/" className="fl-mast-home">
+              <AtlasMark className="fl-mast-mark" />
+              <span>&larr; {t('back')}</span>
+            </Link>
             <div className="fl-mast-controls">
               <div className="fl-lang">
                 <button className={lang === 'en' ? 'on' : ''} onClick={() => setLang('en')}>English</button>
