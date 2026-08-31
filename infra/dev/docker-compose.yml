@@ -43,9 +43,6 @@ services:
       # asserts the API's payload against them, because that file is the
       # contract the browser actually reads — see the note at the top of it.
       - ../../frontend/src/types:/frontend/src/types:ro
-      # The frontend's temporary copy of the reviewed content, for the drift
-      # guard in tests/test_content_parity.py. Goes away with flood.ts.
-      - ../../frontend/content:/frontend/content:ro
     command: /app/docker/entrypoint.sh
     depends_on:
       redis: {condition: service_healthy}

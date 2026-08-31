@@ -1,60 +1,62 @@
-"""The reviewed content exists in two places during the migration. Keep them equal.
+"""The reviewed content lives in backend/content/ and nowhere else.
 
-backend/content/ is canonical — the API serves it and it ships in the backend
-image. frontend/content/ is a temporary copy that only exists because
-src/lib/flood.ts still static-imports it and Next.js will not import from
-outside its own project root.
+This file used to compare two copies. During the migration the frontend kept
+its own, because src/lib/flood.ts static-imported the JSON and Next.js will not
+import from outside its project root — so the guard existed to stop a helpline
+being edited in one copy and not the other.
 
-Both are deleted from the frontend in the commit that retires flood.ts. Until
-then this test is the guard: a reviewed helpline or donation figure edited in
-one copy and not the other is exactly the kind of drift that puts a wrong phone
-number in front of someone during a disaster.
+That copy is gone with the Node backend. What remains is the assertion that the
+canonical content is present and parseable, because a malformed reviewed file
+is a deploy error rather than a runtime condition, and the page would otherwise
+render an empty section rather than saying anything.
 """
 
-import hashlib
 import json
 from pathlib import Path
 
 import pytest
 
-BACKEND_CONTENT = Path(__file__).resolve().parents[1] / "content" / "bhotekoshi-flood"
-FRONTEND_CANDIDATES = [
-    Path(__file__).resolve().parents[2] / "frontend" / "content" / "bhotekoshi-flood",
-    Path("/frontend/content/bhotekoshi-flood"),
+CONTENT = Path(__file__).resolve().parents[1] / "content" / "bhotekoshi-flood"
+
+REQUIRED = [
+    "site.json",
+    "what-happened.json",
+    "alerts.json",
+    "flood-path.json",
+    "helplines.json",
+    "bank-accounts.json",
+    "district-contacts.json",
+    "sitrep.json",
+    "relief-received.json",
+    "relief-needed.json",
+    "damage.json",
 ]
 
 
-def _frontend_content() -> Path | None:
-    return next((p for p in FRONTEND_CANDIDATES if p.is_dir()), None)
+def test_the_content_directory_is_present():
+    assert CONTENT.is_dir(), "the canonical reviewed content is missing"
 
 
-def _digest(path: Path) -> str:
-    """Compare parsed JSON, not bytes — formatting is not a discrepancy."""
-    return hashlib.sha256(
-        json.dumps(json.loads(path.read_text(encoding="utf-8")), sort_keys=True).encode()
-    ).hexdigest()
+@pytest.mark.parametrize("name", REQUIRED)
+def test_every_required_file_parses(name):
+    path = CONTENT / name
+    assert path.is_file(), f"{name} is missing"
+    json.loads(path.read_text(encoding="utf-8"))
 
 
-def test_backend_content_is_present():
-    assert BACKEND_CONTENT.is_dir(), "the canonical reviewed content is missing"
+def test_every_relief_fund_parses_and_declares_a_tier():
+    """Tier decides whether a donation route reaches the page at all."""
+    funds = sorted((CONTENT / "relief-funds").glob("*.json"))
+    assert funds, "no relief funds are shipped"
+    for path in funds:
+        fund = json.loads(path.read_text(encoding="utf-8"))
+        assert isinstance(fund.get("tier"), int), f"{path.name} has no tier"
 
 
-def test_the_two_copies_have_not_drifted():
-    frontend = _frontend_content()
-    if frontend is None:
-        pytest.skip("frontend copy already retired — nothing left to drift")
-
-    backend_files = {p.relative_to(BACKEND_CONTENT): p for p in BACKEND_CONTENT.rglob("*.json")}
-    frontend_files = {p.relative_to(frontend): p for p in frontend.rglob("*.json")}
-
-    assert set(backend_files) == set(frontend_files), (
-        f"file sets differ: only in backend {sorted(set(backend_files) - set(frontend_files))}, "
-        f"only in frontend {sorted(set(frontend_files) - set(backend_files))}"
+def test_no_frontend_copy_remains():
+    """If one comes back, the drift guard has to come back with it."""
+    frontend_copy = Path(__file__).resolve().parents[2] / "frontend" / "content"
+    assert not frontend_copy.exists(), (
+        "a second copy of the reviewed content has reappeared in the frontend; "
+        "restore the drift guard or remove the copy"
     )
-
-    drifted = [
-        str(name)
-        for name in backend_files
-        if _digest(backend_files[name]) != _digest(frontend_files[name])
-    ]
-    assert not drifted, f"reviewed content differs between the copies: {drifted}"

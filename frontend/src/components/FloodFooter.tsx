@@ -3,7 +3,7 @@
 import React from 'react';
 import { useFloodLang } from '@/hooks/use-flood-lang';
 import AtlasMark from '@/components/AtlasMark';
-import siteJson from '../../content/bhotekoshi-flood/site.json';
+import { useSite } from '@/hooks/useFlood';
 
 const T = {
   disclaimer: {
@@ -109,7 +109,8 @@ const SOCIALS: Array<{ id: string; label: string; href: string; icon: React.Reac
 
 export default function FloodFooter() {
   const [lang] = useFloodLang();
-  const reportEmail = siteJson.report_contact_email || '';
+  const { data } = useSite();
+  const reportEmail = data?.site?.report_contact_email || '';
   const hasEmail = reportEmail.trim().length > 0;
 
   return (

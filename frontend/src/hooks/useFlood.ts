@@ -10,6 +10,7 @@ import {
   fetchGalleryService,
   fetchInsightsService,
   fetchPressService,
+  fetchSiteService,
   fetchSituationService,
   fetchVideosService,
 } from '@/services/flood-services';
@@ -112,5 +113,15 @@ export function useInsights(lang: string) {
     queryFn: () => fetchInsightsService(lang),
     // The brief is rewritten every ten minutes at most.
     staleTime: 10 * 60 * 1000,
+  });
+}
+
+/** The reviewed site block. Changes when a maintainer edits content/, so it is
+ *  cached for the life of the page. */
+export function useSite() {
+  return useQuery({
+    queryKey: ['flood', 'site'],
+    queryFn: fetchSiteService,
+    staleTime: Infinity,
   });
 }

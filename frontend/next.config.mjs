@@ -9,9 +9,6 @@ const nextConfig = {
   turbopack: {
     root,
   },
-  // Still needed while the retired Node backend is present. It goes with
-  // src/apis and src/lib in the cleanup commit.
-  serverExternalPackages: ['discord.js', 'minio'],
   reactStrictMode: true,
 
   /**

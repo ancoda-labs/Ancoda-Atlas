@@ -5,7 +5,7 @@ import { ageFrom } from '@/lib/relative-time';
 import { useTick } from '@/hooks/use-desk-refresh';
 import type { Lang } from '@/hooks/use-flood-lang';
 import type { CorridorIncidents, SitrepContent, SitrepHeadline, SitrepValue } from '@/types';
-import sitrepJson from '../../../../content/bhotekoshi-flood/sitrep.json';
+import { useFloodDesk } from '@/app/bhotekoshi-flood/_components/FloodDeskProvider';
 
 // The "what has been reported" tile grid, used on Overview and Situation.
 //
@@ -20,8 +20,6 @@ import sitrepJson from '../../../../content/bhotekoshi-flood/sitrep.json';
 //
 // The heading carries last-update, not a LIVE stamp. A pulse on a tile means
 // that figure currently comes from a scrape; houses and bridges never get one.
-
-const bundledSitrep = sitrepJson as SitrepContent;
 
 const T = {
   title: { en: 'What has been reported', ne: 'के-के जनाइएको छ' },
@@ -176,7 +174,16 @@ export default function FloodReportedTiles({
   // Bundled sitrep is the fallback so the bulletin toll is on the page even
   // before the corridor scrape answers. Reviewed figures win; BIPAD
   // zeros are never the headline number.
-  const figures = sitrep || bundledSitrep;
+  // The desk payload already carries the reviewed sitrep with the live
+  // overlay applied, so there is no separate bundled copy to fall back to.
+  const { desk } = useFloodDesk();
+  const figures = sitrep || (desk.sitrep as SitrepContent | null);
+
+  // No reviewed figures means the desk has not answered yet. The tiles render
+  // nothing rather than a grid of zeros — this component's whole premise is
+  // that a zero is never the headline number.
+  if (!figures) return null;
+
   const deaths = reviewed(figures, 'deaths', 'deaths');
   const missing = reviewed(figures, 'uncontacted', 'uncontacted');
   const injured = reviewed(figures, 'injured', 'injured');

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useRef, useEffect, useState } from 'react';
-import { provinceOf } from '@/apis/utils/nepal.mjs';
+import { provinceOf } from '@/lib/nepal-geo';
 import type { GeoCollection, Geometry, BipadPayload, BipadRiverStation, BipadRainStation, BipadAlert, BipadIncident, BipadEarthquake, BipadRainAverage } from '@/types';
 import { errorMessage } from '@/types';
 

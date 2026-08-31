@@ -77,3 +77,15 @@ export async function fetchRefreshStatusService() {
   const { data } = await api.get('/flood/refresh');
   return data;
 }
+
+/**
+ * The small reviewed strings the chrome needs — the report contact address.
+ *
+ * Its own route because the footer appears on the dashboard as well as the
+ * desk, and pulling the whole desk payload to render one email address would
+ * be absurd.
+ */
+export async function fetchSiteService(): Promise<{ site: { report_contact_email?: string } | null }> {
+  const { data } = await api.get('/flood/site');
+  return data;
+}

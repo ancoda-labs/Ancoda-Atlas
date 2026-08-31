@@ -58,6 +58,22 @@ async def get_desk(response: Response) -> dict[str, Any]:
     return _serve(response, payload, warm=service.is_warm(store), ttl=DESK_TTL_S)
 
 
+@router.get("/site", summary="The reviewed site block")
+async def get_site(response: Response) -> dict[str, Any]:
+    """The small reviewed strings the chrome needs — the report contact address,
+    the standing disclaimer.
+
+    Its own route because the footer appears on the dashboard as well as the
+    desk, and pulling the whole 200KB desk payload to render one email address
+    would be absurd. Cached hard: this changes when a maintainer edits
+    content/, not on any cycle.
+    """
+    from app.domains.flood.content import load_flood_content
+
+    cache_for(response, edge=3600)
+    return {"site": load_flood_content().get("site")}
+
+
 @router.get("/situation", summary="Incidents, alerts and live filings")
 async def get_situation(response: Response) -> dict[str, Any]:
     store = service.get_store()

@@ -17,7 +17,7 @@ import FloodThemeToggle from '@/components/FloodThemeToggle';
 import { useFloodDesk } from '@/app/bhotekoshi-flood/_components/FloodDeskProvider';
 import { usePhotos } from '@/hooks/usePhotos';
 import { useTopicNews } from '@/hooks/useHazards';
-import { districtPinForText } from '@/apis/utils/flood-scope.mjs';
+import { districtPinForText } from '@/lib/flood-scope';
 import type { FloodPhoto, FloodPhotoFeed, NewsItem } from '@/types';
 import { DESK_POLL_MS, nextUpdateLabel, useTick } from '@/hooks/use-desk-refresh';
 import { isConstrainedConnection, whenIdle } from '@/lib/connection-pref';
