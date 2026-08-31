@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 // mixed content on an HTTPS dashboard. Proxy them instead, and only from the
 // one host we expect — never an arbitrary URL supplied by the caller.
 const ALLOWED_HOSTS = new Set(['daq.hydrology.gov.np', 'hydrology.gov.np', 'www.dhm.gov.np', 'bipadportal.gov.np']);
-const MAX_BYTES = 6 * 1024 * 1024;
+const MAX_BYTES = 20 * 1024 * 1024;
 
 export async function GET(req: NextRequest) {
   const id = Number(new URL(req.url).searchParams.get('id'));

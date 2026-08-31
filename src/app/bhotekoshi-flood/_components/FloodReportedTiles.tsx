@@ -162,9 +162,10 @@ export default function FloodReportedTiles({
   sitrep?: SitrepContent | null;
   showHeading?: boolean;
   /**
-   * `headline` is the overview scan: incidents, the official toll, families.
-   * Response splits and infrastructure live in their own sections there.
-   * `all` keeps the situation-page register, which still prints every tile.
+   * `headline` is the overview scan: the official toll only, so the map
+   * still fits on the first screen. Incidents and families live in the
+   * response tab; the situation page still prints the full register.
+   * `all` keeps every tile.
    */
   scope?: 'all' | 'headline';
   /** Short provenance lines for the overview topic panel. */
@@ -191,6 +192,7 @@ export default function FloodReportedTiles({
 
   const showResponse = scope === 'all';
   const showDamage = scope === 'all';
+  const showRegister = scope === 'all';
 
   if (!totals && deaths == null) return null;
 
@@ -206,7 +208,7 @@ export default function FloodReportedTiles({
       )}
 
       <div className="fl-tiles">
-        {totals && (
+        {showRegister && totals && (
           <>
             <Tile value={n(totals.incidentCount)} label={t('incidents')} scraped lang={lang} />
             <Tile value={n(totals.incidentsWithFigures)} label={t('withFigures')} scraped lang={lang} />
@@ -221,20 +223,20 @@ export default function FloodReportedTiles({
         )}
         {deaths != null && (
           <Tile value={n(deaths.value)} label={t('deaths')} tone={deaths.tone} scraped={deaths.live} lang={lang}>
-            <BipadUnder value={totals?.deaths} lang={lang} />
+            {showRegister ? <BipadUnder value={totals?.deaths} lang={lang} /> : null}
           </Tile>
         )}
         {missing != null && (
           <Tile value={n(missing.value)} label={t('missing')} tone={missing.tone} scraped={missing.live} lang={lang}>
-            <BipadUnder value={totals?.missing} lang={lang} />
+            {showRegister ? <BipadUnder value={totals?.missing} lang={lang} /> : null}
           </Tile>
         )}
         {injured != null && (
           <Tile value={n(injured.value)} label={t('injured')} tone={injured.tone} scraped={injured.live} lang={lang}>
-            <BipadUnder value={totals?.injured} lang={lang} />
+            {showRegister ? <BipadUnder value={totals?.injured} lang={lang} /> : null}
           </Tile>
         )}
-        {totals && (
+        {showRegister && totals && (
           <>
             <Tile value={n(totals.familiesEvacuated)} label={t('evacuated')} scraped lang={lang} />
             {(totals.familiesAffected ?? 0) > 0 && (

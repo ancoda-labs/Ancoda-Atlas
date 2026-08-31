@@ -205,20 +205,28 @@ export default function FloodMapDialog({ selection, pathPoints, gauges, photos, 
         </dl>
         {gauge.stale && <p className="fl-dlg-stale">{t('staleNote')}</p>}
 
-        <h4>{t('recentImages')}</h4>
+        <h4>{t('gaugeStation')}</h4>
         {gauge.photo && (
           <figure className="fl-dlg-station">
-            <img src={gauge.photo} alt={`${gauge.label} gauge station`} loading="lazy" />
+            <img
+              src={gauge.photo}
+              alt={`${gauge.label} gauge station`}
+              onError={ev => {
+                ev.currentTarget.style.display = 'none';
+              }}
+            />
             <figcaption>{t('stationPhotoNote')}</figcaption>
           </figure>
         )}
-        {nearby.length > 0 ? (
+        {nearby.length > 0 && (
           <>
+            <h4>{t('recentImages')}</h4>
             <PhotoStrip photos={nearby} lang={lang} />
             <p className="fl-note">{t('nearbyNote')}</p>
           </>
-        ) : (
-          !gauge.photo && <p className="fl-empty">{t('noImages')}</p>
+        )}
+        {!gauge.photo && nearby.length === 0 && (
+          <p className="fl-empty">{t('noImages')}</p>
         )}
       </>
     );

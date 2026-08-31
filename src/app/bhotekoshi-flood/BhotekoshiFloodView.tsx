@@ -49,6 +49,7 @@ const T = {
   title: { en: 'Rasuwa–Bhotekoshi Flood', ne: 'रसुवा–भोटेकोशी बाढी' },
   safetyNotice: { en: 'Safety notice', ne: 'सुरक्षा सूचना' },
   whereTitle: { en: 'Where the water went', ne: 'पानी कता गयो' },
+  mapTopics: { en: 'On this map', ne: 'यो नक्सामा' },
   mapHint: {
     en: 'Rasuwa, Nuwakot and Dhading took the worst of it. The dashed line follows the water downstream.',
     ne: 'रसुवा, नुवाकोट र धादिङमा सबैभन्दा बढी क्षति भयो। धर्के रेखाले पानी बगेको बाटो देखाउँछ।',
@@ -62,10 +63,15 @@ const T = {
     en: 'Photographs sent in by the public, placed where each was taken',
     ne: 'जनताले पठाएका तस्बिर, खिचिएकै स्थानमा राखिएको',
   },
-  mapLayerNews: { en: 'Press photographs', ne: 'समाचारका तस्बिर' },
+  mapLayerNews: { en: 'Press reporting', ne: 'समाचार' },
   mapNewsSource: {
-    en: 'Lead images from flood reporting, placed in the district the headline names — not the camera’s GPS',
-    ne: 'बाढी समाचारका मुख्य तस्बिर, शीर्षकमा लेखिएको जिल्लामा राखिएको — क्यामेराको जीपीएस होइन',
+    en: 'Flood headlines, placed in the district the story names — not the camera’s GPS. A lead image shows when the outlet published one.',
+    ne: 'बाढी समाचार, शीर्षकमा लेखिएको जिल्लामा राखिएको — क्यामेराको जीपीएस होइन। आउटलेटले तस्बिर छापेको भए देखिन्छ।',
+  },
+  mapLayerDhm: { en: 'DHM station photographs', ne: 'डीएचएम मापन केन्द्रका तस्बिर' },
+  mapDhmSource: {
+    en: 'Photographs of the gauge stations themselves, published by DHM. Not live cameras of the flood.',
+    ne: 'जल तथा मौसम विज्ञान विभागले प्रकाशित गरेका मापन केन्द्रकै तस्बिर। बाढीको प्रत्यक्ष क्यामेरा होइन।',
   },
   mapReviewed: { en: 'reviewed', ne: 'जाँचिएको' },
   mapRead: { en: 'read', ne: 'पढिएको' },
@@ -191,7 +197,7 @@ export default function BhotekoshiFloodView() {
       layer: 'ground',
     }));
   const newsPins: MapPhoto[] = (newsItems || [])
-    .filter(item => item.imageProxy && item.link)
+    .filter(item => item.link)
     .map(item => {
       const located = districtPinForText(item.title);
       const pin = located || { district: 'Rasuwa', lat: 28.1167, lon: 85.3000 };
@@ -206,13 +212,19 @@ export default function BhotekoshiFloodView() {
         layer: 'news' as const,
         href: item.link,
         sub: located
-          ? (lang === 'ne' ? 'समाचारको तस्बिर — जिल्ला शीर्षकबाट' : 'Press photograph — district from the headline')
-          : (lang === 'ne'
-            ? 'समाचारको तस्बिर — शीर्षकमा जिल्ला नभएकाले रसुवामा राखिएको'
-            : 'Press photograph — headline named no district, shown in Rasuwa'),
+          ? (item.imageProxy
+            ? (lang === 'ne' ? 'समाचारको तस्बिर — जिल्ला शीर्षकबाट' : 'Press photograph — district from the headline')
+            : (lang === 'ne' ? 'समाचार — जिल्ला शीर्षकबाट' : 'Press — district from the headline'))
+          : (item.imageProxy
+            ? (lang === 'ne'
+              ? 'समाचारको तस्बिर — शीर्षकमा जिल्ला नभएकाले रसुवामा राखिएको'
+              : 'Press photograph — headline named no district, shown in Rasuwa')
+            : (lang === 'ne'
+              ? 'समाचार — शीर्षकमा जिल्ला नभएकाले रसुवामा राखिएको'
+              : 'Press — headline named no district, shown in Rasuwa')),
       };
     })
-    .slice(0, 16);
+    .slice(0, 24);
   const mapPhotos: MapPhoto[] = [...groundPins, ...newsPins];
 
   const sections: Array<{ href: string; title: string; sub: string }> = [
@@ -249,7 +261,7 @@ export default function BhotekoshiFloodView() {
         </div>
       </div>
 
-      <header className="fl-mast fl-mast-sub" style={{ paddingBottom: '16px' }}>
+      <header className="fl-mast fl-mast-sub" style={{ paddingBottom: '8px' }}>
         <div className="fl-wrap">
           <div className="fl-mast-top">
             {/* The publisher's mark sits above the section name, as on a
@@ -348,47 +360,50 @@ export default function BhotekoshiFloodView() {
           )}
           <p className="fl-note">{t('mapHint')}</p>
 
-          {/* Where each layer of pins comes from.
-              The three do not share a provenance and must not look as though
-              they do: the course of the water is a reviewed reading of a DHM
-              situation report, the gauges are live off BIPAD every few minutes,
-              and the green dots are photographs the public sent us. A reader
-              deciding whether to trust a pin needs to know which of those it
-              is. */}
-          <div className="fl-map-sources">
-            <p className="fl-note">
-              <b>{t('mapLayerPath')}</b>{' — '}
-              {(data?.floodPath?.sources || []).map((src, i) => (
-                <a key={i} href={src.url} target="_blank" rel="noopener noreferrer">
-                  {src.label} &#8599;
-                </a>
-              ))}
-              {data?.floodPath?.last_updated && (
-                <span className="fl-blank">
-                  {t('mapReviewed')} {data.floodPath.last_updated}
-                </span>
-              )}
-            </p>
-            <p className="fl-note">
-              <b>{t('mapLayerGauges')}</b>{' — '}
-              <a href="https://bipadportal.gov.np/" target="_blank" rel="noopener noreferrer">
-                {lang === 'ne' ? 'जल तथा मौसम विज्ञान विभाग · बिपद् पोर्टल' : 'DHM · BIPAD Portal'} &#8599;
-              </a>
-              <span className="fl-blank">
-                {t('mapRead')} {ageFrom(data?.river?.fetchedAt, lang)}
-              </span>
-            </p>
-            {groundPins.length > 0 && (
-              <p className="fl-note">
-                <b>{t('mapLayerPhotos')}</b>{' — '}
-                <span className="fl-blank">{t('mapPhotoSource')}</span>
+          {/* Each layer of pins has its own provenance. Grouped as topics so
+              a DHM station photo is not read as a live flood camera, and a
+              press pin is not read as a GPS ground report. */}
+          <div className="fl-map-topics" aria-label={t('mapTopics')}>
+            <article className="fl-map-topic">
+              <h3>{t('mapLayerPath')}</h3>
+              <p>
+                {(data?.floodPath?.sources || []).map((src, i) => (
+                  <a key={i} href={src.url} target="_blank" rel="noopener noreferrer">
+                    {src.label} &#8599;
+                  </a>
+                ))}
+                {data?.floodPath?.last_updated && (
+                  <span className="fl-blank">
+                    {' '}{t('mapReviewed')} {data.floodPath.last_updated}
+                  </span>
+                )}
               </p>
+            </article>
+            <article className="fl-map-topic">
+              <h3>{t('mapLayerGauges')}</h3>
+              <p>
+                <a href="https://bipadportal.gov.np/" target="_blank" rel="noopener noreferrer">
+                  {lang === 'ne' ? 'जल तथा मौसम विज्ञान विभाग · बिपद् पोर्टल' : 'DHM · BIPAD Portal'} &#8599;
+                </a>
+                <span className="fl-blank">
+                  {' '}{t('mapRead')} {ageFrom(data?.river?.fetchedAt, lang)}
+                </span>
+              </p>
+              {(data?.river?.gauges || []).some(g => g.photo) && (
+                <p className="fl-blank" style={{ marginTop: 6 }}>{t('mapDhmSource')}</p>
+              )}
+            </article>
+            {groundPins.length > 0 && (
+              <article className="fl-map-topic">
+                <h3>{t('mapLayerPhotos')}</h3>
+                <p>{t('mapPhotoSource')}</p>
+              </article>
             )}
             {newsPins.length > 0 && (
-              <p className="fl-note">
-                <b>{t('mapLayerNews')}</b>{' — '}
-                <span className="fl-blank">{t('mapNewsSource')}</span>
-              </p>
+              <article className="fl-map-topic">
+                <h3>{t('mapLayerNews')}</h3>
+                <p>{t('mapNewsSource')}</p>
+              </article>
             )}
           </div>
           </div>
