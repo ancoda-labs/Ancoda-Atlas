@@ -33,6 +33,8 @@ dependencies = [
 
     # Ground-report photo bytes.
     "minio==7.2.20",
+    # Multipart form parsing, for the ground-report upload. Apache-2.0.
+    "python-multipart==0.0.20",
 
     # Utilities
     "structlog==26.1.0",
