@@ -156,23 +156,26 @@ export async function getRescueLocations() {
  * for a relative, and the page must be able to tell them apart.
  */
 export async function getRescueRegister() {
-  const [persons, summary, locations, messages] = await Promise.allSettled([
+  // Summary and the notices above the register are one request each. Locations
+  // were a ten-page walk the rescue page never rendered, and running them
+  // beside the name list blew Cloudflare's subrequest budget before the names
+  // arrived. Persons still load in full on a host that can finish the walk.
+  const [persons, summary, messages] = await Promise.allSettled([
     getRescuedPersons(),
     getRescueSummary(),
-    getRescueLocations(),
     getRescueMessages(),
   ]);
 
   // Notices above the register are optional flavour. A missing messages
   // endpoint must not hide the names — that is the page's actual job.
-  const errors = [persons, summary, locations]
+  const errors = [persons, summary]
     .filter(r => r.status === 'rejected')
     .map(r => String(r.reason?.message || r.reason));
 
   return {
     persons: persons.status === 'fulfilled' ? persons.value : [],
     summary: summary.status === 'fulfilled' ? summary.value : null,
-    locations: locations.status === 'fulfilled' ? locations.value : { rescued: [], stationed: [] },
+    locations: { rescued: [], stationed: [] },
     messages: messages.status === 'fulfilled' ? messages.value : [],
     error: errors.length ? errors.join('; ') : null,
     source: SOURCE,

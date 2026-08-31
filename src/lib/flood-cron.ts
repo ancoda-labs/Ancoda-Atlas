@@ -136,6 +136,32 @@ function runsDir(): string {
   return dir;
 }
 
+/**
+ * Cloudflare Workers (and other isolates) are not a long-lived Node process.
+ *
+ * A twenty-source fan-out started from a reader's GET shares that invocation's
+ * subrequest budget. Production was burning it on the register sweep before
+ * `/api/flood` could make the one `/api/stats` call the missing/found tiles
+ * need, and the cycle never finished — so `refreshing` stayed true and the
+ * tiles stayed "—".
+ */
+export function isEphemeralRuntime(): boolean {
+  if (process.env.NEXT_RUNTIME === 'edge') return true;
+  try {
+    const nav = (globalThis as { navigator?: { userAgent?: string } }).navigator;
+    if (nav && /Cloudflare-Workers/i.test(nav.userAgent || '')) return true;
+  } catch {
+    /* ignore */
+  }
+  try {
+    const caches = (globalThis as { caches?: { default?: unknown } }).caches;
+    if (caches && 'default' in caches && caches.default) return true;
+  } catch {
+    /* ignore */
+  }
+  return Boolean(process.env.OPEN_NEXT_CLOUDFLARE || process.env.CF_WORKER);
+}
+
 /** True while a refresh cycle is in flight. */
 export function isFloodRefreshRunning(): boolean {
   return Boolean(g.__atlasFloodRunning);
@@ -146,11 +172,10 @@ export function getFloodStore(): FloodDeskStore {
   if (!g.__atlasFloodStore) {
     g.__atlasFloodStore = loadFromDisk() ?? emptyStore();
   }
-  // The schedule is supposed to be started by instrumentation.ts. On the
-  // deployed host it was not — every desk route answered while lastRunAt
-  // stayed null — so the first read of the store starts it too. Idempotent,
-  // and it returns before the cycle it kicks off finishes.
-  startFloodCron();
+  // On Node the schedule is started by instrumentation.ts; this is the belt
+  // for a host that skipped it. On Workers the same call starts a cycle that
+  // cannot finish, so the cheap per-route fetches own those figures instead.
+  if (!isEphemeralRuntime()) startFloodCron({ runNow: false });
   return g.__atlasFloodStore;
 }
 
@@ -666,7 +691,11 @@ export async function runFloodRefresh(): Promise<FloodDeskStore> {
 }
 
 /** Start the schedule. Idempotent, so a hot reload does not stack timers. */
-export function startFloodCron(): void {
+export function startFloodCron(opts?: { runNow?: boolean }): void {
+  if (isEphemeralRuntime()) {
+    console.log('[Flood cron] Skipping schedule — this runtime cannot keep a timer or finish a full cycle');
+    return;
+  }
   if (g.__atlasFloodTimer) return;
   const minutes = intervalMinutes();
   console.log(`[Flood cron] Starting — refreshing every ${minutes} minutes`);
@@ -683,6 +712,10 @@ export function startFloodCron(): void {
   // Do not hold the process open on this timer alone.
   g.__atlasFloodTimer.unref?.();
 
+  // A reader's GET must not kick the twenty-source fan-out: on Cloudflare that
+  // cycle shares the isolate's subrequest budget and the tiles go blank. Node
+  // still warms immediately from instrumentation.ts (`runNow` default true).
+  if (opts?.runNow === false) return;
   runFloodRefresh().catch(err => console.error('[Flood cron] Initial cycle failed:', errorMessage(err)));
 }
 

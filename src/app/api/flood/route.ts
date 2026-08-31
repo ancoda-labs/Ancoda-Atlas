@@ -45,7 +45,27 @@ async function build(): Promise<FloodDeskPayload> {
   // "running" left the Cloudflare host with an empty map: getFloodStore()
   // starts that cycle, the flag stays true, and the isolate returns before
   // BIPAD answers — so DHM pins and station photos never appeared.
-  const river = store.river ?? await fetchCorridorGauges();
+  //
+  // Portal counters and the NDRRMA headline are one request each and must not
+  // wait behind BIPAD. The rescue-page tiles were "—" on Cloudflare because
+  // they waited for an eight-thousand-row sweep that host cannot finish.
+  const [river, portalStats, fetchedSummary] = await Promise.all([
+    store.river ?? fetchCorridorGauges(),
+    store.portal
+      ? Promise.resolve(store.portal)
+      : import('@/apis/sources/rescue-portal.mjs')
+          .then(m => m.getRescuePortalStats())
+          .then(stats => (stats.error ? null : stats))
+          .catch(() => null),
+    store.rescue?.summary
+      ? Promise.resolve(store.rescue.summary)
+      : import('@/apis/sources/ndrrma.mjs')
+          .then(m => m.getRescueSummary())
+          .catch(() => null),
+  ]);
+  if (portalStats && !store.portal) store.portal = portalStats;
+  const rescueSummary = store.rescue?.summary ?? fetchedSummary ?? null;
+  const rescueFetchedAt = store.rescue?.fetchedAt ?? (fetchedSummary ? new Date().toISOString() : null);
   // Same cold-start as the gauges: the overview leads with BIPAD's incident
   // tiles, and those must not wait for the ten-minute cycle. Skipped while a
   // cycle is already fetching them.
@@ -72,6 +92,7 @@ async function build(): Promise<FloodDeskPayload> {
       : await import('@/apis/sources/bulletin-damage.mjs')
           .then(m => m.getBulletinDamage())
           .catch(() => null));
+
   return {
     ...content,
     river: river ?? { gauges: [], error: null, fetchedAt: new Date().toISOString() },
@@ -82,8 +103,8 @@ async function build(): Promise<FloodDeskPayload> {
     // rescue register itself does not: it is two thousand names, and the page
     // that searches them fetches it on its own route.
     corridor,
-    rescueSummary: store.rescue?.summary ?? null,
-    rescueFetchedAt: store.rescue?.fetchedAt ?? null,
+    rescueSummary,
+    rescueFetchedAt,
     portal: store.portal,
     dailyBulletin: store.dailyBulletin,
     advisories: store.advisories,
@@ -132,7 +153,15 @@ export async function GET() {
         // empty for two minutes after every deploy, long after the figures
         // themselves had landed. An unwarmed build is served once and rebuilt
         // on the next request instead.
-        cache = { data, at: Date.now(), warm: Boolean(getFloodStore().lastRunAt) };
+        // A Worker isolate never finishes a full cycle, so lastRunAt stays
+        // null. Portal stats and the NDRRMA headline are enough to stop
+        // treating the payload as empty.
+        const filled = getFloodStore();
+        cache = {
+          data,
+          at: Date.now(),
+          warm: Boolean(filled.lastRunAt || (data.portal && !data.portal.error) || data.rescueSummary),
+        };
         return data;
       })
       .finally(() => {
@@ -142,7 +171,8 @@ export async function GET() {
 
   try {
     const data = await pending;
-    const warm = Boolean(getFloodStore().lastRunAt);
+    const filled = getFloodStore();
+    const warm = Boolean(filled.lastRunAt || (data.portal && !data.portal.error) || data.rescueSummary);
     const res = NextResponse.json(withLiveState(data));
     res.headers.set('X-Atlas-Cache', warm ? 'miss' : 'cold');
     // Not cached at the edge either, for the same reason.
