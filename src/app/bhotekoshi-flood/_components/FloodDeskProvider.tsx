@@ -1,8 +1,9 @@
 'use client';
 
-import React, { createContext, useContext, useMemo, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { useDeskRefresh } from '@/hooks/use-desk-refresh';
 import type { FloodContent, FloodDeskPayload } from '@/types';
+import { seedLowPerf } from '@/lib/connection-pref';
 
 /**
  * Reviewed flood-desk content in the first HTML, live overlay after.
@@ -45,6 +46,10 @@ export function FloodDeskProvider({
   children: React.ReactNode;
 }) {
   const [live, setLive] = useState<FloodDeskPayload | null>(null);
+
+  useEffect(() => {
+    seedLowPerf();
+  }, []);
 
   useDeskRefresh(
     React.useCallback(() => {

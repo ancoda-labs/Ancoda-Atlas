@@ -4,9 +4,9 @@ import React, { useEffect, useState } from 'react';
 import FloodShell from '@/components/FloodShell';
 import { useFloodLang } from '@/hooks/use-flood-lang';
 import type { Lang } from '@/hooks/use-flood-lang';
-import type { DamageGradeRow, DamageImage, FloodDeskPayload, NeaPlant, SitrepHeadline, SitrepValue } from '@/types';
-import { useDeskRefresh } from '@/hooks/use-desk-refresh';
+import type { DamageGradeRow, DamageImage, NeaPlant, SitrepHeadline, SitrepValue } from '@/types';
 import { useJumpSection } from '@/hooks/use-jump-section';
+import { useFloodDesk } from '@/app/bhotekoshi-flood/_components/FloodDeskProvider';
 
 // Copernicus EMSR927 grading for Syabrubesi / Timure, and the NEA 10 Bhadra
 // notice. Two numbers on this page that look addable are not: 433 is all
@@ -243,24 +243,11 @@ const NO_IMAGES: DamageImage[] = [];
 
 export default function FloodDamageView() {
   const [lang, setLang] = useFloodLang();
-  const [data, setData] = useState<FloodDeskPayload | null>(null);
+  const { desk } = useFloodDesk();
   const [openId, setOpenId] = useState<string | null>(null);
   const t = (key: keyof typeof T) => T[key][lang];
 
-  useDeskRefresh(
-    React.useCallback(() => {
-      fetch('/api/flood')
-        .then(r => (r.ok ? r.json() : null))
-        .then(d => {
-          if (d) setData(d);
-        })
-        .catch(() => {
-          /* reviewed JSON still arrives on the next successful poll */
-        });
-    }, []),
-  );
-
-  const damage = data?.damage;
+  const damage = desk.damage;
   const copernicus = damage?.copernicus;
   const power = damage?.power;
   const rows = copernicus?.rows || [];
@@ -314,9 +301,7 @@ export default function FloodDamageView() {
           <h2>{L(copernicus, 'title', lang) || t('jumpEms')}</h2>
         </div>
 
-        {!data ? (
-          <p className="fl-empty">{t('loading')}</p>
-        ) : !copernicus ? (
+        {!copernicus ? (
           <p className="fl-empty">{t('empty')}</p>
         ) : (
           <>
@@ -430,9 +415,7 @@ export default function FloodDamageView() {
           <h2>{L(power, 'title', lang) || t('jumpPower')}</h2>
         </div>
 
-        {!data ? (
-          <p className="fl-empty">{t('loading')}</p>
-        ) : !power ? (
+        {!power ? (
           <p className="fl-empty">{t('empty')}</p>
         ) : (
           <>

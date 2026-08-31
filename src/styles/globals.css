@@ -56,7 +56,11 @@
   src: url('/fonts/GeistPixel-Square.woff2') format('woff2');
   font-style: normal;
   font-weight: 100 900;
-  font-display: swap;
+  /* Optional: on 2G the system stack (with Noto Sans Devanagari) paints first
+     and Geist never swaps in if it missed the first few hundred milliseconds. */
+  font-display: optional;
+  /* Geist has no Devanagari. Limit the range so Nepali text never waits on it. */
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
 :root {
@@ -140,89 +144,6 @@ body {
 @keyframes scanMove {
   0% { top: -2px; }
   100% { top: 100%; }
-}
-
-/* BOOT LOADING STYLES */
-#boot {
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background: var(--bg);
-}
-
-.logo-ring {
-  width: 120px;
-  height: 120px;
-  border: 2px solid var(--border);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-}
-
-.logo-ring::before {
-  content: '';
-  position: absolute;
-  inset: -8px;
-  border: 1px solid var(--border);
-  border-radius: 50%;
-  border-top-color: var(--accent);
-  animation: spin 2s linear infinite;
-}
-
-.logo-ring::after {
-  content: '';
-  position: absolute;
-  inset: -16px;
-  border: 1px solid rgba(100,240,200,0.06);
-  border-radius: 50%;
-  border-bottom-color: rgba(100,240,200,0.15);
-  animation: spin 3s linear infinite reverse;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.logo-text {
-  font-family: var(--mono);
-  font-size: 18px;
-  font-weight: 700;
-  letter-spacing: 0.2em;
-  color: var(--accent);
-}
-
-#bootLines {
-  margin-top: 32px;
-  font-family: var(--mono);
-  font-size: 12px;
-  color: var(--dim);
-  text-align: left;
-  line-height: 2;
-  min-width: 340px;
-}
-
-#bootLines .ok {
-  color: var(--accent);
-}
-
-#bootLines .count {
-  color: var(--accent);
-  font-weight: 600;
-}
-
-#bootFinal {
-  margin-top: 24px;
-  font-family: var(--mono);
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--accent);
-  letter-spacing: 0.15em;
 }
 
 /* TOPBAR */
@@ -2973,6 +2894,68 @@ html[lang="ne"] .language-toggle button { font-size: 12px; }
 .fl-chips button:hover { border-color: var(--ink-3); color: var(--ink); }
 .fl-chips button.on { background: var(--ink); border-color: var(--ink); color: var(--paper); }
 
+/* One search for rescued + missing-person reports. */
+.fl-find { padding: 4px 0 8px; }
+.fl-find .fl-search { max-width: none; font-size: 19px; padding: 16px 18px; }
+.fl-find-hint { margin: 10px 0 0; font-size: 13.5px; color: var(--ink-2); max-width: 72ch; line-height: 1.45; }
+.fl-find-count {
+  margin: 18px 0 0; font-size: 14px; color: var(--ink-2);
+}
+.fl-find-count b { color: var(--ink-strong); font-weight: 600; }
+.fl-person-list {
+  display: flex; flex-direction: column; gap: 1px;
+  margin-top: 14px; background: var(--rule); border: 1px solid var(--rule);
+}
+.fl-person {
+  display: grid; grid-template-columns: 7.5rem minmax(0, 1fr) auto;
+  gap: 10px 16px; align-items: start;
+  width: 100%; margin: 0; padding: 14px 16px;
+  background: var(--paper); border: 0; text-align: left;
+  font: inherit; color: inherit; cursor: pointer;
+}
+.fl-person:hover,
+.fl-person:focus-visible { background: var(--paper-2); }
+.fl-person:focus-visible { outline: 2px solid var(--red); outline-offset: -2px; }
+.fl-person-kind {
+  margin: 2px 0 0; font-family: var(--mono); font-size: 10px; font-weight: 500;
+  letter-spacing: 0.14em; text-transform: uppercase; line-height: 1.35;
+}
+.fl-person-kind.rescued { color: var(--green); }
+.fl-person-kind.missing { color: var(--red); }
+.fl-person-kind.found { color: var(--ink-3); }
+.fl-person-name {
+  margin: 0; font-size: 17px; font-weight: 600; color: var(--ink-strong);
+  line-height: 1.25; word-break: break-word;
+}
+.fl-person-meta { margin: 4px 0 0; font-size: 13.5px; color: var(--ink-2); line-height: 1.4; }
+.fl-person-why { margin: 4px 0 0; font-size: 12px; color: var(--ink-3); }
+.fl-person-age {
+  font-family: var(--mono); font-size: 12px; color: var(--ink-3);
+  white-space: nowrap; padding-top: 3px;
+}
+.fl-person-group { margin-top: 28px; }
+.fl-person-group > h3 {
+  margin: 0 0 4px; font-family: var(--serif); font-weight: 400;
+  font-size: 22px; letter-spacing: -0.02em; color: var(--ink-strong);
+}
+.fl-person-group > h3 em {
+  font-family: var(--mono); font-style: normal; font-size: 11px;
+  letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3);
+  margin-left: 10px;
+}
+.fl-person-group > p { margin: 0 0 10px; font-size: 13.5px; color: var(--ink-2); max-width: 72ch; }
+.fl-more {
+  margin-top: 12px; padding: 10px 16px;
+  background: transparent; border: 1px solid var(--rule);
+  color: var(--ink); cursor: pointer;
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+}
+.fl-more:hover { border-color: var(--ink-3); }
+@media (max-width: 720px) {
+  .fl-person { grid-template-columns: 1fr auto; }
+  .fl-person-kind { grid-column: 1 / -1; }
+}
+
 /* --- Register tables --- */
 .fl-table-scroll { overflow-x: auto; margin-top: 22px; -webkit-overflow-scrolling: touch; }
 .fl-register { width: 100%; border-collapse: collapse; min-width: 640px; }
@@ -3857,6 +3840,22 @@ body.low-perf .flood-cta-dot { animation: none; }
   font-family: var(--sans);
   font-size: 10px;
   font-weight: 400;
+}
+
+.atlas-map-pending {
+  min-height: 340px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed var(--border);
+  background: var(--panel);
+  color: var(--dim);
+  font-size: 13px;
+  letter-spacing: 0.04em;
+}
+
+.atlas-map-pending p {
+  margin: 0;
 }
 
 .map-hero {
@@ -5224,7 +5223,10 @@ body.dark-theme .fl {
 
 /* Per-layer provenance under the overview map. Tighter than a normal note
    stack: three short lines that read as one block, not three paragraphs. */
-.fl-map-sources { margin-top: 10px; padding-top: 12px; border-top: 1px solid var(--rule); }
+.fl-overview-map .atlas-map-pending {
+  min-height: 340px;
+  margin-bottom: 8px;
+}
 .fl-map-sources .fl-note { margin: 0 0 5px; font-size: 12px; }
 .fl-map-sources .fl-note:last-child { margin-bottom: 0; }
 .fl-map-sources b { color: var(--ink-2); font-weight: 600; }

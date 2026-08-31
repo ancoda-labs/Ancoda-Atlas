@@ -17,54 +17,54 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 // shown is the text the filer typed.
 
 const T = {
-  title: { en: 'OPMCM rescue portal', ne: 'प्रधानमन्त्री कार्यालय उद्धार पोर्टल' },
+  kicker: { en: 'Missing people', ne: 'हराएका व्यक्ति' },
+  title: { en: 'Search missing-person reports', ne: 'हराएका व्यक्तिका रिपोर्ट खोज्नुहोस्' },
   intro: {
-    en: 'Filed on the Office of the Prime Minister’s rescue portal, or imported there from District Administration Offices. Reproduced as published — not merged with the registers above.',
-    ne: 'प्रधानमन्त्री कार्यालयको उद्धार पोर्टलमा दर्ता गरिएको वा जिल्ला प्रशासन कार्यालयबाट त्यहाँ ल्याइएको। प्रकाशित अवस्थामै देखाइएको — माथिका सूचीसँग मिसाइएको छैन।',
+    en: 'Families filed these reports of people still missing — on the Prime Minister’s rescue portal, or through a District Administration Office. Search by name. This is not the NDRRMA rescued register above.',
+    ne: 'परिवारले अझै हराएका व्यक्तिका लागि प्रधानमन्त्री कार्यालयको उद्धार पोर्टल वा जिल्ला प्रशासन कार्यालयमार्फत दर्ता गरेका रिपोर्ट। नाम लेखेर खोज्नुहोस्। माथिको एनडीआरआरएमए उद्धार सूची होइन।',
   },
-  lost: { en: 'Reported lost', ne: 'हराएको जनाइएको' },
+  caveat: {
+    en: 'These count reports, not people. One person is often listed more than once, and a family who finds someone rarely comes back to close the report. Do not add this number to the official uncontacted figure.',
+    ne: 'यी रिपोर्टको संख्या हुन्, व्यक्तिको होइन। एउटै व्यक्तिका लागि धेरै रिपोर्ट हुन सक्छन्, र भेटिएपछि रिपोर्ट बन्द गर्न फर्किने कम हुन्छन्। आधिकारिक सम्पर्कविहीन संख्यामा नजोड्नुहोस्।',
+  },
+  lost: { en: 'Still missing', ne: 'अझै हराइरहेका' },
   found: { en: 'Reported found', ne: 'भेटिएको जनाइएको' },
   other: { en: 'Filed otherwise', ne: 'अन्य रूपमा दर्ता' },
-  wholeRegister: {
-    en: 'Every open report on the portal is searchable here, not just the first page of them.',
-    ne: 'पोर्टलका सबै खुला विवरण यहाँ खोज्न सकिन्छ — पहिलो पृष्ठका मात्र होइन।',
-  },
   shortRead: {
     en: 'The portal states more reports than were read on the last sweep, so a few of the newest may be missing. It is re-read every ten minutes.',
     ne: 'पोर्टलले पढिएकोभन्दा बढी विवरण रहेको जनाएको छ, त्यसैले पछिल्ला केही छुट्न सक्छन्। हरेक दस मिनेटमा पुनः पढिन्छ।',
   },
-  search: { en: 'Search this register', ne: 'यो सूचीमा खोज्नुहोस्' },
-  showing: { en: 'showing', ne: 'देखाइएको' },
+  searchLost: { en: 'Search a missing person’s name', ne: 'हराएका व्यक्तिको नाम खोज्नुहोस्' },
+  searchFound: { en: 'Search a found person’s name', ne: 'भेटिएका व्यक्तिको नाम खोज्नुहोस्' },
+  reports: { en: 'reports', ne: 'रिपोर्ट' },
   name: { en: 'Name', ne: 'नाम' },
   age: { en: 'Age', ne: 'उमेर' },
-  place: { en: 'Place', ne: 'स्थान' },
-  when: { en: 'When', ne: 'कहिले' },
+  place: { en: 'Place last seen', ne: 'अन्तिम देखिएको स्थान' },
+  when: { en: 'Reported', ne: 'रिपोर्ट' },
   status: { en: 'Status', ne: 'अवस्था' },
-  noResults: { en: 'Nobody on this register matches that.', ne: 'यस सूचीमा त्यस्तो कोही भेटिएन।' },
-  loading: { en: 'Loading…', ne: 'लोड हुँदै…' },
-  unavailable: { en: 'The portal register cannot be reached right now.', ne: 'पोर्टल सूचीमा अहिले पहुँच भएन।' },
-  updated: { en: 'Register read', ne: 'सूची पढिएको' },
-  openPortal: { en: 'Open the portal', ne: 'पोर्टल खोल्नुहोस्' },
-  details: { en: 'Details', ne: 'विवरण' },
+  noResults: {
+    en: 'Nobody on this missing-person list matches that. Try another spelling, or file a report on the portal.',
+    ne: 'यो हराएका व्यक्तिको सूचीमा त्यस्तो कोही भेटिएन। अर्को हिज्जे प्रयास गर्नुहोस्, वा पोर्टलमा रिपोर्ट दर्ता गर्नुहोस्।',
+  },
+  loading: { en: 'Loading missing-person reports…', ne: 'हराएका व्यक्तिका रिपोर्ट लोड हुँदै…' },
+  unavailable: {
+    en: 'The missing-person register cannot be reached right now. Try the portal directly.',
+    ne: 'हराएका व्यक्तिको सूचीमा अहिले पहुँच भएन। सिधै पोर्टल हेर्नुहोस्।',
+  },
+  updated: { en: 'Reports read', ne: 'रिपोर्ट पढिएको' },
+  openPortal: { en: 'File a missing-person report on the portal', ne: 'पोर्टलमा हराएको रिपोर्ट दर्ता गर्नुहोस्' },
+  details: { en: 'Missing-person report', ne: 'हराएका व्यक्तिको रिपोर्ट' },
   description: { en: 'Description', ne: 'विवरण' },
   office: { en: 'Registered by', ne: 'दर्ता गर्ने' },
   close: { en: 'Close', ne: 'बन्द गर्नुहोस्' },
 };
 
-/** Loose fold so a family finds a relative despite a different transliteration. */
-function fold(value: string): string {
-  return value
-    .toLowerCase()
-    .normalize('NFKD')
-    .replace(/[̀-ͯ]/g, '')
-    .replace(/[^a-z0-9ऀ-ॿ]/g, '')
-    .replace(/sh/g, 's')
-    .replace(/ph/g, 'f')
-    .replace(/aa/g, 'a')
-    .replace(/ee/g, 'i')
-    .replace(/oo/g, 'u')
-    .replace(/w/g, 'v');
-}
+import {
+  foldName,
+  matchScore,
+  parseAgeField,
+  parsePersonQuery,
+} from '@/lib/person-search';
 
 const DEVA_DIGITS = ['०', '१', '२', '३', '४', '५', '६', '७', '८', '९'];
 const toNeDigits = (str: string) => str.replace(/[0-9]/g, d => DEVA_DIGITS[Number(d)]);
@@ -74,19 +74,32 @@ type Which = 'lost' | 'found' | 'other';
 export default function FloodOpmcmRegister({
   register,
   lang,
+  query,
+  hideSearch = false,
+  which: whichProp,
 }: {
   register: OpmcmPersonRegister | null | undefined;
   lang: Lang;
+  /** When set, this list follows the page search instead of its own box. */
+  query?: string;
+  hideSearch?: boolean;
+  which?: Which;
 }) {
   const t = (key: keyof typeof T) => T[key][lang];
-  const [which, setWhich] = useState<Which>('lost');
-  const [q, setQ] = useState('');
+  const [which, setWhich] = useState<Which>(whichProp || 'lost');
+  const [qLocal, setQ] = useState('');
   const [page, setPage] = useState(0);
   const [selected, setSelected] = useState<OpmcmPersonReport | null>(null);
+
+  const q = query != null ? query : qLocal;
 
   useEffect(() => {
     setPage(0);
   }, [which, q]);
+
+  useEffect(() => {
+    if (whichProp) setWhich(whichProp);
+  }, [whichProp]);
 
   const list =
     which === 'lost'
@@ -95,13 +108,25 @@ export default function FloodOpmcmRegister({
         ? register?.found ?? []
         : register?.other ?? [];
 
+  const parsed = useMemo(() => parsePersonQuery(q), [q]);
+
   const rows = useMemo(() => {
-    const needle = fold(q.trim());
-    if (!needle) return list;
-    return list.filter(p =>
-      fold(`${p.name || ''} ${p.place || ''} ${p.description || ''} ${p.daoOffice || ''}`).includes(needle),
-    );
-  }, [list, q]);
+    if (!parsed.raw) return list;
+    const ranked: Array<{ row: (typeof list)[number]; score: number }> = [];
+    for (const p of list) {
+      const foldedName = foldName(p.name || '');
+      const foldedHay = foldName(`${p.name || ''} ${p.place || ''} ${p.description || ''} ${p.daoOffice || ''} ${p.status || ''} ${p.daoStatus || ''}`);
+      const score = matchScore({
+        foldedName,
+        foldedHay,
+        age: parseAgeField(p.age),
+        query: parsed,
+      });
+      if (score > 0) ranked.push({ row: p, score });
+    }
+    ranked.sort((a, b) => b.score - a.score);
+    return ranked.map(r => r.row);
+  }, [list, parsed]);
 
   const PAGE_SIZE = 10;
   const paginated = useMemo(() => rows.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE), [rows, page]);
@@ -112,15 +137,18 @@ export default function FloodOpmcmRegister({
     return str.length > len ? str.slice(0, len) + '…' : str;
   };
 
+  const countLabel = `${rows.length.toLocaleString()} ${t('reports')}`;
+
   return (
-    <section className="fl-sec">
+    <section className="fl-sec" id="missing" aria-labelledby="fl-missing-title">
       <div className="fl-sec-head">
-        <span>{lang === 'ne' ? 'पोर्टल' : 'Portal'}</span>
-        <h2>{t('title')}</h2>
-        {register && <em>{rows.length.toLocaleString()} {t('showing')}</em>}
+        <span>{t('kicker')}</span>
+        <h2 id="fl-missing-title">{hideSearch ? (lang === 'ne' ? 'हराएका व्यक्तिका रिपोर्ट' : 'Missing-person reports') : t('title')}</h2>
+        {register && <em className={which === 'lost' ? 'warn' : undefined}>{countLabel}</em>}
       </div>
-      <p className="fl-note">
-        {t('intro')} {t('wholeRegister')}
+      <p className="fl-note">{t('intro')}</p>
+      <p className="fl-fig-warn">
+        <b>{lang === 'ne' ? 'जोड्नुहोस् नहोस्।' : 'Do not add these up.'}</b> {t('caveat')}
       </p>
 
       {/* The portal is written to while it is read, so `total` can move between
@@ -131,10 +159,10 @@ export default function FloodOpmcmRegister({
       )}
 
       <div className="fl-chips">
-        <button className={which === 'lost' ? 'on' : ''} onClick={() => setWhich('lost')}>
+        <button type="button" className={which === 'lost' ? 'on' : ''} onClick={() => setWhich('lost')} aria-pressed={which === 'lost'}>
           {t('lost')} {register ? `· ${(register.lost?.length ?? 0).toLocaleString()}` : ''}
         </button>
-        <button className={which === 'found' ? 'on' : ''} onClick={() => setWhich('found')}>
+        <button type="button" className={which === 'found' ? 'on' : ''} onClick={() => setWhich('found')} aria-pressed={which === 'found'}>
           {t('found')} {register ? `· ${(register.found?.length ?? 0).toLocaleString()}` : ''}
         </button>
         {/* Guarded on the field, not just the object. A register handed to this
@@ -142,21 +170,24 @@ export default function FloodOpmcmRegister({
             store from disk across a deploy — and an unguarded `.length` here
             takes the whole page down for someone searching for a relative. */}
         {(register?.other?.length ?? 0) > 0 && (
-          <button className={which === 'other' ? 'on' : ''} onClick={() => setWhich('other')}>
+          <button type="button" className={which === 'other' ? 'on' : ''} onClick={() => setWhich('other')} aria-pressed={which === 'other'}>
             {t('other')} · {(register?.other?.length ?? 0).toLocaleString()}
           </button>
         )}
       </div>
 
+      {!hideSearch && (
       <input
         className="fl-search"
         type="search"
-        value={q}
+        value={qLocal}
         onChange={e => setQ(e.target.value)}
-        placeholder={t('search')}
+        placeholder={which === 'found' ? t('searchFound') : t('searchLost')}
         autoComplete="off"
+        aria-label={which === 'found' ? t('searchFound') : t('searchLost')}
         style={{ marginBottom: '24px' }}
       />
+      )}
 
       {!register ? (
         <p className="fl-empty">{t('loading')}</p>
@@ -167,7 +198,7 @@ export default function FloodOpmcmRegister({
       ) : (
         <>
           <div className="fl-table-scroll" style={{ minHeight: '445px', maxHeight: '445px', overflowY: 'hidden', overflowX: 'hidden', width: '100%' }}>
-            <table className="fl-register" style={{ tableLayout: 'fixed', width: '100%' }}>
+            <table className="fl-register" style={{ tableLayout: 'fixed', width: '100%' }} aria-label={t('title')}>
               <thead>
                 <tr style={{ height: '40px' }}>
                   <th style={{ width: '26%' }}>{t('name')}</th>
@@ -240,7 +271,7 @@ export default function FloodOpmcmRegister({
       <Dialog open={selected !== null} onOpenChange={open => !open && setSelected(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>{t('details')}</DialogTitle>
+            <DialogTitle>{selected?.name || t('details')}</DialogTitle>
           </DialogHeader>
 
           {selected && (

@@ -17,15 +17,19 @@
 // independently and one failing has no effect on the others.
 
 import { writeFileSync, readFileSync, existsSync, mkdirSync } from 'fs';
+import { writeFile } from 'fs/promises';
 import { join } from 'path';
 import { fetchCorridorGauges } from './flood';
 import { proxyUrlFor } from './news-media';
 import { scheduleCatchup } from './news-digest-store';
+import { warmNewsBundle } from './news-topic-cache';
 import type { DamageImage, FeedStatus, FloodDamageContent, FloodDeskStore, NewsItem, OpmcmPersonRegister, OpmcmPersonReport } from '@/types';
 import { errorMessage } from '@/types';
 
 const DEFAULT_INTERVAL_MINUTES = 10;
 const STORE_FILE = 'flood-desk.json';
+const PERSONS_FILE = 'flood-desk-persons.json';
+const RESCUE_FILE = 'flood-desk-rescue.json';
 
 /**
  * The shape of the persisted store.
@@ -49,8 +53,12 @@ const STORE_FILE = 'flood-desk.json';
  * cleanly without it, and the rescue table then prints "FOREIGN" beside a
  * hundred Indian nationals with no country against any of them — no error, no
  * warning, just a column that is silently blank.
+ *
+ * v4 keeps the overview store small: OPMCM persons (~6MB) and the NDRRMA
+ * register live in sidecar files. Writing 9MB of JSON on the event loop was
+ * stalling `/api/flood` for every open desk tab.
  */
-const STORE_VERSION = 3;
+const STORE_VERSION = 4;
 
 function intervalMinutes(): number {
   const raw = Number(process.env.FLOOD_REFRESH_INTERVAL_MINUTES);
@@ -148,18 +156,32 @@ export function getFloodStore(): FloodDeskStore {
 
 function loadFromDisk(): FloodDeskStore | null {
   try {
-    const path = join(runsDir(), STORE_FILE);
+    const dir = runsDir();
+    const path = join(dir, STORE_FILE);
     if (!existsSync(path)) return null;
     const parsed = JSON.parse(readFileSync(path, 'utf8')) as FloodDeskStore & { version?: number };
-    if (parsed.version !== STORE_VERSION) {
+    if (parsed.version !== 3 && parsed.version !== STORE_VERSION) {
       console.log(
         `[Flood cron] Ignoring desk store written for shape v${parsed.version ?? 'unversioned'} ` +
           `(this build expects v${STORE_VERSION}) — starting cold`,
       );
       return null;
     }
+    const store = { ...emptyStore(), ...parsed };
+    if (!store.opmcmPersons) {
+      const personsPath = join(dir, PERSONS_FILE);
+      if (existsSync(personsPath)) {
+        store.opmcmPersons = JSON.parse(readFileSync(personsPath, 'utf8'));
+      }
+    }
+    if (!store.rescue?.persons?.length) {
+      const rescuePath = join(dir, RESCUE_FILE);
+      if (existsSync(rescuePath)) {
+        store.rescue = JSON.parse(readFileSync(rescuePath, 'utf8'));
+      }
+    }
     console.log('[Flood cron] Restored desk store from disk');
-    return { ...emptyStore(), ...parsed };
+    return store;
   } catch (err) {
     console.warn('[Flood cron] Could not restore store:', errorMessage(err));
     return null;
@@ -167,12 +189,31 @@ function loadFromDisk(): FloodDeskStore | null {
 }
 
 function persist(store: FloodDeskStore): void {
+  const dir = runsDir();
+  const slim = {
+    ...store,
+    version: STORE_VERSION,
+    opmcmPersons: null,
+    rescue: store.rescue ? { ...store.rescue, persons: [] } : null,
+  };
   try {
-    writeFileSync(join(runsDir(), STORE_FILE), JSON.stringify({ ...store, version: STORE_VERSION }));
+    writeFileSync(join(dir, STORE_FILE), JSON.stringify(slim));
   } catch (err) {
     // Losing the on-disk copy costs a cold start, not correctness.
     console.warn('[Flood cron] Could not persist store:', errorMessage(err));
   }
+  const persons = store.opmcmPersons;
+  const rescue = store.rescue;
+  if (!persons && !rescue) return;
+  // Heavy registers stringify off the request path so /api/flood stays snappy.
+  setImmediate(() => {
+    void Promise.all([
+      persons ? writeFile(join(dir, PERSONS_FILE), JSON.stringify(persons)) : Promise.resolve(),
+      rescue ? writeFile(join(dir, RESCUE_FILE), JSON.stringify(rescue)) : Promise.resolve(),
+    ]).catch(err => {
+      console.warn('[Flood cron] Could not persist person registers:', errorMessage(err));
+    });
+  });
 }
 
 /**
@@ -558,7 +599,10 @@ export async function runFloodRefresh(): Promise<FloodDeskStore> {
           const feed = await getDonationChannels({ limit: 12 });
           if (feed.error && !feed.items.length) throw new Error(feed.error);
           return {
-            items: feed.items.map(({ qrImage, ...rest }) => ({ ...rest, qrProxy: proxyUrlFor(qrImage) })),
+            items: feed.items.map(item => {
+              const { qrImage, ...rest } = item;
+              return { ...rest, qrData: null, qrProxy: proxyUrlFor(qrImage) };
+            }),
             error: feed.error,
             source: feed.source,
             fetchedAt: feed.fetchedAt,
@@ -607,6 +651,7 @@ export async function runFloodRefresh(): Promise<FloodDeskStore> {
     scheduleCatchup();
 
     persist(store);
+    void warmNewsBundle();
 
     const failed = health.filter(h => !h.ok);
     console.log(

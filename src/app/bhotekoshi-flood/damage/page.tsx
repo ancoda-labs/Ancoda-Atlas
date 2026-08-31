@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import FloodDamageView from '@/app/bhotekoshi-flood/damage/FloodDamageView';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: 'Damage assessment · Rasuwa–Bhotekoshi Flood · Ancoda Atlas',

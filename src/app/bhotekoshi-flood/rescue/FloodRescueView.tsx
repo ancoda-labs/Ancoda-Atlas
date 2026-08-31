@@ -5,18 +5,27 @@ import type {
   RescueRegister,
   RescuedPerson,
   OpmcmPersonRegister,
-  SitrepNameList,
+  OpmcmPersonReport,
 } from '@/types';
 import FloodShell from '@/components/FloodShell';
 import FloodOpmcmRegister from '@/app/bhotekoshi-flood/rescue/_components/FloodOpmcmRegister';
 import { useFloodLang, type Lang } from '@/hooks/use-flood-lang';
 import { ageFrom } from '@/lib/relative-time';
+import {
+  foldName,
+  matchScore,
+  parseAgeField,
+  parsePersonQuery,
+  type PersonQuery,
+} from '@/lib/person-search';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DESK_POLL_MS } from '@/hooks/use-desk-refresh';
 import { useFloodDesk } from '@/app/bhotekoshi-flood/_components/FloodDeskProvider';
+import { isConstrainedConnection, whenIdle } from '@/lib/connection-pref';
 import {
   Select,
   SelectContent,
@@ -35,42 +44,80 @@ import {
 // register renders as a blank here, never as an assumption.
 
 const T = {
-  kicker: { en: 'Rescue register', ne: 'उद्धार सूची' },
-  title: { en: 'People rescued', ne: 'उद्धार गरिएका व्यक्ति' },
+  kicker: { en: 'People', ne: 'व्यक्ति' },
+  title: { en: 'Find someone', ne: 'कोही खोज्नुहोस्' },
   standfirst: {
-    en: 'Published by NDRRMA. Atlas reproduces it as it stands and cannot change the official record.',
-    ne: 'एनडीआरआरएमएद्वारा प्रकाशित। एट्लसले यसलाई जस्ताको तस्तै देखाउँछ र आधिकारिक अभिलेख परिवर्तन गर्न सक्दैन।',
+    en: 'One search, two official lists: people NDRRMA has rescued, and missing-person reports families filed with the Prime Minister’s Office. They are not merged — the same name can appear on both.',
+    ne: 'एउटै खोज, दुई आधिकारिक सूची: एनडीआरआरएमएले उद्धार गरेका व्यक्ति, र प्रधानमन्त्री कार्यालयमा परिवारले दर्ता गरेका हराएका व्यक्तिका रिपोर्ट। मिसाइएको छैन — एउटै नाम दुवैमा पर्न सक्छ।',
   },
-  search: { en: 'Search for a name', ne: 'नाम खोज्नुहोस्' },
+  search: { en: 'Search a name, place, or age', ne: 'नाम, स्थान वा उमेर खोज्नुहोस्' },
   searchHint: {
-    en: 'Try part of the name. Spellings differ between lists — searching for “Ram” will find “Ram Bahadur” and “Rambahadur”.',
-    ne: 'नामको केही अंश लेख्नुहोस्। सूचीहरूमा हिज्जे फरक हुन सक्छ — “राम” खोज्दा “राम बहादुर” पनि भेटिन्छ।',
+    en: 'Try “Ram Bahadur”, “Timure”, “missing 40”, or “rescued India”. Spellings differ between lists — “Ram” also finds “Ram Bahadur”.',
+    ne: '“राम बहादुर”, “टिमुरे”, “हराएका ४०”, वा “उद्धार India” लेख्नुहोस्। सूचीहरूमा हिज्जे फरक हुन सक्छ — “राम” ले “राम बहादुर” पनि भेट्छ।',
   },
-  all: { en: 'All', ne: 'सबै' },
+  jumpLabel: { en: 'Choose a register', ne: 'सूची छान्नुहोस्' },
+  jumpHint: { en: 'Or browse a list', ne: 'वा सूची हेर्नुहोस्' },
+  jumpRescued: { en: 'People rescued', ne: 'उद्धार गरिएका' },
+  jumpRescuedSub: { en: 'NDRRMA named register', ne: 'एनडीआरआरएमए नामावली' },
+  jumpMissing: { en: 'Missing people', ne: 'हराएका व्यक्ति' },
+  jumpMissingSub: { en: 'Family reports on the PM’s portal', ne: 'प्रधानमन्त्री कार्यालयमा परिवारका रिपोर्ट' },
+  all: { en: 'All matches', ne: 'सबै मिलान' },
+  rescued: { en: 'Rescued', ne: 'उद्धार' },
+  missing: { en: 'Still missing', ne: 'अझै हराइरहेका' },
+  found: { en: 'Reported found', ne: 'भेटिएको जनाइएको' },
   nepali: { en: 'Nepali', ne: 'नेपाली' },
   foreign: { en: 'Foreign nationals', ne: 'विदेशी नागरिक' },
   foreignBadge: { en: 'Foreign', ne: 'विदेशी' },
-  total: { en: 'Rescued in total', ne: 'कुल उद्धार' },
+  total: { en: 'Rescued by NDRRMA', ne: 'एनडीआरआरएमए उद्धार' },
+  missingTile: { en: 'Missing-person reports', ne: 'हराएका व्यक्तिका रिपोर्ट' },
+  foundTile: { en: 'Reported found', ne: 'भेटिएको जनाइएको' },
+  reports: { en: 'reports', ne: 'रिपोर्ट' },
+  people: { en: 'people', ne: 'जना' },
   showing: { en: 'showing', ne: 'देखाइएको' },
   name: { en: 'Name', ne: 'नाम' },
   age: { en: 'Age', ne: 'उमेर' },
   rescuedFrom: { en: 'Rescued from', ne: 'उद्धार भएको स्थान' },
   takenTo: { en: 'Taken to', ne: 'पुर्‍याइएको स्थान' },
+  lastSeen: { en: 'Last seen', ne: 'अन्तिम देखिएको' },
   status: { en: 'Status', ne: 'अवस्था' },
   date: { en: 'Date', ne: 'मिति' },
+  gender: { en: 'Gender', ne: 'लिङ्ग' },
+  country: { en: 'Country', ne: 'देश' },
+  notes: { en: 'Notes', ne: 'कैफियत' },
   noName: { en: 'Name not recorded', ne: 'नाम उल्लेख छैन' },
   notRecorded: { en: 'Not recorded', ne: 'उल्लेख छैन' },
-  noResults: {
-    en: 'Nobody on this register matches that. That does not mean they were not rescued — this register covers the rescues NDRRMA has published, and other lists are held by district offices and hospitals.',
-    ne: 'यस सूचीमा त्यस्तो कोही भेटिएन। यसको अर्थ उहाँको उद्धार भएको छैन भन्ने होइन — यो सूचीमा एनडीआरआरएमएले प्रकाशित गरेका उद्धार मात्र छन्; अन्य सूची जिल्ला कार्यालय र अस्पतालसँग छन्।',
+  yearsOld: { en: 'years old', ne: 'वर्ष' },
+  placeMatch: {
+    en: 'Matched a place or note — check the name carefully.',
+    ne: 'स्थान वा विवरणमा मिल्यो — नाम राम्ररी हेर्नुहोस्।',
   },
-  loading: { en: 'Loading the register…', ne: 'सूची लोड हुँदै…' },
+  rescuedGroup: { en: 'Rescued — NDRRMA register', ne: 'उद्धार — एनडीआरआरएमए सूची' },
+  missingGroup: { en: 'Still missing — family reports', ne: 'अझै हराइरहेका — परिवारका रिपोर्ट' },
+  foundGroup: { en: 'Reported found — family reports', ne: 'भेटिएको जनाइएको — परिवारका रिपोर्ट' },
+  missingGroupNote: {
+    en: 'These are reports, not a count of people. One person may appear more than once. Do not add them to the official uncontacted figure.',
+    ne: 'यी रिपोर्ट हुन्, व्यक्तिको संख्या होइन। एउटै व्यक्ति एकभन्दा बढी पटक पर्न सक्छन्। आधिकारिक सम्पर्कविहीन संख्यामा नजोड्नुहोस्।',
+  },
+  noResults: {
+    en: 'Nobody on either list matches that. That does not mean they were not rescued or are not missing — only that these two portals have not published that spelling. Try another spelling, a place name, or file a missing-person report.',
+    ne: 'कुनै सूचीमा त्यस्तो कोही भेटिएन। यसको अर्थ उद्धार भएको छैन वा हराउनुभएको छैन भन्ने होइन — यी दुई पोर्टलले त्यो हिज्जे प्रकाशित गरेका छैनन्। अर्को हिज्जे वा स्थान प्रयास गर्नुहोस्, वा हराएको रिपोर्ट दर्ता गर्नुहोस्।',
+  },
+  noRescued: {
+    en: 'No rescued-register match. Check missing-person reports, or try another spelling.',
+    ne: 'उद्धार सूचीमा मिलान भएन। हराएका व्यक्तिका रिपोर्ट हेर्नुहोस्, वा अर्को हिज्जे प्रयास गर्नुहोस्।',
+  },
+  loadMore: { en: 'Show more', ne: 'थप देखाउनुहोस्' },
+  loading: { en: 'Loading the registers…', ne: 'सूची लोड हुँदै…' },
   unavailable: {
     en: 'The NDRRMA register cannot be reached right now. Try the portal directly.',
     ne: 'एनडीआरआरएमए सूचीमा अहिले पहुँच भएन। सिधै पोर्टल हेर्नुहोस्।',
   },
   updated: { en: 'Register read', ne: 'सूची पढिएको' },
   openPortal: { en: 'Open the NDRRMA Rasuwa register', ne: 'एनडीआरआरएमए रसुवा सूची खोल्नुहोस्' },
+  close: { en: 'Close', ne: 'बन्द गर्नुहोस्' },
+  details: { en: 'Rescued person', ne: 'उद्धार गरिएका व्यक्ति' },
+  fileReport: { en: 'File a missing-person report on the portal', ne: 'पोर्टलमा हराएको रिपोर्ट दर्ता गर्नुहोस्' },
+  matching: { en: 'Matching', ne: 'मिलान' },
   correctionTitle: { en: 'Something wrong on this list?', ne: 'यो सूचीमा केही गलत छ?' },
   correctionIntro: {
     en: 'Atlas cannot edit the government record, but it will pass a correction on. Tell us what is wrong and we will raise it with NDRRMA.',
@@ -99,26 +146,35 @@ const T = {
   },
 };
 
-/**
- * Fold a name into something comparable across spellings.
- *
- * Nepali names reach these lists through several transliterations — Shrestha
- * and Shrest, Bahadur and Bdr — and a family searching for a relative will not
- * guess which one the portal used. Punctuation and spacing go, and the Latin
- * digraphs that vary most are normalised.
- */
-function fold(value: string): string {
-  return value
-    .toLowerCase()
-    .normalize('NFKD')
-    .replace(/[̀-ͯ]/g, '')
-    .replace(/[^a-z0-9ऀ-ॿ]/g, '')
-    .replace(/sh/g, 's')
-    .replace(/ph/g, 'f')
-    .replace(/aa/g, 'a')
-    .replace(/ee/g, 'i')
-    .replace(/oo/g, 'u')
-    .replace(/w/g, 'v');
+type Filter = 'all' | 'rescued' | 'missing' | 'found' | 'foreign';
+const PAGE_SIZE = 20;
+
+type IndexedPerson<T> = {
+  row: T;
+  foldedName: string;
+  foldedHay: string;
+  age: number | null;
+};
+
+function rankRows<T>(rows: IndexedPerson<T>[], query: PersonQuery, searching: boolean): IndexedPerson<T>[] {
+  if (!searching) return rows;
+  const ranked: Array<IndexedPerson<T> & { score: number }> = [];
+  for (const item of rows) {
+    const score = matchScore({
+      foldedName: item.foldedName,
+      foldedHay: item.foldedHay,
+      age: item.age,
+      query,
+    });
+    if (score > 0) ranked.push({ ...item, score });
+  }
+  ranked.sort((a, b) => b.score - a.score);
+  return ranked;
+}
+
+function nameOnlyMatch(foldedName: string, query: PersonQuery): boolean {
+  if (query.tokens.length === 0) return true;
+  return query.tokens.every(tok => foldedName.includes(tok));
 }
 
 /**
@@ -140,8 +196,6 @@ function bilingual(
   return preferred?.trim() || fallback?.trim() || null;
 }
 
-type Filter = 'all' | 'nepali' | 'foreign';
-
 export default function FloodRescueView() {
   const [lang, setLang] = useFloodLang();
   const { desk } = useFloodDesk();
@@ -151,15 +205,36 @@ export default function FloodRescueView() {
   const [portalRegister, setPortalRegister] = useState<OpmcmPersonRegister | null>(null);
   const [q, setQ] = useState('');
   const [filter, setFilter] = useState<Filter>('all');
-  const [page, setPage] = useState(0);
+  const [rescuedShown, setRescuedShown] = useState(PAGE_SIZE);
+  const [missingShown, setMissingShown] = useState(PAGE_SIZE);
+  const [foundShown, setFoundShown] = useState(PAGE_SIZE);
+  const [selectedRescued, setSelectedRescued] = useState<RescuedPerson | null>(null);
+  const [selectedMissing, setSelectedMissing] = useState<OpmcmPersonReport | null>(null);
   const sitrep = desk.sitrep;
   const notices = desk.popups ?? null;
   const [form, setForm] = useState({ kind: 'wrong_details', message: '', contact: '' });
   const [formState, setFormState] = useState<'idle' | 'sending' | 'sent' | 'failed' | 'off'>('idle');
+  const [wantRegisters, setWantRegisters] = useState(false);
 
   const t = (key: keyof typeof T) => T[key][lang];
 
   useEffect(() => {
+    if (q.trim() || filter === 'missing' || filter === 'found') setWantRegisters(true);
+  }, [q, filter]);
+
+  useEffect(() => {
+    const onFocus = () => setWantRegisters(true);
+    const input = document.getElementById('fl-find-q');
+    input?.addEventListener('focus', onFocus);
+    const cancelIdle = whenIdle(() => setWantRegisters(true), isConstrainedConnection() ? 3500 : 1500);
+    return () => {
+      input?.removeEventListener('focus', onFocus);
+      cancelIdle();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!wantRegisters) return;
     let cancelled = false;
     const load = () => {
       void Promise.all([
@@ -183,32 +258,74 @@ export default function FloodRescueView() {
       cancelled = true;
       clearInterval(id);
     };
-  }, []);
+  }, [wantRegisters]);
 
   useEffect(() => {
-    setPage(0);
+    setRescuedShown(PAGE_SIZE);
+    setMissingShown(PAGE_SIZE);
+    setFoundShown(PAGE_SIZE);
   }, [q, filter]);
 
   const persons: RescuedPerson[] = useMemo(() => data?.persons || [], [data]);
+  const parsed = useMemo(() => parsePersonQuery(q), [q]);
+  const searching = parsed.raw.length > 0;
 
-  const matches = useMemo(() => {
-    const needle = fold(q.trim());
-    return persons.filter(p => {
-      if (filter === 'nepali' && p.nationality !== 'nepali') return false;
-      if (filter === 'foreign' && p.nationality === 'nepali') return false;
-      if (!needle) return true;
-      const haystack = fold(`${p.name || ''} ${p.nameNe || ''} ${p.country || ''} ${p.rescuedAt?.title || ''} ${p.rescuedAt?.titleNe || ''} ${p.stationedAt?.title || ''} ${p.stationedAt?.titleNe || ''} ${p.remarks || ''}`);
-      return haystack.includes(needle);
-    });
-  }, [persons, q, filter]);
+  const rescuedIndex = useMemo(
+    () =>
+      persons.map(row => ({
+        row,
+        foldedName: foldName(`${row.name || ''} ${row.nameNe || ''}`),
+        foldedHay: foldName(
+          `${row.name || ''} ${row.nameNe || ''} ${row.country || ''} ${row.rescuedAt?.title || ''} ${row.rescuedAt?.titleNe || ''} ${row.stationedAt?.title || ''} ${row.stationedAt?.titleNe || ''} ${row.remarks || ''} ${row.status?.title || ''} ${row.status?.titleNe || ''}`,
+        ),
+        age: row.age,
+      })),
+    [persons],
+  );
 
-  const PAGE_SIZE = 10;
+  const missingIndex = useMemo(
+    () =>
+      (portalRegister?.lost || []).map(row => ({
+        row,
+        foldedName: foldName(row.name || ''),
+        foldedHay: foldName(`${row.name || ''} ${row.place || ''} ${row.description || ''} ${row.daoOffice || ''} ${row.status || ''} ${row.daoStatus || ''}`),
+        age: parseAgeField(row.age),
+      })),
+    [portalRegister],
+  );
 
-  const paginatedMatches = useMemo(() => {
-    return matches.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
-  }, [matches, page]);
+  const foundIndex = useMemo(
+    () =>
+      (portalRegister?.found || []).map(row => ({
+        row,
+        foldedName: foldName(row.name || ''),
+        foldedHay: foldName(`${row.name || ''} ${row.place || ''} ${row.description || ''} ${row.daoOffice || ''} ${row.status || ''} ${row.daoStatus || ''}`),
+        age: parseAgeField(row.age),
+      })),
+    [portalRegister],
+  );
 
-  const totalPages = useMemo(() => Math.ceil(matches.length / PAGE_SIZE), [matches]);
+  const rescuedHits = useMemo(() => {
+    let rows = rescuedIndex;
+    if (filter === 'foreign' || parsed.foreign) {
+      rows = rows.filter(item => item.row.nationality && item.row.nationality !== 'nepali');
+    }
+    return rankRows(rows, parsed, searching);
+  }, [rescuedIndex, parsed, searching, filter]);
+
+  const missingHits = useMemo(() => rankRows(missingIndex, parsed, searching), [missingIndex, parsed, searching]);
+  const foundHits = useMemo(() => rankRows(foundIndex, parsed, searching), [foundIndex, parsed, searching]);
+
+  const showRescued = filter === 'all' || filter === 'rescued' || filter === 'foreign';
+  const showMissing = filter === 'all' || filter === 'missing';
+  const showFound = filter === 'all' || filter === 'found';
+
+  const groupOrder: Array<'rescued' | 'missing' | 'found'> =
+    parsed.intent === 'missing'
+      ? ['missing', 'found', 'rescued']
+      : parsed.intent === 'found'
+        ? ['found', 'missing', 'rescued']
+        : ['rescued', 'missing', 'found'];
 
   const toNeDigits = (str: string) => {
     const DEVA_DIGITS = ['०', '१', '२', '३', '४', '५', '६', '७', '८', '९'];
@@ -236,34 +353,49 @@ export default function FloodRescueView() {
   };
 
   const summary = data?.summary;
+  const lostCount = portalRegister?.lost?.length ?? 0;
+  const foundCount = portalRegister?.found?.length ?? 0;
+  const fig = (n: number) => (lang === 'ne' ? toNeDigits(n.toLocaleString()) : n.toLocaleString());
+  const anyHits = (showRescued && rescuedHits.length > 0) || (showMissing && missingHits.length > 0) || (showFound && foundHits.length > 0);
 
   return (
     <FloodShell lang={lang} setLang={setLang} kicker={t('kicker')} title={t('title')} standfirst={t('standfirst')}>
-      {/* NDRRMA's own totals lead, because they are the register this page
-          searches and they move with it. The reviewed name-list figures stand
-          in only while the portal is unreachable. */}
-      {summary ? (
-        <div className="fl-tiles">
-          <div><dd>{summary.total.toLocaleString()}</dd><dt>{t('total')}</dt></div>
-          <div><dd>{summary.nepali.toLocaleString()}</dd><dt>{t('nepali')}</dt></div>
-          <div><dd>{summary.foreign.toLocaleString()}</dd><dt>{t('foreign')}</dt></div>
-          {summary.byStatus.filter(s => s.count > 0).map(s => (
-            <div key={s.id}>
-              <dd>{s.count.toLocaleString()}</dd>
-              <dt>{bilingual(lang, s.title, s.titleNe)}</dt>
-            </div>
-          ))}
+      <section className="fl-find" id="rescued-search">
+        <div className="fl-sec-head">
+          <span>{lang === 'ne' ? 'खोज' : 'Search'}</span>
+          <h2><label htmlFor="fl-find-q">{t('search')}</label></h2>
         </div>
-      ) : sitrep?.name_lists?.lists ? (
-        <div className="fl-tiles">
-          {sitrep.name_lists.lists.map((list: SitrepNameList) => (
-            <div key={list.id}>
-              <dd>{list.value.toLocaleString()}</dd>
-              <dt>{bilingual(lang, list.label_en, list.label_ne)}</dt>
-            </div>
-          ))}
+        <input
+          id="fl-find-q"
+          className="fl-search"
+          type="search"
+          value={q}
+          onChange={e => setQ(e.target.value)}
+          onFocus={() => setWantRegisters(true)}
+          placeholder={t('search')}
+          autoComplete="off"
+          autoCorrect="off"
+          spellCheck={false}
+        />
+        <p className="fl-find-hint">{t('searchHint')}</p>
+      </section>
+
+      <div className="fl-tiles">
+        <div className="t-positive">
+          <dd>{fig(summary?.total ?? sitrep?.name_lists?.lists?.find(l => l.id === 'ndrrma')?.value ?? persons.length)}</dd>
+          <dt>{t('total')}</dt>
         </div>
-      ) : null}
+        <div className="t-critical">
+          <dd>{portalRegister ? fig(lostCount) : '—'}</dd>
+          <dt>{t('missingTile')}</dt>
+          <small>{t('reports')}</small>
+        </div>
+        <div>
+          <dd>{portalRegister ? fig(foundCount) : '—'}</dd>
+          <dt>{t('foundTile')}</dt>
+          <small>{t('reports')}</small>
+        </div>
+      </div>
 
       {(data?.messages?.length ?? 0) > 0 && (
         <aside className="fl-register-about">
@@ -275,126 +407,196 @@ export default function FloodRescueView() {
         </aside>
       )}
 
-      <section className="fl-sec">
-        <div className="fl-sec-head">
-          <span>{lang === 'ne' ? 'खोज' : 'Search'}</span>
-          <h2>{t('search')}</h2>
-          {persons.length > 0 && <em>{matches.length} {t('showing')}</em>}
-        </div>
+      <div className="fl-chips" role="tablist" aria-label={t('jumpLabel')}>
+        {(['all', 'rescued', 'missing', 'found', 'foreign'] as Filter[]).map(f => (
+          <button
+            key={f}
+            type="button"
+            role="tab"
+            className={filter === f ? 'on' : ''}
+            aria-selected={filter === f}
+            onClick={() => setFilter(f)}
+          >
+            {t(f)}
+          </button>
+        ))}
+      </div>
 
-        <input
-          className="fl-search"
-          type="search"
-          value={q}
-          onChange={e => setQ(e.target.value)}
-          placeholder={t('search')}
-          autoComplete="off"
-          style={{ marginBottom: '12px' }}
-        />
-        <p className="fl-field-hint" style={{ marginBottom: '24px' }}>{t('searchHint')}</p>
+      {searching && (
+        <p className="fl-find-count" aria-live="polite">
+          {t('matching')} “{parsed.raw}” —
+          {' '}
+          {[
+            showRescued && rescuedHits.length > 0 ? `${fig(rescuedHits.length)} ${t('rescued')}` : null,
+            showMissing && missingHits.length > 0 ? `${fig(missingHits.length)} ${t('missing')}` : null,
+            showFound && foundHits.length > 0 ? `${fig(foundHits.length)} ${t('found')}` : null,
+          ]
+            .filter(Boolean)
+            .join(' · ')}
+        </p>
+      )}
 
-        <div className="fl-chips">
-          {(['all', 'nepali', 'foreign'] as Filter[]).map(f => (
-            <button key={f} className={filter === f ? 'on' : ''} onClick={() => setFilter(f)}>
-              {f === 'all' ? t('all') : f === 'nepali' ? t('nepali') : t('foreign')}
-            </button>
-          ))}
-        </div>
-
-        {!data ? (
-          <p className="fl-empty">{t('loading')}</p>
-        ) : data.error ? (
-          <p className="fl-empty">{t('unavailable')}</p>
-        ) : matches.length === 0 ? (
-          <p className="fl-empty">{t('noResults')}</p>
-        ) : (
-          <>
-            <div className="fl-table-scroll" style={{ minHeight: '445px', maxHeight: '445px', overflowY: 'hidden', overflowX: 'hidden', width: '100%' }}>
-              <table className="fl-register" style={{ tableLayout: 'fixed', width: '100%' }}>
-                <thead>
-                  <tr style={{ height: '40px' }}>
-                    <th style={{ width: '20%' }}>{t('name')}</th>
-                    <th className="num" style={{ width: '10%' }}>{t('age')}</th>
-                    <th style={{ width: '25%' }}>{t('rescuedFrom')}</th>
-                    <th style={{ width: '25%' }}>{t('takenTo')}</th>
-                    <th style={{ width: '10%' }}>{t('status')}</th>
-                    <th className="num" style={{ width: '10%' }}>{t('date')}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {paginatedMatches.map(p => (
-                    <tr key={p.id} style={{ height: '40px' }}>
-                      <th scope="row" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {bilingual(lang, p.name, p.nameNe) || t('noName')}
-                        {/* "FOREIGN (India)". The badge is uppercased by the
-                            stylesheet; the country keeps the case the portal
-                            wrote it in, because "SOUTH KOREA" reads worse than
-                            "South Korea" and neither is translated. A foreign
-                            row the portal left without a country — there is one
-                            — reads simply "FOREIGN". */}
-                        {p.nationality && p.nationality !== 'nepali' && (
-                          <em>
-                            {t('foreignBadge')}
-                            {p.country && <span> ({p.country})</span>}
-                          </em>
-                        )}
-                      </th>
-                      <td className="num" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {p.age ?? '—'}
-                      </td>
-                      <td style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={p.remarks || undefined}>
-                        {bilingual(lang, p.rescuedAt?.title, p.rescuedAt?.titleNe) || p.remarks || '—'}
-                      </td>
-                      <td style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {bilingual(lang, p.stationedAt?.title, p.stationedAt?.titleNe) || '—'}
-                      </td>
-                      <td style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {bilingual(lang, p.status?.title, p.status?.titleNe) || <span className="fl-blank">{t('notRecorded')}</span>}
-                      </td>
-                      <td className="num" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {p.rescuedOn || '—'}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {totalPages > 1 && (
-              <div className="fl-pagination" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px' }}>
-                <button
-                  onClick={() => setPage(p => Math.max(0, p - 1))}
-                  disabled={page === 0}
-                                    className="rounded border border-border bg-background px-3 py-1.5 text-sm text-foreground enabled:hover:border-border-bright disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {lang === 'ne' ? 'अघिल्लो' : 'Previous'}
-                </button>
-                <span style={{ fontSize: '14px', fontWeight: 500 }}>
-                  {lang === 'ne'
-                    ? `पेज ${toNeDigits(String(page + 1))} / ${toNeDigits(String(totalPages))}`
-                    : `Page ${page + 1} of ${totalPages}`}
-                </span>
-                <button
-                  onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
-                  disabled={page === totalPages - 1}
-                                    className="rounded border border-border bg-background px-3 py-1.5 text-sm text-foreground enabled:hover:border-border-bright disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {lang === 'ne' ? 'अर्को' : 'Next'}
-                </button>
-              </div>
-            )}
-          </>
-        )}
-
-        <p className="fl-note">
-          {t('updated')} {data ? ageFrom(data.fetchedAt, lang) : '—'} ·{' '}
-          <a href={data?.source?.url || 'https://ndrrma.gov.np/np/rasuwa/rescue'} target="_blank" rel="noopener noreferrer">
-            {t('openPortal')} &#8599;
+      {!data && !portalRegister ? (
+        <p className="fl-empty">{t('loading')}</p>
+      ) : data?.error && !persons.length ? (
+        <p className="fl-empty">{t('unavailable')}</p>
+      ) : searching && !anyHits ? (
+        <p className="fl-empty">
+          {t('noResults')}{' '}
+          <a href={portalRegister?.source?.url || 'https://rescue.opmcm.gov.np/person-reports'} target="_blank" rel="noopener noreferrer">
+            {t('fileReport')} &#8599;
           </a>
         </p>
-      </section>
+      ) : (
+        groupOrder.map(group => {
+          if (group === 'rescued' && showRescued) {
+            const slice = rescuedHits.slice(0, rescuedShown);
+            if (searching && slice.length === 0) return null;
+            return (
+              <div className="fl-person-group" key="rescued" id="rescued-list">
+                <h3>
+                  {t('rescuedGroup')}
+                  <em>{fig(rescuedHits.length)}</em>
+                </h3>
+                {slice.length === 0 ? (
+                  <p className="fl-empty">{searching ? t('noRescued') : t('loading')}</p>
+                ) : (
+                  <div className="fl-person-list">
+                    {slice.map(item => {
+                      const p = item.row;
+                      const from = bilingual(lang, p.rescuedAt?.title, p.rescuedAt?.titleNe) || p.remarks;
+                      const to = bilingual(lang, p.stationedAt?.title, p.stationedAt?.titleNe);
+                      const st = bilingual(lang, p.status?.title, p.status?.titleNe);
+                      return (
+                        <button type="button" className="fl-person" key={p.id} onClick={() => setSelectedRescued(p)}>
+                          <span className="fl-person-kind rescued">{t('rescued')}</span>
+                          <span>
+                            <p className="fl-person-name">{bilingual(lang, p.name, p.nameNe) || t('noName')}</p>
+                            <p className="fl-person-meta">
+                              {from ? `${t('rescuedFrom')} ${from}` : t('notRecorded')}
+                              {to ? ` · ${t('takenTo')} ${to}` : ''}
+                              {st ? ` · ${st}` : ''}
+                              {p.nationality && p.nationality !== 'nepali' ? ` · ${t('foreignBadge')}${p.country ? ` (${p.country})` : ''}` : ''}
+                            </p>
+                            {searching && !nameOnlyMatch(item.foldedName, parsed) && (
+                              <p className="fl-person-why">{t('placeMatch')}</p>
+                            )}
+                          </span>
+                          <span className="fl-person-age">{p.age != null ? p.age : '—'}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+                {rescuedHits.length > rescuedShown && (
+                  <button type="button" className="fl-more" onClick={() => setRescuedShown(n => n + PAGE_SIZE)}>
+                    {t('loadMore')} · {fig(rescuedHits.length - rescuedShown)}
+                  </button>
+                )}
+                <p className="fl-note">
+                  {t('updated')} {data ? ageFrom(data.fetchedAt, lang) : '—'} ·{' '}
+                  <a href={data?.source?.url || 'https://ndrrma.gov.np/np/rasuwa/rescue'} target="_blank" rel="noopener noreferrer">
+                    {t('openPortal')} &#8599;
+                  </a>
+                </p>
+              </div>
+            );
+          }
 
-      {(notices?.items?.length ?? 0) > 0 && (
+          if (group === 'missing' && showMissing && searching) {
+            const slice = missingHits.slice(0, missingShown);
+            if (searching && slice.length === 0) return null;
+            return (
+              <div className="fl-person-group" key="missing">
+                <h3>
+                  {t('missingGroup')}
+                  <em>{fig(missingHits.length)}</em>
+                </h3>
+                <p>{t('missingGroupNote')}</p>
+                {slice.length === 0 ? (
+                  <p className="fl-empty">{t('loading')}</p>
+                ) : (
+                  <div className="fl-person-list">
+                    {slice.map(item => {
+                      const p = item.row;
+                      return (
+                        <button type="button" className="fl-person" key={p.id || `${p.name}-${p.place}`} onClick={() => setSelectedMissing(p)}>
+                          <span className="fl-person-kind missing">{t('missing')}</span>
+                          <span>
+                            <p className="fl-person-name">{p.name || t('noName')}</p>
+                            <p className="fl-person-meta">
+                              {p.place ? `${t('lastSeen')} ${p.place}` : t('notRecorded')}
+                              {p.daoStatus || p.status ? ` · ${p.daoStatus || p.status}` : ''}
+                              {p.eventAt ? ` · ${ageFrom(p.eventAt, lang)}` : ''}
+                            </p>
+                            {searching && !nameOnlyMatch(item.foldedName, parsed) && (
+                              <p className="fl-person-why">{t('placeMatch')}</p>
+                            )}
+                          </span>
+                          <span className="fl-person-age">{p.age || '—'}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+                {missingHits.length > missingShown && (
+                  <button type="button" className="fl-more" onClick={() => setMissingShown(n => n + PAGE_SIZE)}>
+                    {t('loadMore')} · {fig(missingHits.length - missingShown)}
+                  </button>
+                )}
+                {portalRegister?.source && (
+                  <p className="fl-note">
+                    <a href={portalRegister.source.url} target="_blank" rel="noopener noreferrer">
+                      {t('fileReport')} &#8599;
+                    </a>
+                  </p>
+                )}
+              </div>
+            );
+          }
+
+          if (group === 'found' && showFound && searching) {
+            const slice = foundHits.slice(0, foundShown);
+            if (slice.length === 0) return null;
+            return (
+              <div className="fl-person-group" key="found">
+                <h3>
+                  {t('foundGroup')}
+                  <em>{fig(foundHits.length)}</em>
+                </h3>
+                <p>{t('missingGroupNote')}</p>
+                <div className="fl-person-list">
+                  {slice.map(item => {
+                    const p = item.row;
+                    return (
+                      <button type="button" className="fl-person" key={p.id || `${p.name}-found`} onClick={() => setSelectedMissing(p)}>
+                        <span className="fl-person-kind found">{t('found')}</span>
+                        <span>
+                          <p className="fl-person-name">{p.name || t('noName')}</p>
+                          <p className="fl-person-meta">
+                            {p.place || t('notRecorded')}
+                            {p.daoStatus || p.status ? ` · ${p.daoStatus || p.status}` : ''}
+                          </p>
+                        </span>
+                        <span className="fl-person-age">{p.age || '—'}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                {foundHits.length > foundShown && (
+                  <button type="button" className="fl-more" onClick={() => setFoundShown(n => n + PAGE_SIZE)}>
+                    {t('loadMore')} · {fig(foundHits.length - foundShown)}
+                  </button>
+                )}
+              </div>
+            );
+          }
+
+          return null;
+        })
+      )}
+
+      {(notices?.items?.length ?? 0) > 0 && !searching && (
         <section className="fl-sec">
           <div className="fl-sec-head">
             <span>{lang === 'ne' ? 'सरकारी' : 'Official'}</span>
@@ -427,12 +629,18 @@ export default function FloodRescueView() {
         </section>
       )}
 
-      {/* Two registers, side by side and never merged: NDRRMA's official one
-          above and the Prime Minister's Office portal here. The same person can
-          sit on both under different spellings, and reconciling them by machine
-          would either hide someone still missing or announce a reunion that has
-          not happened. */}
-      <FloodOpmcmRegister register={portalRegister} lang={lang} />
+      {/* Browse the missing-person register when the page is not mid-search.
+          Search results use the cards above so a family is not sent down the
+          page to a second box. The two lists stay separate: this component
+          never receives the NDRRMA rows. */}
+      {!searching && (filter === 'all' || filter === 'missing' || filter === 'found') && (
+        <FloodOpmcmRegister
+          register={portalRegister}
+          lang={lang}
+          hideSearch
+          which={filter === 'found' ? 'found' : 'lost'}
+        />
+      )}
 
       <section className="fl-sec">
         <div className="fl-sec-head">
@@ -515,6 +723,87 @@ export default function FloodRescueView() {
           </div>
         </form>
       </section>
+
+      <Dialog open={selectedRescued !== null} onOpenChange={open => !open && setSelectedRescued(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {selectedRescued ? bilingual(lang, selectedRescued.name, selectedRescued.nameNe) || t('noName') : t('details')}
+            </DialogTitle>
+          </DialogHeader>
+          {selectedRescued && (
+            <dl className="grid grid-cols-[108px_1fr] gap-x-3 gap-y-2 text-sm">
+              <dt className="font-semibold text-foreground">{t('age')}</dt>
+              <dd className="m-0 text-muted-foreground">{selectedRescued.age ?? t('notRecorded')}</dd>
+              <dt className="font-semibold text-foreground">{t('rescuedFrom')}</dt>
+              <dd className="m-0 text-muted-foreground">
+                {bilingual(lang, selectedRescued.rescuedAt?.title, selectedRescued.rescuedAt?.titleNe) || selectedRescued.remarks || t('notRecorded')}
+              </dd>
+              <dt className="font-semibold text-foreground">{t('takenTo')}</dt>
+              <dd className="m-0 text-muted-foreground">
+                {bilingual(lang, selectedRescued.stationedAt?.title, selectedRescued.stationedAt?.titleNe) || t('notRecorded')}
+              </dd>
+              <dt className="font-semibold text-foreground">{t('status')}</dt>
+              <dd className="m-0 text-muted-foreground">
+                {bilingual(lang, selectedRescued.status?.title, selectedRescued.status?.titleNe) || t('notRecorded')}
+              </dd>
+              <dt className="font-semibold text-foreground">{t('date')}</dt>
+              <dd className="m-0 text-muted-foreground">{selectedRescued.rescuedOn || t('notRecorded')}</dd>
+              {selectedRescued.nationality && selectedRescued.nationality !== 'nepali' && (
+                <>
+                  <dt className="font-semibold text-foreground">{t('country')}</dt>
+                  <dd className="m-0 text-muted-foreground">{selectedRescued.country || t('foreignBadge')}</dd>
+                </>
+              )}
+              {selectedRescued.gender && (
+                <>
+                  <dt className="font-semibold text-foreground">{t('gender')}</dt>
+                  <dd className="m-0 text-muted-foreground">{selectedRescued.gender}</dd>
+                </>
+              )}
+              {selectedRescued.remarks && (
+                <>
+                  <dt className="font-semibold text-foreground">{t('notes')}</dt>
+                  <dd className="m-0 text-muted-foreground">{selectedRescued.remarks}</dd>
+                </>
+              )}
+            </dl>
+          )}
+          <DialogFooter>
+            <Button className="w-full" onClick={() => setSelectedRescued(null)}>{t('close')}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={selectedMissing !== null} onOpenChange={open => !open && setSelectedMissing(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{selectedMissing?.name || t('missing')}</DialogTitle>
+          </DialogHeader>
+          {selectedMissing && (
+            <div className="space-y-3 text-sm leading-relaxed">
+              {selectedMissing.imageProxy && (
+                <img src={selectedMissing.imageProxy} alt="" referrerPolicy="no-referrer" className="max-h-56 w-full rounded object-contain" />
+              )}
+              <p className="m-0 text-xs uppercase tracking-wide text-muted-foreground">{t('missingGroupNote')}</p>
+              <dl className="grid grid-cols-[108px_1fr] gap-x-3 gap-y-2">
+                <dt className="font-semibold text-foreground">{t('age')}</dt>
+                <dd className="m-0 text-muted-foreground">{selectedMissing.age || t('notRecorded')}</dd>
+                <dt className="font-semibold text-foreground">{t('lastSeen')}</dt>
+                <dd className="m-0 text-muted-foreground">{selectedMissing.place || t('notRecorded')}</dd>
+                <dt className="font-semibold text-foreground">{t('status')}</dt>
+                <dd className="m-0 text-muted-foreground">{selectedMissing.daoStatus || selectedMissing.status || t('notRecorded')}</dd>
+              </dl>
+              {selectedMissing.description && (
+                <p className="m-0 whitespace-pre-wrap break-words text-muted-foreground">{selectedMissing.description}</p>
+              )}
+            </div>
+          )}
+          <DialogFooter>
+            <Button className="w-full" onClick={() => setSelectedMissing(null)}>{t('close')}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </FloodShell>
   );
 }

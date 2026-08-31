@@ -28,7 +28,7 @@ interface NavItem {
 
 const NAV: NavItem[] = [
   { href: '/bhotekoshi-flood', en: 'Overview', ne: 'सारांश' },
-  { href: '/bhotekoshi-flood/rescue', en: 'Rescued', ne: 'उद्धार' },
+  { href: '/bhotekoshi-flood/rescue', en: 'People', ne: 'व्यक्ति' },
   // Giving sits early: after a reader has the picture, before they go
   // looking for a way to help and find a fake QR code somewhere else.
   { href: '/bhotekoshi-flood/donate', en: 'Donate', ne: 'सहयोग' },

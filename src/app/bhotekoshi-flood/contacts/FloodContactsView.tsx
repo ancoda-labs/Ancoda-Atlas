@@ -355,11 +355,9 @@ export default function FloodContactsView() {
             </React.Fragment>
           ))}
 
-        {districts.length === 0 && official && directory.length === 0 && (
+        {official === null ? null : directory.length === 0 && districts.length === 0 ? (
           <p className="fl-note fl-pending">{t('pending')}</p>
-        )}
-
-        {official === null && <p className="fl-empty">{t('loading')}</p>}
+        ) : null}
 
         {directory.length > 0 && (
           <>

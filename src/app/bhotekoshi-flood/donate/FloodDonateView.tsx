@@ -34,7 +34,8 @@ import FloodWarehouses from '@/app/bhotekoshi-flood/_components/FloodWarehouses'
 
 const T = {
   kicker: { en: 'Give', ne: 'सहयोग' },
-  loading: { en: 'Loading…', ne: 'लोड हुँदै…' },
+  emptyFunds: { en: 'Reviewed accounts are not on this build.', ne: 'जाँचिएका खाता यो निर्माणमा छैनन्।' },
+  emptyFigures: { en: 'These figures are not on this build.', ne: 'यी तथ्यांक यो निर्माणमा छैनन्।' },
   title: { en: 'Give safely', ne: 'सुरक्षित रूपमा सहयोग गर्नुहोस्' },
   standfirst: {
     en: 'Three things, in that order: the authorized government QR, what has already reached that fund, and the goods NDRRMA is still asking for. Atlas never handles money.',
@@ -423,8 +424,8 @@ export default function FloodDonateView() {
           <em className="ok">{t('authorized')}</em>
         </div>
 
-        {!data ? (
-          <p className="fl-empty">{t('loading')}</p>
+        {!primaryFund ? (
+          <p className="fl-empty">{t('emptyFunds')}</p>
         ) : (
           <>
             {primaryFund && heroBank && (
@@ -497,7 +498,7 @@ export default function FloodDonateView() {
           <h2>{t('receivedTitle')}</h2>
         </div>
         {!received ? (
-          <p className="fl-empty">{t('loading')}</p>
+          <p className="fl-empty">{t('emptyFigures')}</p>
         ) : (
           <>
             {(received.discrepancies || []).length > 0 && (
@@ -575,7 +576,7 @@ export default function FloodDonateView() {
           <h2>{t('neededTitle')}</h2>
         </div>
         {!needed ? (
-          <p className="fl-empty">{t('loading')}</p>
+          <p className="fl-empty">{t('emptyFigures')}</p>
         ) : (
           <>
             <p className="fl-note">{t('neededIntro')}</p>
@@ -637,11 +638,7 @@ export default function FloodDonateView() {
           <span>{lang === 'ne' ? 'अन्य' : 'Also'}</span>
           <h2>{t('otherWays')}</h2>
         </div>
-        {!data ? (
-          <p className="fl-empty">{t('loading')}</p>
-        ) : (
-          <>
-            {portalChannels.length > 0 && (
+        {portalChannels.length > 0 && (
               <>
                 <h4 className="fl-minor">{t('portalTitle')}</h4>
                 <p className="fl-note">{t('portalHint')}</p>
@@ -722,8 +719,6 @@ export default function FloodDonateView() {
                 )}
               </p>
             )}
-          </>
-        )}
       </section>
 
       {qrOpen && (
