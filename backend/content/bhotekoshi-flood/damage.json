@@ -1,0 +1,172 @@
+{
+  "id": "damage",
+  "_comment": "Copernicus EMS Rapid Mapping EMSR927 AOI01 Syapru Besi / Timure grading, and the Nepal Electricity Authority 10 Bhadra notice. The bulletin at nirajbhusal.github.io is someone else's compilation; Copernicus and NEA are the sources. Two rules: (1) 433 is all buildings, 392 is residential inside that — never add them; (2) the ~450 people in the AOI are not added to uncontacted 4,247, and the 133+ NEA hydropower workers are not added to hydropower 933 or to 4,247. Langtang 60 is inside the 133+, not on top of it. lib/damage-merge.ts overlays a live scrape of the bulletin's EMSR927 table only when the building arithmetic still closes. Maps are the bulletin's reprinted EMSR927 product images; photograph lat/lon are flood-path place pins from the caption, not GPS.",
+  "as_of": "2026-08-27T05:05:00Z",
+  "as_of_label_en": "27 Aug 2026, 05:05 UTC (Copernicus EMSR927 AOI01 v1) · NEA notice 10 Bhadra",
+  "as_of_label_ne": "२७ अगस्ट २०२६, ०५:०५ UTC (कोपर्निकस EMSR927 AOI01 v1) · प्राधिकरण सूचना १० भदौ",
+  "sources": [
+    { "label": "Copernicus EMS Rapid Mapping EMSR927", "url": "https://mapping.emergency.copernicus.eu/activations/EMSR927/" },
+    { "label": "Rasuwa flood bulletin (compilation)", "url": "https://nirajbhusal.github.io/rasuwa-flood-bulletin/damage.html" },
+    { "label": "Nepal Electricity Authority", "url": "https://www.nea.org.np" },
+    { "label": "NEA via Ratopati (133+ uncontacted)", "url": "https://www.ratopati.com/story/587664/more-than-133-hydropower-employees-and-workers-left-without-contact-in-rasuwa-flood" }
+  ],
+
+  "copernicus": {
+    "title_en": "Syabrubesi and the Trishuli corridor",
+    "title_ne": "स्याफ्रुबेँसी र त्रिशूली करिडोर",
+    "lead_en": "EMSR927 AOI01 · 27 Aug 2026, 05:05 UTC · ITHACA / SERTIT · GLIDE FF-2026-000162-NPL · Charter 1052 · v1",
+    "lead_ne": "EMSR927 AOI01 · २७ अगस्ट २०२६, ०५:०५ UTC · ITHACA / SERTIT · GLIDE FF-2026-000162-NPL · Charter 1052 · v1",
+    "note_en": "Satellite visual interpretation, not a police or NDRRMA sitrep. Not added to deaths, injured, uncontacted 4,247 or rescued. Do not add the ~450 people in this map onto the uncontacted figure. Possibly damaged is a proximity proxy, not a confirmed count.",
+    "note_ne": "उपग्रह दृश्य व्याख्या, प्रहरी वा एनडीआरआरएमए सिटरेप होइन। मृत्यु, घाइते, सम्पर्कविहीन ४,२४७ वा उद्धारमाथि जोडिँदैन। यो नक्साका करिब ४५० लाई सम्पर्कविहीनमा नजोड्नुहोस्। सम्भावित क्षति निकटताको प्रॉक्सी हो, पुष्टि होइन।",
+    "portal_url": "https://mapping.emergency.copernicus.eu/activations/EMSR927/",
+    "maps": [
+      {
+        "id": "copernicus-ems927-overview",
+        "kind": "overview",
+        "src": "https://nirajbhusal.github.io/rasuwa-flood-bulletin/img/today-2026-08-27-copernicus-ems927-overview.jpg",
+        "caption_en": "EMSR927 AOI01 grading overview",
+        "caption_ne": "EMSR927 AOI01 ग्रेडिङ अवलोकन"
+      },
+      {
+        "id": "copernicus-ems927-detail02",
+        "kind": "detail",
+        "src": "https://nirajbhusal.github.io/rasuwa-flood-bulletin/img/today-2026-08-27-copernicus-ems927-detail02.jpg",
+        "caption_en": "EMSR927 AOI01 grading detail",
+        "caption_ne": "EMSR927 AOI01 ग्रेडिङ विवरण"
+      },
+      {
+        "id": "copernicus-ems927-detail03",
+        "kind": "detail",
+        "src": "https://nirajbhusal.github.io/rasuwa-flood-bulletin/img/today-2026-08-27-copernicus-ems927-detail03.jpg",
+        "caption_en": "EMSR927 AOI01 grading detail",
+        "caption_ne": "EMSR927 AOI01 ग्रेडिङ विवरण"
+      },
+      {
+        "id": "copernicus-ems927-infographic-p1",
+        "kind": "infographic",
+        "src": "https://nirajbhusal.github.io/rasuwa-flood-bulletin/img/today-2026-08-27-copernicus-ems927-infographic-p1.jpg",
+        "caption_en": "EMSR927 grading infographic",
+        "caption_ne": "EMSR927 ग्रेडिङ इन्फोग्राफिक"
+      },
+      {
+        "id": "copernicus-ems927-infographic-p2",
+        "kind": "infographic",
+        "src": "https://nirajbhusal.github.io/rasuwa-flood-bulletin/img/today-2026-08-27-copernicus-ems927-infographic-p2.jpg",
+        "caption_en": "EMSR927 grading infographic",
+        "caption_ne": "EMSR927 ग्रेडिङ इन्फोग्राफिक"
+      }
+    ],
+    "photos": [
+      {
+        "id": "ok-syafrubesi-valley",
+        "kind": "photo",
+        "src": "https://nirajbhusal.github.io/rasuwa-flood-bulletin/img/today-2026-08-26-ok-syafrubesi-valley.jpg",
+        "alt": "स्याफ्रुबेसी उपत्यकामा बाढी, अनलाइनखबर",
+        "caption_en": "अनलाइनखबर · सेनाको ७ जना उद्धार रिपोर्ट",
+        "caption_ne": "स्याफ्रुबेसी उपत्यका",
+        "lat": 28.161,
+        "lon": 85.336,
+        "place_id": "syaphrubesi"
+      },
+      {
+        "id": "tkp-syabrubesi-flood",
+        "kind": "photo",
+        "src": "https://nirajbhusal.github.io/rasuwa-flood-bulletin/img/today-2026-08-26-tkp-syabrubesi-flood.jpg",
+        "alt": "स्याफ्रुबेसी क्षेत्रमा बाढी, काठमाडौं पोस्ट",
+        "caption_en": "काठमाडौं पोस्ट · आज",
+        "caption_ne": "स्याफ्रुबेसी / भोटेकोशी बाढी",
+        "lat": 28.161,
+        "lon": 85.336,
+        "place_id": "syaphrubesi"
+      },
+      {
+        "id": "ratopati-timure-surge",
+        "kind": "photo",
+        "src": "https://nirajbhusal.github.io/rasuwa-flood-bulletin/img/today-2026-08-26-ratopati-timure-surge.jpg",
+        "alt": "टिमुरे/भोटेकोशीमा भीषण बाढीको बहाव, रातोपाटी",
+        "caption_en": "रातोपाटी · आज",
+        "caption_ne": "टिमुरे बाढीको बहाव",
+        "lat": 28.207,
+        "lon": 85.334,
+        "place_id": "timure"
+      }
+    ],
+    "headline": [
+      { "id": "landslide", "value": 111.1, "tone": "critical", "label_en": "Landslide / flood area", "label_ne": "पहिरो / बाढी क्षेत्र", "source": "EMSR927", "unit_en": "ha", "unit_ne": "हे" },
+      { "id": "population", "value": 450, "tone": "warning", "label_en": "People in the mapped area", "label_ne": "नक्सा क्षेत्रका व्यक्ति", "source": "EMSR927", "approximate": true },
+      { "id": "buildings", "value": 433, "tone": "critical", "label_en": "Buildings affected", "label_ne": "प्रभावित भवन", "source": "EMSR927" },
+      { "id": "residential", "value": 392, "tone": "critical", "label_en": "Residential, inside the 433", "label_ne": "आवासीय, ४३३ भित्र", "source": "EMSR927" },
+      { "id": "road", "value": 7.6, "tone": "warning", "label_en": "Road affected", "label_ne": "प्रभावित सडक", "source": "EMSR927", "unit_en": "km", "unit_ne": "कि.मी." },
+      { "id": "bridges", "value": 5, "tone": "critical", "label_en": "Bridges destroyed, of 5 in the AOI", "label_ne": "ध्वस्त पुल, AOI का ५ मध्ये", "source": "EMSR927" },
+      { "id": "power", "value": 0.8, "tone": "critical", "label_en": "Power plant constructions", "label_ne": "विद्युत आयोजना संरचना", "source": "EMSR927", "unit_en": "ha", "unit_ne": "हे" },
+      { "id": "helipad", "value": 0.01, "tone": "warning", "label_en": "Helipad destroyed", "label_ne": "ध्वस्त हेलिप्याड", "source": "EMSR927", "unit_en": "ha", "unit_ne": "हे" }
+    ],
+    "rows": [
+      { "id": "landslide", "group": "hazard", "label_en": "Landslide", "label_ne": "पहिरो", "destroyed": 111.1, "affected": 111.1, "unit_en": "ha", "unit_ne": "हे" },
+      { "id": "population", "group": "people", "label_en": "Population", "label_ne": "जनसंख्या", "affected": 450, "aoi": 750, "share": "60%", "approximate": true },
+      { "id": "residential", "group": "buildings", "label_en": "Residential buildings", "label_ne": "आवासीय भवन", "destroyed": 283, "damaged": 31, "possible": 78, "affected": 392, "aoi": 517, "share": "75.8%" },
+      { "id": "institutional", "group": "buildings", "label_en": "Institutional", "label_ne": "संस्थागत", "destroyed": 1, "damaged": 0, "possible": 0, "affected": 1, "aoi": 1, "share": "100%" },
+      { "id": "school", "group": "buildings", "label_en": "School / university", "label_ne": "विद्यालय/विश्वविद्यालय", "destroyed": 0, "damaged": 1, "possible": 0, "affected": 1, "aoi": 1, "share": "100%" },
+      { "id": "other-nonres", "group": "buildings", "label_en": "Other non-residential", "label_ne": "अन्य गैर-आवासीय", "destroyed": 37, "damaged": 0, "possible": 0, "affected": 37, "aoi": 38, "share": "97.4%" },
+      { "id": "religious", "group": "buildings", "label_en": "Religious", "label_ne": "धार्मिक", "destroyed": 2, "damaged": 0, "possible": 0, "affected": 2, "aoi": 2, "share": "100%" },
+      { "id": "all-buildings", "group": "buildings", "label_en": "All buildings (sum)", "label_ne": "सबै भवन (योग)", "destroyed": 323, "damaged": 32, "possible": 78, "affected": 433, "aoi": 559, "share": "77.5%" },
+      { "id": "primary-road", "group": "transport", "label_en": "Primary road", "label_ne": "प्राथमिक सडक", "destroyed": 4.7, "damaged": 0, "possible": 0.7, "affected": 5.4, "aoi": 5.4, "share": "100%", "unit_en": "km", "unit_ne": "कि.मी." },
+      { "id": "local-road", "group": "transport", "label_en": "Local road", "label_ne": "स्थानीय सडक", "destroyed": 0.4, "damaged": 0, "possible": 0.6, "affected": 1.1, "aoi": 3.3, "share": "33.3%", "unit_en": "km", "unit_ne": "कि.मी." },
+      { "id": "cart-track", "group": "transport", "label_en": "Cart track", "label_ne": "गाडा बाटो", "destroyed": 1.0, "damaged": 0, "possible": 0.1, "affected": 1.1, "aoi": 2.8, "share": "39.3%", "unit_en": "km", "unit_ne": "कि.मी." },
+      { "id": "bridges", "group": "transport", "label_en": "Bridges and elevated highways", "label_ne": "पुल तथा एलिभेटेड राजमार्ग", "destroyed": 5, "damaged": 0, "possible": 0, "affected": 5, "aoi": 5, "share": "100%" },
+      { "id": "helipad", "group": "transport", "label_en": "Helipad", "label_ne": "हेलिप्याड", "destroyed": 0.01, "damaged": 0, "possible": 0, "affected": 0.01, "aoi": 0.01, "share": "100%", "unit_en": "ha", "unit_ne": "हे" },
+      { "id": "power-plant", "group": "facilities", "label_en": "Power plant constructions", "label_ne": "विद्युत आयोजना संरचना", "destroyed": 0.8, "damaged": 0, "possible": 0, "affected": 0.8, "aoi": 0.8, "share": "100%", "unit_en": "ha", "unit_ne": "हे" },
+      { "id": "wetland", "group": "landcover", "label_en": "Inland wetlands", "label_ne": "आन्तरिक सिमसार", "affected": 12.1, "aoi": 14.6, "share": "82.9%", "unit_en": "ha", "unit_ne": "हे" },
+      { "id": "other-landuse", "group": "landcover", "label_en": "Other land use", "label_ne": "अन्य भू-उपयोग", "affected": 3.4, "aoi": 4.3, "share": "79.1%", "unit_en": "ha", "unit_ne": "हे" },
+      { "id": "agriculture", "group": "landcover", "label_en": "Mixed agriculture", "label_ne": "मिश्रित कृषि", "affected": 2.1, "aoi": 5.1, "share": "41.2%", "unit_en": "ha", "unit_ne": "हे" },
+      { "id": "shrub", "group": "landcover", "label_en": "Shrub", "label_ne": "झाडी", "affected": 31.8, "aoi": 93.1, "share": "34.2%", "unit_en": "ha", "unit_ne": "हे" },
+      { "id": "forest", "group": "landcover", "label_en": "Forests", "label_ne": "वन", "affected": 61.6, "aoi": 228.8, "share": "26.9%", "unit_en": "ha", "unit_ne": "हे" },
+      { "id": "all-landcover", "group": "landcover", "label_en": "All land cover (sum)", "label_ne": "सबै भू-आवरण (योग)", "affected": 111.0, "aoi": 345.9, "share": "32.1%", "unit_en": "ha", "unit_ne": "हे" }
+    ]
+  },
+
+  "power": {
+    "title_en": "Power · NEA urgent notice",
+    "title_ne": "विद्युत् · प्राधिकरण जरुरी सूचना",
+    "body_en": "Nepal Electricity Authority head office, Durbar Marg. Urgent notice, 10 Bhadra 2083 (26 August 2026). The Rasuwa flash flood damaged hydropower and transmission; supply is interrupted. Work is on to restore supply. Stay alert near the river and in risk areas. Do not believe rumours.",
+    "body_ne": "नेपाल विद्युत् प्राधिकरण प्रधान कार्यालय, दरबारमार्ग। अत्यन्त जरुरी सूचना, १० भदौ २०८३ (२६ अगस्ट २०२६)। रसुवाको आकस्मिक बाढीले जलविद्युत् र प्रसारण संरचनामा क्षति, आपूर्ति अवरुद्ध। आपूर्ति चाँडो सुचारु गर्ने प्रयास। नदीकिनार र जोखिम क्षेत्रमा सतर्क रहनुहोस्। हल्ला नपत्याउनुहोस्।",
+    "note_en": "Source: Nepal Electricity Authority notice 2083/05/10. Projects with a blank remarks column are on this list but not marked as directly affected. Phone 01-4153007, 01-4153012.",
+    "note_ne": "स्रोत: नेपाल विद्युत् प्राधिकरण सूचना २०८३/०५/१०। खाली कैफियत भएका आयोजना यो सूचीमा छन्, प्रत्यक्ष प्रभावित भनेर चिन्हित छैनन्। फोन ०१-४१५३००७, ०१-४१५३०१२।",
+    "listed_mw": 431.1,
+    "affected_mw": 276,
+    "foot_en": "Directly affected 276 MW. Trishuli 3B hub 220 kV substation also damaged. Blank-remarks plants are on the list, not marked hit.",
+    "foot_ne": "प्रत्यक्ष प्रभावित २७६ मेगावाट। त्रिशूली ३बी हब २२० केभी सबस्टेशन पनि क्षति। खाली कैफियत भएका आयोजना सूचीमा छन्, प्रभावित भनेर चिन्हित छैनन्।",
+    "phones": ["014153007", "014153012"],
+    "plants": [
+      { "id": "rasuwagadhi", "name_en": "Rasuwagadhi", "name_ne": "रसुवागढी", "mw": 111, "hit": true, "remarks_en": "Directly affected · NEA subsidiary", "remarks_ne": "प्रत्यक्ष प्रभावित · प्राधिकरण सहायक" },
+      { "id": "salasungi", "name_en": "Salasungi (Sanjen)", "name_ne": "सालासुङगी (सञ्जेन)", "mw": 78, "hit": false },
+      { "id": "upper-sanjen", "name_en": "Upper Sanjen", "name_ne": "अपर सञ्जेन", "mw": 14.8, "hit": false },
+      { "id": "sanjen", "name_en": "Sanjen", "name_ne": "सञ्जेन", "mw": 42.5, "hit": false },
+      { "id": "chilime", "name_en": "Chilime", "name_ne": "चिलिमे", "mw": 22, "hit": true, "remarks_en": "Directly affected · NEA subsidiary", "remarks_ne": "प्रत्यक्ष प्रभावित · प्राधिकरण सहायक" },
+      { "id": "langtang", "name_en": "Langtang", "name_ne": "लाङटाङ", "mw": 20, "hit": true, "remarks_en": "Directly affected · IPP", "remarks_ne": "प्रत्यक्ष प्रभावित · आईपीपी" },
+      { "id": "trishuli-3a", "name_en": "Trishuli 3A", "name_ne": "त्रिशूली ३ए", "mw": 60, "hit": true, "remarks_en": "Directly affected · NEA", "remarks_ne": "प्रत्यक्ष प्रभावित · प्राधिकरण" },
+      { "id": "upper-mailung", "name_en": "Upper Mailung", "name_ne": "अपर मैलुङ", "mw": 14.8, "hit": false },
+      { "id": "mailung", "name_en": "Mailung", "name_ne": "मैलुङ", "mw": 5, "hit": false },
+      { "id": "trishuli", "name_en": "Trishuli", "name_ne": "त्रिशूली", "mw": 24, "hit": true, "remarks_en": "Directly affected · NEA", "remarks_ne": "प्रत्यक्ष प्रभावित · प्राधिकरण" },
+      { "id": "devighat", "name_en": "Devighat", "name_ne": "देवीघाट", "mw": 14, "hit": true, "remarks_en": "Directly affected · NEA", "remarks_ne": "प्रत्यक्ष प्रभावित · प्राधिकरण" },
+      { "id": "nea-solar", "name_en": "NEA Solar", "name_ne": "प्राधिकरण सोलार", "mw": 25, "hit": true, "remarks_en": "Directly affected · NEA", "remarks_ne": "प्रत्यक्ष प्रभावित · प्राधिकरण" }
+    ],
+    "uncontacted": {
+      "id": "nea-staff",
+      "value": 133,
+      "suffix": "+",
+      "label_en": "Hydropower staff uncontacted",
+      "label_ne": "सम्पर्कविहीन जलविद्युत् कर्मचारी",
+      "detail_en": "NEA via Ratopati. Not added to uncontacted 4,247 or to hydropower 933.",
+      "detail_ne": "प्राधिकरण, रातोपाटीमार्फत। सम्पर्कविहीन ४,२४७ वा जलविद्युत् ९३३ माथि जोडिँदैन।"
+    },
+    "langtang_staff": {
+      "id": "langtang-staff",
+      "value": 60,
+      "label_en": "Langtang project, still uncontacted",
+      "label_ne": "लाङटाङ आयोजना, अझै सम्पर्कविहीन",
+      "detail_en": "Inside the 133+, not on top of it. Unchanged.",
+      "detail_ne": "१३३+ भित्र, माथि होइन। यथावत्।"
+    }
+  }
+}

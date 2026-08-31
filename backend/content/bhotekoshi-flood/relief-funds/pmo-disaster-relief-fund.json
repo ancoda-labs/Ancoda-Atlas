@@ -1,0 +1,14 @@
+{
+  "id": "pmo-disaster-relief-fund",
+  "name": "Prime Minister's Disaster Relief Fund (Nepal)",
+  "tier": 1,
+  "category": "donation",
+  "org_type": "government",
+  "description_en": "The Government of Nepal's central relief fund. The official page lists bank account details and QR codes for domestic and international transfers.",
+  "description_ne": "नेपाल सरकारको केन्द्रीय राहत कोष। आधिकारिक पृष्ठमा स्वदेशी तथा विदेशी रकम पठाउनका लागि बैंक खाता विवरण र QR कोड उपलब्ध छन्।",
+  "url": "https://opmcm.gov.np/content/586/heartfelt-appeal/",
+  "source_verification_url": "https://kathmandupost.com/national/2026/08/27/how-people-can-help-nepal-s-flood-affected-communities",
+  "last_verified": "2026-08-27",
+  "status": "active",
+  "translation_status": "pending_native_review"
+}

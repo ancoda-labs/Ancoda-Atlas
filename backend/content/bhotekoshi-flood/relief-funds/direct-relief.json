@@ -1,0 +1,14 @@
+{
+  "id": "direct-relief",
+  "name": "Direct Relief",
+  "tier": 2,
+  "category": "donation",
+  "org_type": "ingo",
+  "description_en": "Supplying medical and trauma supplies to health facilities responding to the floods.",
+  "description_ne": "बाढी प्रतिकार्यमा संलग्न स्वास्थ्य संस्थाहरूलाई औषधि तथा घाइते उपचार सामग्री उपलब्ध गराउँदै।",
+  "url": "https://www.directrelief.org",
+  "source_verification_url": "https://kathmandupost.com/national/2026/08/27/how-people-can-help-nepal-s-flood-affected-communities",
+  "last_verified": "2026-08-27",
+  "status": "active",
+  "translation_status": "pending_native_review"
+}

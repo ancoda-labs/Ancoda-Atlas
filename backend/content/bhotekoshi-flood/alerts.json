@@ -1,0 +1,48 @@
+{
+  "id": "alerts",
+  "last_updated": "2026-08-28",
+  "note_en": "Figures and warnings are preliminary and change through the day. Follow the linked source for the current position.",
+  "note_ne": "तथ्यांक र चेतावनी प्रारम्भिक हुन् र दिनभरि परिवर्तन हुन सक्छन्। पछिल्लो अवस्थाका लागि स्रोत लिंक हेर्नुहोस्।",
+  "alerts": [
+    {
+      "id": "lhende-lake",
+      "severity": "critical",
+      "title_en": "Temporary lake on the Lhende, upstream of Rasuwagadhi",
+      "title_ne": "रसुवागढी माथि ल्हेन्डेमा अस्थायी ताल",
+      "body_en": "SitRep-6 reports a temporary lake of about 0.11 km² on the Lhende river, roughly 18 km upstream of Rasuwagadhi, held back by a debris dam. The risk of a burst flood is high. Seen on satellite imagery at 11:44 on 27 August. The cause is an ice and glacier collapse of about 1 km² on the northern Lhende on 26 August, alongside a magnitude 5.2 seismic event.",
+      "body_ne": "सिटरेप-६ अनुसार रसुवागढीभन्दा करिब १८ कि.मी. माथि ल्हेन्डे नदीमा करिब ०.११ वर्ग कि.मी.को अस्थायी ताल बनेको छ, जुन पहिरोको बाँधले रोकिएको छ। ताल फुटेर बाढी आउने जोखिम उच्च छ। २७ अगस्टको ११:४४ बजेको उपग्रह तस्बिरमा देखिएको। कारण: २६ अगस्टमा उत्तरी ल्हेन्डेमा करिब १ वर्ग कि.मी.को हिउँ र हिमनदी खस्नु, सँगै ५.२ म्याग्निच्युडको भूकम्पीय घटना।",
+      "source": "NDRRMA SitRep-6",
+      "source_url": "https://ndrrma.gov.np/"
+    },
+    {
+      "id": "barrier-lake",
+      "severity": "critical",
+      "title_en": "New barrier lake raises fresh flood threat",
+      "title_ne": "नयाँ बाँध-तालले थप बाढीको जोखिम बढायो",
+      "body_en": "China has warned that a barrier lake near the Nepal–Tibet border could breach, with roughly 3 million cubic metres of water expected to flow into it over the next three days.",
+      "body_ne": "नेपाल–तिब्बत सीमा नजिकको बाँध-ताल फुट्न सक्ने चीनले चेतावनी दिएको छ; आगामी तीन दिनमा करिब ३० लाख घनमिटर पानी त्यसमा थपिने अनुमान छ।",
+      "source": "Kathmandu Post",
+      "source_url": "https://kathmandupost.com/national/2026/08/27/new-barrier-lake-in-nepal-raises-fresh-flood-threat-china-warns"
+    },
+    {
+      "id": "riverside",
+      "severity": "critical",
+      "title_en": "Stay away from the riverbank",
+      "title_ne": "नदी किनारमा नजानुहोस्",
+      "body_en": "Districts along the Trishuli — Nuwakot, Dhading, Chitwan, Gorkha and nearby areas — are asked to stay in safe locations on high alert until further notice.",
+      "body_ne": "त्रिशूली किनारका जिल्लाहरू — नुवाकोट, धादिङ, चितवन, गोरखा र वरपरका क्षेत्र — अर्को सूचना नआउँदासम्म उच्च सतर्कता सहित सुरक्षित स्थानमा रहन अनुरोध छ।",
+      "source": "Nepal Police",
+      "source_url": "https://www.nepalpolice.gov.np/"
+    },
+    {
+      "id": "no-personal-qr",
+      "severity": "warning",
+      "title_en": "Do not send money to personal QR codes",
+      "title_ne": "व्यक्तिगत QR मा पैसा नपठाउनुहोस्",
+      "body_en": "NDRRMA has warned against collecting money or sharing personal QR codes in the name of flood victims. Give only through the official funds listed below.",
+      "body_ne": "बाढी पीडितको नाममा रकम संकलन गर्ने वा व्यक्तिगत QR बाँड्ने कार्यविरुद्ध एनडीआरआरएमएले चेतावनी दिएको छ। तल सूचीबद्ध आधिकारिक कोषबाट मात्र सहयोग गर्नुहोस्।",
+      "source": "NDRRMA",
+      "source_url": "https://bipadportal.gov.np/"
+    }
+  ]
+}

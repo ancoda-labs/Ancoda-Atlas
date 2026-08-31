@@ -1,0 +1,14 @@
+{
+  "id": "nrcs",
+  "name": "Nepal Red Cross Society",
+  "tier": 1,
+  "category": "donation",
+  "org_type": "national_red_cross",
+  "description_en": "Leading on-the-ground evacuation, search & rescue, and emergency supply distribution. Reported reaching around 5,000 people as of 27 August 2026.",
+  "description_ne": "उद्धार, खोज तथा राहत सामग्री वितरणमा अग्रणी। २०२६ अगस्ट २७ सम्म करिब ५,००० जनासम्म पुगेको जनाइएको छ।",
+  "url": "https://donation.nrcs.org/",
+  "source_verification_url": "https://kathmandupost.com/national/2026/08/27/how-people-can-help-nepal-s-flood-affected-communities",
+  "last_verified": "2026-08-27",
+  "status": "active",
+  "translation_status": "pending_native_review"
+}
