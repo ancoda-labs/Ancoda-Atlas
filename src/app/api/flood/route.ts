@@ -41,13 +41,11 @@ async function build(): Promise<FloodDeskPayload> {
   // Gauges come from the ten-minute refresh; the direct fetch is the cold-start
   // path only, for the first request after a deploy.
   const store = getFloodStore();
-  // The direct fetch is the cold-start path only. It is skipped while a cycle
-  // is in flight: reading the store now also starts that cycle, so without this
-  // every request arriving during the first ~30 seconds fetched the gauges
-  // again on its own and competed with the cycle it was waiting for. A cold
-  // request simply has no gauges yet; the next poll has them.
-  const river =
-    store.river ?? (isFloodRefreshRunning() ? null : await fetchCorridorGauges());
+  // Always fetch gauges when the store has none. Skipping while a cycle is
+  // "running" left the Cloudflare host with an empty map: getFloodStore()
+  // starts that cycle, the flag stays true, and the isolate returns before
+  // BIPAD answers — so DHM pins and station photos never appeared.
+  const river = store.river ?? await fetchCorridorGauges();
   // Same cold-start as the gauges: the overview leads with BIPAD's incident
   // tiles, and those must not wait for the ten-minute cycle. Skipped while a
   // cycle is already fetching them.

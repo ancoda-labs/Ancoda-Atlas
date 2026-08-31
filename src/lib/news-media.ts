@@ -40,8 +40,10 @@ function secret(): string {
     // Harmless in development, silently destructive in production: behind more
     // than one replica the signatures this process mints are rejected by every
     // other one, and roughly half of all images fail with nothing in the logs
-    // to say why. Say it once, loudly, rather than let it be discovered from
-    // the outside.
+    // to say why. Cloudflare Workers are that case — the flood desk feed is
+    // signed on one isolate and the photograph is fetched on another, so every
+    // press thumbnail 403s unless ATLAS_MEDIA_SECRET is set to the same value
+    // on the deployment.
     if (process.env.NODE_ENV === 'production') {
       console.warn(
         '[Media proxy] ATLAS_MEDIA_SECRET is not set. A per-process key is in use, ' +
