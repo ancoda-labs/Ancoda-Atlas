@@ -1,0 +1,138 @@
+name: atlas-prod
+
+# Atlas in production: Traefik terminating TLS, the Next.js frontend, the
+# FastAPI API, one Celery worker, one scheduler, and Redis.
+#
+# ── Why this is a single host, and not the Swarm stack Parichaya runs ────────
+#
+# Atlas keeps its sweep snapshot, flood desk store and delta memory as JSON
+# files under runs/, shared between the API and the worker through a bind
+# mount. A bind mount is host-local, so every service that touches it has to
+# sit on the same machine. That rules out spreading replicas across nodes.
+#
+# The worker is pinned to one replica for a second, harder reason: it is the
+# sole writer of those files. Two workers would race on the same sweep and
+# interleave their writes. The API is read-only against runs/ and could be
+# scaled, but there is no point putting it on another node it cannot read from.
+#
+# If Atlas ever needs to scale horizontally, that state moves into Postgres or
+# Redis first and this file becomes a Swarm stack second. Not before.
+
+services:
+  traefik:
+    image: traefik:v3
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+      - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL:-research@ancodalabs.com}"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+      - "--log.level=INFO"
+      - "--accesslog=true"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik-certificates:/letsencrypt
+    networks: [atlas_public]
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes: ["redis-data:/data"]
+    networks: [atlas_internal]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      retries: 5
+    restart: unless-stopped
+
+  api:
+    image: atlas-api:latest
+    build:
+      context: ../../backend
+      dockerfile: ../infra/prod/Dockerfile.api
+    env_file: ../../.env
+    environment:
+      APP_ENV: production
+      REDIS_URL: redis://redis:6379/0
+      ATLAS_RUNS_DIR: /app/runs
+    volumes:
+      - ${ATLAS_RUNS_PATH:-./runs}:/app/runs:ro
+    networks: [atlas_internal, atlas_public]
+    depends_on:
+      redis: {condition: service_healthy}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=atlas-prod_atlas_public"
+      - "traefik.http.routers.api.rule=Host(`${DOMAIN_API:-atlas-api.ancodalabs.com}`)"
+      - "traefik.http.routers.api.entrypoints=websecure"
+      - "traefik.http.routers.api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.api.loadbalancer.server.port=8000"
+    restart: unless-stopped
+
+  # One replica, always. See the note at the top of this file.
+  worker:
+    image: atlas-api:latest
+    env_file: ../../.env
+    environment:
+      APP_ENV: production
+      REDIS_URL: redis://redis:6379/0
+      ATLAS_RUNS_DIR: /app/runs
+    volumes:
+      - ${ATLAS_RUNS_PATH:-./runs}:/app/runs
+    command: /app/docker/worker-entrypoint.sh
+    networks: [atlas_internal]
+    depends_on:
+      redis: {condition: service_healthy}
+    restart: unless-stopped
+
+  beat:
+    image: atlas-api:latest
+    env_file: ../../.env
+    environment:
+      APP_ENV: production
+      REDIS_URL: redis://redis:6379/0
+    command: /app/docker/beat-entrypoint.sh
+    networks: [atlas_internal]
+    depends_on:
+      redis: {condition: service_healthy}
+    restart: unless-stopped
+
+  frontend:
+    image: atlas-frontend:latest
+    build:
+      context: ../../frontend
+      dockerfile: ../infra/prod/Dockerfile.frontend
+      args:
+        # Baked into the browser bundle, so this is the public API hostname.
+        NEXT_PUBLIC_API_BASE_URL: "https://${DOMAIN_API:-atlas-api.ancodalabs.com}"
+    environment:
+      # Used by the server-rendered dashboard, which reaches the API over the
+      # internal network rather than back out through Traefik.
+      ATLAS_API_BASE_URL: http://api:8000
+      PORT: "3117"
+    networks: [atlas_internal, atlas_public]
+    depends_on: [api]
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=atlas-prod_atlas_public"
+      - "traefik.http.routers.frontend.rule=Host(`${DOMAIN_FRONTEND:-atlas.ancodalabs.com}`)"
+      - "traefik.http.routers.frontend.entrypoints=websecure"
+      - "traefik.http.routers.frontend.tls.certresolver=letsencrypt"
+      - "traefik.http.services.frontend.loadbalancer.server.port=3117"
+    restart: unless-stopped
+
+volumes:
+  redis-data:
+  traefik-certificates:
+
+networks:
+  atlas_internal:
+  atlas_public:

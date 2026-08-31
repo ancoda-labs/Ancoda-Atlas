@@ -1,0 +1,36 @@
+# The Next.js frontend, built and served by its own Node process.
+#
+# Not a static export behind nginx: the dashboard's first paint is
+# server-rendered from the API so that a reader on a slow connection gets the
+# hazard figures in the HTML rather than after a round trip, and the flood desk
+# pages carry per-page metadata. Both need a running Next server.
+
+FROM node:22-alpine AS deps
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --ignore-scripts
+
+FROM node:22-alpine AS build
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+# Baked into the client bundle at build time, so it must be the address a
+# browser can reach — not the internal service name.
+ARG NEXT_PUBLIC_API_BASE_URL=""
+ENV NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL}
+RUN npm run build
+
+FROM node:22-alpine AS run
+WORKDIR /app
+ENV NODE_ENV=production
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/.next ./.next
+COPY --from=build /app/public ./public
+COPY --from=build /app/package.json ./package.json
+COPY --from=build /app/next.config.mjs ./next.config.mjs
+
+EXPOSE 3117
+HEALTHCHECK --interval=60s --timeout=10s --start-period=40s --retries=3 \
+  CMD wget -qO- http://localhost:${PORT:-3117}/ > /dev/null || exit 1
+
+CMD ["sh", "-c", "npx next start -p ${PORT:-3117}"]
