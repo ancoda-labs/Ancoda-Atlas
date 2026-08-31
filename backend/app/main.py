@@ -125,6 +125,9 @@ async def readiness():
     """
     import redis
 
+    from app.core.storage import is_storage_configured, storage_healthy
+    from app.core.supabase import db_healthy, is_db_configured
+
     checks: dict[str, str] = {}
 
     try:
@@ -137,8 +140,19 @@ async def readiness():
     runs = settings.runs_dir
     checks["runs"] = "ok" if runs.is_dir() else "missing"
 
-    checks["supabase"] = "configured" if settings.is_db_configured else "not_configured"
-    checks["storage"] = "configured" if settings.is_storage_configured else "not_configured"
+    # Three states, not two. "Configured but unreachable" is the one worth
+    # separating out: it is the shape an unapplied migration or a rotated key
+    # takes, and reporting it as merely "configured" is how that goes unnoticed
+    # until a reader tries to send a photograph.
+    if is_db_configured():
+        checks["supabase"] = "ok" if await db_healthy() else "unavailable"
+    else:
+        checks["supabase"] = "not_configured"
+
+    if is_storage_configured():
+        checks["storage"] = "ok" if await storage_healthy() else "unavailable"
+    else:
+        checks["storage"] = "not_configured"
 
     # Only the pieces Atlas genuinely cannot run without gate readiness.
     required_ok = checks["redis"] == "ok" and checks["runs"] == "ok"
