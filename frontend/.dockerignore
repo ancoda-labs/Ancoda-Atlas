@@ -1,15 +1,22 @@
+# The build context is frontend/, not the repository root — so .git, .github,
+# LICENSE and the docs all sit outside it already and need no entry here.
+
 node_modules
-npm-debug.log*
-.git
-.gitignore
-.github
-.omc
+.next/
+out/
+.turbo/
+*.tsbuildinfo
+
+# Secrets never enter an image layer. The build reads NEXT_PUBLIC_* from build
+# args instead; see infra/prod/Dockerfile.frontend.
 .env
 .env.*
 !.env.example
+
+# Machine state, not source.
 runs/
-.next/
-docs/
-*.md
-!README.md
-LICENSE
+
+npm-debug.log*
+yarn-error.log*
+*.log
+.DS_Store

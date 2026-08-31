@@ -1,52 +1,93 @@
-# Dependencies
-node_modules/
-
-# Python
-__pycache__/
-*.py[cod]
-.venv/
-venv/
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-*.egg-info/
-
-# Environment (contains API keys)
+# ─── Secrets ──────────────────────────────────────────────────────────────────
+# Every .env at any depth — the root one both services read, and any that
+# appear under backend/ or frontend/. .env.example is the tracked template and
+# is exempted below.
+#
+# Next.js also reads .env.local, .env.development.local and .env.production.local
+# without being told to, so those have to be covered by the pattern rather than
+# listed one by one.
 .env
+.env.*
+!.env.example
+*.pem
+*.key
 
-# Runtime data
+# ─── Runtime data ─────────────────────────────────────────────────────────────
+# The sweep snapshot, the flood desk store and the delta memory. The worker
+# writes these; they are machine state, not source.
 runs/
 output/
 
-# IDE / Editor
+# ─── Node / Next.js ───────────────────────────────────────────────────────────
+node_modules/
+.next/
+out/
+.turbo/
+*.tsbuildinfo
+.npm/
+.yarn/
+.pnpm-store/
+
+# ─── Python ───────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.so
+.Python
+.venv/
+venv/
+env/
+build/
+dist/
+.eggs/
+*.egg-info/
+
+# Tooling caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+
+# Coverage
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+
+# Celery, when a worker or beat is run on the host rather than in its container
+celerybeat-schedule*
+celerybeat.pid
+
+# ─── Supabase CLI ─────────────────────────────────────────────────────────────
+# Local CLI scratch. supabase/migrations/ is tracked — it is the schema.
+supabase/.temp/
+supabase/.branches/
+
+# ─── Logs and process files ───────────────────────────────────────────────────
+*.log
+npm-debug.log*
+yarn-error.log*
+*.pid
+*.seed
+
+# ─── IDE / Editor ─────────────────────────────────────────────────────────────
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
 
-# OS files
+# ─── OS files ─────────────────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
 desktop.ini
 
-# Local agent files (Next.js may rewrite CLAUDE.md; AGENTS.md is tracked)
+# ─── Local agent and maintainer files ─────────────────────────────────────────
+# next dev rewrites CLAUDE.md; AGENTS.md is tracked and must stay that way, or
+# the working tree gains an uncommitted change on every dev server start.
 .claude/
 CLAUDE.md
-
-# Playwright
-.playwright-cli/
-
-# Logs
-*.log
-npm-debug.log*
-
-# Backup files
-*.bak
-
-# Local maintainer notes
 MAINTAINER_DECISIONS.local.md
 
-# Next.js build output
-.next/
-*.tsbuildinfo
+# ─── Misc ─────────────────────────────────────────────────────────────────────
+.playwright-cli/
+*.bak
