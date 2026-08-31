@@ -44,10 +44,29 @@ async def _run_cycle() -> dict[str, Any]:
     delta = memory.add_run(synthesized)
     synthesized["delta"] = delta
 
-    # 4. Actionable reads. The rule engine is the fallback; the LLM layer
-    #    replaces this when one is configured (see the ai domain).
-    synthesized["ideas"] = generate_ideas(synthesized)
-    synthesized["ideasSource"] = "rules" if synthesized["ideas"] else "disabled"
+    # 4. Actionable reads. The LLM writes them when one is configured; the rule
+    #    engine is the fallback, and a failed model call falls back rather than
+    #    leaving the panel empty.
+    from app.domains.ai.ideas import generate_llm_ideas
+    from app.domains.ai.providers.factory import get_provider
+
+    provider = get_provider()
+    llm_ideas = None
+    if provider and provider.is_configured:
+        previous = (memory.get_last_run() or {}).get("ideas") or []
+        llm_ideas = await generate_llm_ideas(provider, synthesized, delta, previous)
+
+    if llm_ideas:
+        synthesized["ideas"] = llm_ideas
+        synthesized["ideasSource"] = "llm"
+    elif provider and provider.is_configured:
+        # Configured but unusable. Distinct from `disabled` so an operator can
+        # see the difference between "no key" and "the key is not working".
+        synthesized["ideas"] = []
+        synthesized["ideasSource"] = "llm-failed"
+    else:
+        synthesized["ideas"] = generate_ideas(synthesized)
+        synthesized["ideasSource"] = "rules" if synthesized["ideas"] else "disabled"
 
     # 5. Publish.
     runs_store.write_json(runs_store.DASHBOARD, synthesized)
