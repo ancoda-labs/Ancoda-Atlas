@@ -1,11 +1,11 @@
-name: Build & Publish Docker Image
+name: Build & Publish Docker Images
 
 on:
   push:
-    branches: [master]
+    branches: [main]
     tags: ['v*']
   pull_request:
-    branches: [master]
+    branches: [main]
 
 env:
   REGISTRY: ghcr.io
@@ -17,6 +17,20 @@ jobs:
     permissions:
       contents: read
       packages: write
+
+    # Atlas is two images. The API carries every source, schedule and route;
+    # the frontend carries the UI. They are built from infra/prod, which is the
+    # only place their production Dockerfiles live.
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: api
+            context: backend
+            dockerfile: infra/prod/Dockerfile.api
+          - name: frontend
+            context: frontend
+            dockerfile: infra/prod/Dockerfile.frontend
 
     steps:
       - name: Checkout
@@ -48,21 +62,23 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-            ${{ vars.DOCKERHUB_ENABLED == 'true' && format('{0}/{1}', secrets.DOCKERHUB_USERNAME, 'atlas') || '' }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.name }}
+            ${{ vars.DOCKERHUB_ENABLED == 'true' && format('{0}/atlas-{1}', secrets.DOCKERHUB_USERNAME, matrix.name) || '' }}
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=sha,prefix=
 
-      - name: Build and push
+      - name: Build and push ${{ matrix.name }}
         uses: docker/build-push-action@v6
         with:
-          context: .
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
           platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # Scoped per image, or the two builds evict each other's layers.
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.name }}

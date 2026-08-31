@@ -1,12 +1,8 @@
-<!-- BEGIN:nextjs-agent-rules -->
-
 # This is NOT the Next.js you know
 
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
-
-<!-- END:nextjs-agent-rules -->
 
 # Ancoda Atlas — agent notes
 
@@ -20,162 +16,122 @@ It aggregates Nepal-scoped hazard feeds onto a dashboard, with a public flood-re
 
 **Scope is natural hazards and humanitarian response only:** earthquakes, floods, landslides, GLOF, wildfire, hazardous air, extreme heat/cold, avalanches, drought, and declared relief. Out of scope: politics, elections, conflict, markets, finance, diplomacy, aviation tracking, general news. India and China appear only via cross-boundary hazards.
 
-Package: `ancoda-atlas` **4.0.0**. Contact: `research@ancodalabs.com`.
+Version **4.0.0**. Contact: `research@ancodalabs.com`.
 
-## License
+## Architecture: two services, one repo
 
-**AGPL-3.0-only** (`LICENSE`, `package.json`). Copyright (c) 2026 Ancoda Labs.
+Atlas is a **Python/FastAPI backend** and a **Next.js frontend**. All fetching, scraping, scheduling and persistence is Python. The frontend renders and nothing else — it has no server-side data code and no database or storage clients.
 
-There are **no SPDX or copyright headers** in source files. Provenance and third-party data live in `NOTICE`. Boundary GeoJSON under `public/data/` is derived from openknowledgenp/localboundaries (**MIT**) — keep that attribution. Payment QR codes under `public/qr/` are Government of Nepal artefacts, not Ancoda property.
-
-Running a modified Atlas as a network service requires offering users the source of that modified version.
-
-**New dependencies must be license-compatible** (MIT/BSD/Apache/ISC/AGPL-compatible). Do not add proprietary, source-available-but-not-OSI, or AGPL-incompatible packages. If you vendor data or code, add it to `NOTICE` in the same PR.
-
-## Stack and versions
+```
+backend/     FastAPI + Celery. Every source, every route, every schedule.
+frontend/    Next.js. Pages, views, components. Talks to the API over axios.
+infra/       dev/ and prod/ Compose stacks.
+runs/        Gitignored. The worker writes it; the API reads it.
+supabase/    The SQL schema, applied out of band.
+```
 
 | Piece | What is actually used |
 |---|---|
-| Runtime | **Node.js >= 22**, npm >= 10 (`.nvmrc` is `22`) |
-| App | **Next.js 16** (App Router only — no `pages/`), **React 19**, `next.config.mjs` |
-| Language | TypeScript `strict` + `noImplicitAny` for `src/app`, `src/components`, `src/lib/*.ts`. Hazard sources and much of `src/lib` / `src/apis` are **ESM `.mjs`**. `allowJs` is false; `.mjs` is typed via `src/types/atlas-modules.d.ts`. |
-| UI | Tailwind CSS **v4** (`@tailwindcss/postcss`), shadcn/ui + Radix, `geist`, `lucide-react`, `clsx` / `tailwind-merge` / CVA. Tokens in `src/styles/globals.css`. |
-| Optional DB | **Hosted Supabase** over PostgREST (`@supabase/supabase-js`). Not a Compose service. |
-| Optional object store | **MinIO** (`minio` npm client). Compose sidecar for local photos. |
-| Optional LLM | Raw `fetch()` providers in `src/lib/llm/` — no vendor SDKs. |
-| Optional Discord | `discord.js` is an **optionalDependency**. |
-| Tests | Node’s built-in test runner: `node --experimental-strip-types --test test/*.test.mjs` |
-| Lint/format | **None.** No ESLint, Prettier, or Biome. `npm run check:no-any` bans explicit `any`. `next build` is the typecheck. |
-| Hooks | `npm install` sets `core.hooksPath` to `.githooks/`. `commit-msg` enforces `type(scope): subject`. `pre-commit` runs **`npm run verify`** (no-any + tests + production build). |
+| Backend | **Python 3.12**, FastAPI, Celery + Redis, `httpx`, `structlog` |
+| Frontend | **Node 22**, Next.js 16 (App Router), React 19, Tailwind v4, shadcn/ui |
+| Transport | **axios** (`frontend/src/config/axios.ts`) |
+| Server state | **TanStack Query** (`frontend/src/hooks/use*.ts`) |
+| Client state | **Redux Toolkit** (`frontend/src/store/`) — theme, language, display prefs |
+| Database | **Hosted Supabase over PostgREST** (`supabase-py`). Optional. |
+| Object store | **MinIO**. Optional, behind a Compose profile. |
+| LLM | Raw `httpx` in `backend/app/domains/ai/providers/` — no vendor SDKs |
+| Backend checks | `ruff`, `mypy`, `pytest` — run in the container |
+| Frontend checks | `npm run verify` (no-any + node:test + `next build`) |
 
-Default dashboard port is **3117** (`PORT`, `atlas.config.mjs`). `next.config.mjs` sets `reactStrictMode: true` and `serverExternalPackages: ['discord.js', 'pg', 'minio']` — `pg` is listed but **not a dependency**.
+## The three backend processes
+
+| Service | Does | Constraint |
+|---|---|---|
+| `api` | Serves HTTP. **Reads** `runs/`, never writes it. | Never fetches from a government portal on the request path. |
+| `worker` | Runs every sweep and refresh. The **only** writer of `runs/`. | **Do not scale past one replica.** |
+| `beat` | The clock. 15-min hazard sweep, 10-min flood refresh. | Separate so restarting a worker mid-sweep does not lose the schedule. |
+
+Redis is Celery's broker **and** the channel the worker uses to tell the API a sweep landed. It carries the signal, never the state — the payloads are the JSON files under `runs/`, which both services mount.
+
+Every write to `runs/` is atomic (temp file + rename, fsync before rename, `.bak` kept). Reads never raise; a missing or corrupt file answers `None` and the page renders its empty state.
+
+## How to run locally
+
+```bash
+cp .env.example .env   # every key is optional
+make up                # redis, api, worker, beat, frontend
+```
+
+| | |
+|---|---|
+| Dashboard | http://localhost:3117 |
+| Flood desk | http://localhost:3117/bhotekoshi-flood |
+| API docs | http://localhost:8000/docs |
+
+`make storage` adds MinIO if you want photo uploads locally. `make diag` reports which optional services are configured. See `make help` for the rest.
+
+A cold start shows the empty skeleton for one cycle — the worker sweeps on start (with a staleness guard so a code-change restart does not re-pull sixteen thousand register rows).
+
+### Environment
+
+One `.env` at the repository root, read by both services. Copy `.env.example`. **Do not put comments on the same line as values** — Docker `env_file` treats them as part of the value.
+
+Two API base URLs exist deliberately: `NEXT_PUBLIC_API_BASE_URL` is baked into the browser bundle at **build** time and must be publicly reachable; `ATLAS_API_BASE_URL` is read at **runtime** by the server renderer and points at the API container.
+
+Everything degrades. No Supabase → photos, digests and rescue corrections hide themselves. No MinIO → photos hide. No LLM key → rule-based reads, briefs in Nepali and English only. No FIRMS key → empty wildfire panel. The hazard dashboard works with none of them.
 
 ## Directory map
 
 | Path | Purpose |
 |---|---|
-| `src/app/` | App Router: `/` dashboard, `/bhotekoshi-flood/*` desk, `/events` SSE, `/api/*` |
-| `src/app/_components/` | Dashboard-route-only UI |
-| `src/app/bhotekoshi-flood/_components/` | Flood-desk-shared UI |
-| `src/components/` | Cross-route UI (`FloodShell`, maps). `ui/` = shadcn primitives |
-| `src/hooks/` | `use-atlas-theme`, `use-flood-lang`, `use-desk-refresh` |
-| `src/types/` | Shared domain types + `.mjs` declarations |
-| `src/styles/` | Global CSS / design tokens |
-| `src/apis/` | Sweep orchestrator + standalone hazard source modules |
-| `src/apis/sources/` | One file per feed; each exports `briefing()` |
-| `src/apis/utils/` | `safeFetch`, Nepal geography, flood scope, `.env` loader |
-| `src/lib/` | Sweeper, flood cron, synthesize, photos, storage, LLM, alerts |
-| `src/lib/supabase/` | Unused shadcn/Supabase client stubs (no `middleware.ts` at app root) |
-| `src/instrumentation.ts` | Starts sweeper + flood cron on Node runtime |
-| `content/bhotekoshi-flood/` | Human-reviewed funds, helplines, sitrep JSON |
-| `locales/` | `en` / `ne` / `fr` UI strings (`src/lib/i18n.mjs`) |
-| `supabase/migrations/` | Community-layer SQL (applied in Supabase, not by the app) |
-| `scripts/` | diag, synthesize, clean, migrate-check, no-any, git hooks |
-| `test/` | `node:test` suites (mostly LLM; plus image + news-media) |
-| `public/data/` | Province/district GeoJSON |
-| `public/qr/` | Government relief-fund QR images |
-| `runs/` | **Gitignored** runtime: `latest.json`, `dashboard.json`, `memory/`, `flood-desk.json` |
-| `atlas.config.mjs` | Env-backed config (port, intervals, LLM, telegram, discord) |
-| `.githooks/` | commit-msg + pre-commit |
-| `.github/` | PR template, issue templates, CODEOWNERS, docker-publish workflow |
-| `.devcontainer/` | Codespaces / VS Code compose (Node 22 + MinIO) |
+| `backend/app/core/` | config, logging, errors, http, nepal, supabase, storage, celery, `runs_store` |
+| `backend/app/api/v1/router.py` | Where domain routers mount |
+| `backend/app/domains/hazards/` | 5 sources, synthesize, delta, sweep task |
+| `backend/app/domains/flood/` | gauges, BIPAD, NDRRMA, bulletins, rescue portal, desk store, 10-min task |
+| `backend/app/domains/news/` | wire, YouTube, digests, topic cache |
+| `backend/app/domains/media/` | the signed image proxy |
+| `backend/app/domains/photos/` | ground reports: EXIF walker, upload rails |
+| `backend/app/domains/ai/` | 11 LLM providers, reads, insights, ask sandbox |
+| `backend/app/domains/alerts/` | Telegram and Discord |
+| `backend/app/domains/stream/` | SSE over Redis pub/sub |
+| `backend/content/` | **Reviewed** funds, helplines, sitrep. Higher bar than code. |
+| `backend/scripts/` | diag, sweep, flood_refresh, migrate_check, clean |
+| `frontend/src/config/axios.ts` | The one HTTP client |
+| `frontend/src/services/` | One thin file per domain |
+| `frontend/src/hooks/use*.ts` | TanStack Query over the services |
+| `frontend/src/store/` | Redux slices: theme, language, desk prefs |
+| `frontend/src/types/index.ts` | **The API contract.** Backend responses must satisfy it. |
 
-Geography is centralized in `src/apis/utils/nepal.mjs`. Do not scatter bounding boxes.
+Geography is centralized in `backend/app/core/nepal.py` and `backend/app/domains/flood/scope.py`. The frontend has a small read-only subset in `src/lib/nepal-geo.ts` and `src/lib/flood-scope.ts` for map rendering; both say so at the top. Do not scatter bounding boxes.
 
-## How to run locally
+## Conventions
 
-```bash
-cp .env.example .env   # keys optional; see below
-npm install            # Node 22+, configures git hooks
-npm run dev            # http://localhost:3117  (PORT from .env)
-```
-
-`npm run diag` checks Node, imports, and port. First paint may be an empty skeleton until the first sweep writes `runs/` and SSE pushes.
-
-**Docker (production-shaped, not the edit loop):**
-
-```bash
-cp .env.example .env
-# MINIO_ROOT_PASSWORD is required by docker-compose.yml (it uses :? interpolation)
-docker compose up --build -d
-```
-
-Compose always starts **MinIO** and `atlas` `depends_on` it, even though the app itself can run without storage. Volume `./runs:/app/runs`. Image is `node:22-alpine`, `npm ci --ignore-scripts`, `next start -p ${PORT:-3117}`.
-
-**Supabase is never local.** Same hosted project as production. Apply `supabase/migrations/0001_flood_desk.sql` with `supabase db push` or the SQL editor. `npm run db:migrate` **does not apply DDL** — it only checks that tables/RPCs are reachable.
-
-### Environment
-
-Copy `.env.example`. **Do not put comments on the same line as values** (Docker `env_file` treats them as part of the value). All keys are optional for a working hazard dashboard.
-
-| Group | Vars | If absent |
-|---|---|---|
-| Always useful | `PORT=3117`, `REFRESH_INTERVAL_MINUTES`, `FLOOD_REFRESH_INTERVAL_MINUTES` (min 2) | Defaults in `atlas.config.mjs` |
-| Hazard keys | `FIRMS_MAP_KEY`, `RELIEFWEB_APPNAME` | FIRMS `no_key` / empty wildfire; ReliefWeb degrades to HDX |
-| Media proxy | `ATLAS_MEDIA_SECRET` | Random per process — **broken images after restart and across replicas** |
-| Flood admin | `FLOOD_REFRESH_TOKEN`, `FLOOD_ADMIN_TOKEN`, `ATLAS_IP_SALT` | Refresh POST and photo DELETE return **404** if tokens empty; IP salt randomizes per process |
-| YouTube | `YOUTUBE_API_KEY` | Known channel IDs still work |
-| Supabase | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY` (alias `SUPABASE_SERVICE_ROLE_KEY`) | Photos, digest store, rescue corrections hide (`database_not_configured`) |
-| MinIO | `MINIO_ENDPOINT`, `MINIO_ROOT_USER`, `MINIO_ROOT_PASSWORD`, `MINIO_PUBLIC_ENDPOINT`, `MINIO_SECURE`, `MINIO_BUCKET` | Photos hide (`storage_not_configured`). News images are **never** stored here |
-| LLM | `LLM_PROVIDER`, `LLM_API_KEY`, `LLM_MODEL`, … | Rule-based hazard engine; briefs only Nepali + English |
-| Alerts | Telegram / Discord vars | Alerts off; Discord falls back to webhook if no `discord.js` |
-
-Use the **secret** Supabase key server-side. Tables have RLS on with no policies; the publishable key cannot read them.
-
-## `runs/` read and write
-
-Created by the sweeper if the disk is writable.
-
-| File | Writer | Readers |
-|---|---|---|
-| `runs/latest.json` | Sweeper after `fullBriefing()`; CLI `brief:save` | `scripts/synthesize.mjs`, LLM/CLI |
-| `runs/dashboard.json` | Sweeper after synthesize + ideas | SSR `src/app/page.tsx`, sweeper cold start |
-| `runs/memory/` | `src/lib/delta/memory.mjs` (hot + cold archives) | Delta engine |
-| `runs/flood-desk.json` | `src/lib/flood-cron.ts` | Flood desk APIs (versioned store; mismatch is discarded, not migrated) |
-
-`npm run clean` deletes these. Do not commit `runs/`.
-
-## Supabase and MinIO when absent
-
-`isDbConfigured()` needs URL + secret key. `isStorageConfigured()` needs endpoint + user + password.
-
-Photo GET returns `{ enabled: false, photos: [], reason }`. Digest GET returns `{ enabled: false, reason: "database_not_configured" }`. POST upload returns 503. The rest of Atlas (sweeps, gauges, curated `content/`) continues.
-
-Photos need **both** services. MinIO holds only public ground-report bytes (`flood-photos/{date}/{id}.{ext}`), short-lived presigned URLs. News/thumbs go through `src/lib/news-media.ts` at request time.
-
-## Code conventions (from the tree)
-
-- **App Router.** Route `page.tsx` is a thin server wrapper; views are `*View.tsx` / `DashboardClient.tsx`. Route-private components live in `_components/`. `'use client'` only where state/hooks need it.
-- **Imports:** `@/` → `src/`, `@/atlas.config.mjs` for config.
-- **Naming:** PascalCase React components; kebab-case hooks (`use-flood-lang.ts`); source files `seismic.mjs`, `flood-photos.ts`.
-- **Data fetching:** Server Route Handlers under `src/app/api/`. Many are `force-dynamic` with `cacheFor` / `noStore` from `src/lib/http-cache.ts`. Dashboard live updates via SSE `/events`. News is independent of the 15-minute sweep (`/api/news`).
-- **Sources:** `Promise.allSettled`, structured errors, `stale: true` on fallback feeds. Runnable alone: `node src/apis/sources/seismic.mjs`.
-- **Quotes:** mixed. shadcn `ui/` uses double quotes; most app code uses single.
-- **Types:** no explicit `any`. Prefer existing types in `src/types/index.ts`.
-- **Commits:** `feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert(scope): subject` (subject ≤ 72 chars after type).
-- **PRs:** default branch is **`main`**. Do not commit on `main`. CODEOWNERS: `@ancoda-labs`; `content/`, `LICENSE`, `NOTICE`, `CONTRIBUTING.md`, `SECURITY.md` need maintainer review.
+- **Backend:** domain folders with `sources/`, `service.py`, `routers.py`, `tasks.py`. No explicit `Any` where a real type exists. `ruff` (E, F, I, N) and `mypy` both clean.
+- **Responses are camelCase.** `frontend/src/types/index.ts` is the contract, and `backend/tests/test_contract.py` fails the build on a snake_case key or a missing field. This is the most likely way a change breaks a panel, because Python naming conventions push the other way.
+- **Sources** answer a dict, are runnable alone (`python -m app.domains.hazards.sources.seismic`), and never raise: a failure returns an error shape so `asyncio.gather` cannot lose the other sources.
+- **`safe_fetch` never raises.** Check `is_error()` before using a result.
+- **Frontend:** no component calls `fetch` directly. Services → hooks → views.
+- **Commits:** `feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert(scope): subject`, ≤72 chars after the type.
+- **PRs:** default branch is `main`. Do not commit on `main`. CODEOWNERS `@ancoda-labs`; `backend/content/`, `LICENSE`, `NOTICE`, `CONTRIBUTING.md`, `SECURITY.md` need maintainer review.
 
 ## Constraints (non-negotiable)
 
-1. **Live public-safety tool.** Never fabricate, placeholder, or mock hazard readings, alerts, helpline numbers, casualty figures, or donation links in UI or `content/`. Empty/degraded is correct; invented numbers are not. LLM may **translate** listed headlines, not compose a disaster brief. Do not invent funds.
-2. **Do not weaken crowdsourced upload rails** in `src/app/api/flood/photos/route.ts` and `src/lib/flood-photos.ts` / `src/lib/image.ts`: size cap, `safetyAcknowledged`, magic-byte type sniff, EXIF strip, Nepal bounds, rate limit, report threshold. Photos **publish on arrival** by design — those rails are the review.
-3. **No secrets.** Never commit `.env` or keys. `.gitignore` already excludes `.env` and `runs/`.
-4. **No commits on `main`.** Branch and open a PR. Run `npm run verify` before the PR (`pre-commit` already does).
-5. **Hazard-only sources.** New feeds go through `src/apis/briefing.mjs` and `src/lib/synthesize.mjs` plus delta metrics if they affect the dashboard.
-6. **`content/` is higher bar than code.** Every fund/helpline/figure needs a primary source on the record. Donation routes are curated, never scraped.
+1. **Live public-safety tool.** Never fabricate, placeholder, or mock hazard readings, alerts, helpline numbers, casualty figures, or donation links. Empty or degraded with an honest timestamp is correct; invented numbers are not. An LLM may **translate** listed headlines, never compose a disaster brief. Do not invent funds.
+2. **Do not weaken the upload rails** in `backend/app/domains/photos/`: size cap, `safetyAcknowledged`, magic-byte sniff, EXIF strip, Nepal bounds, rate limit, report threshold. Photos publish on arrival by design — those rails *are* the review, and each has a test naming what it prevents.
+3. **Do not weaken the media proxy.** It only fetches URLs Atlas signed itself. The SSRF guard (loopback, RFC1918, `169.254.169.254`) is why an open text field cannot reach the cloud metadata endpoint.
+4. **Zero is a claim.** BIPAD stores unfilled loss records as zeros, so every total travels with how many records actually carried figures. An absent counter is `None`, never `0`.
+5. **No secrets.** `.env` and `.env.*` are gitignored at every depth; `.env.example` is the tracked template.
+6. **No commits on `main`.** Branch and open a PR. Run `npm run verify` and the backend checks first (the pre-commit hook does both).
+7. **New sources** go through `app/domains/hazards/sweep.py` or the flood cycle, plus delta metrics if they affect the dashboard.
+8. **`backend/content/` is a higher bar than code.** Every fund, helpline and figure needs a primary source on the record. Donation routes are curated, never scraped.
+9. **New dependencies must be licence-compatible** (MIT/BSD/Apache/ISC/AGPL-compatible). Add vendored data or code to `NOTICE` in the same PR.
 
 ## Known gaps (blunt)
 
-- **`README.md` is duplicated** — the document restarts around the screenshots TODO (~line 845). Trust the first half, then stop.
-- **CI badge points at `ci.yml`, which does not exist.** The only workflow is `.github/workflows/docker-publish.yml`, and it still triggers on **`master`**, while `origin/HEAD` is **`main`**. `CONTRIBUTING.md` previously claimed CI runs `verify`; it does not.
-- **`npm run db:migrate` does not migrate.** Name vs behaviour will waste a deploy.
-- **Compose is not optional-MinIO.** `MINIO_ROOT_PASSWORD` is mandatory interpolation; `atlas` waits on MinIO health even if you only wanted the dashboard.
-- **Stale deploy story.** README still argues `@napi-rs/canvas` / Netlify / edge in places; `package.json` has no canvas. `src/lib/db.ts` talks about Netlify functions; `src/lib/http-cache.ts` talks about Cloudflare Workers. Architecture elsewhere says a long-lived Node process + writable `runs/` is required.
-- **Metadata lie:** root layout title still says “19 Sources”.
-- **`src/lib/supabase/{client,server,middleware}.ts` are unused** shadcn leftovers. Do not wire browser Supabase into flood tables (RLS would hide them anyway).
-- **Test coverage is thin** outside LLM provider wrappers and `flood-image` / `news-media`. No sweep/API/UI tests. Integration LLM tests will fail without keys.
-- **No formatter/linter**, so style is inconsistent by file.
-- **Production secrets:** unset `ATLAS_MEDIA_SECRET` / `ATLAS_IP_SALT` / `FLOOD_ADMIN_TOKEN` are foot-guns (proxy signatures, rate-limit salt, no photo takedown except DB).
-- **Photos are public on upload.** Three reports auto-unpublish; without `FLOOD_ADMIN_TOKEN` DELETE is 404.
-- **Insights translation cache is in-process** — multi-replica multiplies LLM rate limits.
-- **`.gitignore` still mentions dead paths** (`apis/.env`, `dashboard/public/vercel.json`) and used to ignore `AGENTS.md` (this file must stay tracked so `next dev` does not fight the working tree).
+- **The worker cannot be scaled.** It is the sole writer of `runs/`, which is a host-local bind mount. Moving that state into Postgres or Redis is the prerequisite for horizontal scaling, and should happen before `infra/prod` becomes a Swarm stack.
+- **The news topic cache and the ask-sandbox rate limit are per process.** Behind more than one API replica each holds its own, which multiplies the sandbox's hourly ceiling. Acceptable for a sandbox; note it before relying on it.
+- **`make migrate` does not migrate.** PostgREST cannot run DDL. Apply `supabase/migrations/0001_flood_desk.sql` with `supabase db push`; `make migrate` only checks the tables and the `flood_photo_recount` RPC are reachable.
+- **The interactive bots are not implemented.** The Node build carried ~400 lines of Telegram polling and a discord.js gateway client that nothing ever started. Alerts are one-way: Telegram messages and a Discord webhook. A two-way bot needs its own long-lived process.
+- **Compose is single-host by design**, not by omission. See the note at the top of `infra/prod/docker-compose.yml`.
+- **Production foot-guns:** unset `ATLAS_MEDIA_SECRET` breaks every image link on restart and across replicas; unset `ATLAS_IP_SALT` resets rate limits on restart; unset `FLOOD_ADMIN_TOKEN` means photo takedown answers 404 and there is no path except the database.
+- **The frontend duplicates a little geography** (`src/lib/nepal-geo.ts`, `src/lib/flood-scope.ts`) because the map needs it client-side. The backend owns the authoritative copies; edit both.
