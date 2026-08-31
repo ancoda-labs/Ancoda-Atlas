@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import '@/styles/globals.css';
+import Providers from '@/app/providers';
 
 export const metadata: Metadata = {
   title: 'ANCODA ATLAS INTELLIGENCE DASHBOARD',
@@ -18,7 +19,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className="bg-background text-foreground font-sans min-h-screen overflow-x-hidden selection:bg-primary selection:text-background" suppressHydrationWarning>
         <script dangerouslySetInnerHTML={{ __html: SEED_LOW_PERF }} />
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
