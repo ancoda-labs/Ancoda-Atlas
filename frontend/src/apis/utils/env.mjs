@@ -12,10 +12,12 @@ import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const paths = [
-  resolve(process.cwd(), '.env'),                // project root, however invoked
-  resolve(__dirname, '..', '..', '..', '.env'),  // repo root from src/apis/utils
-  resolve(__dirname, '..', '..', '.env'),        // legacy: apis/utils
-  resolve(__dirname, '..', '.env'),              // legacy: apis/.env
+  resolve(process.cwd(), '.env'),                      // however invoked
+  resolve(process.cwd(), '..', '.env'),                // repo root when cwd is frontend/
+  resolve(__dirname, '..', '..', '..', '..', '.env'),  // repo root from frontend/src/apis/utils
+  resolve(__dirname, '..', '..', '..', '.env'),        // legacy: repo root from src/apis/utils
+  resolve(__dirname, '..', '..', '.env'),              // legacy: apis/utils
+  resolve(__dirname, '..', '.env'),                    // legacy: apis/.env
 ];
 
 function loadEnv(filePath) {

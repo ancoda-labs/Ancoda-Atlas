@@ -1,5 +1,7 @@
 #!/bin/sh
 set -eu
 
+# The Next.js app lives in frontend/ now, so its checks run from there rather
+# than from the repository root.
 echo "Running TypeScript and production-build checks..."
-npm run verify
+(cd frontend && npm run verify)
