@@ -14,6 +14,7 @@ import {
   fetchVideosService,
 } from '@/services/flood-services';
 import type { Lang } from '@/store/slices/langSlice';
+import type { FloodDeskPayload } from '@/types';
 
 /**
  * How often an open desk page re-asks for its figures.
@@ -37,8 +38,15 @@ export const DESK_POLL_MS = 2 * 60 * 1000;
 
 const desk = { refetchInterval: DESK_POLL_MS, staleTime: DESK_POLL_MS / 2 };
 
-export function useDesk() {
-  return useQuery({ queryKey: ['flood', 'desk'], queryFn: fetchDeskService, ...desk });
+export function useDesk(initialData?: FloodDeskPayload) {
+  return useQuery({
+    queryKey: ['flood', 'desk'],
+    queryFn: fetchDeskService,
+    // Handed in by the server render, so the reviewed content is in the first
+    // HTML rather than arriving a round trip later.
+    initialData,
+    ...desk,
+  });
 }
 
 export function useSituation() {

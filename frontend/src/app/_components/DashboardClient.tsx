@@ -22,6 +22,10 @@ import { useAtlasTheme } from '@/hooks/use-atlas-theme';
 import FloodThemeToggle from '@/components/FloodThemeToggle';
 import FloodFooter from '@/components/FloodFooter';
 import { isConstrainedConnection, seedLowPerf, whenIdle } from '@/lib/connection-pref';
+import { useDashboard, useSweepStream } from '@/hooks/useHazards';
+import { fetchNewsBundleService } from '@/services/news-services';
+import { fetchBipadService } from '@/services/hazard-services';
+import { fetchVideosService } from '@/services/flood-services';
 
 const NepalSignalsMap = dynamic(() => import('@/app/_components/NepalSignalsMap'), {
   ssr: false,
@@ -339,10 +343,8 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
     let cancelled = false;
     const fetchBipad = async () => {
       try {
-        const res = await fetch('/api/bipad');
-        if (res.ok && !cancelled) {
-          setBipadData(await res.json());
-        }
+        const data = await fetchBipadService();
+        if (!cancelled) setBipadData(data);
       } catch (err) {
         console.error('[DashboardClient] Failed to fetch BIPAD data:', err);
       }
@@ -368,49 +370,10 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
     seedLowPerf();
   }, []);
 
-  // Subscribe to live events via SSE
-  useEffect(() => {
-    if (typeof EventSource === 'undefined') return;
+  // The live sweep stream, and the poll behind it. Both write into the same
+  // query cache entry, so this component reads one source either way.
+  useSweepStream();
 
-    const es = new EventSource('/events');
-    es.onmessage = (e) => {
-      try {
-        const msg = JSON.parse(e.data);
-        if (msg.type === 'update' && msg.data) {
-          setD(msg.data);
-        }
-      } catch (err) {
-        console.error('[SSE client] Error parsing event:', err);
-      }
-    };
-
-    es.onerror = () => {
-      es.close();
-    };
-
-    return () => {
-      es.close();
-    };
-  }, []);
-
-  // A polling fallback beside the stream.
-  //
-  // The dashboard used to depend on SSE alone: if the stream never delivered —
-  // a proxy that buffers event-streams, a dropped connection the browser does
-  // not retry, an instance that has not swept yet — the page kept whatever it
-  // was rendered with and never moved again, with nothing on screen to say so.
-  // Polling the same snapshot on a short cycle makes that unnoticeable rather
-  // than terminal, and costs one cached response every couple of minutes.
-  useDeskRefresh(
-    React.useCallback(() => {
-      fetch('/api/data')
-        .then(r => (r.ok ? r.json() : null))
-        .then(d => {
-          if (d?.meta) setD(d);
-        })
-        .catch(() => {});
-    }, []),
-  );
 
   // One bundled payload. Eight topic routes on a high-RTT radio each pay
   // 200–400ms before any RSS work starts.
@@ -424,9 +387,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
     });
 
     try {
-      const res = await fetch(`/api/news?bundle=1&window=${newsWindow}`);
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      const bundle = (await res.json()) as NewsBundleResponse;
+      const bundle = await fetchNewsBundleService(newsWindow);
       const topics = bundle.topics || {};
 
       setNewsCache(prev => {
@@ -481,9 +442,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
     let interval: ReturnType<typeof setInterval> | undefined;
     const loadVideos = async () => {
       try {
-        const res = await fetch('/api/flood/videos');
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        const feed = (await res.json()) as VideoFeed;
+        const feed = await fetchVideosService();
         if (!cancelled) setVideoFeed(feed);
       } catch (err) {
         console.error('[Video load failed]:', errorMessage(err));

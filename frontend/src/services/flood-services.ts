@@ -3,9 +3,28 @@ import type {
   BipadDistrictContacts,
   FloodDeskPayload,
   FloodOfficialFeed,
+  FloodVideo,
+  NdrrmaPhoto,
   NewsDigestFeed,
+  PortalCarouselPhoto,
   PortalDonationChannel,
 } from '@/types';
+
+/** What /flood/gallery answers with. */
+export interface GalleryFeed {
+  carousel: FloodOfficialFeed<PortalCarouselPhoto> | null;
+  featured: FloodOfficialFeed<NdrrmaPhoto> | null;
+  generatedAt: string;
+}
+
+/** What /flood/videos answers with. */
+export interface VideoFeed {
+  videos: FloodVideo[];
+  live: FloodVideo[];
+  searchEnabled: boolean;
+  error: string | null;
+  fetchedAt: string;
+}
 
 /** The overview: reviewed content with the live ten-minute cycle laid over it. */
 export async function fetchDeskService(): Promise<FloodDeskPayload> {
@@ -28,8 +47,8 @@ export async function fetchDonationsService(): Promise<FloodOfficialFeed<PortalD
   return data;
 }
 
-export async function fetchGalleryService() {
-  const { data } = await api.get('/flood/gallery');
+export async function fetchGalleryService(): Promise<GalleryFeed> {
+  const { data } = await api.get<GalleryFeed>('/flood/gallery');
   return data;
 }
 
@@ -38,8 +57,8 @@ export async function fetchPressService() {
   return data;
 }
 
-export async function fetchVideosService() {
-  const { data } = await api.get('/flood/videos');
+export async function fetchVideosService(): Promise<VideoFeed> {
+  const { data } = await api.get<VideoFeed>('/flood/videos');
   return data;
 }
 

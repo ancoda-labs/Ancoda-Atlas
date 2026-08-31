@@ -15,6 +15,8 @@ log = get_logger(__name__)
 
 router = APIRouter(tags=["ai"])
 
+MAX_QUESTION_CHARS = 500
+
 
 def _client_ip(forwarded: str | None, real: str | None) -> str:
     if forwarded:
@@ -70,10 +72,17 @@ async def ask(
     person, will not advise anyone to stay or leave, and will not predict — and
     those three refusals are decided before a model is consulted at all.
     """
-    question = payload.get("question")
-    if not isinstance(question, str) or not question.strip():
+    # The field is `message`, matching the contract the frontend already sends.
+    # `question` is accepted as well so a direct caller reading the route names
+    # is not surprised.
+    raw = payload.get("message") or payload.get("question")
+    question = raw.strip() if isinstance(raw, str) else ""
+    # Capped rather than truncated: a 5,000-word prompt is not a question about
+    # the desk, and silently answering the first 500 characters of one would be
+    # worse than refusing it.
+    if not question or len(question) > MAX_QUESTION_CHARS:
         response.status_code = 400
-        return {"error": "question_required"}
+        return {"error": "message_required"}
 
     client_key = hash_client(_client_ip(x_forwarded_for, x_real_ip))
     no_store(response)

@@ -15,6 +15,8 @@ import { ageFrom } from '@/lib/relative-time';
 import FloodFooter from '@/components/FloodFooter';
 import FloodThemeToggle from '@/components/FloodThemeToggle';
 import { useFloodDesk } from '@/app/bhotekoshi-flood/_components/FloodDeskProvider';
+import { usePhotos } from '@/hooks/usePhotos';
+import { useTopicNews } from '@/hooks/useHazards';
 import { districtPinForText } from '@/apis/utils/flood-scope.mjs';
 import type { FloodPhoto, FloodPhotoFeed, NewsItem } from '@/types';
 import { DESK_POLL_MS, nextUpdateLabel, useTick } from '@/hooks/use-desk-refresh';
@@ -120,37 +122,19 @@ export default function BhotekoshiFloodView() {
     return whenIdle(() => setHeavyReady(true), isConstrainedConnection() ? 4000 : 1800);
   }, []);
 
+  // Both deferred behind heavyReady: the map and the reviewed figures paint
+  // first, and these fill in once the page has settled. On a constrained
+  // connection that is the difference between a usable page and a spinner.
+  const photosQuery = usePhotos(heavyReady);
+  const wireQuery = useTopicNews('flood', '24h', 28, 8, heavyReady);
   useEffect(() => {
-    if (!heavyReady) return;
-    let cancelled = false;
-    const load = async () => {
-      const [photosRes, newsRes] = await Promise.all([
-        fetch('/api/flood/photos').catch(() => null),
-        fetch('/api/news?topic=flood&window=24h&limit=28&sourceCap=8').catch(() => null),
-      ]);
-      try {
-        if (photosRes?.ok && !cancelled) setPhotoFeed(await photosRes.json());
-      } catch {
-        /* the map stands on its own without ground reports */
-      }
-      try {
-        if (newsRes?.ok && !cancelled) {
-          const j = await newsRes.json();
-          setNewsItems(Array.isArray(j.items) ? j.items : []);
-        } else if (!cancelled) {
-          setNewsItems([]);
-        }
-      } catch {
-        if (!cancelled) setNewsItems([]);
-      }
-    };
-    load();
-    const id = setInterval(load, DESK_POLL_MS);
-    return () => {
-      cancelled = true;
-      clearInterval(id);
-    };
-  }, [heavyReady]);
+    if (photosQuery.data) setPhotoFeed(photosQuery.data);
+  }, [photosQuery.data]);
+  useEffect(() => {
+    if (wireQuery.data) setNewsItems(wireQuery.data.items ?? []);
+    else if (wireQuery.isError) setNewsItems([]);
+  }, [wireQuery.data, wireQuery.isError]);
+
 
   const L = (o: object | null | undefined, key: string): string => {
     if (!o) return '';

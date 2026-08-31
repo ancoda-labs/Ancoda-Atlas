@@ -8,6 +8,7 @@ import { useFloodLang } from '@/hooks/use-flood-lang';
 import { ageFrom } from '@/lib/relative-time';
 import { DESK_POLL_MS } from '@/hooks/use-desk-refresh';
 import { useFloodDesk } from '@/app/bhotekoshi-flood/_components/FloodDeskProvider';
+import { useSituation } from '@/hooks/useFlood';
 import type {
   BipadAlert,
   BipadIncident,
@@ -124,25 +125,8 @@ function sourceLabel(source: string | null, lang: 'en' | 'ne'): string {
 export default function FloodSituationView() {
   const [lang, setLang] = useFloodLang();
   const { desk } = useFloodDesk();
-  const [data, setData] = useState<Payload | null>(null);
+  const { data = null } = useSituation() as { data: Payload | null };
   const t = (key: keyof typeof T) => T[key][lang];
-
-  useEffect(() => {
-    let cancelled = false;
-    const load = () =>
-      fetch('/api/flood/situation')
-        .then(r => (r.ok ? r.json() : null))
-        .then(d => {
-          if (!cancelled && d) setData(d);
-        })
-        .catch(() => {});
-    load();
-    const id = setInterval(load, DESK_POLL_MS);
-    return () => {
-      cancelled = true;
-      clearInterval(id);
-    };
-  }, []);
 
   const incidents = data?.corridor?.incidents || [];
   const alerts = (data?.alerts || []).filter(a => a.public);

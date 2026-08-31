@@ -25,6 +25,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DESK_POLL_MS } from '@/hooks/use-desk-refresh';
 import { useFloodDesk } from '@/app/bhotekoshi-flood/_components/FloodDeskProvider';
+import { useFileCorrection, usePersonRegister, useRescueRegister } from '@/hooks/useRescue';
 import { isConstrainedConnection, whenIdle } from '@/lib/connection-pref';
 import {
   Select,
@@ -233,32 +234,18 @@ export default function FloodRescueView() {
     };
   }, []);
 
+  // Both registers, fetched only once the reader has asked for them —
+  // `wantRegisters` gates it because between them they are around twelve
+  // megabytes, and most visitors to this page never search a name.
+  const rescueQuery = useRescueRegister(wantRegisters);
+  const personsQuery = usePersonRegister(wantRegisters);
   useEffect(() => {
-    if (!wantRegisters) return;
-    let cancelled = false;
-    const load = () => {
-      void Promise.all([
-        fetch('/api/flood/rescue')
-          .then(r => (r.ok ? r.json() : null))
-          .then(d => {
-            if (!cancelled && d) setData(d);
-          })
-          .catch(() => {}),
-        fetch('/api/flood/persons')
-          .then(r => (r.ok ? r.json() : null))
-          .then(d => {
-            if (!cancelled && d) setPortalRegister(d);
-          })
-          .catch(() => {}),
-      ]);
-    };
-    load();
-    const id = setInterval(load, DESK_POLL_MS);
-    return () => {
-      cancelled = true;
-      clearInterval(id);
-    };
-  }, [wantRegisters]);
+    if (rescueQuery.data) setData(rescueQuery.data);
+  }, [rescueQuery.data]);
+  useEffect(() => {
+    if (personsQuery.data) setPortalRegister(personsQuery.data);
+  }, [personsQuery.data]);
+
 
   useEffect(() => {
     setRescuedShown(PAGE_SIZE);
@@ -332,23 +319,25 @@ export default function FloodRescueView() {
     return str.replace(/[0-9]/g, d => DEVA_DIGITS[Number(d)]);
   };
 
+  const fileCorrection = useFileCorrection();
+
   const submitCorrection = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.message.trim()) return;
     setFormState('sending');
     try {
-      const res = await fetch('/api/flood/rescue/correction', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ kind: form.kind, message: form.message, contact: form.contact }),
+      await fileCorrection.mutateAsync({
+        kind: form.kind,
+        message: form.message,
+        contact: form.contact,
       });
-      if (res.status === 503) setFormState('off');
-      else if (res.ok) {
-        setFormState('sent');
-        setForm({ kind: 'wrong_details', message: '', contact: '' });
-      } else setFormState('failed');
-    } catch {
-      setFormState('failed');
+      setFormState('sent');
+      setForm({ kind: 'wrong_details', message: '', contact: '' });
+    } catch (err) {
+      // 503 means the database is not configured, which is a different thing
+      // from the form failing — the page says "not available" rather than
+      // "try again".
+      setFormState((err as { status?: number })?.status === 503 ? 'off' : 'failed');
     }
   };
 

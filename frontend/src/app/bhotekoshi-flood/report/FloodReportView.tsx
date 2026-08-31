@@ -10,7 +10,7 @@ import { useFloodLang } from '@/hooks/use-flood-lang';
 import { ageFrom } from '@/lib/relative-time';
 import { orientationTransform } from '@/lib/photo-orientation';
 import type { FloodPhoto, FloodPhotoFeed } from '@/types';
-import { useDeskRefresh } from '@/hooks/use-desk-refresh';
+import { usePhotos } from '@/hooks/usePhotos';
 import { useFloodDesk } from '@/app/bhotekoshi-flood/_components/FloodDeskProvider';
 
 // Photographs sent in from the corridor, and the map they sit on.
@@ -43,28 +43,17 @@ const T = {
 export default function FloodReportView() {
   const [lang, setLang] = useFloodLang();
   const { desk } = useFloodDesk();
-  const [feed, setFeed] = useState<FloodPhotoFeed | null>(null);
+  // Photographs arrive from the public while this page is open, so it refreshes
+  // on the same cycle as the rest of the desk rather than showing whoever had
+  // sent one by the time the tab was opened.
+  const { data: feed = null, refetch } = usePhotos();
   const [openId, setOpenId] = useState<string | null>(null);
   const [selection, setSelection] = useState<MapSelection | null>(null);
   const t = (key: keyof typeof T) => T[key][lang];
 
-  const loadPhotos = useCallback(async () => {
-    try {
-      const res = await fetch('/api/flood/photos');
-      if (res.ok) setFeed(await res.json());
-    } catch {
-      setFeed({ enabled: false, photos: [], reason: 'unavailable' });
-    }
-  }, []);
-
-  // Photographs arrive from the public while this page is open, so it refreshes
-  // on the same cycle as the rest of the desk rather than showing whoever had
-  // sent one by the time the tab was opened.
-  useDeskRefresh(
-    React.useCallback(() => {
-      loadPhotos();
-    }, [loadPhotos]),
-  );
+  const loadPhotos = useCallback(() => {
+    void refetch();
+  }, [refetch]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

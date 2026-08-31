@@ -13,7 +13,7 @@ import type {
   SitrepValue,
 } from '@/types';
 import { ageFrom } from '@/lib/relative-time';
-import { useDeskRefresh } from '@/hooks/use-desk-refresh';
+import { useDonations } from '@/hooks/useFlood';
 import { useJumpSection } from '@/hooks/use-jump-section';
 import { useFloodDesk } from '@/app/bhotekoshi-flood/_components/FloodDeskProvider';
 import FloodWarehouses from '@/app/bhotekoshi-flood/_components/FloodWarehouses';
@@ -270,21 +270,10 @@ export default function FloodDonateView() {
   const [lang, setLang] = useFloodLang();
   const { desk: data } = useFloodDesk();
   const [qrOpen, setQrOpen] = useState<{ src: string; payee: string } | null>(null);
-  const [portal, setPortal] = useState<FloodOfficialFeed<PortalDonationChannel> | null>(null);
-  const t = (key: keyof typeof T) => T[key][lang];
-
   // The portal's own channels ride on their own route: the QR codes arrive as
   // inline images and would otherwise bloat the payload every desk page loads.
-  useDeskRefresh(
-    React.useCallback(() => {
-      fetch('/api/flood/donations')
-        .then(r => (r.ok ? r.json() : null))
-        .then(d => {
-          if (d) setPortal(d);
-        })
-        .catch(() => {});
-    }, []),
-  );
+  const { data: portal = null } = useDonations();
+  const t = (key: keyof typeof T) => T[key][lang];
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

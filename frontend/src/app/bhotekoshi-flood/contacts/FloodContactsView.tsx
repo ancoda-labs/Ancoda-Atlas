@@ -6,7 +6,7 @@ import FloodWarehouses from '@/app/bhotekoshi-flood/_components/FloodWarehouses'
 import { useFloodLang } from '@/hooks/use-flood-lang';
 import { ageFrom } from '@/lib/relative-time';
 import type { BipadContact, BipadDistrictContacts, FloodDistrictContacts, FloodOfficialFeed } from '@/types';
-import { useDeskRefresh } from '@/hooks/use-desk-refresh';
+import { useContacts } from '@/hooks/useFlood';
 import { useJumpSection } from '@/hooks/use-jump-section';
 import { useFloodDesk } from '@/app/bhotekoshi-flood/_components/FloodDeskProvider';
 import {
@@ -204,21 +204,10 @@ export default function FloodContactsView() {
   const { desk: data } = useFloodDesk();
   // Three hundred rows, and only this page wants them, so they ride their own
   // route rather than the desk payload every page loads.
-  const [official, setOfficial] = useState<FloodOfficialFeed<BipadDistrictContacts> | null>(null);
+  // Emergency numbers are the last thing that should go stale on an open tab.
+  const { data: official = null } = useContacts();
   const t = (key: keyof typeof T) => T[key][lang];
   const onJump = useJumpSection(['national', 'warehouses', 'districts']);
-
-  // Emergency numbers are the last thing that should go stale on an open tab.
-  useDeskRefresh(
-    React.useCallback(() => {
-      fetch('/api/flood/contacts')
-        .then(r => (r.ok ? r.json() : null))
-        .then(d => {
-          if (d) setOfficial(d);
-        })
-        .catch(() => {});
-    }, []),
-  );
 
   const lines = data?.helplines?.lines || [];
   const primary = lines.filter(l => l.primary);

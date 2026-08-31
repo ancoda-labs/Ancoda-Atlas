@@ -7,8 +7,9 @@ import api from '@/config/axios';
  * person, advise anyone to stay or leave, or predict — and those refusals are
  * decided server-side before a model is consulted.
  */
-export async function askService(question: string, lang: 'en' | 'ne' = 'en') {
-  const { data } = await api.post('/sandbox/ask', { question, lang });
+export async function askService(message: string, lang: 'en' | 'ne' = 'en') {
+  // The field is `message`, which is the contract the desk already used.
+  const { data } = await api.post('/sandbox/ask', { message, lang });
   return data;
 }
 

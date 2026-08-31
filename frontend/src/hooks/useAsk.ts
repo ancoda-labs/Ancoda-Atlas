@@ -16,7 +16,7 @@ export function useSandboxStatus() {
 
 export function useAsk() {
   return useMutation({
-    mutationFn: ({ question, lang }: { question: string; lang: Lang }) =>
-      askService(question, lang),
+    mutationFn: ({ message, lang }: { message: string; lang: Lang }) =>
+      askService(message, lang),
   });
 }

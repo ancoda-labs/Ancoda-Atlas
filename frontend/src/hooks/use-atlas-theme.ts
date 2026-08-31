@@ -1,76 +1,30 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 
-// One theme choice, shared by the dashboard and every flood-desk page.
-//
-// A visit opens in Light. Dark is one click away, and that click is remembered
-// for this tab so the dashboard and the desk agree. It is not carried into the
-// next visit — the first thing shown is Light.
+import { useAppDispatch, useAppSelector } from '@/hooks/use-app-store';
+import { setTheme, type Theme } from '@/store/slices/themeSlice';
 
-export type Theme = 'light' | 'dark';
-
-const KEY = 'atlas_theme';
-const EVENT = 'atlas:theme';
 const CLASS = 'dark-theme';
 
-function readSession(): Theme | null {
-  try {
-    const value = sessionStorage.getItem(KEY);
-    return value === 'dark' || value === 'light' ? value : null;
-  } catch {
-    return null;
-  }
-}
-
-function apply(theme: Theme): void {
-  document.body.classList.toggle(CLASS, theme === 'dark');
-}
-
+/**
+ * One theme choice, shared by the dashboard and every flood-desk page.
+ *
+ * The state lives in the store now, so the two pages read the same value
+ * without the custom DOM event and cross-tab storage listener this used to
+ * need. What stays here is the one thing a store cannot do: put the class on
+ * the body.
+ */
 export function useAtlasTheme(): [Theme, (next: Theme) => void] {
-  const [theme, setTheme] = useState<Theme>('light');
+  const theme = useAppSelector(s => s.theme.theme);
+  const dispatch = useAppDispatch();
 
   useEffect(() => {
-    const stored = readSession();
-    if (stored) {
-      setTheme(stored);
-      apply(stored);
-    } else {
-      apply('light');
-    }
+    document.body.classList.toggle(CLASS, theme === 'dark');
+  }, [theme]);
 
-    const onChange = (e: Event) => {
-      const next = (e as CustomEvent<Theme>).detail;
-      if (next === 'light' || next === 'dark') {
-        setTheme(next);
-        apply(next);
-      }
-    };
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === KEY && (e.newValue === 'light' || e.newValue === 'dark')) {
-        setTheme(e.newValue);
-        apply(e.newValue);
-      }
-    };
-
-    window.addEventListener(EVENT, onChange);
-    window.addEventListener('storage', onStorage);
-    return () => {
-      window.removeEventListener(EVENT, onChange);
-      window.removeEventListener('storage', onStorage);
-    };
-  }, []);
-
-  const setThemeAndStore = useCallback((next: Theme) => {
-    setTheme(next);
-    apply(next);
-    try {
-      sessionStorage.setItem(KEY, next);
-    } catch {
-      /* the choice still applies for this page view */
-    }
-    window.dispatchEvent(new CustomEvent<Theme>(EVENT, { detail: next }));
-  }, []);
-
-  return [theme, setThemeAndStore];
+  const set = useCallback((next: Theme) => dispatch(setTheme(next)), [dispatch]);
+  return [theme, set];
 }
+
+export type { Theme };

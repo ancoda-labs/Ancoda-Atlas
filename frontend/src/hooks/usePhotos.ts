@@ -10,10 +10,11 @@ import {
 
 const PHOTOS_KEY = ['flood', 'photos'] as const;
 
-export function usePhotos() {
+export function usePhotos(enabled = true) {
   return useQuery({
     queryKey: PHOTOS_KEY,
     queryFn: fetchPhotosService,
+    enabled,
     // The URLs inside are short-lived presigned links, so a long cache would
     // hand a reader signatures that have already expired.
     staleTime: 30_000,

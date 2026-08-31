@@ -5,6 +5,7 @@ import type { FloodPhoto } from '@/types';
 import { ageFrom } from '@/lib/relative-time';
 import { orientationTransform } from '@/lib/photo-orientation';
 import { AFFECTED_DISTRICTS } from '@/apis/utils/flood-scope.mjs';
+import { useReportPhoto } from '@/hooks/usePhotos';
 
 // Ground reports — photos the public sends in from the flood corridor.
 //
@@ -208,16 +209,14 @@ export default function FloodGroundReports({ photos, enabled, lang, safetyNotice
     xhr.send(form);
   };
 
+  const reportPhoto = useReportPhoto();
+
   const report = async (id: string) => {
     if (reported.has(id)) return;
     if (!window.confirm(T.reportConfirm[lang])) return;
     setReported(prev => new Set(prev).add(id));
     try {
-      await fetch('/api/flood/photos/report', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id }),
-      });
+      await reportPhoto.mutateAsync({ id, reason: null });
       onUploaded();
     } catch {
       /* the flag is best-effort; the local state already reads as reported */

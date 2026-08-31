@@ -1,35 +1,20 @@
-import { join } from 'path';
-import { readFileSync, existsSync } from 'fs';
 import type { HazardSnapshot } from '@/types';
-import { errorMessage } from '@/types';
-import { sweeper } from '@/lib/sweeper';
+import { serverGet } from '@/lib/server-api';
 import DashboardClient from '@/app/_components/DashboardClient';
 
 export const dynamic = 'force-dynamic';
 
-async function getInitialData(): Promise<HazardSnapshot> {
-  // Kick the scheduler if nothing has started it. On a host where
-  // instrumentation.ts does not run, this is what gets the first sweep going;
-  // it returns immediately and the result reaches the open page over SSE.
-  sweeper.ensureStarted();
-
-  // Try memory cache first
-  if (sweeper.currentData) {
-    return sweeper.currentData;
-  }
-
-  // Fallback to the last synthesized payload on disk. runs/latest.json is the
-  // raw sweep and is not in the shape this page renders.
-  const dashboardPath = join(process.cwd(), 'runs', 'dashboard.json');
-  if (existsSync(dashboardPath)) {
-    try {
-      return JSON.parse(readFileSync(dashboardPath, 'utf8')) as HazardSnapshot;
-    } catch (err) {
-      console.error('[Next.js SSR] Failed to parse dashboard.json:', errorMessage(err));
-    }
-  }
-
-  // Absolute fallback skeleton if no sweep runs have completed yet
+/**
+ * The hazard snapshot, rendered into the first HTML.
+ *
+ * A reader on a slow connection gets the figures in the markup rather than
+ * after a round trip. The client query then takes over, seeded with this.
+ *
+ * When the API has not swept yet — or cannot be reached — this falls back to
+ * the empty skeleton below. Every counter is zero and every list empty, which
+ * is the honest state: Atlas shows nothing rather than something invented.
+ */
+function emptySnapshot(): HazardSnapshot {
   return {
     meta: {
       timestamp: new Date().toISOString(),
@@ -58,15 +43,15 @@ async function getInitialData(): Promise<HazardSnapshot> {
 }
 
 export default async function DashboardPage() {
-  const initialData = await getInitialData();
-  
+  const initialData = (await serverGet<HazardSnapshot>('/data')) ?? emptySnapshot();
+
   return (
     <main suppressHydrationWarning>
       {/* Background Grid Elements */}
       <div className="bg-grid" id="bgGrid" suppressHydrationWarning />
       <div className="bg-radial" id="bgRadial" suppressHydrationWarning />
       <div className="scanline" id="scanline" suppressHydrationWarning />
-      
+
       <DashboardClient initialData={initialData} />
     </main>
   );

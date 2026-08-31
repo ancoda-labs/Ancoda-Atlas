@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import type { Lang } from '@/hooks/use-flood-lang';
 import type { NewsItem } from '@/types';
 import { DESK_POLL_MS } from '@/hooks/use-desk-refresh';
+import { useTopicNews } from '@/hooks/useHazards';
 
 // The same Bhotekoshi flood headlines the Atlas home page scrolls under the
 // masthead. The desk used to leave them on the home page, so a family who
@@ -34,29 +35,20 @@ export default function FloodNewsTicker({ lang, items: givenItems, status: given
   const [fetched, setFetched] = useState<NewsItem[] | null>(givenItems !== undefined ? null : []);
   const [status, setStatus] = useState<'loading' | 'live' | 'error'>(givenItems !== undefined ? 'live' : 'loading');
 
+  // The ticker takes items from its parent when it has them, and fetches its
+  // own only when it does not — so a page already holding the wire does not
+  // ask for it twice.
+  const query = useTopicNews('flood', '24h', 28, 8);
   useEffect(() => {
     if (givenItems !== undefined) return;
-    let cancelled = false;
-    const load = async () => {
-      try {
-        const res = await fetch('/api/news?topic=flood&window=24h&limit=28&sourceCap=8');
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        const data = (await res.json()) as { items?: NewsItem[] };
-        if (!cancelled) {
-          setFetched(Array.isArray(data.items) ? data.items : []);
-          setStatus('live');
-        }
-      } catch {
-        if (!cancelled) setStatus('error');
-      }
-    };
-    void load();
-    const id = setInterval(load, DESK_POLL_MS);
-    return () => {
-      cancelled = true;
-      clearInterval(id);
-    };
-  }, [givenItems]);
+    if (query.data) {
+      setFetched(query.data.items ?? []);
+      setStatus('live');
+    } else if (query.isError) {
+      setStatus('error');
+    }
+  }, [givenItems, query.data, query.isError]);
+
 
   const items = (givenItems ?? fetched ?? []).slice(0, 20);
   const loading = givenItems !== undefined ? givenStatus === 'loading' : status === 'loading';

@@ -8,6 +8,8 @@ import { ageFrom } from '@/lib/relative-time';
 import { highlightNames } from '@/lib/ask-sandbox/view';
 import type { AskTurnResult, ViewAction } from '@/lib/ask-sandbox/types';
 import type { FloodInsight, FloodInsightFeed } from '@/types';
+import { useAsk, useSandboxStatus } from '@/hooks/useAsk';
+import { useInsights } from '@/hooks/useFlood';
 
 interface Chip {
   id: string;
@@ -40,40 +42,25 @@ export default function AskSandboxView() {
   const [error, setError] = useState<string | null>(null);
   const logRef = useRef<HTMLDivElement | null>(null);
 
+  // Status carries the remaining hourly budget, so it is never cached.
+  const statusQuery = useSandboxStatus();
+  const insightQuery = useInsights(lang);
   useEffect(() => {
-    let cancelled = false;
-    fetch(`/api/sandbox/ask?lang=${lang}`)
-      .then(r => r.json())
-      .then(d => {
-        if (!cancelled) setStatus(d as Status);
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, [lang]);
+    if (statusQuery.data) setStatus(statusQuery.data as Status);
+  }, [statusQuery.data]);
+  useEffect(() => {
+    if (insightQuery.data) setInsight((insightQuery.data as FloodInsightFeed).insight ?? null);
+    else if (insightQuery.isError) setInsight(null);
+  }, [insightQuery.data, insightQuery.isError]);
 
-  useEffect(() => {
-    let cancelled = false;
-    setInsight(undefined);
-    fetch(`/api/flood/insights?lang=${lang}`)
-      .then(r => (r.ok ? r.json() : null))
-      .then((feed: FloodInsightFeed | null) => {
-        if (!cancelled) setInsight(feed?.insight ?? null);
-      })
-      .catch(() => {
-        if (!cancelled) setInsight(null);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [lang]);
 
   useEffect(() => {
     logRef.current?.scrollTo({ top: logRef.current.scrollHeight, behavior: 'smooth' });
   }, [thread, insight]);
 
   const highlights = useMemo(() => highlightNames(view), [view]);
+
+  const ask = useAsk();
 
   async function send(text: string) {
     const q = text.trim();
@@ -82,13 +69,7 @@ export default function AskSandboxView() {
     setError(null);
     setThread(prev => [...prev, { role: 'user', text: q }]);
     try {
-      const res = await fetch('/api/sandbox/ask', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: q, lang }),
-      });
-      const data = (await res.json()) as AskTurnResult & { error?: string };
-      if (!res.ok) throw new Error(data.error || 'ask failed');
+      const data = (await ask.mutateAsync({ message: q, lang })) as AskTurnResult;
       setThread(prev => [...prev, { role: 'assistant', text: data.answer, result: data }]);
       if (data.view) {
         setView(data.view);

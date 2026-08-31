@@ -8,10 +8,13 @@ import {
   fileCorrectionService,
 } from '@/services/rescue-services';
 
-export function useRescueRegister() {
+export function useRescueRegister(enabled = true) {
   return useQuery({
     queryKey: ['flood', 'rescue'],
     queryFn: fetchRescueService,
+    // Gated by the caller: between them the two registers are around twelve
+    // megabytes, and most visitors to the page never search a name.
+    enabled,
     staleTime: 2 * 60 * 1000,
   });
 }
@@ -23,10 +26,11 @@ export function useRescueRegister() {
  * switched tabs would cost them several megabytes on a mobile connection for a
  * list that moves every ten minutes.
  */
-export function usePersonRegister() {
+export function usePersonRegister(enabled = true) {
   return useQuery({
     queryKey: ['flood', 'persons'],
     queryFn: fetchPersonsService,
+    enabled,
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
   });

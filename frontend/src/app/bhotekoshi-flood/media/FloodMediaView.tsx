@@ -4,7 +4,8 @@ import React, { useEffect, useState } from 'react';
 import FloodShell from '@/components/FloodShell';
 import { useFloodLang } from '@/hooks/use-flood-lang';
 import { ageFrom } from '@/lib/relative-time';
-import { DESK_POLL_MS } from '@/hooks/use-desk-refresh';
+import { useGallery, useVideos } from '@/hooks/useFlood';
+import { useTopicNews } from '@/hooks/useHazards';
 import type {
   FloodOfficialFeed,
   FloodVideo,
@@ -60,9 +61,6 @@ const T = {
 
 export default function FloodMediaView() {
   const [lang, setLang] = useFloodLang();
-  const [news, setNews] = useState<NewsItem[] | null>(null);
-  const [videoFeed, setVideoFeed] = useState<VideoFeed | null>(null);
-  const [gallery, setGallery] = useState<GalleryFeed | null>(null);
   // NDRRMA publishes camera originals — one of them is a 9 MB JPEG the media
   // proxy refuses on size. A photograph that will not load is dropped rather
   // than left as a broken frame in the grid.
@@ -72,42 +70,14 @@ export default function FloodMediaView() {
   const [visibleVideosCount, setVisibleVideosCount] = useState(9);
   const t = (key: keyof typeof T) => T[key][lang];
 
-  useEffect(() => {
-    let cancelled = false;
-    const load = async () => {
-      const [newsRes, videoRes, galleryRes] = await Promise.all([
-        fetch('/api/news?topic=flood&window=48h&limit=40&sourceCap=8').catch(() => null),
-        fetch('/api/flood/videos').catch(() => null),
-        fetch('/api/flood/gallery').catch(() => null),
-      ]);
-      try {
-        if (newsRes?.ok && !cancelled) {
-          const j = await newsRes.json();
-          setNews(Array.isArray(j.items) ? j.items : []);
-        } else if (!cancelled) {
-          setNews([]);
-        }
-      } catch {
-        if (!cancelled) setNews([]);
-      }
-      try {
-        if (videoRes?.ok && !cancelled) setVideoFeed(await videoRes.json());
-      } catch {
-        /* the press section stands on its own */
-      }
-      try {
-        if (galleryRes?.ok && !cancelled) setGallery(await galleryRes.json());
-      } catch {
-        /* the galleries are optional */
-      }
-    };
-    load();
-    const id = setInterval(load, DESK_POLL_MS);
-    return () => {
-      cancelled = true;
-      clearInterval(id);
-    };
-  }, []);
+  // Three independent panels, three queries. One failing leaves the other two
+  // standing, which is what the hand-rolled version was doing with a
+  // try/catch per response.
+  const { data: newsFeed } = useTopicNews('flood', '48h', 40, 8);
+  const { data: videoFeed = null } = useVideos();
+  const { data: gallery = null } = useGallery();
+  const news = newsFeed?.items ?? null;
+
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

@@ -5,7 +5,7 @@ import { useEffect } from 'react';
 
 import { EVENTS_URL } from '@/config/axios';
 import { fetchDashboardService } from '@/services/hazard-services';
-import { fetchNewsBundleService } from '@/services/news-services';
+import { fetchNewsBundleService, fetchTopicNewsService } from '@/services/news-services';
 import { useAppDispatch } from '@/hooks/use-app-store';
 import { setSweeping } from '@/store/slices/deskSlice';
 import type { HazardSnapshot } from '@/types';
@@ -78,6 +78,22 @@ export function useNewsBundle(window = '24h') {
     queryKey: ['news', 'bundle', window],
     queryFn: () => fetchNewsBundleService(window),
     // The wire's own cache is four minutes; asking more often only re-reads it.
+    staleTime: 4 * 60 * 1000,
+  });
+}
+
+/** One panel's worth of ranked headlines, for a page that needs a single topic. */
+export function useTopicNews(
+  topic: string,
+  window = '24h',
+  limit = 48,
+  sourceCap = 12,
+  enabled = true,
+) {
+  return useQuery({
+    queryKey: ['news', topic, window, limit, sourceCap],
+    queryFn: () => fetchTopicNewsService(topic, window, limit, sourceCap),
+    enabled,
     staleTime: 4 * 60 * 1000,
   });
 }
