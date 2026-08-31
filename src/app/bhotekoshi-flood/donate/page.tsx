@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import FloodDonateView from '@/app/bhotekoshi-flood/donate/FloodDonateView';
 
-export const revalidate = 300;
+export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: 'Give safely · Rasuwa–Bhotekoshi Flood · Ancoda Atlas',
