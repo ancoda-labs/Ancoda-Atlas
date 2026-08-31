@@ -17,7 +17,7 @@ celery_app = Celery(
     "atlas",
     broker=settings.broker_url,
     backend=settings.result_backend,
-    include=["app.domains.hazards.tasks"],
+    include=["app.domains.hazards.tasks", "app.domains.flood.tasks"],
 )
 
 celery_app.conf.update(
@@ -43,7 +43,25 @@ celery_app.conf.update(
         "hazard-sweep": {
             "task": "hazards.sweep",
             "schedule": settings.REFRESH_INTERVAL_MINUTES * 60.0,
-            "options": {"queue": "sweeps", "expires": settings.REFRESH_INTERVAL_MINUTES * 60},
+            "options": {
+                "queue": "sweeps",
+                # A tick that could not be delivered is dropped rather than
+                # queued behind the next one. Two sweeps back to back would
+                # hit the same upstreams twice for one interval's worth of
+                # new data.
+                "expires": settings.REFRESH_INTERVAL_MINUTES * 60,
+            },
+        },
+        # The flood desk. Ten minutes by default: river gauges, the rescue
+        # registers and the wire all move on that timescale during a live
+        # response, and the sweep's fifteen is too slow for it.
+        "flood-refresh": {
+            "task": "flood.refresh",
+            "schedule": settings.flood_refresh_minutes * 60.0,
+            "options": {
+                "queue": "sweeps",
+                "expires": settings.flood_refresh_minutes * 60,
+            },
         },
     },
 )
