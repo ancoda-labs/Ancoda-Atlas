@@ -59,14 +59,27 @@ async def _run_cycle() -> dict[str, Any]:
     if llm_ideas:
         synthesized["ideas"] = llm_ideas
         synthesized["ideasSource"] = "llm"
-    elif provider and provider.is_configured:
-        # Configured but unusable. Distinct from `disabled` so an operator can
-        # see the difference between "no key" and "the key is not working".
-        synthesized["ideas"] = []
-        synthesized["ideasSource"] = "llm-failed"
     else:
-        synthesized["ideas"] = generate_ideas(synthesized)
-        synthesized["ideasSource"] = "rules" if synthesized["ideas"] else "disabled"
+        # A deliberate departure from the Node build, which set an empty list
+        # and `llm-failed` whenever a configured model did not answer.
+        #
+        # No component renders anything for `llm-failed`, so that produced a
+        # silently empty reads panel — on a hazard dashboard, during the event
+        # the panel exists for. The rule engine is right there and its reads
+        # are real, so a model failure falls back to them.
+        #
+        # `ideasSource` still says which engine actually wrote what is on
+        # screen, which is what a reader is entitled to know. The model failure
+        # itself is logged loudly for the operator, and `llm-failed` remains
+        # for the case where neither engine produced anything.
+        rule_ideas = generate_ideas(synthesized)
+        synthesized["ideas"] = rule_ideas
+        if rule_ideas:
+            synthesized["ideasSource"] = "rules"
+        elif provider and provider.is_configured:
+            synthesized["ideasSource"] = "llm-failed"
+        else:
+            synthesized["ideasSource"] = "disabled"
 
     # 5. Alerts, on the delta rather than the snapshot. Never awaited into the
     #    critical path and never able to fail the cycle: a sweep that produced

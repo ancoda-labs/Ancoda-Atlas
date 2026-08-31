@@ -47,3 +47,23 @@ async def test_timing_is_reported_for_failed_sources_too(monkeypatch):
     monkeypatch.setattr(sweep, "SOURCES", [("Bad", boom)])
     out = await sweep.full_briefing()
     assert out["timing"]["Bad"]["status"] == "error"
+
+
+class TestIdeasFallback:
+    """A model failure must not empty the reads panel."""
+
+    def test_the_rule_engine_produces_reads_the_llm_path_would_have_lost(self):
+        """The case seen live: a configured Groq key that answers 413.
+
+        The Node build set an empty list here. No component renders anything
+        for `llm-failed`, so that was a silently blank panel during exactly the
+        event it exists for.
+        """
+        from app.domains.hazards.synthesize import generate_ideas
+
+        sweep = {
+            "seismic": {"maxMagnitude": 6.1},
+            "impact": {"count": 20, "topRegions": [{"region": "Rasuwa", "count": 9}]},
+            "news": list(range(50)),
+        }
+        assert generate_ideas(sweep), "the rule engine had reads to give"
