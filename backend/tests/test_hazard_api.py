@@ -44,30 +44,45 @@ def test_a_real_snapshot_is_cacheable(tmp_path, monkeypatch):
     assert "s-maxage" in response.headers["cache-control"]
 
 
-def test_news_reads_off_the_sweep_rather_than_fetching(tmp_path, monkeypatch):
-    """Eight RSS feeds per reader request is how a desk falls over."""
+def test_news_serves_ranked_topics_from_the_cache(monkeypatch):
+    """The wire moved off the sweep and onto the warm topic cache.
+
+    /data still carries the sweep's own geo-tagged `news` array — that is the
+    set the map plots. These are the ranked per-topic panels, which are a
+    different thing and are cached separately.
+    """
+
+    async def fake_topic(topic, window, limit, source_cap):
+        return {"topic": topic, "window": window, "mode": "normal", "count": 1, "items": []}
+
+    monkeypatch.setattr("app.domains.hazards.routers.load_topic_news", fake_topic)
+    body = client.get("/api/v1/news?topic=flood&window=24h").json()
+    assert body["topic"] == "flood"
+    assert body["count"] == 1
+
+
+def test_news_bundle_returns_every_panel(monkeypatch):
+    """One payload rather than eight routes: eight round trips on a
+    high-latency mobile connection each pay 200-400ms before any RSS work."""
+
+    async def fake_bundle(window):
+        return {"window": window, "timestamp": "t", "topics": {"all": {}, "flood": {}}}
+
+    monkeypatch.setattr("app.domains.hazards.routers.load_news_bundle", fake_bundle)
+    body = client.get("/api/v1/news?bundle=true").json()
+    assert set(body["topics"]) == {"all", "flood"}
+
+
+def test_the_sweep_still_carries_the_geo_tagged_news_the_map_plots(tmp_path, monkeypatch):
     monkeypatch.setattr(
         type(runs_store.settings), "runs_dir", property(lambda self: tmp_path)
     )
     runs_store.write_json(
         runs_store.DASHBOARD,
         {
-            "meta": {"timestamp": "2026-08-31T12:00:00.000Z"},
-            "news": [{"title": "Flood in Rasuwa"}],
-            "newsFeed": [{"headline": "Flood in Rasuwa"}],
-            "impact": {"count": 1, "topRegions": [], "headline": "Flood in Rasuwa"},
+            "meta": {"sourcesOk": 5, "timestamp": "2026-08-31T12:00:00.000Z"},
+            "news": [{"title": "Flood in Rasuwa", "lat": 28.1, "lon": 85.3}],
         },
     )
-    body = client.get("/api/v1/news").json()
-    assert len(body["news"]) == 1
-    assert body["impact"]["count"] == 1
-    assert body["generatedAt"] == "2026-08-31T12:00:00.000Z"
-
-
-def test_news_before_a_sweep_is_empty_not_an_error(tmp_path, monkeypatch):
-    monkeypatch.setattr(
-        type(runs_store.settings), "runs_dir", property(lambda self: tmp_path)
-    )
-    body = client.get("/api/v1/news").json()
-    assert body["news"] == []
-    assert body["impact"]["count"] == 0
+    body = client.get("/api/v1/data").json()
+    assert body["news"][0]["lat"] == 28.1

@@ -12,6 +12,7 @@ from fastapi import APIRouter, Response
 
 from app.core.http_cache import cache_for, no_store
 from app.domains.hazards import service
+from app.domains.news.cache import NEWS_CACHE_TTL_S, load_news_bundle, load_topic_news
 
 router = APIRouter(tags=["hazards"])
 
@@ -37,18 +38,27 @@ async def get_data(response: Response) -> dict[str, Any]:
 
 
 @router.get("/news", summary="The disaster-filtered Nepali news wire")
-async def get_news(response: Response) -> dict[str, Any]:
-    """The hazard headlines, read off the last sweep.
+async def get_news(
+    response: Response,
+    topic: str = "all",
+    window: str = "24h",
+    limit: int = 48,
+    sourceCap: int = 12,  # noqa: N803 - the query parameter the frontend sends
+    bundle: bool = False,
+) -> dict[str, Any]:
+    """Ranked hazard headlines, from the warm cache.
 
-    Served from the sweep rather than fetched per request: the wire is eight
-    RSS feeds, and fetching them on a reader's request during a live event is
-    how a desk falls over.
+    `bundle=true` returns every dashboard panel at once. That is the shape the
+    page asks for: eight separate routes on a high-latency mobile connection
+    each pay 200-400ms before any RSS work starts.
+
+    The sweep's own `news` array stays available on /data — it is the
+    geo-tagged set the map plots, which is a different thing from these ranked
+    per-topic panels.
     """
-    data = service.get_dashboard()
-    cache_for(response, edge=CACHE_TTL_S)
-    return {
-        "news": data.get("news") or [],
-        "newsFeed": data.get("newsFeed") or [],
-        "impact": data.get("impact") or {"count": 0, "topRegions": [], "headline": None},
-        "generatedAt": (data.get("meta") or {}).get("timestamp"),
-    }
+    if bundle:
+        payload = await load_news_bundle(window)
+    else:
+        payload = await load_topic_news(topic, window, limit, sourceCap)
+    cache_for(response, edge=int(NEWS_CACHE_TTL_S))
+    return payload
