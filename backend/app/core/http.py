@@ -27,6 +27,45 @@ USER_AGENT = "Atlas/1.0"
 DEFAULT_TIMEOUT_S = 15.0
 DEFAULT_RETRIES = 1
 
+# One client, one connection pool, for the whole process.
+#
+# This started as a fresh AsyncClient per request, which is the obvious
+# translation of JavaScript's bare fetch() — and it is wrong for the same
+# reason it would be wrong there if fetch did not pool internally. A sweep
+# makes around forty requests, many of them concurrently to the same handful of
+# hosts, and a new client means a new TLS handshake for every one of them.
+#
+# It was not merely slow. Two concurrent POSTs to ReliefWeb raced their
+# handshakes and one came back ConnectTimeout, which the fallback then reported
+# as the reason ReliefWeb was unavailable — burying the actual 403 about an
+# unapproved appname under a network error that had not really happened.
+_client: httpx.AsyncClient | None = None
+_client_lock = asyncio.Lock()
+
+
+async def get_client() -> httpx.AsyncClient:
+    global _client
+    if _client is None or _client.is_closed:
+        async with _client_lock:
+            if _client is None or _client.is_closed:
+                _client = httpx.AsyncClient(
+                    follow_redirects=True,
+                    timeout=httpx.Timeout(DEFAULT_TIMEOUT_S, connect=10.0),
+                    limits=httpx.Limits(
+                        max_connections=50, max_keepalive_connections=20
+                    ),
+                    headers={"User-Agent": USER_AGENT},
+                )
+    return _client
+
+
+async def close_client() -> None:
+    """Release the pool on shutdown. Called from the app lifespan."""
+    global _client
+    if _client is not None and not _client.is_closed:
+        await _client.aclose()
+    _client = None
+
 
 @dataclass(frozen=True)
 class FetchError:
@@ -73,25 +112,27 @@ async def safe_fetch(
 
     for attempt in range(retries + 1):
         try:
-            async with httpx.AsyncClient(
-                timeout=timeout, follow_redirects=True
-            ) as client:
-                response = await client.get(url, headers=request_headers, params=params)
-                if response.status_code >= 400:
-                    body = response.text[:200]
-                    raise httpx.HTTPStatusError(
-                        f"HTTP {response.status_code}: {body}",
-                        request=response.request,
-                        response=response,
-                    )
-                text = response.text
-                if as_ == "text":
-                    return text
-                try:
-                    return json.loads(text)
-                except json.JSONDecodeError:
-                    return RawText(raw_text=text[:500])
+            client = await get_client()
+            response = await client.get(
+                url, headers=request_headers, params=params, timeout=timeout
+            )
+            if response.status_code >= 400:
+                body = response.text[:200]
+                raise httpx.HTTPStatusError(
+                    f"HTTP {response.status_code}: {body}",
+                    request=response.request,
+                    response=response,
+                )
+            text = response.text
+            if as_ == "text":
+                return text
+            try:
+                return json.loads(text)
+            except json.JSONDecodeError:
+                return RawText(raw_text=text[:500])
         except Exception as exc:  # noqa: BLE001 - the whole point is not to raise
+            # str() is empty for several httpx timeout classes; the class name
+            # is vague but a blank reason is worse.
             last_error = str(exc) or exc.__class__.__name__
             if attempt < retries:
                 # Linear back-off. Sources that need more room set their own
@@ -120,19 +161,25 @@ async def post_json(
         **(headers or {}),
     }
     try:
-        async with httpx.AsyncClient(timeout=timeout, follow_redirects=True) as client:
-            response = await client.post(url, json=payload, headers=request_headers)
-            if response.status_code >= 400:
-                return FetchError(
-                    error=f"HTTP {response.status_code}: {response.text[:200]}", source=url
-                )
-            try:
-                return response.json()
-            except ValueError:
-                return RawText(raw_text=response.text[:500])
+        client = await get_client()
+        response = await client.post(
+            url, json=payload, headers=request_headers, timeout=timeout
+        )
+        if response.status_code >= 400:
+            return FetchError(
+                error=f"HTTP {response.status_code}: {response.text[:200]}", source=url
+            )
+        try:
+            return response.json()
+        except ValueError:
+            return RawText(raw_text=response.text[:500])
     except Exception as exc:  # noqa: BLE001
-        log.warning("post_failed", url=url, error=str(exc))
-        return FetchError(error=str(exc) or exc.__class__.__name__, source=url)
+        # An exception's str() is empty for several httpx timeout classes, and
+        # an empty reason is worse than a vague one — it reaches the desk as a
+        # blank explanation of why a feed is missing.
+        reason = str(exc) or exc.__class__.__name__
+        log.warning("post_failed", url=url, error=reason)
+        return FetchError(error=reason, source=url)
 
 
 def is_error(value: Any) -> bool:

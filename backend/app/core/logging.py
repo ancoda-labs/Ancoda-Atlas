@@ -14,9 +14,13 @@ from app.core.config import settings
 
 
 def configure_logging() -> None:
+    # stderr, not stdout. Every source module is documented as runnable alone
+    # and its JSON piped somewhere — `python -m app.domains.hazards.sources.seismic
+    # | jq`. A log line on stdout corrupts that stream, which is exactly what
+    # happened the first time this was run standalone.
     logging.basicConfig(
         format="%(message)s",
-        stream=sys.stdout,
+        stream=sys.stderr,
         level=getattr(logging, settings.LOG_LEVEL.upper(), logging.INFO),
     )
 

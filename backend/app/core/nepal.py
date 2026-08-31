@@ -27,7 +27,14 @@ NEPAL_BBOX = BBox(lamin=26.3, lomin=79.9, lamax=30.6, lomax=88.3)
 # Geographic centre, for radius searches and default map framing.
 NEPAL_CENTER = Point(lat=28.35, lon=84.1)
 
-NEPAL_ISO = {"alpha2": "NP", "alpha3": "NPL", "numeric": 524, "name": "Nepal"}
+class Iso(NamedTuple):
+    alpha2: str
+    alpha3: str
+    numeric: int
+    name: str
+
+
+NEPAL_ISO = Iso(alpha2="NP", alpha3="NPL", numeric=524, name="Nepal")
 
 # Nepal sits on the Main Himalayan Thrust. The seismic source widens the
 # national box to catch ruptures that shake Nepal from just across the border.

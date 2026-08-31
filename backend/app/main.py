@@ -37,6 +37,11 @@ async def lifespan(app: FastAPI):
         llm=settings.is_llm_configured,
     )
     yield
+    # Release the shared connection pool rather than leaving sockets open
+    # through a reload.
+    from app.core.http import close_client
+
+    await close_client()
     log.info("shutdown")
 
 
