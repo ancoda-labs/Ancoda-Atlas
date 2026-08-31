@@ -88,22 +88,45 @@ const BIPAD_TIMEOUT_MS = 20_000;
 // The gauges that sit on the flood's actual path, ordered upstream → downstream:
 // Bhotekoshi from the Tibet border through Rasuwa, into the Trishuli, down to
 // the Narayani at Devghat. Matched on the station title BIPAD publishes.
-const CORRIDOR_STATIONS: Array<{ match: string; label: string; labelNe: string; district: string; districtNe: string }> = [
-  { match: 'Bhotekoshi at Rasuwagadi',       label: 'Bhotekoshi at Rasuwagadhi', labelNe: 'भोटेकोशी, रसुवागढी',   district: 'Rasuwa',  districtNe: 'रसुवा' },
-  { match: 'Bhote Koshi at Shyaprubesi',     label: 'Bhotekoshi at Syaphrubesi', labelNe: 'भोटेकोशी, स्याफ्रुबेंसी', district: 'Rasuwa',  districtNe: 'रसुवा' },
-  { match: 'Langtang Khola at Shyaprubesi',  label: 'Langtang Khola',            labelNe: 'लाङटाङ खोला',          district: 'Rasuwa',  districtNe: 'रसुवा' },
-  { match: 'Trishuli Khola at Dhunche',      label: 'Trishuli at Dhunche',       labelNe: 'त्रिशूली, धुन्चे',       district: 'Rasuwa',  districtNe: 'रसुवा' },
-  { match: 'Trishuli at Betrawati',          label: 'Trishuli at Betrawati',     labelNe: 'त्रिशूली, बेत्रावती',     district: 'Nuwakot', districtNe: 'नुवाकोट' },
-  { match: 'Phalakhu Khola at Betrawati',    label: 'Phalakhu Khola',            labelNe: 'फलाँखु खोला',           district: 'Nuwakot', districtNe: 'नुवाकोट' },
-  { match: 'Tadi at Belkot',                 label: 'Tadi Khola at Belkot',      labelNe: 'तादी खोला, बेल्कोट',     district: 'Nuwakot', districtNe: 'नुवाकोट' },
-  { match: 'Trishuli River at Bhorle',       label: 'Trishuli at Bhorle',        labelNe: 'त्रिशूली, भोर्ले',        district: 'Nuwakot', districtNe: 'नुवाकोट' },
-  { match: 'Trishuli at Furke Khola',        label: 'Trishuli at Malekhu',       labelNe: 'त्रिशूली, मलेखु',        district: 'Dhading', districtNe: 'धादिङ' },
-  { match: 'Trishuli River at Kali Khola',   label: 'Trishuli at Kali Khola',    labelNe: 'त्रिशूली, कालीखोला',     district: 'Dhading', districtNe: 'धादिङ' },
-  { match: 'Ankhu Khola at Ankhu Bagar',     label: 'Ankhu Khola',               labelNe: 'आँखु खोला',            district: 'Dhading', districtNe: 'धादिङ' },
-  { match: 'Budhi Gandaki at Aarughat',      label: 'Budhi Gandaki at Arughat',  labelNe: 'बूढीगण्डकी, आरुघाट',     district: 'Gorkha',  districtNe: 'गोरखा' },
-  { match: 'Narayani at Devghat',            label: 'Narayani at Devghat',       labelNe: 'नारायणी, देवघाट',       district: 'Chitwan', districtNe: 'चितवन' },
-  { match: 'Narayani River at Narayanghat',  label: 'Narayani at Narayanghat',   labelNe: 'नारायणी, नारायणघाट',    district: 'Chitwan', districtNe: 'चितवन' },
+// `id` is BIPAD's river-station id, used for the DHM site-photo proxy.
+const CORRIDOR_STATIONS: Array<{ id: number; match: string; label: string; labelNe: string; district: string; districtNe: string }> = [
+  { id: 171, match: 'Bhotekoshi at Rasuwagadi',       label: 'Bhotekoshi at Rasuwagadhi', labelNe: 'भोटेकोशी, रसुवागढी',   district: 'Rasuwa',  districtNe: 'रसुवा' },
+  { id: 74,  match: 'Bhote Koshi at Shyaprubesi',     label: 'Bhotekoshi at Syaphrubesi', labelNe: 'भोटेकोशी, स्याफ्रुबेंसी', district: 'Rasuwa',  districtNe: 'रसुवा' },
+  { id: 49,  match: 'Langtang Khola at Shyaprubesi',  label: 'Langtang Khola',            labelNe: 'लाङटाङ खोला',          district: 'Rasuwa',  districtNe: 'रसुवा' },
+  { id: 105, match: 'Trishuli Khola at Dhunche',      label: 'Trishuli at Dhunche',       labelNe: 'त्रिशूली, धुन्चे',       district: 'Rasuwa',  districtNe: 'रसुवा' },
+  { id: 137, match: 'Trishuli at Betrawati',          label: 'Trishuli at Betrawati',     labelNe: 'त्रिशूली, बेत्रावती',     district: 'Nuwakot', districtNe: 'नुवाकोट' },
+  { id: 79,  match: 'Phalakhu Khola at Betrawati',    label: 'Phalakhu Khola',            labelNe: 'फलाँखु खोला',           district: 'Nuwakot', districtNe: 'नुवाकोट' },
+  { id: 135, match: 'Tadi at Belkot',                 label: 'Tadi Khola at Belkot',      labelNe: 'तादी खोला, बेल्कोट',     district: 'Nuwakot', districtNe: 'नुवाकोट' },
+  { id: 35,  match: 'Trishuli River at Bhorle',       label: 'Trishuli at Bhorle',        labelNe: 'त्रिशूली, भोर्ले',        district: 'Nuwakot', districtNe: 'नुवाकोट' },
+  { id: 261, match: 'Trishuli at Furke Khola',        label: 'Trishuli at Malekhu',       labelNe: 'त्रिशूली, मलेखु',        district: 'Dhading', districtNe: 'धादिङ' },
+  { id: 67,  match: 'Trishuli River at Kali Khola',   label: 'Trishuli at Kali Khola',    labelNe: 'त्रिशूली, कालीखोला',     district: 'Dhading', districtNe: 'धादिङ' },
+  { id: 68,  match: 'Ankhu Khola at Ankhu Bagar',     label: 'Ankhu Khola',               labelNe: 'आँखु खोला',            district: 'Dhading', districtNe: 'धादिङ' },
+  { id: 100, match: 'Budhi Gandaki at Aarughat',      label: 'Budhi Gandaki at Arughat',  labelNe: 'बूढीगण्डकी, आरुघाट',     district: 'Gorkha',  districtNe: 'गोरखा' },
+  { id: 25,  match: 'Narayani at Devghat',            label: 'Narayani at Devghat',       labelNe: 'नारायणी, देवघाट',       district: 'Chitwan', districtNe: 'चितवन' },
+  { id: 106, match: 'Narayani River at Narayanghat',  label: 'Narayani at Narayanghat',   labelNe: 'नारायणी, नारायणघाट',    district: 'Chitwan', districtNe: 'चितवन' },
 ];
+
+// DHM station portraits and BIPAD coordinates, as BIPAD published them.
+// Water levels are never taken from here — only the pin and the site photo,
+// which change when DHM re-photographs a gauge, not with the flood. Needed
+// because the live river-stations feed is often unreachable from the
+// Cloudflare host that serves atlas.ancodalabs.com.
+const CORRIDOR_STATION_SITES: Record<number, { lat: number; lon: number; image: string }> = {
+  171: { lat: 28.271297, lon: 85.377649, image: 'http://daq.hydrology.gov.np/images/83784301e1756ec67166ba592bcaec51' },
+  74:  { lat: 28.17065, lon: 85.342554, image: 'http://daq.hydrology.gov.np/images/765e2644b4ebca0d35110479c999a6f8' },
+  49:  { lat: 28.16222222, lon: 85.34611111, image: 'http://daq.hydrology.gov.np/images/9656ba736c6d3c61c56673d3e4c3b23a' },
+  105: { lat: 28.098163, lon: 85.318589, image: 'http://daq.hydrology.gov.np/images/0a4d86552fd0e57c5ab02555b4dc693f' },
+  137: { lat: 27.97, lon: 85.18, image: 'http://daq.hydrology.gov.np/images/3f8da446cb4c467cefcb57072396ca1f' },
+  79:  { lat: 27.974259, lon: 85.185829, image: 'http://daq.hydrology.gov.np/images/965582ba18e135375d97534971f0c506' },
+  135: { lat: 27.860094, lon: 85.134943, image: 'http://daq.hydrology.gov.np/images/325da877378a7511354dba39e151ea7c' },
+  35:  { lat: 27.82, lon: 84.45, image: 'http://daq.hydrology.gov.np/images/73368683a6f7de9fb9558110f86350e9' },
+  261: { lat: 27.802439, lon: 84.844102, image: 'http://daq.hydrology.gov.np/images/6bc210f963f5e2e3c424a74842e92fda' },
+  67:  { lat: 27.833, lon: 84.546, image: 'http://daq.hydrology.gov.np/images/364ef9a4cae0f2a57b48d88b42f579ff' },
+  68:  { lat: 28.000431, lon: 84.889347, image: 'http://daq.hydrology.gov.np/images/cf987cac6d1fe65d4a886347f3e4e760' },
+  100: { lat: 28.046, lon: 84.816, image: 'http://daq.hydrology.gov.np/images/a5d962039af199e304760d743ab51419' },
+  25:  { lat: 27.71, lon: 84.43, image: 'http://daq.hydrology.gov.np/images/82f9703dad054cae6100809681272696' },
+  106: { lat: 27.69971, lon: 84.41894, image: 'http://daq.hydrology.gov.np/images/074313bb1102dc050064f069fbf182c1' },
+};
 
 // ─── District lookup ────────────────────────────────────────────────────────
 //
@@ -227,8 +250,82 @@ function classify(waterLevel: number | null, warning: number | null, danger: num
   return 'normal';
 }
 
+function photoPath(stationId: number, liveImage?: string | null): string | null {
+  if (liveImage || CORRIDOR_STATION_SITES[stationId]) return `/api/flood/station-photo?id=${stationId}`;
+  return null;
+}
+
+function buildGauge(
+  spec: (typeof CORRIDOR_STATIONS)[number],
+  station: BipadStation | undefined,
+): FloodGauge {
+  const site = CORRIDOR_STATION_SITES[spec.id];
+  const coords = station?.point?.coordinates;
+  let lat = site?.lat ?? null;
+  let lon = site?.lon ?? null;
+  if (Array.isArray(coords) && coords.length >= 2) {
+    lon = coords[0];
+    lat = coords[1];
+  }
+  const place = districtAt(lat, lon);
+
+  const measuredAt: string | null = station?.waterLevelOn || null;
+  const ageMinutes = measuredAt
+    ? Math.max(0, Math.round((Date.now() - new Date(measuredAt).getTime()) / 60000))
+    : null;
+  const stale = !station || ageMinutes == null || ageMinutes > STALE_AFTER_MINUTES;
+
+  let waterLevel: number | null = typeof station?.waterLevel === 'number' ? station.waterLevel : null;
+  const warningLevel: number | null = typeof station?.warningLevel === 'number' ? station.warningLevel : null;
+  const dangerLevel: number | null = typeof station?.dangerLevel === 'number' ? station.dangerLevel : null;
+
+  // BIPAD occasionally emits sensor spikes (one station reports 100008 m).
+  // A reading far above the danger mark is instrument error, not a flood.
+  const ceiling = (dangerLevel ?? warningLevel ?? 0) * 20;
+  if (waterLevel != null && ceiling > 0 && waterLevel > ceiling) waterLevel = null;
+
+  const level = stale ? 'unknown' : classify(waterLevel, warningLevel, dangerLevel);
+  const percentOfDanger =
+    waterLevel != null && dangerLevel && dangerLevel > 0
+      ? Math.max(0, Math.min(140, Math.round((waterLevel / dangerLevel) * 100)))
+      : waterLevel != null && warningLevel && warningLevel > 0
+      ? Math.max(0, Math.min(140, Math.round((waterLevel / warningLevel) * 90)))
+      : null;
+
+  return {
+    id: station?.id ?? spec.id,
+    label: spec.label,
+    labelNe: spec.labelNe,
+    district: place?.en ?? spec.district,
+    districtNe: place?.ne ?? spec.districtNe,
+    waterLevel,
+    warningLevel,
+    dangerLevel,
+    level,
+    trend: station?.steady || null,
+    measuredAt,
+    ageMinutes,
+    stale,
+    percentOfDanger,
+    lat,
+    lon,
+    photo: photoPath(spec.id, station?.image),
+  };
+}
+
+let gaugesPending: Promise<RiverGauges> | null = null;
+
 export async function fetchCorridorGauges(): Promise<RiverGauges> {
+  if (gaugesPending) return gaugesPending;
+  gaugesPending = fetchCorridorGaugesOnce().finally(() => {
+    gaugesPending = null;
+  });
+  return gaugesPending;
+}
+
+async function fetchCorridorGaugesOnce(): Promise<RiverGauges> {
   const fetchedAt = new Date().toISOString();
+  const fallback = (): FloodGauge[] => CORRIDOR_STATIONS.map(spec => buildGauge(spec, undefined));
   try {
     const res = await fetch(BIPAD_RIVER_URL, {
       signal: AbortSignal.timeout(BIPAD_TIMEOUT_MS),
@@ -239,66 +336,18 @@ export async function fetchCorridorGauges(): Promise<RiverGauges> {
     const payload = data as { results?: BipadStation[] };
     const results: BipadStation[] = Array.isArray(payload.results) ? payload.results : [];
 
-    const gauges: FloodGauge[] = [];
-    for (const spec of CORRIDOR_STATIONS) {
-      const station = results.find(r => String(r.title ?? '').toLowerCase().includes(spec.match.toLowerCase()));
-      if (!station) continue;
-
-      const measuredAt: string | null = station.waterLevelOn || null;
-      const ageMinutes = measuredAt
-        ? Math.max(0, Math.round((Date.now() - new Date(measuredAt).getTime()) / 60000))
-        : null;
-      const stale = ageMinutes == null || ageMinutes > STALE_AFTER_MINUTES;
-
-      let waterLevel: number | null = typeof station.waterLevel === 'number' ? station.waterLevel : null;
-      const warningLevel: number | null = typeof station.warningLevel === 'number' ? station.warningLevel : null;
-      const dangerLevel: number | null = typeof station.dangerLevel === 'number' ? station.dangerLevel : null;
-
-      // BIPAD occasionally emits sensor spikes (one station reports 100008 m).
-      // A reading far above the danger mark is instrument error, not a flood.
-      const ceiling = (dangerLevel ?? warningLevel ?? 0) * 20;
-      if (waterLevel != null && ceiling > 0 && waterLevel > ceiling) waterLevel = null;
-
-      const level = stale ? 'unknown' : classify(waterLevel, warningLevel, dangerLevel);
-      const percentOfDanger =
-        waterLevel != null && dangerLevel && dangerLevel > 0
-          ? Math.max(0, Math.min(140, Math.round((waterLevel / dangerLevel) * 100)))
-          : waterLevel != null && warningLevel && warningLevel > 0
-          ? Math.max(0, Math.min(140, Math.round((waterLevel / warningLevel) * 90)))
-          : null;
-
-      const coords = station.point?.coordinates;
-      const lat = Array.isArray(coords) ? coords[1] ?? null : null;
-      const lon = Array.isArray(coords) ? coords[0] ?? null : null;
-      // Derived from the coordinate, so the label always agrees with the pin.
-      // The curated value stands in only for a station outside every shape.
-      const place = districtAt(lat, lon);
-      gauges.push({
-        id: station.id,
-        label: spec.label,
-        labelNe: spec.labelNe,
-        district: place?.en ?? spec.district,
-        districtNe: place?.ne ?? spec.districtNe,
-        waterLevel,
-        warningLevel,
-        dangerLevel,
-        level,
-        trend: station.steady || null,
-        measuredAt,
-        ageMinutes,
-        stale,
-        percentOfDanger,
-        lat,
-        lon,
-        photo: station.image ? `/api/flood/station-photo?id=${station.id}` : null,
-      });
-    }
-
-    return { gauges, error: null, fetchedAt };
+    return {
+      gauges: CORRIDOR_STATIONS.map(spec => {
+        const station = results.find(r => String(r.title ?? '').toLowerCase().includes(spec.match.toLowerCase()));
+        return buildGauge(spec, station);
+      }),
+      error: null,
+      fetchedAt,
+    };
   } catch (err) {
     const message = errorMessage(err);
     console.error('[Flood] BIPAD river gauges unavailable:', message);
-    return { gauges: [], error: message, fetchedAt };
+    return { gauges: fallback(), error: message, fetchedAt };
   }
 }
 
@@ -328,6 +377,10 @@ async function loadPhotoMap(): Promise<Map<number, string>> {
 
 /** Resolve one station's upstream photo URL, for the proxy route. */
 export async function resolveStationPhotoUrl(stationId: number): Promise<string | null> {
+  const bundled = CORRIDOR_STATION_SITES[stationId]?.image ?? null;
+  // Corridor portraits are bundled so the map does not wait on BIPAD — the
+  // Cloudflare host often cannot reach bipadportal.gov.np at all.
+  if (bundled) return bundled;
   if (photoMap && Date.now() - photoMap.at < PHOTO_MAP_TTL_MS) {
     return photoMap.urls.get(stationId) || null;
   }
