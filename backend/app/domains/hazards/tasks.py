@@ -68,9 +68,36 @@ async def _run_cycle() -> dict[str, Any]:
         synthesized["ideas"] = generate_ideas(synthesized)
         synthesized["ideasSource"] = "rules" if synthesized["ideas"] else "disabled"
 
-    # 5. Publish.
+    # 5. Alerts, on the delta rather than the snapshot. Never awaited into the
+    #    critical path and never able to fail the cycle: a sweep that produced
+    #    good data must be published whether or not a webhook answered.
+    if delta and (delta.get("summary") or {}).get("totalChanges"):
+        from app.domains.alerts.discord import DiscordAlerter
+        from app.domains.alerts.telegram import TelegramAlerter
+
+        for alerter in (TelegramAlerter(), DiscordAlerter()):
+            if not alerter.is_configured:
+                continue
+            try:
+                await alerter.evaluate_and_alert(provider, delta, memory)
+            except Exception as exc:  # noqa: BLE001
+                log.warning("alerter_failed", channel=alerter.name, error=str(exc))
+
+    # 6. Publish.
     runs_store.write_json(runs_store.DASHBOARD, synthesized)
     memory.prune_alerted_signals()
+
+    # The reads go out after the snapshot is published, so a Discord outage
+    # cannot delay the dashboard.
+    if synthesized.get("ideas"):
+        from app.domains.alerts.discord import DiscordAlerter
+
+        discord = DiscordAlerter()
+        if discord.is_configured:
+            try:
+                await discord.send_actionable_ideas(synthesized["ideas"])
+            except Exception as exc:  # noqa: BLE001
+                log.warning("discord_ideas_failed", error=str(exc))
 
     # The file is written; now tell the API replicas to re-read it. Published
     # after the write, never before, or a listener races the bytes it is being
