@@ -1,9 +1,22 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import '@/styles/globals.css';
 
 export const metadata: Metadata = {
   title: 'ANCODA ATLAS INTELLIGENCE DASHBOARD',
   description: 'Nepal Focus · 19 Sources · Local',
+  icons: {
+    icon: [
+      { url: '/images/atlas-black.png', media: '(prefers-color-scheme: light)' },
+      { url: '/images/atlas-white.png', media: '(prefers-color-scheme: dark)' },
+    ],
+    apple: '/images/atlas-black.png',
+  },
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
 };
 
 /** Same rule as src/lib/connection-pref.ts — applied before first paint. */
@@ -16,6 +29,15 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <link
+          rel="preload"
+          href="/fonts/GeistPixel-Square.woff2"
+          as="font"
+          type="font/woff2"
+          crossOrigin="anonymous"
+        />
+      </head>
       <body className="bg-background text-foreground font-sans min-h-screen overflow-x-hidden selection:bg-primary selection:text-background" suppressHydrationWarning>
         <script dangerouslySetInnerHTML={{ __html: SEED_LOW_PERF }} />
         {children}
