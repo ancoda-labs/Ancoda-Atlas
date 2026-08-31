@@ -1,10 +1,13 @@
 """The versioned API surface.
 
 Domain routers are mounted here as each one is ported. Route paths deliberately
-mirror the ones the Node build served — /flood, /news, /data and the rest — so
+mirror the ones the Node build served — /data, /news, /flood and the rest — so
 the frontend's service layer maps one to one onto what it replaced.
 """
 
 from fastapi import APIRouter
 
+from app.domains.hazards.routers import router as hazards_router
+
 api_router = APIRouter()
+api_router.include_router(hazards_router)

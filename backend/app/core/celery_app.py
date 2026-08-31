@@ -17,7 +17,7 @@ celery_app = Celery(
     "atlas",
     broker=settings.broker_url,
     backend=settings.result_backend,
-    include=[],
+    include=["app.domains.hazards.tasks"],
 )
 
 celery_app.conf.update(
@@ -37,5 +37,13 @@ celery_app.conf.update(
     # cut off by the source rather than by Celery killing the whole sweep.
     task_time_limit=900,
     task_soft_time_limit=840,
-    beat_schedule={},
+    beat_schedule={
+        # The national hazard sweep. Fifteen minutes by default; the sources
+        # behind it move on that timescale or slower.
+        "hazard-sweep": {
+            "task": "hazards.sweep",
+            "schedule": settings.REFRESH_INTERVAL_MINUTES * 60.0,
+            "options": {"queue": "sweeps", "expires": settings.REFRESH_INTERVAL_MINUTES * 60},
+        },
+    },
 )

@@ -39,6 +39,10 @@ services:
       # The sweep snapshot, the flood desk store and the delta memory. The
       # worker writes these; the API only ever reads them.
       - ../../runs:/app/runs
+      # The frontend's TypeScript types, read-only. tests/test_contract.py
+      # asserts the API's payload against them, because that file is the
+      # contract the browser actually reads — see the note at the top of it.
+      - ../../frontend/src/types:/frontend/src/types:ro
     command: /app/docker/entrypoint.sh
     depends_on:
       redis: {condition: service_healthy}
