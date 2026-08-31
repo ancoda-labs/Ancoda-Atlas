@@ -7,9 +7,11 @@ the frontend's service layer maps one to one onto what it replaced.
 
 from fastapi import APIRouter
 
+from app.domains.flood.routers import router as flood_router
 from app.domains.hazards.routers import router as hazards_router
 from app.domains.media.routers import router as media_router
 
 api_router = APIRouter()
 api_router.include_router(hazards_router)
+api_router.include_router(flood_router)
 api_router.include_router(media_router)

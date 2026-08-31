@@ -119,6 +119,29 @@ def sweep_on_worker_start(**_kwargs: Any) -> None:
     sweep_hazards.apply_async(queue="sweeps")
 
 
+@worker_ready.connect
+def refresh_flood_on_worker_start(**_kwargs: Any) -> None:
+    """Fill the flood desk on start, if it is missing or stale.
+
+    The API is read-only against runs/ and never fetches from a government
+    portal on the request path, so until this runs every desk section reports
+    "awaiting first cycle". Beat would not fire for ten minutes. Same staleness
+    guard as the sweep, so a code-change restart does not re-pull sixteen
+    thousand register rows for nothing.
+    """
+    from app.domains.flood import store as desk_store
+    from app.domains.flood.tasks import refresh_flood_desk
+
+    store = desk_store.load()
+    age_s = _age_seconds(store.get("lastRunAt"))
+    if age_s is not None and age_s < desk_store.interval_minutes() * 60:
+        log.info("cold_start_flood_skipped", reason="recent", age_s=int(age_s))
+        return
+
+    log.info("cold_start_flood_queued")
+    refresh_flood_desk.apply_async(queue="sweeps")
+
+
 def _age_seconds(timestamp: str | None) -> float | None:
     if not timestamp:
         return None
