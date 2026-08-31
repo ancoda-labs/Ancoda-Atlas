@@ -4,9 +4,9 @@ import { useCallback, useEffect, useState } from 'react';
 
 // One theme choice, shared by the dashboard and every flood-desk page.
 //
-// A visit opens in Light. Dark is one click away, and that click is remembered
+// A visit opens in Dark. Light is one click away, and that click is remembered
 // for this tab so the dashboard and the desk agree. It is not carried into the
-// next visit — the first thing shown is Light.
+// next visit — the first thing shown is Dark.
 
 export type Theme = 'light' | 'dark';
 
@@ -28,7 +28,10 @@ function apply(theme: Theme): void {
 }
 
 export function useAtlasTheme(): [Theme, (next: Theme) => void] {
-  const [theme, setTheme] = useState<Theme>('light');
+  const [theme, setTheme] = useState<Theme>(() => {
+    if (typeof window === 'undefined') return 'dark';
+    return readSession() ?? 'dark';
+  });
 
   useEffect(() => {
     const stored = readSession();
@@ -36,7 +39,7 @@ export function useAtlasTheme(): [Theme, (next: Theme) => void] {
       setTheme(stored);
       apply(stored);
     } else {
-      apply('light');
+      apply('dark');
     }
 
     const onChange = (e: Event) => {

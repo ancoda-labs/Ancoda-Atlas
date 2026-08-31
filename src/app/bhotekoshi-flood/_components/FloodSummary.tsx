@@ -68,7 +68,6 @@ const T = {
   familiesRelocated: { en: 'Families relocated', ne: 'पुनर्स्थापित परिवार' },
   peopleAffected: { en: 'People affected', ne: 'प्रभावित व्यक्ति' },
   nameLists: { en: 'Published name lists', ne: 'प्रकाशित नामावली' },
-  chapterKicker: { en: 'Read by topic', ne: 'विषयअनुसार पढ्नुहोस्' },
   chapterTitle: { en: 'Official figures', ne: 'आधिकारिक तथ्यांक' },
   chapterHint: {
     en: 'Pick a topic. Each tab counts something different — do not add across tabs.',
@@ -610,12 +609,10 @@ export default function FloodSummary({
   const active = chapters.some(c => c.id === chapter) ? chapter : chapters[0]?.id || 'reported';
   const showChapters = section === 'chapters' || section === 'all';
   const showRest = section === 'rest' || section === 'all';
-  const activeChapter = chapters.find(c => c.id === active);
 
   const chaptersBlock = chapters.length > 0 && (
         <section className={`fl-sec fl-desk-chapters${section === 'chapters' ? ' fl-desk-chapters-lead' : ''}`}>
           <header className="fl-desk-chapters-head">
-            <span>{t('chapterKicker')}</span>
             <h2>{t('chapterTitle')}</h2>
             <p>{t('chapterHint')}</p>
           </header>
@@ -635,7 +632,7 @@ export default function FloodSummary({
                 onClick={() => setChapter(c.id)}
               >
                 <span className="fl-desk-tab-icon" aria-hidden="true">
-                  <Icon size={16} strokeWidth={1.75} />
+                  <Icon size={14} strokeWidth={1.75} />
                 </span>
                 <span className="fl-desk-tab-label">{c.label}</span>
                 {c.stat && <em className="fl-desk-tab-badge">{c.stat}</em>}
@@ -645,9 +642,6 @@ export default function FloodSummary({
           </div>
 
           <div className="fl-desk-panel">
-            <div className="fl-desk-panel-head">
-              <h3>{activeChapter?.label || t('reportedTitle')}</h3>
-            </div>
             <div className="fl-desk-panel-body">
           {active === 'reported' && (
             <div

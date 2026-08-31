@@ -7,8 +7,11 @@ import assert from 'node:assert/strict';
 import {
   CIRCLE_SPIRAL_SWITCHOVER,
   circleOffsets,
+  clusterByPlace,
+  clusterByTopic,
   fitLeaves,
   separateLeaves,
+  spiderLayout,
   spiderOffsets,
   spiralOffsets,
 } from '../src/lib/spiderfy.ts';
@@ -53,4 +56,47 @@ test('separateLeaves pulls stacked photographs apart', () => {
   );
   assert.ok(Math.hypot(apart[1].x - apart[0].x, apart[1].y - apart[0].y) >= 40 - 1e-6);
   assert.ok(Math.hypot(apart[2].x - apart[1].x, apart[2].y - apart[1].y) >= 40 - 1e-6);
+});
+
+test('spiderLayout keeps a large press cluster inside a narrow stage', () => {
+  const origin = { x: 200, y: 40 };
+  const bounds = { w: 420, h: 300, pad: 24, padTop: 44, padRight: 48, padBottom: 120 };
+  const fitted = spiderLayout(origin, 24, bounds, 40, 48);
+  assert.equal(fitted.length, 24);
+  for (const p of fitted) {
+    const x = origin.x + p.x;
+    const y = origin.y + p.y;
+    assert.ok(x >= 24 && x <= 420 - 48, `x ${x} left the stage`);
+    assert.ok(y >= 44 && y <= 300 - 120, `y ${y} left the stage`);
+  }
+});
+
+test('clusterByTopic does not merge a DHM station with a headline', () => {
+  const groups = clusterByTopic(
+    [
+      { x: 10, y: 10, layer: 'gauge' },
+      { x: 12, y: 11, layer: 'news' },
+      { x: 80, y: 80, layer: 'gauge' },
+    ],
+    40,
+  );
+  assert.equal(groups.length, 3);
+  assert.ok(groups.every(g => g.every(p => p.layer === g[0].layer)));
+});
+
+test('clusterByPlace keeps Rasuwa and Nuwakot headlines on their districts', () => {
+  const groups = clusterByPlace(
+    [
+      { x: 10, y: 10, layer: 'news', place: 'Rasuwa' },
+      { x: 18, y: 12, layer: 'news', place: 'Rasuwa' },
+      { x: 22, y: 14, layer: 'news', place: 'Nuwakot' },
+      { x: 11, y: 11, layer: 'gauge', place: 'Rasuwa' },
+    ],
+    80,
+  );
+  const news = groups.filter(g => g[0].layer === 'news');
+  assert.equal(news.length, 2);
+  assert.equal(news.find(g => g[0].place === 'Rasuwa')?.length, 2);
+  assert.equal(news.find(g => g[0].place === 'Nuwakot')?.length, 1);
+  assert.equal(groups.filter(g => g[0].layer === 'gauge').length, 1);
 });
