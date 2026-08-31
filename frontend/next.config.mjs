@@ -9,8 +9,31 @@ const nextConfig = {
   turbopack: {
     root,
   },
+  // Still needed while the retired Node backend is present. It goes with
+  // src/apis and src/lib in the cleanup commit.
   serverExternalPackages: ['discord.js', 'minio'],
   reactStrictMode: true,
+
+  /**
+   * Proxy the API through this origin in development.
+   *
+   * With NEXT_PUBLIC_API_BASE_URL unset, config/axios.ts calls /api/v1 on the
+   * frontend's own origin and these rewrites forward it to the API container.
+   * Same-origin means no CORS preflight, which on a high-latency mobile
+   * connection costs a full round trip before any request starts.
+   *
+   * In production the browser bundle is built with the public API hostname and
+   * calls it directly, so these rewrites are a development convenience rather
+   * than the deployed path.
+   */
+  async rewrites() {
+    const api = (process.env.ATLAS_API_BASE_URL || 'http://localhost:8000').replace(/\/+$/, '');
+    return [
+      { source: '/api/v1/:path*', destination: `${api}/api/v1/:path*` },
+      // The live sweep stream. Not versioned — it is a stream, not a resource.
+      { source: '/events', destination: `${api}/events` },
+    ];
+  },
   async headers() {
     return [
       {
