@@ -1,6 +1,6 @@
 {
   "id": "alerts",
-  "last_updated": "2026-08-28",
+  "last_updated": "2026-08-31",
   "note_en": "Figures and warnings are preliminary and change through the day. Follow the linked source for the current position.",
   "note_ne": "तथ्यांक र चेतावनी प्रारम्भिक हुन् र दिनभरि परिवर्तन हुन सक्छन्। पछिल्लो अवस्थाका लागि स्रोत लिंक हेर्नुहोस्।",
   "alerts": [
@@ -23,6 +23,16 @@
       "body_ne": "नेपाल–तिब्बत सीमा नजिकको बाँध-ताल फुट्न सक्ने चीनले चेतावनी दिएको छ; आगामी तीन दिनमा करिब ३० लाख घनमिटर पानी त्यसमा थपिने अनुमान छ।",
       "source": "Kathmandu Post",
       "source_url": "https://kathmandupost.com/national/2026/08/27/new-barrier-lake-in-nepal-raises-fresh-flood-threat-china-warns"
+    },
+    {
+      "id": "ktm-bishnumati",
+      "severity": "warning",
+      "title_en": "Kathmandu: Bishnumati and Dhobikhola near flood risk",
+      "title_ne": "काठमाडौँ: विष्णुमति र धोबीखोलामा बाढीको जोखिम",
+      "body_en": "On the evening of 15 Bhadra the Flood Forecasting Division warned riverside areas of Kathmandu after heavy rain. The Gongabu gauge on the Bishnumati was near the danger mark; reporting also put the Bagmati near danger. Residents along the Bishnumati, Dhobikhola and Bagmati were asked to stay on high alert overnight. This is a valley-stream warning, not a Bhotekoshi casualty figure.",
+      "body_ne": "१५ भदौ साँझ बाढी पूर्वानुमान महाशाखाले अविरल वर्षापछि काठमाडौँका नदीतटीय क्षेत्रमा सतर्कता आह्वान गरेको छ। गोंगबु जलमापन केन्द्रमा विष्णुमतिको सतह खतरा तह नजिक पुगेको; बागमती पनि खतरा नजिक रहेको समाचार छ। विष्णुमति, धोबीखोला र बागमती किनारका बासिन्दालाई रातभर उच्च सतर्क रहन भनिएको छ। यो उपत्यका खोलाको चेतावनी हो, भोटेकोशीको क्षति आँकडा होइन।",
+      "source": "Flood Forecasting Division via Nepal Press",
+      "source_url": "https://www.nepalpress.com/2026/08/31/759129/alert-issued-in-bishnumati-and-dhobi-khola-risk-of-flooding/"
     },
     {
       "id": "riverside",
