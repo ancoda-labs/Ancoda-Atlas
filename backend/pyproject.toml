@@ -1,0 +1,83 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ancoda-atlas-backend"
+version = "4.0.0"
+description = "Ancoda Atlas — Nepal natural-hazard and disaster intelligence API"
+requires-python = ">=3.12"
+license = "AGPL-3.0-only"
+dependencies = [
+    # Web framework
+    "fastapi==0.141.1",
+    "uvicorn[standard]==0.52.4",
+
+    # Validation and settings
+    "pydantic==2.13.5",
+    "pydantic-settings==2.15.0",
+
+    # Hazard sources are all HTTP. No vendor SDKs anywhere in this project —
+    # every upstream, LLM providers included, is a plain request.
+    "httpx==0.28.1",
+    "tenacity==9.1.4",
+
+    # Scheduling. The worker runs the sweeps; beat holds the clock.
+    "celery[redis]==5.6.3",
+    "redis==6.4.0",
+
+    # The community layer — photos, rescue corrections, news digests. Over
+    # PostgREST rather than a Postgres socket, matching how Atlas already
+    # reaches Supabase.
+    "supabase==2.31.0",
+
+    # Ground-report photo bytes.
+    "minio==7.2.20",
+    # Multipart form parsing, for the ground-report upload. Apache-2.0.
+    "python-multipart==0.0.20",
+
+    # Utilities
+    "structlog==26.1.0",
+    "orjson==3.12.0",
+    "python-dateutil==2.9.0.post0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==9.1.1",
+    "pytest-asyncio==1.4.0",
+    "pytest-cov==7.1.0",
+    "anyio[trio]==4.14.2",
+    "respx==0.23.1",
+    "ruff==0.16.5",
+    "mypy==2.3.1",
+
+    # TestClient
+    "httpx==0.28.1",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+addopts = "-v --tb=short"
+
+[tool.mypy]
+python_version = "3.12"
+files = ["app", "scripts", "tests"]
+# Several dependencies ship no stubs, and chasing third-party annotations is
+# not what this check is for — it is here to catch our own None that nobody
+# guarded.
+ignore_missing_imports = true
+disable_error_code = ["annotation-unchecked"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N"]
+ignore = ["E501"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]

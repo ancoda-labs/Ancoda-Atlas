@@ -1,0 +1,37 @@
+# The build context is backend/. The repository root, and everything at it,
+# sits outside this context already.
+
+# Secrets never enter an image layer — the containers read them from compose's
+# env_file at run time.
+.env
+.env.*
+!.env.example
+
+__pycache__/
+*.py[cod]
+*.so
+.venv/
+venv/
+env/
+build/
+dist/
+*.egg-info/
+
+# Tooling caches. Baking these in makes the image bigger and, worse, can carry
+# a stale mypy cache keyed to host paths into the container.
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.coverage
+.coverage.*
+htmlcov/
+
+celerybeat-schedule*
+celerybeat.pid
+
+# Machine state, not source. Mounted at run time.
+runs/
+
+*.log
+.DS_Store

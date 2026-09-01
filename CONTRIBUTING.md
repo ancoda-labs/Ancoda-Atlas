@@ -18,7 +18,7 @@ This matters more than a typical bug. Use the path that matches the harm:
 
 Highest value right now:
 
-1. Native-language review (Nepali and others). Look for `pending_native_review` in `content/`.
+1. Native-language review (Nepali and others). Look for `pending_native_review` in `backend/content/`.
 2. Check that a brief in *your* language still matches the listed headlines.
 3. Re-check a relief fund or helpline against the organisation’s own page, and send a correction as above if it has gone stale.
 
@@ -31,14 +31,14 @@ git clone https://github.com/ancoda-labs/Ancoda-Atlas.git
 cd Ancoda-Atlas
 cp .env.example .env
 npm install
-npm run dev
+make up
 ```
 
-Open [http://localhost:3117](http://localhost:3117). Empty panels for a few seconds is normal — the first sweep is still running. If it never starts, `npm run diag`.
+Open [http://localhost:3117](http://localhost:3117). Empty panels for a minute is normal — the first sweep is still running across five upstreams. If it never fills, `make diag` reports what is configured and `make logs` shows the worker.
 
 You do **not** need API keys, Supabase, or MinIO for the main dashboard. NASA FIRMS and ReliefWeb are better with free keys; without them those panels degrade instead of crashing.
 
-**GitHub Codespaces:** open the repo in Codespaces (dev container: Node 22 + MinIO). After it finishes installing, run `npm run dev` and use port 3117. Hosted Supabase is still optional; photo uploads need both Supabase keys in Codespaces secrets and the MinIO sidecar (already running).
+**GitHub Codespaces:** open the repo in Codespaces, then `make up` and use port 3117. Hosted Supabase stays optional; photo uploads need the Supabase secret key in Codespaces secrets and `make storage` for MinIO.
 
 **Docker Compose** on your laptop is the production-shaped path (`docker compose up --build`). You must set `MINIO_ROOT_PASSWORD` in `.env` or Compose will refuse to start.
 
@@ -59,7 +59,7 @@ Commit subject format (git will reject others):
 
 Allowed types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`. Example: `fix(flood): handle missing gauge data`.
 
-Before you push, `npm run verify` must pass (the pre-commit hook runs the same thing: no `any` types, tests, production build). Then open a pull request against `main`. Keep the PR to **one** bug or **one** feature. Fill in the PR template. If you change `content/` (funds, banks, helplines, figures), cite the primary source for every value.
+Before you push, both halves must pass. The pre-commit hook runs them: `ruff`, `mypy` and `pytest` against the backend in its container, then `npm run verify` (no `any` types, tests, production build) against the frontend. Then open a pull request against `main`. Keep the PR to **one** bug or **one** feature. Fill in the PR template. If you change `backend/content/` (funds, banks, helplines, figures), cite the primary source for every value.
 
 Open an **issue first** if you want to add a paid API, a new dashboard surface, a new dependency, or anything that widens scope.
 
@@ -78,7 +78,7 @@ By opening a pull request you license your work under the **GNU Affero GPL v3.0*
 
 Do not paste code or data whose licence you have not checked. Third-party material must be listed in `NOTICE`. The map files under `public/data/` are MIT (openknowledgenp/localboundaries) — keep that credit.
 
-More engineering detail (how to add a hazard source, layout of `src/`): see [AGENTS.md](AGENTS.md) and the rest of the README.
+More engineering detail — how to add a hazard source, the layout of `backend/app/` and `frontend/src/`, and the constraints that are not negotiable: see [AGENTS.md](AGENTS.md), which is the current architectural truth for this repository.
 
 ## Conduct
 

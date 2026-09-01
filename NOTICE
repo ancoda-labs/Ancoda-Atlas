@@ -27,9 +27,14 @@ THIRD-PARTY DATA AND CONTENT
 ================================================================================
 
 Administrative boundary data
-    public/data/flood-affected-districts.geojson
-    public/data/nepal-districts.geojson
-    public/data/nepal-provinces.geojson
+    frontend/public/data/flood-affected-districts.json
+    frontend/public/data/nepal-districts.geojson
+    frontend/public/data/nepal-provinces.geojson
+    backend/content/geo/flood-affected-districts.json
+
+    The backend copy is the same file. It is read server-side to resolve a
+    river gauge's district from its coordinates; the frontend copies are served
+    to the browser for the maps.
 
     Derived from openknowledgenp/localboundaries
     https://github.com/openknowledgenp/localboundaries

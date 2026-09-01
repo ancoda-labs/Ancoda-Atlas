@@ -1,0 +1,137 @@
+{
+  "jpeg_exif.jpg": {
+    "bytes": 777,
+    "type": "image/jpeg",
+    "facts": {
+      "width": 4032,
+      "height": 3024,
+      "orientation": 6,
+      "lat": 28.116666666666667,
+      "lon": 85.3,
+      "takenAt": "2026-08-26T08:40:00.000Z"
+    },
+    "strippedBytes": 558,
+    "strippedSha": "cfaa30f4e0e54267fe4ff043a8f6160378b4037003143437bd01891939f1d3f5",
+    "strippedType": "image/jpeg"
+  },
+  "jpeg_south.jpg": {
+    "bytes": 758,
+    "type": "image/jpeg",
+    "facts": {
+      "width": 4032,
+      "height": 3024,
+      "orientation": 1,
+      "lat": -33.86666666666667,
+      "lon": -151.2,
+      "takenAt": "2026-08-26T08:40:00.000Z"
+    },
+    "strippedBytes": 558,
+    "strippedSha": "cfaa30f4e0e54267fe4ff043a8f6160378b4037003143437bd01891939f1d3f5",
+    "strippedType": "image/jpeg"
+  },
+  "jpeg_zerofix.jpg": {
+    "bytes": 758,
+    "type": "image/jpeg",
+    "facts": {
+      "width": 4032,
+      "height": 3024,
+      "orientation": 1,
+      "lat": null,
+      "lon": null,
+      "takenAt": "2026-08-26T08:40:00.000Z"
+    },
+    "strippedBytes": 558,
+    "strippedSha": "cfaa30f4e0e54267fe4ff043a8f6160378b4037003143437bd01891939f1d3f5",
+    "strippedType": "image/jpeg"
+  },
+  "jpeg_plain.jpg": {
+    "bytes": 558,
+    "type": "image/jpeg",
+    "facts": {
+      "width": 4032,
+      "height": 3024,
+      "orientation": 1,
+      "lat": null,
+      "lon": null,
+      "takenAt": null
+    },
+    "strippedBytes": 558,
+    "strippedSha": "cfaa30f4e0e54267fe4ff043a8f6160378b4037003143437bd01891939f1d3f5",
+    "strippedType": "image/jpeg"
+  },
+  "png_text.png": {
+    "bytes": 369,
+    "type": "image/png",
+    "facts": {
+      "width": 800,
+      "height": 600,
+      "orientation": 1,
+      "lat": null,
+      "lon": null,
+      "takenAt": null
+    },
+    "strippedBytes": 313,
+    "strippedSha": "d9ad24b547a05b19851fc61074f2205e1e0a0391ae48e1ed56d98d2b2e67d958",
+    "strippedType": "image/png"
+  },
+  "png_clean.png": {
+    "bytes": 313,
+    "type": "image/png",
+    "facts": {
+      "width": 800,
+      "height": 600,
+      "orientation": 1,
+      "lat": null,
+      "lon": null,
+      "takenAt": null
+    },
+    "strippedBytes": 313,
+    "strippedSha": "d9ad24b547a05b19851fc61074f2205e1e0a0391ae48e1ed56d98d2b2e67d958",
+    "strippedType": "image/png"
+  },
+  "webp_exif.webp": {
+    "bytes": 338,
+    "type": "image/webp",
+    "facts": {
+      "width": 1200,
+      "height": 900,
+      "orientation": 1,
+      "lat": 28.116666666666667,
+      "lon": 85.3,
+      "takenAt": "2026-08-26T08:40:00.000Z"
+    },
+    "strippedBytes": 102,
+    "strippedSha": "1843aafb86cb26dae2e45cf23b381061a1e544c076d15377a4233e75001f5a5e",
+    "strippedType": "image/webp"
+  },
+  "webp_clean.webp": {
+    "bytes": 102,
+    "type": "image/webp",
+    "facts": {
+      "width": 1200,
+      "height": 900,
+      "orientation": 1,
+      "lat": null,
+      "lon": null,
+      "takenAt": null
+    },
+    "strippedBytes": 102,
+    "strippedSha": "1843aafb86cb26dae2e45cf23b381061a1e544c076d15377a4233e75001f5a5e",
+    "strippedType": "image/webp"
+  },
+  "truncated.jpg": {
+    "bytes": 40,
+    "type": "image/jpeg",
+    "facts": {
+      "width": null,
+      "height": null,
+      "orientation": 1,
+      "lat": null,
+      "lon": null,
+      "takenAt": null
+    },
+    "strippedBytes": 40,
+    "strippedSha": "601bea5432e932291df7407fe3c0fe0553bb6ea5ab89a861b94d7c2ffcf6bfeb",
+    "strippedType": "image/jpeg"
+  }
+}

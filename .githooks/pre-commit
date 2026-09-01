@@ -1,5 +1,20 @@
 #!/bin/sh
 set -eu
 
-echo "Running TypeScript and production-build checks..."
-npm run verify
+# Both halves of the stack. The backend's checks run in its container, because
+# there is no Python environment on the host to fall back to — and the frontend
+# has no backend to import any more, so the two are genuinely independent.
+
+COMPOSE="docker compose -f infra/dev/docker-compose.yml --env-file .env"
+
+echo "==> Backend: ruff, mypy, pytest"
+if $COMPOSE ps --status running api 2>/dev/null | grep -q api; then
+  $COMPOSE exec -T api python -m ruff check app scripts tests
+  $COMPOSE exec -T api python -m mypy
+  $COMPOSE exec -T api python -m pytest -q
+else
+  echo "    api container is not running — skipping. Start it with 'make up'."
+fi
+
+echo "==> Frontend: no-any, tests, production build"
+(cd frontend && npm run verify)

@@ -1,24 +1,25 @@
 <div align="center">
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="public/images/atlas-white.png">
-  <source media="(prefers-color-scheme: light)" srcset="public/images/atlas-black.png">
-  <img alt="Ancoda Atlas" src="public/images/atlas-black.png" width="420">
+  <source media="(prefers-color-scheme: dark)" srcset="frontend/public/images/atlas-white.png">
+  <source media="(prefers-color-scheme: light)" srcset="frontend/public/images/atlas-black.png">
+  <img alt="Ancoda Atlas" src="frontend/public/images/atlas-black.png" width="420">
 </picture>
 
 # Ancoda Atlas
 
 **Nepal emergency disaster intelligence. Natural hazards only. One command. Zero cloud.**
 
-An open-source project by [Ancoda Labs](https://github.com/ancodalabs).
+An open-source project by [Ancoda Labs](https://github.com/ancoda-labs).
 
 ## [Visit Ancoda Labs](https://ancodalabs.com/)
 
 [![Ancoda Labs](https://img.shields.io/badge/Ancoda%20Labs-website-00d4ff?style=for-the-badge)](https://ancodalabs.com/)
 
+[![Python 3.12](https://img.shields.io/badge/python-3.12-3776ab?logo=python&logoColor=white)](#quick-start)
 [![Node.js 22+](https://img.shields.io/badge/node-22%2B-brightgreen)](#quick-start)
 [![License: AGPL v3](https://img.shields.io/badge/license-AGPLv3-blue.svg)](LICENSE)
-[![Maintained by Ancoda Labs](https://img.shields.io/badge/maintained%20by-Ancoda%20Labs-7c5cff)](https://github.com/ancodalabs)
+[![Maintained by Ancoda Labs](https://img.shields.io/badge/maintained%20by-Ancoda%20Labs-7c5cff)](https://github.com/ancoda-labs)
 [![Hazard sources](https://img.shields.io/badge/hazard%20sources-5-cyan)](#data-sources)
 [![Focus](https://img.shields.io/badge/focus-Nepal%20%F0%9F%87%B3%F0%9F%87%B5-dc143c)](#scope)
 [![Docker](https://img.shields.io/badge/docker-ready-blue?logo=docker)](#docker)
@@ -37,11 +38,13 @@ An open-source project by [Ancoda Labs](https://github.com/ancodalabs).
 
 Atlas pulls earthquake activity, monsoon and flood forecasts, satellite fire detection, air quality and humanitarian response reporting from five open hazard feeds — all scoped to Nepal, in parallel, every 15 minutes — plus a disaster-filtered live news layer from Nepali dailies, and renders everything on a single self-contained dashboard.
 
-Hook it up to an LLM and it becomes a **two-way emergency assistant** — pushing multi-tier alerts to Telegram and Discord when hazard conditions change, responding to `/brief` and `/sweep` from your phone, producing actionable reads grounded in real cross-layer hazard data, and carrying the flood desk's news brief into any of ~130 languages for families reading from outside Nepal.
+Hook it up to an LLM and it gains a **reading layer** — multi-tier alerts pushed to Telegram and Discord when hazard conditions change, actionable reads grounded in real cross-layer hazard data, and the flood desk's news brief carried into any of ~130 languages for families reading from outside Nepal.
 
 No cloud. No telemetry. No subscriptions.
 
 Live at **[atlas.ancodalabs.com](https://atlas.ancodalabs.com)**.
+
+**Docs:** [Quick start](docs/quickstart.md) · [Architecture](docs/architecture/architecture.md)
 
 ---
 
@@ -84,7 +87,7 @@ Atlas covers **natural hazards in Nepal, and nothing else**:
 
 Out of scope, deliberately: politics, elections, conflict, markets, trade, finance, diplomacy, aviation tracking and general news. India and China appear only through cross-boundary hazards — upstream river discharge, transboundary smoke, and ruptures on shared fault segments.
 
-Every geographic boundary, province and city lives in [`src/apis/utils/nepal.mjs`](src/apis/utils/nepal.mjs). Edit that file to adjust coverage; nothing else hardcodes geography.
+Every geographic boundary, province and city lives in [`backend/app/core/nepal.py`](backend/app/core/nepal.py). Edit that file to adjust coverage; nothing else hardcodes geography. The frontend keeps a small read-only subset in `frontend/src/lib/nepal-geo.ts` because the map needs it client-side — it says so at the top.
 
 ---
 
@@ -109,84 +112,73 @@ Nepal sits on the Main Himalayan Thrust, receives roughly 80% of its rainfall in
 
 ## Quick Start
 
-```bash
-# 1. Clone the repo
-git clone https://github.com/ancodalabs/atlas.git
-cd atlas
-
-# 2. Install dependencies
-npm install
-
-# 3. Copy env template and add your API keys (see below)
-cp .env.example .env
-
-# 4. Start the dashboard
-npm run dev
-```
-
-The dashboard runs at `http://localhost:3117` and begins its first hazard sweep immediately. The sweep queries all five sources in parallel and typically completes in under 10 seconds. After that it auto-refreshes every 15 minutes and pushes updates over SSE — no manual page refresh needed.
-
-Run `npm run diag` if something fails to start; it checks your Node version, imports every local module individually, and verifies port availability.
-
-**Requirements:** Node.js 22+ (uses native `fetch`, top-level `await`, ESM)
-
-### Docker
-
-Docker is the recommended way to run the production build. Docker Compose
-loads configuration from `.env` and persists sweep data in the local `runs/`
-directory.
+Atlas is two services: a Python/FastAPI backend that does every fetch, scrape
+and schedule, and a Next.js frontend that renders. Compose runs both.
 
 ```bash
-# From the repository root:
-cp .env.example .env
-# Edit .env and add optional API keys, if available.
-docker compose up --build -d
+git clone https://github.com/ancoda-labs/Ancoda-Atlas.git
+cd Ancoda-Atlas
+cp .env.example .env   # every key is optional
+make up
 ```
 
-The dashboard is available at `http://localhost:3117`. The container exposes
-the port configured by `PORT` in `.env` and persists `runs/latest.json`,
-`runs/dashboard.json`, and sweep memory through the `./runs:/app/runs` volume.
+| | |
+|---|---|
+| Dashboard | http://localhost:3117 |
+| Flood desk | http://localhost:3117/bhotekoshi-flood |
+| API docs | http://localhost:8000/docs |
+
+**Requirements:** Docker and Docker Compose. Nothing else — Python 3.12 and
+Node 22 live inside the images.
+
+A cold start shows the empty skeleton for one cycle: the worker sweeps as soon
+as it comes up, so the dashboard fills within seconds and the flood desk within
+about a minute. Until then the pages say they are waiting rather than showing
+figures they do not have.
+
+Run `make diag` if something looks wrong — it reports which optional services
+are configured and which keys are set. `make help` lists every target.
+
+**→ [Full quick start, configuration and deployment](docs/quickstart.md)**
+
+### Deploying
+
+One machine, Traefik terminating TLS for both hostnames:
 
 ```bash
-# Follow application logs
-docker compose logs -f atlas
-
-# Check container health and status
-docker compose ps
-
-# Stop the service (keeps ./runs/)
-docker compose down
+docker compose -f infra/prod/docker-compose.yml up -d
 ```
 
-To use another host port, set `PORT` in `.env` before starting Compose. The
-same value is used inside and outside the container.
+Two machines — the frontend holds no state, so it can live anywhere, Cloudflare
+included. The backend cannot be split further, because `runs/` is a host-local
+bind mount with exactly one writer:
 
-The image build installs all platform-specific optional dependencies required by
-Next.js and skips local Git hooks, which are only configured on developer
-machines by `npm install`.
+```bash
+make be    # API, worker, beat, Redis — the machine that owns the data
+make fe    # the machine that serves readers
+```
 
-### Why not a serverless or edge runtime
+Set `ALLOWED_ORIGINS` to the frontend's origin before either half is useful.
+See [docs/quickstart.md](docs/quickstart.md#deploying) for the rest.
 
-Atlas needs a host that runs a long-lived Node process with a writable disk. It
-is not deployable to Cloudflare Workers, or to any other edge-serverless
-runtime, and adapters such as OpenNext cannot bridge the gap — the build fails
-while bundling, and the parts that did bundle would not work:
+### Where it can and cannot run
 
-- **A native binary.** Rescue-register OCR rasterizes official PDFs through
-  `@napi-rs/canvas`, which ships a platform-specific `.node` Skia binary. Edge
-  runtimes execute no native modules, and no bundler setting changes that.
-- **A writable filesystem.** The sweeper and the flood desk persist each cycle
-  to `runs/`, and the dashboard reads `runs/dashboard.json` when its in-memory
-  copy is cold. Edge runtimes have no writable disk.
-- **Background schedulers.** The hazard sweep and the flood refresh are
-  `setInterval` loops owned by the server process. Edge runtimes keep no process
-  alive between requests.
+The **backend** needs a host that runs a long-lived process with a writable
+disk. It is not deployable to an edge-serverless runtime, and no adapter bridges
+the gap:
 
-Any container or VM host works: Docker Compose as above, or the published image
-on a container platform. Use the `runs/` volume so sweep state survives a
-restart.
+- **A writable filesystem.** The worker persists each cycle to `runs/` and the
+  API reads those files. Edge runtimes have no writable disk.
+- **A background scheduler.** Celery beat keeps the 15-minute sweep and the
+  10-minute flood refresh. Edge runtimes keep no process alive between requests.
+- **One writer.** The worker is the sole writer of `runs/`, so it cannot be
+  spread across isolates that share nothing.
 
----
+The **frontend** has none of those needs — it renders and calls the API, holds
+no state, opens no database and reads no disk. It runs on Cloudflare, on a
+second VPS, or beside the backend. That split is the point: an earlier build put
+the schedulers and the store inside the Next.js server, which is exactly why it
+could not be hosted at the edge.
 
 ## What You Get
 
@@ -210,7 +202,7 @@ English / नेपाली throughout, with the news brief available in ~130 l
 Donation links are curated, never scraped. Disaster fundraising scams peak in the
 first 48–72 hours, so an aggregator that auto-surfaces unverified fundraisers is
 worse than none at all. Every fund is a reviewed JSON record under
-`content/bhotekoshi-flood/` with its own source and verification date.
+`backend/content/bhotekoshi-flood/` with its own source and verification date.
 
 ### Multilingual news briefs
 
@@ -221,7 +213,7 @@ of the Bhotekoshi are disproportionately Tamang, Tharu and Maithili speakers. A
 relief notice someone cannot read is a notice that did not reach them.
 
 The **AI Insights** panel therefore offers its brief in ~130 languages, listed in
-[`src/lib/nepal-languages.ts`](src/lib/nepal-languages.ts) in two groups: Nepal's
+[`backend/app/domains/ai/languages.py`](backend/app/domains/ai/languages.py) in two groups: Nepal's
 own languages first, then the rest of the world.
 
 Two things about how this works are deliberate and worth stating plainly:
@@ -264,8 +256,8 @@ languages the wire itself arrives in.
 
 ### Disaster-filtered news, independent of the sweep
 
-The news panels do not wait for the 15-minute sweep. They poll `/api/news` on
-their own 5-minute cadence. The aggregator fans out across Nepali dailies and
+The news panels do not wait for the 15-minute sweep. They poll `/api/v1/news` on
+their own cadence. The aggregator fans out across Nepali dailies and
 hazard-scoped Google News queries, then applies two gates before anything
 reaches a panel: a **hazard gate** (the item must name a natural hazard, its
 impact, or the response to it) and a **Nepal gate** (it must carry a Nepal
@@ -297,29 +289,23 @@ The server runs a sweep cycle every 15 minutes (configurable). Each cycle:
 The flood desk runs its own faster cycle (10 minutes by default) so a government
 portal falling over degrades to slightly older figures rather than an empty page.
 
-### Telegram Bot (Two-Way)
+### Alerts (one-way)
 
-| Command | What It Does |
-|---------|-------------|
-| `/status` | System health, last sweep time, source status, LLM status |
-| `/sweep` | Trigger a manual sweep cycle |
-| `/brief` | Compact text summary of the latest hazard picture |
-| `/alerts` | Recent alert history with tiers |
-| `/mute` / `/mute 2h` | Silence alerts for 1h (or custom duration) |
-| `/unmute` | Resume alerts |
-| `/help` | Show all available commands |
+When hazard conditions change, Atlas pushes multi-tier alerts — FLASH,
+PRIORITY, ROUTINE — with semantic deduplication so the same event does not
+arrive five times.
 
-Requires `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` in `.env`.
+| Channel | Setup |
+|---------|-------|
+| Telegram | `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` |
+| Discord | `DISCORD_WEBHOOK_URL` — rich embeds colour-coded by tier |
 
-### Discord Bot (Two-Way)
-
-Mirrors the Telegram bot with Discord-native slash commands (`/status`, `/sweep`, `/brief`, `/alerts`, `/mute`, `/unmute`) and rich embed alerts colour-coded by tier: red for FLASH, yellow for PRIORITY, blue for ROUTINE.
-
-**Webhook fallback:** set `DISCORD_WEBHOOK_URL` instead of a bot token for one-way alerts with zero extra dependencies.
-
-**Optional dependency:** the full bot uses `discord.js`, which is installed
-automatically by `npm install` and in the Docker image. Without it Atlas falls
-back to webhook-only mode.
+> [!NOTE]
+> **Alerts are one-way. There are no bot commands.** An earlier build carried
+> Telegram long-polling and a discord.js gateway client, but nothing ever
+> started either of them, so `/status`, `/sweep` and `/brief` never worked. That
+> dead code was removed rather than documented. A two-way bot needs its own
+> long-lived process, and is not implemented.
 
 ### Optional community layer (Supabase + MinIO)
 
@@ -329,8 +315,12 @@ that show how an event developed rather than a wall of near-duplicate headlines.
 
 Both are optional and each hides itself when its backing service is absent, so
 Atlas still runs as a pure monitoring dashboard with neither configured. Supabase
-holds the records, MinIO holds the image objects. Run `npm run db:migrate` to
-apply the schema in `supabase/migrations/`.
+holds the records, MinIO holds the image objects.
+
+Apply the schema out of band — PostgREST cannot run DDL — with
+`supabase db push`, then `make migrate` to check the tables and the
+`flood_photo_recount` RPC are reachable. `make migrate` only verifies; it
+does not migrate.
 
 ### Optional LLM Layer
 
@@ -419,7 +409,7 @@ provider is the cause, not the code. Options, in order of effort:
 2. On Groq, try a larger or more multilingual model. Check what your key can
    reach with `GET https://api.groq.com/openai/v1/models`.
 3. Raise `LLM_REASONING_EFFORT` if briefs come back *empty* rather than wrong.
-4. Trim `src/lib/nepal-languages.ts` to the languages you can actually serve.
+4. Trim `backend/app/domains/ai/languages.py` to the languages you can actually serve.
    Offering 130 and delivering 40 is exactly what that file's design note was
    written to prevent.
 
@@ -433,40 +423,23 @@ it — a paid tier is worth it if the multilingual panel matters to you.
 |-----|------------|
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project → Settings → API |
 | `SUPABASE_SECRET_KEY` | Supabase → API keys. **The secret key, never the publishable one** — these tables have row-level security on with no policies, so the browser-facing key reads nothing |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase → API keys, for browser-side reads |
 | `MINIO_ENDPOINT` / `MINIO_ROOT_USER` / `MINIO_ROOT_PASSWORD` | Your MinIO or S3-compatible object store |
 | `MINIO_BUCKET` | Bucket for uploaded photos (default `atlas`) |
 | `ATLAS_IP_SALT` | Random string. Salts hashed uploader IPs for rate limiting — set it, or the hashes are not worth much |
-| `ATLAS_MEDIA_SECRET` | Signs media proxy URLs |
+| `ATLAS_MEDIA_SECRET` | Signs media proxy URLs. **Required in production and identical on every instance** — unset, a random key is minted per process and image links die on restart |
 | `FLOOD_ADMIN_TOKEN` | Bearer token for the photo moderation endpoints |
-| `FLOOD_REFRESH_TOKEN` | Bearer token to trigger `/api/flood/refresh` externally |
+| `FLOOD_REFRESH_TOKEN` | Bearer token to trigger `POST /api/v1/flood/refresh` externally |
 | `YOUTUBE_API_KEY` | *(Optional)* Enriches the flood desk's video panel |
 
-### Telegram Bot + Alerts (optional)
+### Alerts (optional)
 
 | Key | How to Get |
 |-----|------------|
 | `TELEGRAM_BOT_TOKEN` | Create via [@BotFather](https://t.me/BotFather) |
 | `TELEGRAM_CHAT_ID` | Get via [@userinfobot](https://t.me/userinfobot) |
-| `TELEGRAM_CHANNELS` | *(Optional)* Comma-separated extra channel IDs to broadcast to |
-| `TELEGRAM_POLL_INTERVAL` | *(Optional)* Bot command polling interval in ms (default: 5000) |
+| `DISCORD_WEBHOOK_URL` | Channel Settings → Integrations → Webhooks |
 
-### Discord Bot + Alerts (optional)
-
-| Key | How to Get |
-|-----|------------|
-| `DISCORD_BOT_TOKEN` | [Discord Developer Portal](https://discord.com/developers/applications) → Bot → Token |
-| `DISCORD_CHANNEL_ID` | Right-click channel (Developer Mode on) → Copy Channel ID |
-| `DISCORD_GUILD_ID` | *(Optional)* Right-click server → Copy Server ID. Enables instant slash command registration |
-| `DISCORD_WEBHOOK_URL` | *(Optional)* Channel Settings → Integrations → Webhooks. Alert-only mode without a bot |
-
-**Discord bot setup:**
-1. Create an application at the [Discord Developer Portal](https://discord.com/developers/applications)
-2. **Bot** → **Reset Token** → copy to `DISCORD_BOT_TOKEN`
-3. Under **Privileged Gateway Intents**, enable **Message Content Intent**
-4. **OAuth2** → **URL Generator** → scopes `bot` + `applications.commands`, permissions `Send Messages` + `Embed Links`
-5. Open the generated URL to invite the bot
-6. `discord.js` is installed with the project dependencies.
+Alerts are one-way. There is no bot token to set, because there is no bot.
 
 ### Without Any Keys
 
@@ -476,109 +449,43 @@ Atlas works with zero API keys. Three of the five hazard sources need no authent
 
 ## Architecture
 
+Atlas is a **Python/FastAPI backend** and a **Next.js frontend**. All fetching,
+scraping, scheduling and persistence is Python. The frontend renders and nothing
+else.
+
 ```
-atlas/
-├── src/
-│   ├── app/                   # Next.js App Router — routes and the views they render
-│   │   ├── page.tsx           # SSR entry — hydrates DashboardClient
-│   │   ├── layout.tsx
-│   │   ├── _components/       # Dashboard-route-only UI (DashboardClient, maps, flood button)
-│   │   ├── bhotekoshi-flood/  # Public flood response page
-│   │   │   ├── BhotekoshiFloodView.tsx
-│   │   │   ├── _components/   # Shared across the flood desk's own routes
-│   │   │   └── <route>/       # rescue, donate, report, media, situation, contacts
-│   │   ├── events/route.ts    # SSE stream for live push updates
-│   │   └── api/
-│   │       ├── data/route.ts  # Current synthesized hazard data (JSON)
-│   │       ├── news/route.ts  # Disaster-filtered news, 4-minute server cache
-│   │       ├── bipad/route.ts # NDRRMA BIPAD Portal telemetry
-│   │       └── flood/         # Flood content, gauges, photos, digests, insights
-│   │
-│   ├── components/            # Reusable across routes — nothing route-specific
-│   │   ├── ui/                # shadcn/ui primitives (Button, Command, Popover, …)
-│   │   ├── FloodShell.tsx     # Chrome shared by every flood desk page
-│   │   └── FloodDistrictMap.tsx   # Affected-district map with the flood path
-│   │
-│   ├── hooks/                 # use-atlas-theme, use-flood-lang
-│   ├── types/                 # Shared domain types + .mjs module declarations
-│   ├── styles/globals.css     # Tailwind entry, shadcn token map, Atlas design system
-│   │
-│   ├── apis/
-│   │   ├── briefing.mjs       # Master orchestrator — runs all 5 sources in parallel
-│   │   ├── save-briefing.mjs  # CLI: save timestamped + latest.json
-│   │   ├── BRIEFING_PROMPT.md # Disaster briefing protocol
-│   │   ├── BRIEFING_TEMPLATE.md   # Briefing output structure
-│   │   ├── utils/
-│   │   │   ├── fetch.mjs      # safeFetch() — timeout, retries, abort, auto-JSON
-│   │   │   ├── nepal.mjs      # Geography: bbox, provinces, cities, seismic box
-│   │   │   ├── flood-scope.mjs
-│   │   │   └── env.mjs        # .env loader (no dotenv dependency)
-│   │   └── sources/
-│   │       ├── seismic.mjs    # USGS — each exports briefing() → structured data
-│   │       ├── weather.mjs    # Open-Meteo, monsoon-aware thresholds
-│   │       ├── firms.mjs      # NASA FIRMS satellite fire detection
-│   │       ├── airquality.mjs # PM2.5, PM10 and US AQI across 10 cities
-│   │       ├── reliefweb.mjs  # UN OCHA, HDX fallback
-│   │       ├── bipad.mjs      # NDRRMA BIPAD Portal river gauges
-│   │       ├── ndrrma*.mjs    # NDRRMA bulletins and notices
-│   │       ├── rescue-portal.mjs  # OPMCM rescue register
-│   │       ├── youtube.mjs    # Flood desk video panel
-│   │       └── nepal-news.mjs # Hazard news aggregator behind /api/news
-│   │
-│   └── lib/
-│       ├── utils.ts           # cn() — the shadcn class merger
-│       ├── sweeper.ts         # Background sweep loop, SSE broadcast, alert dispatch
-│       ├── flood-cron.ts      # The flood desk's own faster refresh cycle
-│       ├── news-digest.mjs    # Extractive briefs + the translation layer
-│       ├── news-digest-store.ts   # Stored ten-minute digests (Supabase)
-│       ├── nepal-languages.ts # The ~130 languages briefs are offered in
-│       ├── db.ts / storage.ts / supabase/   # Optional community layer
-│       ├── llm/               # LLM abstraction (11 providers, raw fetch, no SDKs)
-│       │   ├── provider.mjs   # Base class
-│       │   ├── ideas.mjs      # LLM-powered hazard reads
-│       │   └── index.mjs      # Factory: createLLMProvider()
-│       ├── delta/
-│       │   ├── engine.mjs     # Hazard delta computation, configurable thresholds
-│       │   ├── memory.mjs     # Hot memory (3 runs, atomic writes) + cold archives
-│       │   └── index.mjs      # Re-exports
-│       └── alerts/
-│           ├── telegram.mjs   # Multi-tier alerts + two-way bot commands
-│           └── discord.mjs    # Slash commands, rich embeds, webhook fallback
-│
-├── content/
-│   └── bhotekoshi-flood/      # Reviewed relief funds, helplines, figures
-│
-├── locales/                   # en, ne, fr UI strings
-├── supabase/migrations/       # Community layer schema
-├── test/                      # node:test suites (npm test)
-│
-├── scripts/
-│   ├── diag.mjs               # Runtime and module diagnostics
-│   ├── migrate.mjs            # Apply Supabase migrations
-│   ├── check-no-any.mjs       # Fails the build on implicit `any`
-│   └── synthesize.mjs         # CLI wrapper for dashboard synthesis
-│
-├── public/
-│   ├── qr/                    # Government relief-fund payment QR codes
-│   └── data/                  # Boundary GeoJSON (see NOTICE for attribution)
-│
-└── runs/                      # Runtime data (gitignored)
-    ├── latest.json            # Most recent raw sweep output
-    ├── dashboard.json         # Most recent synthesized payload (what the UI renders)
-    └── memory/                # Delta memory (hot.json + cold/YYYY-MM-DD.json)
+backend/     FastAPI + Celery. Every source, every route, every schedule.
+frontend/    Next.js. Pages, views, components. Talks to the API over axios.
+infra/       dev/, prod/ and split/ Compose stacks.
+docs/        Quick start and architecture.
+runs/        Gitignored. The worker writes it; the API reads it.
+supabase/    The SQL schema, applied out of band.
 ```
+
+Three backend processes, and the constraint on each:
+
+| Service | Does | Constraint |
+|---|---|---|
+| `api` | Serves HTTP. **Reads** `runs/`, never writes it. | Never fetches from a government portal on the request path. |
+| `worker` | Runs every sweep and refresh. The **only** writer of `runs/`. | **Do not scale past one replica.** |
+| `beat` | The clock. 15-min hazard sweep, 10-min flood refresh. | Separate, so restarting a worker mid-sweep does not lose the schedule. |
+
+Redis is Celery's broker **and** the channel the worker uses to tell the API a
+sweep landed. It carries the signal, never the state — the payloads are JSON
+files under `runs/`, written atomically and read by both services.
+
+**→ [Full architecture, with a diagram](docs/architecture/architecture.md)**
 
 ### Design Principles
 
 - **Hazard-only** — if a signal is not a natural hazard, its impact, or the response to it, it does not belong in this build
-- **Minimal dependencies** — Next.js and React at runtime. `discord.js` is optional. LLM providers use raw `fetch()`, no SDKs.
-- **Parallel execution** — `Promise.allSettled()` fires all five sources simultaneously, each with its own timeout
+- **The API never fetches on the request path** — a reader's page load must not depend on a government portal being up
+- **Parallel execution** — `asyncio.gather` fires all five sources simultaneously, each with its own timeout
 - **Graceful degradation** — missing keys produce structured errors, not crashes. A source running on a fallback feed reports as degraded rather than healthy.
-- **Each source is standalone** — run `node src/apis/sources/seismic.mjs` to test any source independently
+- **Each source is standalone** — run `python -m app.domains.hazards.sources.seismic` to test any source independently
+- **Zero is a claim** — BIPAD stores unfilled loss records as zeros, so every total travels with how many records actually carried figures. An absent counter is `None`, never `0`.
 - **Seasonality is context, not noise** — thresholds move with the monsoon and fire calendars
 - **Provenance over polish** — every panel says where its text came from and whether a model touched it. A summary that reads well is indistinguishable from a summary that is right, and the reader cannot tell them apart from the page.
-
----
 
 ## Data Sources
 
@@ -597,8 +504,8 @@ bulletins, notices) and the **OPMCM rescue portal**.
 
 ### Live hazard news aggregator
 
-Separate from the sweep, `src/apis/sources/nepal-news.mjs` powers the `/api/news`
-route and every news panel.
+Separate from the sweep, `backend/app/domains/news/sources/nepal_news.py` powers
+the `/api/v1/news` route and every news panel.
 
 | Topic | Panel |
 |-------|-------|
@@ -624,90 +531,112 @@ route and every news panel.
 
 ---
 
-## npm Scripts
+## Commands
 
-| Script | Command | Description |
-|--------|---------|-------------|
-| `npm run dev` | `next dev` | Start the dashboard with auto-refresh |
-| `npm run build` | `next build` | Production build |
-| `npm start` | `next start` | Serve the production build |
-| `npm test` | `node --test test/*.test.mjs` | Run the test suite |
-| `npm run verify` | — | No-any check + tests + build. **Run this before opening a PR.** |
-| `npm run check:no-any` | `node scripts/check-no-any.mjs` | Fail on implicit `any` |
-| `npm run sweep` | `node src/apis/briefing.mjs` | Run a single sweep, output JSON to stdout |
-| `npm run synthesize` | `node scripts/synthesize.mjs` | Synthesize `runs/latest.json` into dashboard shape |
-| `npm run brief:save` | `node src/apis/save-briefing.mjs` | Run sweep + save timestamped JSON |
-| `npm run db:migrate` | `node scripts/migrate.mjs` | Apply Supabase migrations |
-| `npm run diag` | `node scripts/diag.mjs` | Run diagnostics (Node version, imports, port check) |
-| `npm run clean` | `node scripts/clean.mjs` | Clear runtime data in `runs/` |
-| `npm run fresh-start` | — | Clean, build, and start |
+Everything runs through the Makefile; the backend checks run inside the API
+container, so there is no local Python to install.
 
----
+| Command | Description |
+|---------|-------------|
+| `make up` / `make down` | Start / stop the dev stack |
+| `make logs` · `make ps` · `make shell` | Tail logs, container status, shell in the API |
+| `make restart` | Restart the API, worker and scheduler |
+| `make sweep` | Run one national hazard sweep by hand |
+| `make flood` | Run one flood desk refresh by hand |
+| `make diag` | Python, imports, ports, and which keys are set |
+| `make migrate` | Check the Supabase schema is reachable (it does not migrate) |
+| `make clean` | Delete the runtime sweep and desk files in `runs/` |
+| `make test` · `make lint` · `make typecheck` | pytest, ruff, mypy |
+| `make fe-build` | Type-check and build the frontend |
+| `make storage` | Start the optional local MinIO sidecar |
+| `make be` / `make fe` | Run one half alone, for a two-machine deploy |
+| `make hooks` | Enable the versioned git hooks in `.githooks` |
+
+Before opening a PR run `make test`, `make lint`, `make typecheck`, and
+`cd frontend && npm run verify`. The pre-commit hook does both halves.
+
+Each hazard source is standalone:
+
+```bash
+docker compose -f infra/dev/docker-compose.yml exec api \
+  python -m app.domains.hazards.sources.seismic
+```
 
 ## Configuration
 
+One `.env` at the repository root, read by both services. **Do not put a comment
+on the same line as a value** — Docker's `env_file` treats it as part of the
+value. `.env.example` is the tracked template and lists every variable.
+
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `PORT` | `3117` | Dashboard server port |
-| `PUBLIC_URL` | — | Public base URL, for absolute links in alerts |
-| `REFRESH_INTERVAL_MINUTES` | `15` | Sweep interval |
-| `FLOOD_REFRESH_INTERVAL_MINUTES` | `10` | Flood desk refresh interval (minimum 2) |
-| `FLOOD_REFRESH_TOKEN` | — | Bearer token for `POST /api/flood/refresh` |
+| `PORT` | `3117` | Frontend port |
+| `API_HOST_PORT` | `8000` | API port on the host |
+| `NEXT_PUBLIC_API_BASE_URL` | — | Baked into the browser bundle at **build** time |
+| `ATLAS_API_BASE_URL` | `http://localhost:8000` | Read at **runtime** by the server renderer |
+| `ALLOWED_ORIGINS` | `http://localhost:3117` | Origins the API answers. Load-bearing on a split deploy |
+| `ATLAS_RUNS_DIR` | `./runs` | Where the sweep snapshot and desk store live |
+| `REFRESH_INTERVAL_MINUTES` | `15` | Hazard sweep interval |
+| `FLOOD_REFRESH_INTERVAL_MINUTES` | `10` | Flood desk interval (minimum 2) |
+| `FLOOD_REFRESH_TOKEN` | — | Bearer token for `POST /api/v1/flood/refresh` |
 | `FIRMS_MAP_KEY` | disabled | NASA FIRMS satellite fire detection |
-| `RELIEFWEB_APPNAME` | `atlas` | Approved ReliefWeb appname |
+| `RELIEFWEB_APPNAME` | — | Approved ReliefWeb appname |
 | `LLM_PROVIDER` | disabled | `anthropic`, `openai`, `gemini`, `codex`, `openrouter`, `minimax`, `mistral`, `ollama`, `grok`, `groq`, `tarka` |
-| `LLM_API_KEY` | — | API key (not needed for codex or ollama) |
+| `LLM_API_KEY` | — | Not needed for codex or ollama |
 | `LLM_MODEL` | per-provider default | Override model selection |
 | `LLM_REASONING_EFFORT` | provider default | `low` / `medium` / `high` for reasoning models |
-| `LLM_BASE_URL` | `https://tarka.rest/v1` | Override the Tarka API base URL |
-| `OLLAMA_BASE_URL` | `http://localhost:11434` | Ollama host |
+| `LLM_BASE_URL` · `OLLAMA_BASE_URL` | — | Override a provider's base URL |
 | `NEXT_PUBLIC_SUPABASE_URL` | disabled | Community layer database |
-| `SUPABASE_SECRET_KEY` | — | Supabase secret key (**not** the publishable one) |
-| `MINIO_ENDPOINT` | disabled | Object store for uploaded photos |
-| `MINIO_BUCKET` | `atlas` | Bucket name |
-| `MINIO_PRESIGNED_EXPIRY_SECONDS` | `3600` | Presigned URL lifetime |
+| `SUPABASE_SECRET_KEY` | — | Service-role key (**not** the publishable one) |
+| `MINIO_ENDPOINT` · `MINIO_BUCKET` | disabled · `atlas` | Object store for uploaded photos |
 | `ATLAS_IP_SALT` | — | Salt for hashed uploader IPs |
-| `ATLAS_MEDIA_SECRET` | — | Signs media proxy URLs |
-| `FLOOD_ADMIN_TOKEN` | — | Bearer token for photo moderation |
+| `ATLAS_MEDIA_SECRET` | — | Signs media proxy URLs. Required in production |
+| `FLOOD_ADMIN_TOKEN` | — | Bearer token for photo takedown |
 | `YOUTUBE_API_KEY` | disabled | Enriches the flood desk video panel |
-| `TELEGRAM_BOT_TOKEN` | disabled | For Telegram alerts + bot commands |
-| `TELEGRAM_CHAT_ID` | — | Your Telegram chat ID |
-| `TELEGRAM_CHANNELS` | — | Extra channel IDs to broadcast to (comma-separated) |
-| `TELEGRAM_POLL_INTERVAL` | `5000` | Bot command polling interval (ms) |
-| `DISCORD_BOT_TOKEN` | disabled | For Discord alerts + slash commands |
-| `DISCORD_CHANNEL_ID` | — | Discord channel for alerts |
-| `DISCORD_GUILD_ID` | — | Server ID (instant slash command registration) |
-| `DISCORD_WEBHOOK_URL` | — | Webhook URL (alert-only fallback, no bot needed) |
+| `TELEGRAM_BOT_TOKEN` · `TELEGRAM_CHAT_ID` | disabled | One-way Telegram alerts |
+| `DISCORD_WEBHOOK_URL` | disabled | One-way Discord alerts |
+| `DOMAIN_FRONTEND` · `DOMAIN_API` · `ACME_EMAIL` | — | Traefik routing and certificates |
+| `ATLAS_RUNS_PATH` | `./runs` | Host path for `runs/`. Use an absolute path outside the repo |
 
-Delta engine thresholds live in `atlas.config.mjs` under `delta.thresholds`. They are tuned for Nepal: any new earthquake or flood alert clears the bar on its own, while fire detection counts need a swing of a couple hundred before they mean anything.
+Delta engine thresholds live in
+[`backend/app/domains/hazards/delta/engine.py`](backend/app/domains/hazards/delta/engine.py).
+They are tuned for Nepal: any new earthquake or flood alert clears the bar on
+its own, while fire detection counts need a swing of a couple hundred before
+they mean anything.
 
-Geographic coverage lives in `src/apis/utils/nepal.mjs` — the national bounding box, the widened seismic box that catches ruptures just across the border, the seven provinces, the ten monitored cities, and the keyword set used to filter text feeds down to Nepal.
-
----
+Geographic coverage lives in
+[`backend/app/core/nepal.py`](backend/app/core/nepal.py) — the national bounding
+box, the widened seismic box that catches ruptures just across the border, the
+seven provinces, the ten monitored cities, and the keyword set used to filter
+text feeds down to Nepal.
 
 ## API Endpoints
 
+Everything is under `/api/v1`. Interactive docs at `http://localhost:8000/docs`.
+
 | Endpoint | Description |
 |----------|-------------|
-| `GET /` | Hazard dashboard — simple view by default, detailed view on toggle |
-| `GET /bhotekoshi-flood` | Public flood response page |
-| `GET /api/data` | Current synthesized hazard data (JSON) |
-| `GET /api/news` | Disaster-filtered news (JSON). Params: `topic`, `window` (`1h\|6h\|24h\|48h\|7d\|all`), `limit`, `sourceCap` |
-| `GET /api/bipad` | NDRRMA BIPAD Portal telemetry |
-| `GET /api/flood` | Flood content plus live BIPAD river gauges (JSON, 2-minute cache) |
-| `GET /api/flood/insights?lang=` | Live news brief in any of ~130 languages (10-minute cache) |
-| `GET /api/flood/digest?lang=&limit=` | Stored ten-minute digest timeline (`en` / `ne`; needs Supabase) |
-| `GET /api/flood/situation` | Situation report and river gauge detail |
-| `GET /api/flood/persons` | Searchable rescue register |
-| `GET /api/flood/contacts` | District contacts and helplines |
-| `GET /api/flood/donations` | Human-verified relief funds and bank details |
-| `GET /api/flood/photos` | Crowdsourced ground photos (needs Supabase + MinIO) |
-| `GET /api/flood/gallery` · `/videos` · `/press` | Media panels |
-| `GET /api/flood/station-photo?id=` | HTTPS proxy for DHM gauge-station photos |
-| `POST /api/flood/refresh` | Trigger a flood desk refresh (`FLOOD_REFRESH_TOKEN`) |
+| `GET /api/v1/data` | The synthesized hazard snapshot |
+| `GET /api/v1/news` | Disaster-filtered news. Params: `topic`, `window`, `limit`, `sourceCap` |
+| `GET /api/v1/flood` | The flood desk overview — reviewed content plus live gauges |
+| `GET /api/v1/flood/situation` | Incidents, alerts and live filings |
+| `GET /api/v1/flood/insights?lang=` | The overview brief, in a chosen language |
+| `GET /api/v1/flood/digest?lang=&limit=` | Stored ten-minute digests (needs Supabase) |
+| `GET /api/v1/flood/persons` | The OPMCM missing-and-found register |
+| `GET /api/v1/flood/rescue` | The NDRRMA rescued-persons register |
+| `GET` · `POST /api/v1/flood/rescue/correction` | Corrections filed against the register |
+| `GET /api/v1/flood/contacts` | District contacts and helplines |
+| `GET /api/v1/flood/donations` | Published donation channels |
+| `GET` · `POST /api/v1/flood/photos` | Ground reports (needs Supabase + MinIO) |
+| `POST /api/v1/flood/photos/report` | Flag a ground report |
+| `DELETE /api/v1/flood/photos/{id}` | Take one down (`FLOOD_ADMIN_TOKEN`) |
+| `GET /api/v1/flood/gallery` · `/videos` · `/press` | Media panels |
+| `GET /api/v1/flood/media/image` | Signed proxy for one news photograph |
+| `GET /api/v1/flood/station-photo?id=` | HTTPS proxy for a DHM gauge-station photo |
+| `GET` · `POST /api/v1/flood/refresh` | Cycle health; trigger one out of band |
+| `GET` · `POST /api/v1/sandbox/ask` | The unlisted desk sandbox |
 | `GET /events` | SSE stream for live push updates |
-
----
+| `GET /health` · `/health/ready` | Liveness and readiness probes |
 
 ## Troubleshooting
 
@@ -715,9 +644,12 @@ Geographic coverage lives in `src/apis/utils/nepal.mjs` — the national boundin
 
 Normal. The first sweep takes a few seconds; the dashboard populates once it completes and pushes over SSE. Check the terminal for sweep progress logs.
 
-### Wrong Node version
+### Something will not start
 
-Atlas requires Node.js 22 or later. Download the latest LTS from [nodejs.org](https://nodejs.org/).
+Run `make diag`. It reports the Python version, imports every module, checks
+ports, and lists which optional services and keys are configured. Docker and
+Docker Compose are the only host requirements — Python and Node live in the
+images.
 
 ### Some sources show errors or degraded status
 
@@ -746,7 +678,7 @@ Common causes, in order:
 
 ### The digest timeline is empty or always English
 
-The stored ten-minute digests need Supabase. Without it, `/api/flood/digest`
+The stored ten-minute digests need Supabase. Without it, `/api/v1/flood/digest`
 returns `enabled: false` with `reason: "database_not_configured"` and the panel
 hides itself. The digest route is bilingual by design — the ~130-language brief
 is the AI Insights panel, not this one.
@@ -754,38 +686,42 @@ is the AI Insights panel, not this one.
 ### Photo uploads fail
 
 Both Supabase **and** MinIO must be configured. Check `ATLAS_MEDIA_SECRET` and
-`ATLAS_IP_SALT` are set, and that `npm run db:migrate` has been run.
+`ATLAS_IP_SALT` are set, and that the schema has been applied
+(`supabase db push`, then `make migrate` to verify). `make diag` says which
+services are missing.
 
-### Telegram bot not responding to commands
+### The flood desk says it is awaiting figures
 
-Make sure both `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` are set. The bot only responds to the configured chat ID. Verify your token with `curl https://api.telegram.org/bot<YOUR_TOKEN>/getMe`.
+It has no completed cycle yet. On a fresh deploy that clears within a minute.
+If it persists, check the worker and the API are pointed at the same
+`ATLAS_RUNS_PATH` — a worker writing a store the API cannot see produces
+exactly this.
 
-### Discord bot not responding to slash commands
+### Alerts are not arriving
 
-1. Confirm `DISCORD_BOT_TOKEN` and `DISCORD_CHANNEL_ID` are set
-2. Verify `discord.js` is installed: `npm ls discord.js`
-3. If commands don't appear, set `DISCORD_GUILD_ID` — global commands can take up to an hour to propagate
-4. Confirm the bot was invited with `bot` + `applications.commands` scopes and has `Send Messages` + `Embed Links`
-5. Check logs for `[Discord] Bot logged in as ...`
-6. For alerts only, use `DISCORD_WEBHOOK_URL` instead — no `discord.js` needed
+Telegram needs both `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID`; verify the
+token with `curl https://api.telegram.org/bot<YOUR_TOKEN>/getMe`. Discord needs
+`DISCORD_WEBHOOK_URL`.
+
+There are no bot commands to test — alerts are one-way.
 
 ---
 
 ## Contributing
 
-Found a bug? Want to add a hazard source? PRs welcome. Each source is a standalone module in `src/apis/sources/` — export a `briefing()` function returning structured data and add it to the orchestrator in `src/apis/briefing.mjs`.
+Found a bug? Want to add a hazard source? PRs welcome. Each source is a standalone module in `backend/app/domains/hazards/sources/` — answer a dict, never raise, and register it in `backend/app/domains/hazards/sweep.py`. A source that affects the dashboard needs delta metrics too.
 
-Run `npm run verify` before opening a PR; CI runs the same thing.
+Before opening a PR run `make test`, `make lint`, `make typecheck` and `cd frontend && npm run verify`. The pre-commit hook runs both halves, and CI runs the same thing. Responses are camelCase: `frontend/src/types/index.ts` is the contract and `backend/tests/test_contract.py` fails the build on a snake_case key.
 
 Source additions must be natural-hazard sources. Political, market, conflict and general-news feeds are out of scope for this build by design.
 
 **Where help is most useful right now:**
 
 - **Nepali and other native-language review.** Much of the UI copy and the flood content is marked `pending_native_review`. This is the highest-value contribution to the project and needs no JavaScript at all.
-- **Language coverage testing.** If you speak one of the languages in `src/lib/nepal-languages.ts`, checking whether the brief actually reads correctly in it — and opening an issue when it doesn't — directly improves whether that language stays offered.
-- **Relief-fund and helpline verification.** Every record in `content/` carries a source and a verification date. Stale ones matter.
+- **Language coverage testing.** If you speak one of the languages in `backend/app/domains/ai/languages.py`, checking whether the brief actually reads correctly in it — and opening an issue when it doesn't — directly improves whether that language stays offered.
+- **Relief-fund and helpline verification.** Every record in `backend/content/` carries a source and a verification date. Stale ones matter.
 
-Contributions are licensed under the AGPL-3.0. See [CONTRIBUTING.md](CONTRIBUTING.md) for scope rules and review expectations, [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) for community standards, and [SECURITY.md](SECURITY.md) for security reports or corrections to a relief fund or helpline.
+Contributions are licensed under the AGPL-3.0. See [CONTRIBUTING.md](CONTRIBUTING.md) for scope rules and review expectations, and [SECURITY.md](SECURITY.md) for security reports or corrections to a relief fund or helpline.
 
 ## Contact
 
@@ -794,17 +730,17 @@ Ancoda Atlas is built and maintained by **Ancoda Labs**.
 For partnerships, integrations, security reports, or corrections to a relief fund
 or helpline: `research@ancodalabs.com`.
 
-For bugs and feature requests, please use [GitHub Issues](https://github.com/ancodalabs/atlas/issues).
+For bugs and feature requests, please use [GitHub Issues](https://github.com/ancoda-labs/Ancoda-Atlas/issues).
 
 ---
 
 ## Star History
 
-<a href="https://www.star-history.com/?repos=ancodalabs%2Fatlas&type=date&legend=top-left">
+<a href="https://www.star-history.com/?repos=ancoda-labs%2FAncoda-Atlas&type=date&legend=top-left">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/image?repos=ancodalabs/atlas&type=date&theme=dark&legend=top-left" />
-    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/image?repos=ancodalabs/atlas&type=date&legend=top-left" />
-    <img alt="Star History Chart" src="https://api.star-history.com/image?repos=ancodalabs/atlas&type=date&legend=top-left" />
+    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/image?repos=ancoda-labs/Ancoda-Atlas&type=date&theme=dark&legend=top-left" />
+    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/image?repos=ancoda-labs/Ancoda-Atlas&type=date&legend=top-left" />
+    <img alt="Star History Chart" src="https://api.star-history.com/image?repos=ancoda-labs/Ancoda-Atlas&type=date&legend=top-left" />
   </picture>
 </a>
 

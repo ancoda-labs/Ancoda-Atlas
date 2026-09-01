@@ -1,0 +1,131 @@
+name: atlas-dev
+
+# Atlas in development: the FastAPI API, the Celery worker that runs every
+# sweep and refresh, the scheduler that triggers them, and the Next.js
+# frontend. Backend and frontend are both bind-mounted, so both hot-reload.
+#
+# The database is Supabase and is therefore NOT a container — it is the same
+# hosted project in development as in production, reached over PostgREST. Set
+# the Supabase variables in .env at the repository root.
+#
+# Object storage is the optional `storage` profile below. Atlas runs without
+# it: the ground-report photo sections hide themselves and everything else —
+# sweeps, gauges, the reviewed relief content — is unaffected.
+
+services:
+  # Celery's broker, and the channel the worker uses to tell the API that a
+  # sweep landed. It carries the signal, never the state: the payloads
+  # themselves are the JSON files under runs/, which both services mount.
+  redis:
+    image: redis:7-alpine
+    ports: ["${REDIS_HOST_PORT:-6379}:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 10
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ../../backend
+      dockerfile: ../infra/dev/Dockerfile.api
+    env_file: ../../.env
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      ATLAS_RUNS_DIR: /app/runs
+    ports: ["${API_HOST_PORT:-8000}:8000"]
+    volumes:
+      - ../../backend:/app
+      # The sweep snapshot, the flood desk store and the delta memory. The
+      # worker writes these; the API only ever reads them.
+      - ../../runs:/app/runs
+      # The frontend's TypeScript types, read-only. tests/test_contract.py
+      # asserts the API's payload against them, because that file is the
+      # contract the browser actually reads — see the note at the top of it.
+      - ../../frontend/src/types:/frontend/src/types:ro
+    command: /app/docker/entrypoint.sh
+    depends_on:
+      redis: {condition: service_healthy}
+    restart: unless-stopped
+
+  # Runs the sweeps. This is the ONLY writer of runs/ — the API opens those
+  # files read-only, and every write here goes to a temp file and is renamed
+  # into place, so a reader sees one complete version or the other and never a
+  # half-written one. That single-writer rule is also why this service must not
+  # be scaled past one replica.
+  worker:
+    build:
+      context: ../../backend
+      dockerfile: ../infra/dev/Dockerfile.api
+    env_file: ../../.env
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      ATLAS_RUNS_DIR: /app/runs
+    volumes:
+      - ../../backend:/app
+      - ../../runs:/app/runs
+    command: /app/docker/worker-entrypoint.sh
+    depends_on:
+      redis: {condition: service_healthy}
+    restart: unless-stopped
+
+  # The clock. Kept separate from the worker so that restarting a worker
+  # mid-sweep does not also lose the schedule.
+  beat:
+    build:
+      context: ../../backend
+      dockerfile: ../infra/dev/Dockerfile.api
+    env_file: ../../.env
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      ATLAS_RUNS_DIR: /app/runs
+    volumes:
+      - ../../backend:/app
+      - ../../runs:/app/runs
+    command: /app/docker/beat-entrypoint.sh
+    depends_on:
+      redis: {condition: service_healthy}
+    restart: unless-stopped
+
+  # The image carries node; the source is a bind mount and the API base URL
+  # points at the api service rather than localhost, which inside a container
+  # is the container itself.
+  frontend:
+    image: node:22-alpine
+    working_dir: /app
+    env_file: ../../.env
+    environment:
+      ATLAS_API_BASE_URL: http://api:8000
+      PORT: "${PORT:-3117}"
+    ports: ["${PORT:-3117}:${PORT:-3117}"]
+    volumes: ["../../frontend:/app"]
+    command: sh -c "npm install && npm run dev"
+    depends_on: [api]
+    restart: unless-stopped
+
+  # Optional. `make storage` starts it; `make up` does not.
+  #
+  # Atlas's own compose used to make MINIO_ROOT_PASSWORD a mandatory
+  # interpolation, so `docker compose up` failed outright for anyone who only
+  # wanted the hazard dashboard. It has a default here and sits behind a
+  # profile instead.
+  minio:
+    image: minio/minio:latest
+    profiles: ["storage"]
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-atlas}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-atlas-dev-secret}
+    ports:
+      - "${MINIO_API_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    volumes: ["minio-data:/data"]
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  minio-data:
