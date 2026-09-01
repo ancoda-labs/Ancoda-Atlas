@@ -17,6 +17,11 @@
 #                 every setting the backend reads is listed explicitly in the
 #                 x-backend-env anchor below. A variable missing from that
 #                 list cannot be configured from the Coolify UI at all.
+#   networks      api and frontend join Coolify's `coolify` network as well as
+#                 the project's own. Coolify's Traefik runs on `coolify`, and a
+#                 container it cannot reach answers "no available server" — the
+#                 router exists, the backend is undialable. redis, worker and
+#                 beat stay off it: nothing routes to them.
 #   runs/         a named volume instead of a host bind mount. Coolify builds
 #                 in a temp directory, so a relative bind path would land
 #                 inside the checkout and be discarded on the next deploy.
@@ -122,6 +127,10 @@ services:
       - atlas-runs:/app/runs:ro
     expose:
       - "8000"
+    networks: [default, coolify]
+    labels:
+      # With two networks attached, name the one Traefik should dial.
+      - "traefik.docker.network=coolify"
     depends_on:
       redis: {condition: service_healthy}
     restart: unless-stopped
@@ -169,6 +178,9 @@ services:
       PORT: "3117"
     expose:
       - "3117"
+    networks: [default, coolify]
+    labels:
+      - "traefik.docker.network=coolify"
     depends_on:
       - api
     restart: unless-stopped
@@ -176,3 +188,9 @@ services:
 volumes:
   redis-data:
   atlas-runs:
+
+networks:
+  # Created by Coolify when it installs its proxy. Declared external so this
+  # stack joins it rather than trying to manage it.
+  coolify:
+    external: true
