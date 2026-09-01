@@ -81,3 +81,28 @@ def test_the_sweep_stream_is_never_compressed():
     )
     excluded = gzip_mw.kwargs.get("exclude_content_types", DEFAULT_EXCLUDED_CONTENT_TYPES)
     assert "text/event-stream" in excluded
+
+
+def test_an_empty_origin_setting_still_answers_cors():
+    """A blank ALLOWED_ORIGINS must not mean "refuse every browser".
+
+    This is the most confusing failure the service has: server-rendered pages
+    keep working, because a server render never sends an Origin header, while
+    every call the browser makes is refused. The site looks live and quietly
+    stops refreshing. A platform that injects `ALLOWED_ORIGINS=` for an
+    unfilled field overrides any compose-level default, so the fallback lives
+    in config and is pinned here.
+    """
+    from app.core.config import DEFAULT_ALLOWED_ORIGINS, Settings
+
+    for blank in ("", "   ", ",", " , "):
+        origins = Settings(ALLOWED_ORIGINS=blank).allowed_origins_list
+        assert origins == list(DEFAULT_ALLOWED_ORIGINS), blank
+        assert "*" not in origins, "a fallback must never widen to every origin"
+
+
+def test_a_configured_origin_still_wins():
+    from app.core.config import Settings
+
+    s = Settings(ALLOWED_ORIGINS="https://example.test, https://other.test")
+    assert s.allowed_origins_list == ["https://example.test", "https://other.test"]

@@ -20,6 +20,11 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
 
+# Used when ALLOWED_ORIGINS resolves to nothing. The live site, plus the local
+# dev origin so a developer who blanks the setting is not locked out either.
+DEFAULT_ALLOWED_ORIGINS = ("https://atlas.ancodalabs.com", "http://localhost:3117")
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         # In Docker the values arrive as real environment variables through
@@ -34,9 +39,10 @@ class Settings(BaseSettings):
     APP_ENV: Literal["development", "production"] = "development"
     API_PREFIX: str = "/api/v1"
     LOG_LEVEL: str = "INFO"
-    # The frontend's origin. It proxies /api through itself in development, so
-    # this matters mainly for a deployment that serves the two from different
-    # hosts.
+    # The frontend's origin, comma separated. It proxies /api through itself in
+    # development, so this matters mainly for a deployment that serves the two
+    # from different hosts. Empty falls back to DEFAULT_ALLOWED_ORIGINS — see
+    # allowed_origins_list.
     ALLOWED_ORIGINS: str = "http://localhost:3117"
 
     # ── Geographic focus ──────────────────────────────────────────────────────
@@ -133,7 +139,22 @@ class Settings(BaseSettings):
 
     @property
     def allowed_origins_list(self) -> list[str]:
-        return [o.strip() for o in self.ALLOWED_ORIGINS.split(",") if o.strip()]
+        """The origins the API answers CORS for, never an empty list.
+
+        An empty setting used to mean no allowed origins at all, which is the
+        most confusing failure this service has: the pages still render,
+        because a server-side render talks to the API directly and never sends
+        an Origin header, while every call the browser makes is refused. The
+        site looks live and quietly stops refreshing.
+
+        A platform that injects `ALLOWED_ORIGINS=` for an unfilled field
+        overrides any default the compose file computes, so the fallback has to
+        be here, past the last thing that can overwrite it. Falling back to the
+        known public origin is safe — it permits exactly one site, and is not
+        the same as permitting all of them.
+        """
+        origins = [o.strip() for o in self.ALLOWED_ORIGINS.split(",") if o.strip()]
+        return origins or list(DEFAULT_ALLOWED_ORIGINS)
 
     @property
     def runs_dir(self) -> Path:
