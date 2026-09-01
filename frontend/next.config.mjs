@@ -43,6 +43,7 @@ const nextConfig = {
       // reachable this way.
       { source: '/api/flood/station-photo', destination: `${api}/api/v1/flood/station-photo` },
       { source: '/api/flood/media/image', destination: `${api}/api/v1/flood/media/image` },
+      { source: '/api/flood/insights', destination: `${api}/api/v1/flood/insights` },
     ];
   },
   async headers() {

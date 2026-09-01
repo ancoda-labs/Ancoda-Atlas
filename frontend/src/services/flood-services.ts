@@ -2,6 +2,7 @@ import api from '@/config/axios';
 import type {
   BipadDistrictContacts,
   FloodDeskPayload,
+  FloodInsightFeed,
   FloodOfficialFeed,
   FloodVideo,
   NdrrmaPhoto,
@@ -67,8 +68,8 @@ export async function fetchDigestService(lang: 'en' | 'ne' = 'en'): Promise<News
   return data;
 }
 
-export async function fetchInsightsService(lang: string) {
-  const { data } = await api.get('/flood/insights', { params: { lang } });
+export async function fetchInsightsService(lang: string): Promise<FloodInsightFeed> {
+  const { data } = await api.get<FloodInsightFeed>('/flood/insights', { params: { lang } });
   return data;
 }
 

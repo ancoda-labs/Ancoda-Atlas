@@ -12,7 +12,7 @@ import {
   isWireLanguage,
 } from '@/lib/nepal-languages';
 import { Button } from '@/components/ui/button';
-import { DESK_POLL_MS } from '@/hooks/use-desk-refresh';
+import { useInsights } from '@/hooks/useFlood';
 import {
   Command,
   CommandEmpty,
@@ -78,39 +78,13 @@ interface Props {
 export default function FloodAiInsights({ lang }: Props) {
   const [briefLang, setBriefLang] = useState<string>(lang);
   const [langOpen, setLangOpen] = useState(false);
-  const [feed, setFeed] = useState<FloodInsightFeed | null>(null);
   const t = (key: keyof typeof T) => T[key][lang];
 
   // Following the page's own language toggle is the behaviour a reader expects;
   // picking a language here then overrides it until they pick again.
   useEffect(() => setBriefLang(lang), [lang]);
 
-  useEffect(() => {
-    const controller = new AbortController();
-    const load = async () => {
-      try {
-        const res = await fetch(
-          `/api/flood/insights?lang=${encodeURIComponent(briefLang)}`,
-          { signal: controller.signal },
-        );
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        const nextFeed: FloodInsightFeed = await res.json();
-        if (!controller.signal.aborted) setFeed(nextFeed);
-      } catch {
-        if (!controller.signal.aborted) {
-          setFeed({ insight: null, hasModel: false, reason: 'unavailable' });
-        }
-      }
-    };
-
-    setFeed(null);
-    void load();
-    const id = setInterval(load, DESK_POLL_MS);
-    return () => {
-      controller.abort();
-      clearInterval(id);
-    };
-  }, [briefLang]);
+  const { data: feed, isLoading, isError } = useInsights(briefLang);
 
   const insight = feed?.insight ?? null;
   const hasModel = feed?.hasModel ?? false;
@@ -167,7 +141,6 @@ export default function FloodAiInsights({ lang }: Props) {
                         key={l.code}
                         value={`${l.native} ${l.english} ${l.code}`}
                         onSelect={() => {
-                          setFeed(null);
                           setBriefLang(l.code);
                           setLangOpen(false);
                         }}
@@ -197,10 +170,10 @@ export default function FloodAiInsights({ lang }: Props) {
         </Popover>
       </div>
 
-      {feed === null ? (
+      {isLoading && !feed ? (
         <p className="fl-empty">{t('loading')}</p>
-      ) : !insight ? (
-        <p className="fl-empty">{feed.reason === 'no_reporting' ? t('none') : t('unavailable')}</p>
+      ) : isError || !insight ? (
+        <p className="fl-empty">{feed?.reason === 'no_reporting' ? t('none') : t('unavailable')}</p>
       ) : (
         <div className="fl-insights-body">
           {insight.fellBackFrom && (
