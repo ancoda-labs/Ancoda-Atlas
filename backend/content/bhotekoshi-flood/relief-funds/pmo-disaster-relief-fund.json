@@ -4,11 +4,11 @@
   "tier": 1,
   "category": "donation",
   "org_type": "government",
-  "description_en": "The Government of Nepal's central relief fund. The official page lists bank account details and QR codes for domestic and international transfers.",
-  "description_ne": "नेपाल सरकारको केन्द्रीय राहत कोष। आधिकारिक पृष्ठमा स्वदेशी तथा विदेशी रकम पठाउनका लागि बैंक खाता विवरण र QR कोड उपलब्ध छन्।",
-  "url": "https://opmcm.gov.np/content/586/heartfelt-appeal/",
-  "source_verification_url": "https://kathmandupost.com/national/2026/08/27/how-people-can-help-nepal-s-flood-affected-communities",
-  "last_verified": "2026-08-27",
+  "description_en": "The Government of Nepal's central relief fund. Give on donate.gov.np — card, NepalPay, Fonepay and SWIFT — or through the reviewed bank accounts on this page.",
+  "description_ne": "नेपाल सरकारको केन्द्रीय राहत कोष। donate.gov.np मा कार्ड, NepalPay, Fonepay र SWIFT बाट सहयोग गर्न सकिन्छ, वा यस पृष्ठका जाँचिएका बैंक खातामार्फत।",
+  "url": "https://donate.gov.np",
+  "source_verification_url": "https://donate.gov.np",
+  "last_verified": "2026-09-01",
   "status": "active",
   "translation_status": "pending_native_review"
 }

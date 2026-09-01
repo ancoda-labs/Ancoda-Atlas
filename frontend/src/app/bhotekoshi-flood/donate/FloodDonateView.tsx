@@ -71,6 +71,11 @@ const T = {
   jumpHint: { en: 'Tap a box to jump', ne: 'जान बाकस थिच्नुहोस्' },
   jumpGive: { en: 'Give with the authorized QR', ne: 'आधिकारिक QR बाट सहयोग' },
   jumpGiveSub: { en: "Prime Minister's Disaster Relief Fund", ne: 'प्रधानमन्त्री दैवी प्रकोप उद्धार कोष' },
+  govDonate: { en: 'Give on donate.gov.np', ne: 'donate.gov.np मा सहयोग गर्नुहोस्' },
+  govDonateHint: {
+    en: 'The Government of Nepal’s own page: card, NepalPay, Fonepay and SWIFT. Atlas never handles the money.',
+    ne: 'नेपाल सरकारकै पृष्ठ: कार्ड, NepalPay, Fonepay र SWIFT। एट्लसले रकम लिँदैन।',
+  },
   jumpReceived: { en: 'What has reached the fund', ne: 'कोषमा आएको रकम' },
   jumpReceivedSub: { en: 'Cash already in the nine banks', ne: 'नौ बैंकमा आइसकेको नगद' },
   jumpNeeded: { en: 'Relief goods and warehouses', ne: 'राहत सामग्री र गोदाम' },
@@ -440,6 +445,15 @@ export default function FloodDonateView() {
                     <CopyableAccount key={a} value={a} lang={lang} />
                   ))}
                   {heroBank.swift && <span className="fl-swift">SWIFT {heroBank.swift}</span>}
+                  <a
+                    className="fl-hero-portal"
+                    href="https://donate.gov.np"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {t('govDonate')} &#8599;
+                  </a>
+                  <p className="fl-hero-portal-hint">{t('govDonateHint')}</p>
                 </div>
               </div>
             )}
