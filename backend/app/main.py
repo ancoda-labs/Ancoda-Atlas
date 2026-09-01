@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 import structlog
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
 
 from app.api.v1.router import api_router
@@ -63,6 +64,22 @@ app = FastAPI(
     swagger_ui_parameters={"displayRequestDuration": True, "filter": True},
     lifespan=lifespan,
 )
+
+# Compression happens here, not in a route.
+#
+# The person register is eight and a half megabytes of JSON and comes down to
+# under one — names and place names repeat heavily. That ratio is the
+# difference between the register working and not working on a phone on a
+# Nepali mobile network, which is what most people reading it are on. It is
+# not negotiable; who performs it is, and a route that compresses its own body
+# has to hold the string and the buffer at once.
+#
+# Starlette excludes `text/event-stream` by default, so the sweep stream still
+# arrives event by event, and it hands anything over 128 KiB to a worker
+# thread, so a register download does not stall the event loop. Level 6 rather
+# than the default 9: on this payload the last three percent of size costs more
+# than twice the CPU.
+app.add_middleware(GZipMiddleware, minimum_size=1024, compresslevel=6)
 
 app.add_middleware(
     CORSMiddleware,

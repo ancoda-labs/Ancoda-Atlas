@@ -66,6 +66,12 @@ async def _cached(key: str, loader: Any) -> Any:
     hit = _cache.get(key)
     if hit and (time.monotonic() - hit[0]) < CONTENT_TTL_S:
         return hit[1]
+    # Drop the expired entry before the reload rather than overwriting it
+    # after. The register is the largest value in this map by orders of
+    # magnitude, and leaving the stale copy reachable for the ninety seconds
+    # its replacement takes to sweep means both are resident at once.
+    if hit:
+        del _cache[key]
     value = await loader()
     _cache[key] = (time.monotonic(), value)
     return value
@@ -382,12 +388,19 @@ def person_row(row: dict[str, Any], fallback_type: str | None) -> dict[str, Any]
     }
 
 
-async def _collect_persons(query: str) -> dict[str, Any]:
+async def _collect_persons(query: str, fallback_type: str | None = None) -> dict[str, Any]:
     """Page through the register until the portal runs out of rows.
 
     Termination is decided by three things — the stated total reached, a short
     page, or the page cap — because during a live response the register is
     being written to while it is being read, and `total` moves between requests.
+
+    Rows are slimmed here rather than after the loop. The portal ships a base64
+    thumbnail inline on every row that carries a photograph, so holding the raw
+    pages until the sweep ends is tens of megabytes of data URI that
+    `person_row` was only going to discard anyway. Mapping per page lets each
+    raw page be collected immediately and keeps the sweep's peak proportional
+    to one page rather than to the whole register.
     """
     items: list[dict[str, Any]] = []
     total: int | None = None
@@ -409,7 +422,7 @@ async def _collect_persons(query: str) -> dict[str, Any]:
             f"/api/person-reports?{query}&page={page}&limit={PERSON_PAGE}"
         )
         rows = data.get("items") or []
-        items.extend(rows)
+        items.extend(person_row(raw, fallback_type) for raw in rows)
         if isinstance(data.get("total"), int):
             total = data["total"]
         if not rows or len(rows) < PERSON_PAGE:
@@ -437,9 +450,9 @@ async def get_person_reports(
             )
             if p
         )
-        collected = await _collect_persons(params)
+        collected = await _collect_persons(params, type_)
         return {
-            "items": [person_row(r, type_) for r in collected["rows"]],
+            "items": collected["rows"],
             "total": collected["total"],
             "error": None,
             "source": PERSONS_SOURCE,
@@ -477,8 +490,7 @@ async def get_person_register() -> dict[str, Any]:
     async def load() -> dict[str, Any]:
         collected = await _collect_persons("status=open")
         lost, found, other = [], [], []
-        for raw in collected["rows"]:
-            row = person_row(raw, None)
+        for row in collected["rows"]:
             if row["type"] == "lost":
                 lost.append(row)
             elif row["type"] == "found":
