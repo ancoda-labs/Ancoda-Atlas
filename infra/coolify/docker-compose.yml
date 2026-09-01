@@ -191,6 +191,7 @@ services:
         # BUILD time, baked into the browser bundle. Must be the API's public
         # URL — changing it means rebuilding, not restarting.
         NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-https://atlas-api.ancodalabs.com}
+        ATLAS_API_BASE_URL: ${ATLAS_API_BASE_URL:-http://api:8000}
     environment:
       SERVICE_FQDN_FRONTEND_3117: ""
       # RUNTIME, for the server-rendered first paint. The API container sits

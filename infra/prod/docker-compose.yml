@@ -115,6 +115,7 @@ services:
       args:
         # Baked into the browser bundle, so this is the public API hostname.
         NEXT_PUBLIC_API_BASE_URL: "https://${DOMAIN_API:-atlas-api.ancodalabs.com}"
+        ATLAS_API_BASE_URL: "http://api:8000"
     environment:
       # Used by the server-rendered dashboard, which reaches the API over the
       # internal network rather than back out through Traefik.

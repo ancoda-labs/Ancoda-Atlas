@@ -12,6 +12,7 @@ from fastapi import APIRouter, Response
 
 from app.core.http_cache import cache_for, no_store
 from app.domains.hazards import service
+from app.domains.hazards.sources import bipad_telemetry
 from app.domains.news.cache import NEWS_CACHE_TTL_S, load_news_bundle, load_topic_news
 
 router = APIRouter(tags=["hazards"])
@@ -61,4 +62,12 @@ async def get_news(
     else:
         payload = await load_topic_news(topic, window, limit, sourceCap)
     cache_for(response, edge=int(NEWS_CACHE_TTL_S))
+    return payload
+
+
+@router.get("/bipad", summary="BIPAD live telemetry layer for the dashboard map")
+async def get_bipad(response: Response) -> dict[str, Any]:
+    """River gauges, rain stations, alerts, incidents and earthquakes for the map."""
+    payload = await bipad_telemetry.get_bipad_telemetry()
+    cache_for(response, edge=180)
     return payload

@@ -24,7 +24,11 @@ const nextConfig = {
    * than the deployed path.
    */
   async rewrites() {
-    const api = (process.env.ATLAS_API_BASE_URL || 'http://localhost:8000').replace(/\/+$/, '');
+    const fallbackApi =
+      process.env.NODE_ENV === 'production'
+        ? (process.env.NEXT_PUBLIC_API_BASE_URL || 'http://api:8000')
+        : 'http://localhost:8000';
+    const api = (process.env.ATLAS_API_BASE_URL || fallbackApi).replace(/\/+$/, '');
     return [
       { source: '/api/v1/:path*', destination: `${api}/api/v1/:path*` },
       // The live sweep stream. Not versioned — it is a stream, not a resource.

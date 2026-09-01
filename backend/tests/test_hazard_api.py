@@ -10,9 +10,7 @@ client = TestClient(app)
 
 def test_data_serves_the_empty_skeleton_before_the_first_sweep(tmp_path, monkeypatch):
     """Zeros, not absence — and never anything that reads as a measurement."""
-    monkeypatch.setattr(
-        type(runs_store.settings), "runs_dir", property(lambda self: tmp_path)
-    )
+    monkeypatch.setattr(type(runs_store.settings), "runs_dir", property(lambda self: tmp_path))
     response = client.get("/api/v1/data")
     assert response.status_code == 200
     body = response.json()
@@ -24,17 +22,13 @@ def test_data_serves_the_empty_skeleton_before_the_first_sweep(tmp_path, monkeyp
 
 def test_the_empty_skeleton_is_never_cached(tmp_path, monkeypatch):
     """A deployment that later gains a source must not keep serving zeros."""
-    monkeypatch.setattr(
-        type(runs_store.settings), "runs_dir", property(lambda self: tmp_path)
-    )
+    monkeypatch.setattr(type(runs_store.settings), "runs_dir", property(lambda self: tmp_path))
     response = client.get("/api/v1/data")
     assert "no-store" in response.headers["cache-control"]
 
 
 def test_a_real_snapshot_is_cacheable(tmp_path, monkeypatch):
-    monkeypatch.setattr(
-        type(runs_store.settings), "runs_dir", property(lambda self: tmp_path)
-    )
+    monkeypatch.setattr(type(runs_store.settings), "runs_dir", property(lambda self: tmp_path))
     runs_store.write_json(
         runs_store.DASHBOARD,
         {"meta": {"sourcesOk": 5, "timestamp": "2026-08-31T12:00:00.000Z"}, "news": []},
@@ -74,9 +68,7 @@ def test_news_bundle_returns_every_panel(monkeypatch):
 
 
 def test_the_sweep_still_carries_the_geo_tagged_news_the_map_plots(tmp_path, monkeypatch):
-    monkeypatch.setattr(
-        type(runs_store.settings), "runs_dir", property(lambda self: tmp_path)
-    )
+    monkeypatch.setattr(type(runs_store.settings), "runs_dir", property(lambda self: tmp_path))
     runs_store.write_json(
         runs_store.DASHBOARD,
         {
@@ -86,3 +78,27 @@ def test_the_sweep_still_carries_the_geo_tagged_news_the_map_plots(tmp_path, mon
     )
     body = client.get("/api/v1/data").json()
     assert body["news"][0]["lat"] == 28.1
+
+
+def test_bipad_serves_telemetry_payload(monkeypatch):
+    async def fake_bipad():
+        return {
+            "riverStations": [{"id": 1, "title": "Koshi at Chatara"}],
+            "rainStations": [{"id": 2, "title": "Kathmandu Airport"}],
+            "alerts": [{"id": 3, "title": "Heavy Rain"}],
+            "incidents": [{"id": 4, "title": "Landslide in Rasuwa"}],
+            "earthquakes": [{"id": 5, "magnitude": 4.2}],
+        }
+
+    monkeypatch.setattr(
+        "app.domains.hazards.routers.bipad_telemetry.get_bipad_telemetry", fake_bipad
+    )
+    response = client.get("/api/v1/bipad")
+    assert response.status_code == 200
+    body = response.json()
+    assert "riverStations" in body
+    assert "rainStations" in body
+    assert "alerts" in body
+    assert "incidents" in body
+    assert "earthquakes" in body
+    assert body["riverStations"][0]["title"] == "Koshi at Chatara"

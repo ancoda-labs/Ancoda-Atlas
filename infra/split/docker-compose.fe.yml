@@ -60,6 +60,7 @@ services:
         # Build-time. The public API hostname, not an internal service name —
         # this string ends up in the JavaScript a reader downloads.
         NEXT_PUBLIC_API_BASE_URL: "${NEXT_PUBLIC_API_BASE_URL:-https://${DOMAIN_API:-atlas-api.ancodalabs.com}}"
+        ATLAS_API_BASE_URL: "${ATLAS_API_BASE_URL:-https://${DOMAIN_API:-atlas-api.ancodalabs.com}}"
     environment:
       # Runtime, for the server-rendered first paint. Public URL here too:
       # there is no API container beside this one to shortcut to.
