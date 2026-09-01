@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import type { AffectedDistrictProps, FloodGauge, GeoCollection, Geometry, PhotoGeoSource } from '@/types';
 import { orientationTransform } from '@/lib/photo-orientation';
-import { clusterByPlace, spiderLayout, type OverlayLayer } from '@/lib/spiderfy';
+import { clusterByPlace, pickSpiderItems, spiderLayout, spiderLeafBudget, type OverlayLayer } from '@/lib/spiderfy';
 
 // The flood corridor map.
 //
@@ -15,7 +15,8 @@ import { clusterByPlace, spiderLayout, type OverlayLayer } from '@/lib/spiderfy'
 //
 // Press photographs, DHM station photos and ground reports land on the same
 // few districts. Press stacks sit on the district the headline names; DHM
-// thumbnails stay on the station. Tap a stack to spiderfy it inside the map.
+// thumbnails stay on the station. Tap a stack to open its list; photographs
+// that fit fan out around the hub instead of covering the corridor.
 //
 // The map draws four things, and the distinction between the first two is the
 // one that matters most:
@@ -775,18 +776,23 @@ export default function FloodDistrictMap({ points = [], photos = [], gauges = []
       : [];
   const listGroups = groupPinsByPlace(listItems);
   const showList = listItems.length > 0;
-  const listH = showList ? Math.min(152, Math.max(108, Math.round(stageH * 0.30))) : 0;
+  const listAsRail = showList && stageW >= 440;
+  const listW = listAsRail ? Math.min(268, Math.round(stageW * 0.42)) : 0;
+  const listH = showList && !listAsRail ? Math.min(220, Math.max(160, Math.round(stageH * 0.42))) : 0;
   const origin = open ? { x: open.x, y: open.y } : { x: 0, y: 0 };
   const spiderBounds = {
     w: stageW,
     h: stageH,
     pad: 26,
     padTop: 48,
-    padLeft: 26,
+    padLeft: listW ? listW + 18 : 26,
     padRight: 52,
     padBottom: listH ? listH + 16 : 28,
   };
-  const spider = open ? spiderLayout(origin, open.items.length, spiderBounds, 36, 44) : [];
+  const fanItems = open
+    ? pickSpiderItems(open.items, spiderLeafBudget(spiderBounds, 36, 48))
+    : [];
+  const spider = fanItems.length ? spiderLayout(origin, fanItems.length, spiderBounds, 36, 48) : [];
   const tipMaxY = stageH - (listH || 0) - 56;
   const tipFlip = hover != null && hover.x > stageW * 0.55;
   const tipLeft = hover
@@ -860,7 +866,7 @@ export default function FloodDistrictMap({ points = [], photos = [], gauges = []
         {open && (
           <svg className="flood-map-spider" width={stageW} height={stageH} aria-hidden="true">
             {spider.map((pt, i) => {
-              const pin = open.items[i];
+              const pin = fanItems[i];
               if (!pin) return null;
               return (
                 <line
@@ -967,7 +973,7 @@ export default function FloodDistrictMap({ points = [], photos = [], gauges = []
           );
         })}
         {open && spider.map((pt, i) => {
-          const pin = open.items[i];
+          const pin = fanItems[i];
           if (!pin) return null;
           const x = open.x + pt.x;
           const y = open.y + pt.y;
@@ -1023,8 +1029,8 @@ export default function FloodDistrictMap({ points = [], photos = [], gauges = []
         )}
         {showList && (
           <div
-            className="flood-map-stack-list"
-            style={{ height: listH }}
+            className={`flood-map-stack-list${listAsRail ? ' rail' : ''}`}
+            style={listAsRail ? { width: listW } : { height: listH }}
             onPointerDown={e => e.stopPropagation()}
             onWheel={e => e.stopPropagation()}
           >
@@ -1129,8 +1135,8 @@ export default function FloodDistrictMap({ points = [], photos = [], gauges = []
       </div>
       <p className="flood-map-zoom-hint">
         {ne
-          ? 'विषय छानेर सूची खोल्नुहोस्। थुप्रो तस्बिर थिचेर फिँजाउनुहोस् — नक्साभित्रै रहन्छ।'
-          : 'Pick a topic to open its list. Tap a stacked pin to fan it out inside the map.'}
+          ? 'विषय छानेर सूची खोल्नुहोस्। थुप्रो थिचेर सूची आउँछ; तस्बिर भएका मात्र नक्सामा फिँजिन्छन्।'
+          : 'Pick a topic to open its list. A stacked pin opens the list; only photographs fan out on the map.'}
       </p>
     </div>
   );
