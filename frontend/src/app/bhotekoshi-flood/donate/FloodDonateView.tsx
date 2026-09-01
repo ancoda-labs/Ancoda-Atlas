@@ -82,14 +82,14 @@ const T = {
   receivedKicker: { en: '2 · Received', ne: '२ · प्राप्त' },
   receivedTitle: { en: 'What has reached the Prime Minister’s fund', ne: 'प्रधानमन्त्री कोषमा आएको रकम' },
   receivedIntro: {
-    en: 'Balances the Ministry of Finance published for the Prime Minister’s Disaster Relief Fund, nine banks, 12 Bhadra. This is cash already in those accounts — not a pledge, and not Atlas. Give through the accounts above.',
-    ne: 'अर्थ मन्त्रालयले प्रधानमन्त्री दैवी प्रकोप उद्धार कोषका नौ बैंकमा १२ भदौ प्रकाशित गरेको मौज्दात। यो ती खातामा आइसकेको नगद हो — घोषणा होइन, एट्लस होइन। माथिका खातामार्फत सहयोग गर्नुहोस्।',
+    en: 'Balances the Ministry of Finance published for the Prime Minister’s Disaster Relief Fund: the 12 Bhadra nine-bank table plus 15 Bhadra receipts. This is cash already in those accounts — not a pledge, and not Atlas. Give through the accounts above.',
+    ne: 'अर्थ मन्त्रालयले प्रधानमन्त्री दैवी प्रकोप उद्धार कोषमा प्रकाशित गरेको मौज्दात: १२ भदौको नौ बैंक तालिका र १५ भदौको थप संकलन। यो ती खातामा आइसकेको नगद हो — घोषणा होइन, एट्लस होइन। माथिका खातामार्फत सहयोग गर्नुहोस्।',
   },
   receivedAsOf: { en: 'Figures as of', ne: 'तथ्यांक मिति' },
   doNotAdd: { en: 'Do not add these together', ne: 'यी संख्या नजोड्नुहोस्' },
   receivedWarn: {
-    en: 'The amount already in the fund before the flood is inside the 6.55 billion, not on top of it. Foreign pledges, the World Bank package and in-kind cargo are not this fund.',
-    ne: 'विपद्अघिको मौज्दात ६ अर्ब ५५ करोडभित्र छ, माथि होइन। वैदेशिक घोषणा, विश्व बैंक प्याकेज र सामग्री यो कोष होइनन्।',
+    en: 'The amount already in the fund before the flood is inside the 7.15 billion, not on top of it. PhonePe QR, foreign pledges, the World Bank package and in-kind cargo are not this fund.',
+    ne: 'विपद्अघिको मौज्दात ७ अर्ब १५ करोडभित्र छ, माथि होइन। फोनपे QR, वैदेशिक घोषणा, विश्व बैंक प्याकेज र सामग्री यो कोष होइनन्।',
   },
   notInRupee: { en: 'Counted separately, not in the rupee total', ne: 'छुट्टै गनिएको, नेपाली जम्मामा छैन' },
   notInFund: { en: 'Not in the Prime Minister’s fund', ne: 'प्रधानमन्त्री कोषमा होइन' },
@@ -104,8 +104,8 @@ const T = {
     ne: 'एनडीआरआरएमए सिटरेप #०६ को माग सूची। पठाइएको सामग्री होइन, प्रधानमन्त्री कोषको नगद पनि होइन।',
   },
   neededWarn: {
-    en: 'Do not add these quantities onto the Rs 6.55 billion. The list will be updated as NDRRMA republishes it.',
-    ne: 'यी परिमाण ६ अर्ब ५५ करोडमाथि नजोड्नुहोस्। एनडीआरआरएमए नयाँ सूची निकालेपछि यो अद्यावधिक हुनेछ।',
+    en: 'Do not add these quantities onto the Rs 7.15 billion. The list will be updated as NDRRMA republishes it.',
+    ne: 'यी परिमाण ७ अर्ब १५ करोडमाथि नजोड्नुहोस्। एनडीआरआरएमए नयाँ सूची निकालेपछि यो अद्यावधिक हुनेछ।',
   },
   warehousesTitle: { en: 'Emergency warehouses', ne: 'आपत्कालीन गोदाम' },
   warehousesIntro: {

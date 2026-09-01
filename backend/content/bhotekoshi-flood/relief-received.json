@@ -1,33 +1,33 @@
 {
   "id": "relief-received",
-  "_comment": "Cash in the Prime Minister's Disaster Relief Fund, from the Ministry of Finance nine-bank table as compiled on the Rasuwa flood bulletin donate page. The bulletin is someone else's aggregation; the government statement is the source. These are reviewed content. Two rules: (1) the pre-disaster balance is already inside the 6.55 billion — never add it again; (2) foreign pledges, in-kind cargo and the IFRC DREF are not this fund and are never added to it. lib/flood.ts re-adds the bank rows at load.",
-  "as_of": "2026-08-28T00:00:00+05:45",
-  "as_of_label_en": "12 Bhadra (Ministry of Finance / PM Disaster Relief Fund)",
-  "as_of_label_ne": "१२ भदौ (अर्थ मन्त्रालय / प्रधानमन्त्री दैवी प्रकोप उद्धार कोष)",
+  "_comment": "Cash in the Prime Minister's Disaster Relief Fund. The 12 Bhadra nine-bank table (Rs 6,553,362,011) plus 15 Bhadra receipts (Rs 600,220,106) close at Rs 7,153,582,117. The bulletin at nirajbhusal.github.io is someone else's aggregation; the Ministry of Finance / PMDRF figures are the source. Two rules: (1) the pre-disaster balance is already inside the 7.15 billion — never add it again; (2) PhonePe QR, foreign pledges, in-kind cargo and the IFRC DREF are not this fund and are never added to it. app/domains/flood/content.py re-adds the bank rows at load.",
+  "as_of": "2026-08-31T00:00:00+05:45",
+  "as_of_label_en": "15 Bhadra (Ministry of Finance / PM Disaster Relief Fund)",
+  "as_of_label_ne": "१५ भदौ (अर्थ मन्त्रालय / प्रधानमन्त्री दैवी प्रकोप उद्धार कोष)",
   "sources": [
+    { "label": "MoF / PMDRF via Rasuwa flood bulletin (15 Bhadra: 7,153,582,117 = 12 Bhadra nine-bank 6,553,362,011 + 600,220,106)", "url": "https://nirajbhusal.github.io/rasuwa-flood-bulletin/donate.html#aid" },
     { "label": "Prime Minister's Office appeal (PDF)", "url": "https://opmcm.gov.np/content/586/heartfelt-appeal/" },
-    { "label": "Rasuwa flood bulletin (compilation)", "url": "https://nirajbhusal.github.io/rasuwa-flood-bulletin/donate.html#aid" },
     { "label": "UAE $10m pledge (Rising Nepal / RSS, 30 Aug)", "url": "https://risingnepaldaily.com/news/85819" },
     { "label": "UAE $10m pledge (Khaleej Times)", "url": "https://www.khaleejtimes.com/uae/uae-10-million-aid-nepal-floods-landslide-victims" }
   ],
 
   "headline": [
-    { "id": "pm-fund", "value": 6553362011, "tone": "positive", "label_en": "In the PM Disaster Relief Fund", "label_ne": "प्रधानमन्त्री दैवी प्रकोप उद्धार कोषमा", "source": "MoF / PMDRF", "unit_en": "NPR", "unit_ne": "रु." },
-    { "id": "since-flood", "value": 4380852252, "tone": "positive", "label_en": "Collected after the flood", "label_ne": "विपद्पछि संकलित", "source": "MoF / PMDRF", "unit_en": "NPR", "unit_ne": "रु." },
+    { "id": "pm-fund", "value": 7153582117, "tone": "positive", "label_en": "In the PM Disaster Relief Fund", "label_ne": "प्रधानमन्त्री दैवी प्रकोप उद्धार कोषमा", "source": "MoF / PMDRF", "unit_en": "NPR", "unit_ne": "रु." },
+    { "id": "since-flood", "value": 4981072358, "tone": "positive", "label_en": "Collected after the flood", "label_ne": "विपद्पछि संकलित", "source": "MoF / PMDRF", "unit_en": "NPR", "unit_ne": "रु." },
     { "id": "already-held", "value": 2172509759, "tone": "warning", "label_en": "Already in the fund before the flood", "label_ne": "विपद्अघि मौज्दात", "source": "MoF / PMDRF", "unit_en": "NPR", "unit_ne": "रु." }
   ],
 
   "breakdowns": [
     {
       "id": "pm-fund",
-      "total": 6553362011,
-      "title_en": "By bank",
-      "title_ne": "बैंकअनुसार",
+      "total": 7153582117,
+      "title_en": "By bank, plus 15 Bhadra receipts",
+      "title_ne": "बैंकअनुसार, १५ भदौ थप सहित",
       "tone": "positive",
-      "caption_en": "Nine banks, 12 Bhadra. Rs 6.55 billion = 4.38 billion collected after the flood plus 2.17 billion already held. The USD line is a separate label.",
-      "caption_ne": "नौ बैंक, १२ भदौ। रु. ६ अर्ब ५५ करोड = विपद्पछि ४ अर्ब ३८ करोड + मौज्दात २ अर्ब १७ करोड। डलर छुट्टै लेबल हो।",
-      "do_not_merge_en": "The 2.17 billion already in the fund is inside the 6.55 billion, not on top of it. USD 680,618 is not part of the Nepali-rupee total. Foreign pledges, World Bank Rs 25 billion and the IFRC appeal are not this fund.",
-      "do_not_merge_ne": "विपद्अघिको २ अर्ब १७ करोड ६ अर्ब ५५ करोडभित्र छ, माथि होइन। डलर ६,८०,६१८ नेपाली जम्मामा होइन। वैदेशिक घोषणा, विश्व बैंक २५ अर्ब र आईएफआरसी अपिल यो कोष होइनन्।",
+      "caption_en": "Nine banks, 12 Bhadra (Rs 6.55 billion) plus 15 Bhadra receipts (Rs 600 million) = Rs 7.15 billion. That equals 4.98 billion collected after the flood plus 2.17 billion already held. The USD line is a separate label.",
+      "caption_ne": "नौ बैंक, १२ भदौ (रु. ६ अर्ब ५५ करोड) + १५ भदौ (रु. ६० करोड २ लाख) = रु. ७ अर्ब १५ करोड। विपद्पछि ४ अर्ब ९८ करोड + मौज्दात २ अर्ब १७ करोड। डलर छुट्टै लेबल हो।",
+      "do_not_merge_en": "The 2.17 billion already in the fund is inside the 7.15 billion, not on top of it. USD 3.19 million is not part of the Nepali-rupee total. PhonePe QR Rs 1.97 billion, foreign pledges, World Bank Rs 25 billion and the IFRC appeal are not this fund.",
+      "do_not_merge_ne": "विपद्अघिको २ अर्ब १७ करोड ७ अर्ब १५ करोडभित्र छ, माथि होइन। डलर ३१.९ लाख नेपाली जम्मामा होइन। फोनपे QR रु. १ अर्ब ९६ करोड, वैदेशिक घोषणा, विश्व बैंक २५ अर्ब र आईएफआरसी अपिल यो कोष होइनन्।",
       "items": [
         { "label_en": "Rastriya Banijya Bank", "label_ne": "राष्ट्रिय वाणिज्य बैंक", "value": 3279902335, "unit_en": "NPR", "unit_ne": "रु." },
         { "label_en": "Everest Bank", "label_ne": "एभरेष्ट बैंक", "value": 1952718185, "unit_en": "NPR", "unit_ne": "रु." },
@@ -37,10 +37,11 @@
         { "label_en": "Nabil Bank", "label_ne": "नबिल बैंक", "value": 164047708, "unit_en": "NPR", "unit_ne": "रु." },
         { "label_en": "Global IME", "label_ne": "ग्लोबल आइएमई", "value": 130180000, "unit_en": "NPR", "unit_ne": "रु." },
         { "label_en": "Agricultural Development Bank", "label_ne": "कृषि विकास बैंक", "value": 95262715, "unit_en": "NPR", "unit_ne": "रु." },
-        { "label_en": "Nepal Bank", "label_ne": "नेपाल बैंक", "value": 92388614, "unit_en": "NPR", "unit_ne": "रु." }
+        { "label_en": "Nepal Bank", "label_ne": "नेपाल बैंक", "value": 92388614, "unit_en": "NPR", "unit_ne": "रु." },
+        { "label_en": "15 Bhadra additional receipts", "label_ne": "१५ भदौ थप संकलन", "value": 600220106, "unit_en": "NPR", "unit_ne": "रु." }
       ],
       "aside": [
-        { "label_en": "USD (Himalayan + Laxmi Sunrise)", "label_ne": "डलर (हिमालयन + लक्ष्मी)", "value": 680618, "unit_en": "USD", "unit_ne": "USD", "exclusive": true }
+        { "label_en": "USD account (~Rs 48.6 crore at NRB 152.57, 28 Aug)", "label_ne": "डलर खाता (~रु. ४८.६ करोड, एनआरबी १५२.५७, २८ अगस्ट)", "value": 3190000, "unit_en": "USD", "unit_ne": "USD", "exclusive": true }
       ]
     },
     {
@@ -51,8 +52,8 @@
       "tone": "warning",
       "caption_en": "UK $6.79m + US $3.6m + OCHA $3.2m + South Korea $1m + ADB $5m + UAE $10m. These are pledges, not cash in the Prime Minister's fund.",
       "caption_ne": "बेलायत $६.७९ मि. + अमेरिका $३.६ मि. + ओसीएचए $३.२ मि. + दक्षिण कोरिया $१ मि. + एडीबी $५ मि. + युएई $१० मि.। घोषणा हुन्, प्रधानमन्त्री कोषमा आएको नगद होइनन्।",
-      "do_not_merge_en": "Not added to the Rs 6.55 billion. World Bank Rs 25 billion and the IFRC CHF 25 million appeal are separate lines, not inside this $29.59 million. ADB $5m and UAE $10m are pledges, not cash received. UAE's 83-tonne flight is inside the $10m package, not on top of it.",
-      "do_not_merge_ne": "रु. ६ अर्ब ५५ करोडमा जोडिँदैन। विश्व बैंक २५ अर्ब र आईएफआरसी CHF २५ मिलियन अपिल यो $२९.५९ मिलियनभित्र होइनन्। एडीबी $५ मिलियन र युएई $१० मिलियन घोषणा हुन्, आएको नगद होइनन्। युएईको ८३ टन उडान $१० मिलियनभित्र छ, माथि होइन।",
+      "do_not_merge_en": "Not added to the Rs 7.15 billion. World Bank Rs 25 billion and the IFRC CHF 25 million appeal are separate lines, not inside this $29.59 million. ADB $5m and UAE $10m are pledges, not cash received. UAE's 83-tonne flight is inside the $10m package, not on top of it.",
+      "do_not_merge_ne": "रु. ७ अर्ब १५ करोडमा जोडिँदैन। विश्व बैंक २५ अर्ब र आईएफआरसी CHF २५ मिलियन अपिल यो $२९.५९ मिलियनभित्र होइनन्। एडीबी $५ मिलियन र युएई $१० मिलियन घोषणा हुन्, आएको नगद होइनन्। युएईको ८३ टन उडान $१० मिलियनभित्र छ, माथि होइन।",
       "items": [
         { "label_en": "United Kingdom (FCDO)", "label_ne": "युनाइटेड किंगडम (एफसीडीओ)", "value": 6790000, "unit_en": "USD", "unit_ne": "USD" },
         { "label_en": "United States", "label_ne": "संयुक्त राज्य अमेरिका", "value": 3600000, "unit_en": "USD", "unit_ne": "USD" },
@@ -65,6 +66,7 @@
   ],
 
   "exclusive": [
+    { "id": "phonepe-qr", "label_en": "PhonePe QR (26–31 Aug)", "label_ne": "फोनपे QR (२६–३१ अगस्ट)", "value": 1965554361, "unit_en": "NPR", "unit_ne": "रु.", "detail_en": "803,259 transactions. Not added to the Rs 7.15 billion.", "detail_ne": "८,०३,२५९ कारोबार। रु. ७ अर्ब १५ करोडमा जोडिँदैन।" },
     { "id": "world-bank", "label_en": "World Bank emergency package (pledge)", "label_ne": "विश्व बैंक आपत्कालीन प्याकेज", "value": 25000000000, "unit_en": "NPR", "unit_ne": "रु.", "detail_en": "Rs 25 billion. Not cash in the Prime Minister's fund.", "detail_ne": "रु. २५ अर्ब। प्रधानमन्त्री कोषमा आएको नगद होइन।" },
     { "id": "ifrc-appeal", "label_en": "IFRC emergency appeal", "label_ne": "आईएफआरसी आपत्कालीन अपिल", "value": 25000000, "unit_en": "CHF", "unit_ne": "CHF", "detail_en": "Appeal, not a government account.", "detail_ne": "अपिल, सरकारी खाता होइन।" },
     { "id": "ifrc-dref", "label_en": "IFRC DREF to Nepal Red Cross", "label_ne": "आईएफआरसी डीआरईएफ · नेपाल रेडक्रस", "value": 1200000, "unit_en": "USD", "unit_ne": "USD", "detail_en": "Emergency fund for the Red Cross. Not the Prime Minister's accounts.", "detail_ne": "नेपाल रेडक्रसलाई आपत्कालीन कोष। सरकारको खातामा आएको होइन।" },
