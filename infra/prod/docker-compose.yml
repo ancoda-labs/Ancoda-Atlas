@@ -63,6 +63,8 @@ services:
       APP_ENV: production
       REDIS_URL: redis://redis:6379/0
       ATLAS_RUNS_DIR: /app/runs
+      # The frontend is a different host here, so it is a different origin.
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-https://${DOMAIN_FRONTEND:-atlas.ancodalabs.com}}
     volumes:
       - ${ATLAS_RUNS_PATH:-./runs}:/app/runs:ro
     networks: [atlas_internal, atlas_public]
