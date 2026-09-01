@@ -4,13 +4,13 @@
   "description": "Nepal emergency disaster intelligence \u2014 5 natural-hazard sources, live dashboard, auto-refresh, optional LLM layer.",
   "author": "Ancoda Labs",
   "license": "AGPL-3.0-only",
-  "homepage": "https://github.com/ancodalabs/atlas#readme",
+  "homepage": "https://github.com/ancoda-labs/Ancoda-Atlas#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ancodalabs/atlas.git"
+    "url": "git+https://github.com/ancoda-labs/Ancoda-Atlas.git"
   },
   "bugs": {
-    "url": "https://github.com/ancodalabs/atlas/issues",
+    "url": "https://github.com/ancoda-labs/Ancoda-Atlas/issues",
     "email": "research@ancodalabs.com"
   },
   "type": "module",
