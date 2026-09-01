@@ -13,6 +13,7 @@ from fastapi import APIRouter, Response
 from app.core.http_cache import cache_for, no_store
 from app.domains.hazards import service
 from app.domains.hazards.sources import bipad_telemetry
+from app.domains.news import ledger
 from app.domains.news.cache import NEWS_CACHE_TTL_S, load_news_bundle, load_topic_news
 
 router = APIRouter(tags=["hazards"])
@@ -63,6 +64,27 @@ async def get_news(
         payload = await load_topic_news(topic, window, limit, sourceCap)
     cache_for(response, edge=int(NEWS_CACHE_TTL_S))
     return payload
+
+
+@router.get("/news/ledger.csv", summary="Every headline Atlas has shown, as CSV")
+async def get_news_ledger() -> Response:
+    """The collected-news table behind issue #37.
+
+    Served as a file a spreadsheet can pull directly rather than as JSON: the
+    point of the ledger is to be scored by hand, and Google Sheets' IMPORTDATA
+    takes a CSV URL and nothing else. See docs/news-ledger.md.
+
+    The worker appends to this file; this route only reads it, so the export
+    can never be the thing that creates a row.
+    """
+    return cache_for(
+        Response(
+            ledger.read_csv(),
+            media_type="text/csv; charset=utf-8",
+            headers={"Content-Disposition": 'attachment; filename="atlas-news-ledger.csv"'},
+        ),
+        edge=60,
+    )
 
 
 @router.get("/bipad", summary="BIPAD live telemetry layer for the dashboard map")

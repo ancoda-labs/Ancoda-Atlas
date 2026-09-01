@@ -23,7 +23,7 @@ import hmac
 import ipaddress
 import re
 import secrets
-from urllib.parse import quote, urlparse
+from urllib.parse import parse_qs, quote, urlparse
 
 from app.core.config import settings
 from app.core.logging import get_logger
@@ -122,14 +122,42 @@ def proxy_url_for(image_url: str | None) -> str | None:
     )
 
 
+def _decode_upstream(encoded: str | None) -> str | None:
+    """The URL inside a `u=` parameter, with no signature check."""
+    if not encoded:
+        return None
+    try:
+        padded = encoded + "=" * (-len(encoded) % 4)
+        url = base64.urlsafe_b64decode(padded).decode()
+    except (ValueError, UnicodeDecodeError):
+        return None
+    return url if is_signable_image_url(url) else None
+
+
+def resign_proxy_url(path: str | None) -> str | None:
+    """Re-sign a stored proxy path with the key this process actually holds.
+
+    The worker writes `imageProxy` at persist time. If that process and the
+    API do not share `ATLAS_MEDIA_SECRET` — a missing env on one of them, or
+    a one-off script that minted the store — every thumbnail 403s. The
+    upstream URL is already in the path; this issues a signature the API
+    will accept, still refusing anything that is not a public http(s) URL.
+    """
+    if not path:
+        return None
+    try:
+        encoded = parse_qs(urlparse(path).query).get("u", [None])[0]
+    except ValueError:
+        return None
+    return proxy_url_for(_decode_upstream(encoded))
+
+
 def resolve_signed_url(u: str | None, s: str | None) -> str | None:
     """Recover the URL behind a proxy request, or None if the signature fails."""
     if not u or not s:
         return None
-    try:
-        padded = u + "=" * (-len(u) % 4)
-        url = base64.urlsafe_b64decode(padded).decode()
-    except (ValueError, UnicodeDecodeError):
+    url = _decode_upstream(u)
+    if not url:
         return None
 
     # compare_digest rather than ==: a plain comparison leaks the position of
@@ -137,7 +165,4 @@ def resolve_signed_url(u: str | None, s: str | None) -> str | None:
     # one byte at a time.
     if not hmac.compare_digest(_sign(url), s):
         return None
-
-    # Re-checked after decoding: the allowlist rule must hold at fetch time,
-    # not only at signing time.
-    return url if is_signable_image_url(url) else None
+    return url

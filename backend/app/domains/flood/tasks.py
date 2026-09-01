@@ -14,12 +14,15 @@ from typing import Any, Awaitable, Callable
 from app.core.celery_app import celery_app
 from app.core.http import now_iso
 from app.core.logging import configure_logging, get_logger
+from app.domains.flood import scope
 from app.domains.flood import store as desk_store
 from app.domains.flood.gauges import fetch_corridor_gauges
 from app.domains.flood.sources import bipad, bulletin_damage, bulletin_sitrep, ndrrma
 from app.domains.flood.sources import rescue_portal as portal
 from app.domains.media.proxy import proxy_url_for
-from app.domains.news.cache import warm_news_bundle
+from app.domains.news import ledger
+from app.domains.news.cache import load_news_bundle
+from app.domains.news.sources.gov_updates import get_gov_updates
 from app.domains.news.sources.nepal_news import fetch_topic_news
 from app.domains.news.sources.youtube import get_flood_videos
 
@@ -115,6 +118,45 @@ async def _load_news() -> list[dict[str, Any]]:
     if not items:
         raise RuntimeError("no items")
     return items
+
+
+def _scope_gov_update(item: dict[str, Any]) -> dict[str, Any]:
+    """Mark whether a ministry post is about this flood or another hazard.
+
+    The source can only answer "is this a hazard post" and which hazard — it
+    has no business knowing what this desk's corridor is. That question belongs
+    here, and `scope.district_pin_for_text` is the same needle list the map
+    places headlines with, so a post and a pin cannot disagree about where
+    Timure is.
+
+    A post naming no corridor district is not dropped. The government warning
+    the Mahakali about flash floods is worth reading; it is simply not this
+    flood, and the desk shows it under its own heading rather than beside the
+    Bhotekoshi sitreps where it would be read as part of them.
+    """
+    district = scope.describes_corridor(
+        f"{item.get('titleNe') or ''} {item.get('title') or ''}",
+        f"{item.get('bodyNe') or ''} {item.get('bodyEn') or ''}",
+    )
+    return {**item, "district": district, "corridor": district is not None}
+
+
+async def _load_gov_updates() -> dict[str, Any]:
+    feed = await get_gov_updates(limit=40)
+    if feed["error"] and not feed["items"]:
+        raise RuntimeError(feed["error"])
+    # An empty list without an error is a real answer — the government has
+    # posted nothing about a hazard this week — so it is kept rather than
+    # treated as a failed read.
+    return {
+        **feed,
+        "items": [
+            _scope_gov_update(
+                {**item, "images": [_swap_image_for_proxy(i) for i in item["images"]]}
+            )
+            for item in feed["items"]
+        ],
+    }
 
 
 async def _load_sitrep() -> dict[str, Any]:
@@ -228,6 +270,34 @@ async def _guard(feed: dict[str, Any], items_key: str) -> dict[str, Any]:
     return feed
 
 
+async def _warm_and_log_news(
+    gov_updates: dict[str, Any] | None,
+    flood_news: list[dict[str, Any]] | None,
+) -> None:
+    """Fill the news cache, then write down what was on the pages.
+
+    Awaited, not fire-and-forget. `run_flood_refresh` is called through
+    `asyncio.run`, which closes the loop on return and cancels leftover tasks
+    — a `create_task` here was dying before it appended a single row.
+
+    The figures are already on disk by the time this runs, so a slow wire
+    delays the Celery task finishing, not the page a reader is looking at.
+    """
+    try:
+        bundle = await load_news_bundle()
+    except Exception as exc:  # noqa: BLE001
+        log.warning("news_cache_warm_failed", error=str(exc))
+        bundle = {}
+
+    logged = ledger.record_wire_bundle(bundle)
+    # The desk's own rail is a 48-hour flood window, wider than the dashboard
+    # bundle. Log it too, or a district story that only made that rail is lost.
+    logged += ledger.record_wire_items(flood_news, topic="flood")
+    logged += ledger.record_gov_updates((gov_updates or {}).get("items") or [])
+    if logged:
+        log.info("news_ledger_appended", rows=logged, total=ledger.stats()["rows"])
+
+
 # ─── The cycle ───────────────────────────────────────────────────────────────
 
 
@@ -286,6 +356,7 @@ async def run_flood_refresh() -> dict[str, Any]:
             lambda: _guard_call(portal.get_government_efforts(limit=20), "items"),
             setter("govEfforts"),
         ),
+        _refresh("govUpdates", store, _load_gov_updates, setter("govUpdates")),
         _refresh(
             "portalContacts",
             store,
@@ -338,7 +409,8 @@ async def run_flood_refresh() -> dict[str, Any]:
     from app.domains.news.digest_store import schedule_catchup
 
     await schedule_catchup()
-    asyncio.create_task(warm_news_bundle())
+    # Awaited: a create_task here is cancelled when asyncio.run closes the loop.
+    await _warm_and_log_news(store.get("govUpdates"), store.get("news"))
 
     failed = [h for h in health if not h["ok"]]
     log.info(

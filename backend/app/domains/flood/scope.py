@@ -69,7 +69,9 @@ PIN_NEEDLES: list[tuple[str, list[str]]] = [
     ("Gorkha", ["gorkha", "गोरखा", "ghyalchok", "घ्याल्चोक"]),
     ("Tanahu", ["tanahu", "tanahun", "तनहुँ"]),
     ("Chitwan", ["chitwan", "चितवन", "narayanghat", "नारायणगढ"]),
-    ("Rasuwa", ["rasuwa", "रसुवा", "timure", "तिमुरे", "syaphrubesi", "स्याफ्रु", "bhotekoshi", "bhote koshi", "भोटेकोशी"]),
+    # Timure is written both ways in Nepali and the government portal uses the
+    # ट spelling, so a post about the border point missed the corridor entirely.
+    ("Rasuwa", ["rasuwa", "रसुवा", "timure", "तिमुरे", "टिमुरे", "syaphrubesi", "स्याफ्रु", "bhotekoshi", "bhote koshi", "भोटेकोशी"]),
 ]
 
 
@@ -88,6 +90,61 @@ def district_pin_for_text(text: str | None) -> dict[str, object] | None:
                 return None
             return {"district": district, "lat": pin["lat"], "lon": pin["lon"]}
     return None
+
+
+# How a ministry advisory says it is not about one place. A nationwide warning
+# routinely names a corridor district among twenty others — "देशका केही स्थानमा
+# आकस्मिक बाढीको सम्भावना" then lists half the country — and matching that one
+# district would file a national warning as though it were about this flood.
+NATIONWIDE_PHRASES = [
+    "देशका",
+    "देशभर",
+    "देशभरि",
+    "विभिन्न स्थानमा",
+    "विभिन्न भूभागमा",
+    "nationwide",
+    "across the country",
+    "various parts of the country",
+]
+
+
+def is_nationwide(text: str | None) -> bool:
+    """Whether a post announces itself as covering the whole country."""
+    if not text:
+        return False
+    lowered = text.lower()
+    return any(phrase in lowered for phrase in NATIONWIDE_PHRASES)
+
+
+def describes_corridor(title: str | None, body: str | None) -> str | None:
+    """The corridor district a post is about, or None if it is about elsewhere.
+
+    "Names a corridor district" and "is about this flood" are different
+    questions, and answering the first as though it were the second is how a
+    Mahakali warning ends up on the Bhotekoshi desk. Two rules separate them.
+
+    A corridor place in the **title** is decisive — a ministry titles a post
+    with what it is about, so "टिमुरेमा सीसी क्यामेरा जडान" is this flood no
+    matter what the body goes on to mention.
+
+    Otherwise the body decides, unless the post has already said it covers the
+    country. A national advisory that lists Nuwakot among twenty districts is
+    not corridor news.
+
+    This deliberately under-claims. A corridor post that happens to use a
+    nationwide phrase is shown under the wrong heading, which costs a reader
+    one extra glance; a national warning shown as Bhotekoshi news would be read
+    as saying something about this flood that nobody said.
+    """
+    from_title = district_pin_for_text(title)
+    if from_title:
+        return str(from_title["district"])
+
+    if is_nationwide(f"{title or ''} {body or ''}"):
+        return None
+
+    from_body = district_pin_for_text(body)
+    return str(from_body["district"]) if from_body else None
 
 
 class BBox(NamedTuple):

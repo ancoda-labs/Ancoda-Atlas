@@ -9,6 +9,7 @@ import FloodReportButton from '@/components/FloodReportButton';
 import FloodNewsTicker from '@/components/FloodNewsTicker';
 import { FloodNav } from '@/components/FloodShell';
 import FloodSummary from '@/app/bhotekoshi-flood/_components/FloodSummary';
+import FloodGovUpdates from '@/app/bhotekoshi-flood/_components/FloodGovUpdates';
 import FloodOfficial from '@/app/bhotekoshi-flood/_components/FloodOfficial';
 import { useFloodLang } from '@/hooks/use-flood-lang';
 import { ageFrom } from '@/lib/relative-time';
@@ -54,22 +55,22 @@ const T = {
   },
   whatHappened: { en: 'What happened', ne: 'के भयो' },
   source: { en: 'Source', ne: 'स्रोत' },
-  mapLayerPath: { en: 'Districts and the water’s course', ne: 'जिल्ला र पानीको बाटो' },
-  mapLayerGauges: { en: 'River gauges', ne: 'नदी मापन केन्द्र' },
+  mapLayerPath: { en: 'Course', ne: 'पानीको बाटो' },
+  mapLayerGauges: { en: 'Gauges', ne: 'मापन केन्द्र' },
   mapLayerPhotos: { en: 'Ground reports', ne: 'जनताका तस्बिर' },
   mapPhotoSource: {
-    en: 'Photographs sent in by the public, placed where each was taken',
-    ne: 'जनताले पठाएका तस्बिर, खिचिएकै स्थानमा राखिएको',
+    en: 'Public photographs, placed where each was taken',
+    ne: 'जनताका तस्बिर, खिचिएकै स्थानमा',
   },
-  mapLayerNews: { en: 'Press reporting', ne: 'समाचार' },
+  mapLayerNews: { en: 'Press', ne: 'समाचार' },
   mapNewsSource: {
-    en: 'Flood headlines, placed in the district the story names — not the camera’s GPS. A lead image shows when the outlet published one.',
-    ne: 'बाढी समाचार, शीर्षकमा लेखिएको जिल्लामा राखिएको — क्यामेराको जीपीएस होइन। आउटलेटले तस्बिर छापेको भए देखिन्छ।',
+    en: 'Headlines pinned to the district they name, not GPS',
+    ne: 'शीर्षकमा लेखिएको जिल्लामा राखिएको, जीपीएस होइन',
   },
   mapLayerDhm: { en: 'DHM station photographs', ne: 'डीएचएम मापन केन्द्रका तस्बिर' },
   mapDhmSource: {
-    en: 'Photographs of the gauge stations themselves, published by DHM. Not live cameras of the flood.',
-    ne: 'जल तथा मौसम विज्ञान विभागले प्रकाशित गरेका मापन केन्द्रकै तस्बिर। बाढीको प्रत्यक्ष क्यामेरा होइन।',
+    en: 'station photographs, not live cameras',
+    ne: 'मापन केन्द्रका तस्बिर, प्रत्यक्ष क्यामेरा होइन',
   },
   mapReviewed: { en: 'reviewed', ne: 'जाँचिएको' },
   mapRead: { en: 'read', ne: 'पढिएको' },
@@ -342,13 +343,12 @@ export default function BhotekoshiFloodView() {
           )}
           <p className="fl-note">{t('mapHint')}</p>
 
-          {/* Each layer of pins has its own provenance. Grouped as topics so
-              a DHM station photo is not read as a live flood camera, and a
-              press pin is not read as a GPS ground report. */}
-          <div className="fl-map-topics" aria-label={t('mapTopics')}>
-            <article className="fl-map-topic">
-              <h3>{t('mapLayerPath')}</h3>
-              <p>
+          {/* One line per pin layer, not a card grid: three boxed topics left
+              an empty cell and read as a second page of content under the map. */}
+          <dl className="fl-map-topics" aria-label={t('mapTopics')}>
+            <div className="fl-map-topic">
+              <dt>{t('mapLayerPath')}</dt>
+              <dd>
                 {(data?.floodPath?.sources || []).map((src, i) => (
                   <a key={i} href={src.url} target="_blank" rel="noopener noreferrer">
                     {src.label} &#8599;
@@ -359,35 +359,35 @@ export default function BhotekoshiFloodView() {
                     {' '}{t('mapReviewed')} {data.floodPath.last_updated}
                   </span>
                 )}
-              </p>
-            </article>
-            <article className="fl-map-topic">
-              <h3>{t('mapLayerGauges')}</h3>
-              <p>
+              </dd>
+            </div>
+            <div className="fl-map-topic">
+              <dt>{t('mapLayerGauges')}</dt>
+              <dd>
                 <a href="https://bipadportal.gov.np/" target="_blank" rel="noopener noreferrer">
                   {lang === 'ne' ? 'जल तथा मौसम विज्ञान विभाग · बिपद् पोर्टल' : 'DHM · BIPAD Portal'} &#8599;
                 </a>
                 <span className="fl-blank">
                   {' '}{t('mapRead')} {ageFrom(data?.river?.fetchedAt, lang)}
                 </span>
-              </p>
-              {(data?.river?.gauges || []).some(g => g.photo) && (
-                <p className="fl-blank" style={{ marginTop: 6 }}>{t('mapDhmSource')}</p>
-              )}
-            </article>
+                {(data?.river?.gauges || []).some(g => g.photo) && (
+                  <> — {t('mapDhmSource')}</>
+                )}
+              </dd>
+            </div>
             {groundPins.length > 0 && (
-              <article className="fl-map-topic">
-                <h3>{t('mapLayerPhotos')}</h3>
-                <p>{t('mapPhotoSource')}</p>
-              </article>
+              <div className="fl-map-topic">
+                <dt>{t('mapLayerPhotos')}</dt>
+                <dd>{t('mapPhotoSource')}</dd>
+              </div>
             )}
             {newsPins.length > 0 && (
-              <article className="fl-map-topic">
-                <h3>{t('mapLayerNews')}</h3>
-                <p>{t('mapNewsSource')}</p>
-              </article>
+              <div className="fl-map-topic">
+                <dt>{t('mapLayerNews')}</dt>
+                <dd>{t('mapNewsSource')}</dd>
+              </div>
             )}
-          </div>
+          </dl>
           </div>
 
           <div className="fl-overview-aside">
@@ -423,6 +423,8 @@ export default function BhotekoshiFloodView() {
             />
           </>
         ) : null}
+
+        <FloodGovUpdates govUpdates={data?.govUpdates} lang={lang} />
 
         <FloodOfficial govEfforts={data?.govEfforts} dailyBulletin={data?.dailyBulletin} lang={lang} />
 

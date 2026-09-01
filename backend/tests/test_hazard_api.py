@@ -102,3 +102,45 @@ def test_bipad_serves_telemetry_payload(monkeypatch):
     assert "incidents" in body
     assert "earthquakes" in body
     assert body["riverStations"][0]["title"] == "Koshi at Chatara"
+
+
+def test_the_news_ledger_is_a_csv_a_sheet_can_pull(tmp_path, monkeypatch):
+    """Issue #37: Google Sheets IMPORTDATA needs a CSV URL, not JSON."""
+    monkeypatch.setattr(type(runs_store.settings), "runs_dir", property(lambda self: tmp_path))
+    monkeypatch.setattr("app.domains.news.ledger._seen", None)
+    from app.domains.news import ledger
+
+    ledger.record_wire_bundle(
+        {
+            "topics": {
+                "flood": {
+                    "items": [
+                        {
+                            "title": "Bhotekoshi bursts its banks",
+                            "link": "https://kp/ledger",
+                            "source": "Kathmandu Post",
+                            "pubDate": "2026-09-01T10:00:00.000Z",
+                        }
+                    ]
+                }
+            }
+        }
+    )
+    response = client.get("/api/v1/news/ledger.csv")
+    assert response.status_code == 200
+    assert "text/csv" in response.headers["content-type"]
+    body = response.text
+    assert "Bhotekoshi bursts its banks" in body
+    assert "title" in body.splitlines()[0]
+    assert "sentiment" not in body.splitlines()[0]
+    assert "attachment" in response.headers.get("content-disposition", "")
+
+
+def test_an_empty_ledger_still_answers_column_names(tmp_path, monkeypatch):
+    """A sheet pulling this before the first cycle gets a table, not an error."""
+    monkeypatch.setattr(type(runs_store.settings), "runs_dir", property(lambda self: tmp_path))
+    monkeypatch.setattr("app.domains.news.ledger._seen", None)
+    response = client.get("/api/v1/news/ledger.csv")
+    assert response.status_code == 200
+    assert response.text.strip().split(",")[0] == "id"
+    assert response.text.strip().split(",")[1] == "title"

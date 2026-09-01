@@ -4,6 +4,7 @@ from app.domains.media.proxy import (
     is_private_host,
     is_signable_image_url,
     proxy_url_for,
+    resign_proxy_url,
     resolve_signed_url,
 )
 
@@ -95,3 +96,22 @@ class TestRoundTrip:
 
     def test_malformed_base64_is_refused(self):
         assert resolve_signed_url("!!!not base64!!!", "sig") is None
+
+    def test_a_stale_signature_can_be_reissued(self):
+        """The worker and the API may not share a key. The URL is in the path."""
+        from urllib.parse import parse_qs, quote, urlparse
+
+        original = "https://nepal.gov.np/api/updates/abc/attachments/def"
+        good = proxy_url_for(original)
+        encoded = parse_qs(urlparse(good).query)["u"][0]
+        stale = f"/api/flood/media/image?u={quote(encoded, safe='')}&s=not-the-signature"
+        assert resolve_signed_url(encoded, "not-the-signature") is None
+        assert resign_proxy_url(stale) == good
+
+    def test_resign_refuses_a_private_url_hidden_in_the_path(self):
+        import base64
+        from urllib.parse import quote
+
+        encoded = base64.urlsafe_b64encode(b"http://127.0.0.1/x.jpg").rstrip(b"=").decode()
+        stale = f"/api/flood/media/image?u={quote(encoded, safe='')}&s=x"
+        assert resign_proxy_url(stale) is None

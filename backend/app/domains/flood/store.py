@@ -41,7 +41,8 @@ STORE_VERSION = 4
 # crashes just as hard as one reading a wrong value.
 _FEED_KEYS = [
     "river", "corridor", "rescue", "portal", "videos", "sitrep", "damage",
-    "dailyBulletin", "pressReleases", "advisories", "govEfforts", "portalContacts",
+    "dailyBulletin", "pressReleases", "advisories", "govEfforts", "govUpdates",
+    "portalContacts",
     "opmcmPersons", "helpRequests", "officialContacts", "featuredPhotos", "popups",
     "carousel", "donationChannels", "latestActivity", "personPoints",
 ]

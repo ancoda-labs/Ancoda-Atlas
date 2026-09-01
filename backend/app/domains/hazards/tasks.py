@@ -117,6 +117,21 @@ async def _run_cycle() -> dict[str, Any]:
     # told about.
     bus.publish_sync({"type": bus.UPDATE, "timestamp": now_iso()})
 
+    # Headlines the dashboard is about to show. Same file the flood cycle
+    # appends to; duplicates are dropped. Awaited because this function is
+    # itself run via asyncio.run, and a leftover task would be cancelled.
+    try:
+        from app.domains.news import ledger
+        from app.domains.news.cache import load_news_bundle
+
+        bundle = await load_news_bundle()
+        logged = ledger.record_wire_bundle(bundle)
+        logged += ledger.record_wire_items(synthesized.get("news") or [], topic="all")
+        if logged:
+            log.info("news_ledger_appended", rows=logged, total=ledger.stats()["rows"])
+    except Exception as exc:  # noqa: BLE001
+        log.warning("news_ledger_append_failed", error=str(exc))
+
     log.info(
         "sweep_cycle_complete",
         sources_ok=(raw.get("atlas") or {}).get("sourcesOk"),

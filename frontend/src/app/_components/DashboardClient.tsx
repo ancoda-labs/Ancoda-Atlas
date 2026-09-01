@@ -25,6 +25,7 @@ import FloodFooter from '@/components/FloodFooter';
 import { isConstrainedConnection, seedLowPerf, whenIdle } from '@/lib/connection-pref';
 import { useDashboard, useSweepStream } from '@/hooks/useHazards';
 import { fetchNewsBundleService } from '@/services/news-services';
+import { API_BASE } from '@/config/axios';
 import { fetchBipadService } from '@/services/hazard-services';
 import { fetchVideosService } from '@/services/flood-services';
 
@@ -146,6 +147,7 @@ const DASHBOARD_COPY = {
   },
   liveUpdates: { en: 'Live updates', ne: 'प्रत्यक्ष अपडेट' },
   liveFeed: { en: 'Live hazard feed', ne: 'प्रत्यक्ष विपद् फिड' },
+  downloadCsv: { en: 'Download CSV of every headline shown', ne: 'देखाइएका सबै शीर्षक CSV मा डाउनलोड' },
   showUpdates: { en: 'Show updates from', ne: 'अपडेटको समय' },
   moreContext: { en: 'A little more context', ne: 'थप जानकारी' },
   happening: { en: 'What else is happening?', ne: 'अरू के भइरहेको छ?' },
@@ -641,6 +643,11 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                 {(newsCache['live-hazard']?.items || []).length} ITEMS
               </span>
             </div>
+            <p className="news-window-bar">
+              <a href={`${API_BASE}/news/ledger.csv`} download="atlas-news-ledger.csv">
+                {copy('downloadCsv', language)}
+              </a>
+            </p>
             <div className="news-window-bar">
               <span>{copy('showUpdates', language)}</span>
               {['6h', '24h', '48h', '7d'].map((w) => (

@@ -461,6 +461,7 @@ export interface FloodDeskPayload extends FloodContent {
   dailyBulletin?: FloodOfficialFeed<NdrrmaBulletin> | null;
   advisories?: FloodOfficialFeed<NationalAdvisory> | null;
   govEfforts?: FloodOfficialFeed<GovEffort> | null;
+  govUpdates?: FloodOfficialFeed<GovUpdate> | null;
   portalContacts?: FloodOfficialFeed<PortalContact> | null;
   popups?: FloodOfficialFeed<NdrrmaPopup> | null;
   /** When the ten-minute cycle last finished, and when the next one is due. */
@@ -737,6 +738,62 @@ export interface GovEffort {
   province: string | null;
   link: string | null;
   createdAt: string | null;
+}
+
+/** The hazard topics the wire ranks against. Mirrors TOPIC_ORDER on the server. */
+export type NewsTopic =
+  | 'flood'
+  | 'earthquake'
+  | 'wildfire'
+  | 'airquality'
+  | 'climate'
+  | 'weather'
+  | 'relief';
+
+export interface GovUpdateImage {
+  filename: string | null;
+  mimeType: string | null;
+  /** Signed media-proxy path, or null. */
+  imageProxy: string | null;
+}
+
+export interface GovUpdateDocument {
+  filename: string | null;
+  mimeType: string | null;
+  url: string;
+}
+
+/**
+ * One post from the Government of Nepal updates portal at nepal.gov.np.
+ *
+ * Hazard-filtered on the server — the feed carries every ministry, so an
+ * administrative circular never reaches this list. A language the government
+ * did not publish is null rather than a copy of the other one, so `title` and
+ * `titleNe` are rarely both filled.
+ */
+export interface GovUpdate {
+  id: string;
+  title: string | null;
+  titleNe: string | null;
+  bodyEn: string | null;
+  bodyNe: string | null;
+  /** Which hazard the post is about, on the news wire's own topic scale. */
+  topic: NewsTopic | null;
+  /**
+   * Whether the post is about this flood rather than a hazard elsewhere.
+   * Decided in `flood/scope.py`: a national advisory that happens to list a
+   * corridor district among twenty others is not corridor news.
+   */
+  corridor: boolean;
+  /** The corridor district the post names, when it is about this flood. */
+  district: string | null;
+  /** The publishing ministry or office. The named official is not carried. */
+  ministry: string | null;
+  publishedAt: string | null;
+  link: string;
+  /** Frequently the substance itself: a photograph of a printed notice. */
+  images: GovUpdateImage[];
+  documents: GovUpdateDocument[];
 }
 
 export interface PortalContact {
@@ -1396,6 +1453,8 @@ export interface FloodDeskStore {
   advisories: FloodOfficialFeed<NationalAdvisory> | null;
   /** OPMCM government-effort log. */
   govEfforts: FloodOfficialFeed<GovEffort> | null;
+  /** Hazard-scoped ministry posts from the nepal.gov.np updates portal. */
+  govUpdates: FloodOfficialFeed<GovUpdate> | null;
   /** OPMCM emergency-contact directory. */
   portalContacts: FloodOfficialFeed<PortalContact> | null;
   /** OPMCM missing-and-found register. */

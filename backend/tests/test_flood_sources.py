@@ -4,6 +4,7 @@ import httpx
 import respx
 
 from app.domains.flood.scope import (
+    describes_corridor,
     district_pin_for_text,
     in_corridor,
     is_placeholder,
@@ -162,6 +163,48 @@ class TestDistrictPins:
 
     def test_an_uncovered_district_is_none(self):
         assert district_pin_for_text("flooding in Jhapa") is None
+
+
+class TestDescribesCorridor:
+    """Naming a corridor district and being about this flood are not the same."""
+
+    def test_a_corridor_title_decides_it(self):
+        assert describes_corridor("टिमुरेमा सीसी क्यामेरा जडान", None) == "Rasuwa"
+
+    def test_the_body_answers_when_the_title_names_nowhere(self):
+        """A telecom restoration log names its districts in the list, not the title."""
+        district = describes_corridor(
+            "नेपाल टेलिकमको साइट पुनर्स्थापना अपडेट",
+            "धादिङको कल्लेरी साइट सुचारु भएको छ",
+        )
+        assert district == "Dhading"
+
+    def test_a_post_naming_several_districts_still_answers_one(self):
+        """The district is a label on the post, not a claim about who was hit."""
+        district = describes_corridor(None, "धादिङ र नुवाकोट दुवैमा साइट सुचारु")
+        assert district in {"Dhading", "Nuwakot"}
+
+    def test_a_national_advisory_naming_one_corridor_district_is_not_this_flood(self):
+        """The failure this exists to prevent.
+
+        A flash-flood warning for the whole country lists Nuwakot among twenty
+        districts. Filing it as corridor news puts a national forecast on the
+        desk as though it said something about the Bhotekoshi.
+        """
+        assert describes_corridor(
+            "देशका केही स्थानमा आकस्मिक बाढीको सम्भावना",
+            "नुवाकोट, झापा, मोरङलगायतका जिल्लामा सतर्कता अपनाउन आग्रह",
+        ) is None
+
+    def test_a_corridor_title_survives_a_nationwide_body(self):
+        """What the post is titled is what it is about."""
+        assert describes_corridor(
+            "रसुवा बाढी; उद्धार अपडेट",
+            "देशका विभिन्न स्थानमा वर्षा जारी छ",
+        ) == "Rasuwa"
+
+    def test_another_river_basin_is_not_this_flood(self):
+        assert describes_corridor("महाकाली तटिय क्षेत्रका बासिन्दा सतर्क रहनुहोला", None) is None
 
 
 class TestNdrrmaHelpers:

@@ -6,6 +6,7 @@ import { useFloodLang } from '@/hooks/use-flood-lang';
 import { ageFrom } from '@/lib/relative-time';
 import { useGallery, useVideos } from '@/hooks/useFlood';
 import { useTopicNews } from '@/hooks/useHazards';
+import { API_BASE } from '@/config/axios';
 import type {
   FloodOfficialFeed,
   FloodVideo,
@@ -45,6 +46,10 @@ const T = {
   },
   loading: { en: 'Loading…', ne: 'लोड हुँदै…' },
   noNews: { en: 'No reporting in the last 48 hours.', ne: 'बितेका ४८ घण्टामा समाचार छैन।' },
+  downloadCsv: {
+    en: 'Download every headline shown (CSV)',
+    ne: 'देखाइएका सबै शीर्षक डाउनलोड (CSV)',
+  },
   noVideo: { en: 'No broadcast coverage found right now.', ne: 'अहिले प्रसारण सामग्री भेटिएन।' },
   watch: { en: 'Watch on YouTube', ne: 'युट्युबमा हेर्नुहोस्' },
   close: { en: 'Close', ne: 'बन्द' },
@@ -196,6 +201,11 @@ export default function FloodMediaView() {
           <h2>{t('press')}</h2>
           {news && news.length > 0 && <em>{news.length}</em>}
         </div>
+        <p className="fl-note">
+          <a href={`${API_BASE}/news/ledger.csv`} download="atlas-news-ledger.csv">
+            {t('downloadCsv')}
+          </a>
+        </p>
 
         {news === null ? (
           <p className="fl-empty">{t('loading')}</p>
