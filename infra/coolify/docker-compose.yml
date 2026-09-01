@@ -17,6 +17,12 @@
 #                 every setting the backend reads is listed explicitly in the
 #                 x-backend-env anchor below. A variable missing from that
 #                 list cannot be configured from the Coolify UI at all.
+#   healthcheck   worker and beat override the one baked into Dockerfile.api.
+#                 All three services share that image, and its probe is
+#                 `curl localhost:8000/health` — right for the api, impossible
+#                 for two Celery processes that listen on no port. They stayed
+#                 unhealthy forever, and Coolify refuses to route a resource
+#                 that is not healthy, so BOTH hostnames answered 503.
 #   networks      api and frontend join Coolify's `coolify` network as well as
 #                 the project's own. Coolify's Traefik runs on `coolify`, and a
 #                 container it cannot reach answers "no available server" — the
@@ -146,6 +152,16 @@ services:
     volumes:
       - atlas-runs:/app/runs
     command: /app/docker/worker-entrypoint.sh
+    # Replaces the image's HTTP probe: ask Celery itself. This answers only if
+    # the worker is registered with the broker and consuming, which is the
+    # thing that matters — a worker that stops sweeping is how the desk goes
+    # quiet without anything looking broken.
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A app.core.celery_app inspect ping -t 10 | grep -q pong"]
+      interval: 60s
+      timeout: 15s
+      start_period: 60s
+      retries: 3
     depends_on:
       redis: {condition: service_healthy}
     restart: unless-stopped
@@ -157,6 +173,11 @@ services:
     environment:
       <<: *backend-env
     command: /app/docker/beat-entrypoint.sh
+    # beat has no inspect endpoint and serves nothing, so there is no true
+    # readiness signal to probe. Disabled rather than faked: a healthcheck that
+    # always passes is worse than none, because it reads as a real one.
+    healthcheck:
+      disable: true
     depends_on:
       redis: {condition: service_healthy}
     restart: unless-stopped
