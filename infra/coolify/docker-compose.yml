@@ -128,7 +128,7 @@ services:
       ATLAS_RUNS_DIR: /app/runs
       # Must name the frontend's public origin or every browser call fails
       # CORS preflight — the SSE stream included — and the site renders blank.
-      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-https://atlas.ancodalabs.com}
     volumes:
       - atlas-runs:/app/runs:ro
     expose:
@@ -190,7 +190,7 @@ services:
       args:
         # BUILD time, baked into the browser bundle. Must be the API's public
         # URL — changing it means rebuilding, not restarting.
-        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-}
+        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-https://atlas-api.ancodalabs.com}
     environment:
       SERVICE_FQDN_FRONTEND_3117: ""
       # RUNTIME, for the server-rendered first paint. The API container sits

@@ -16,8 +16,19 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 # Baked into the client bundle at build time, so it must be the address a
 # browser can reach — not the internal service name.
+# Baked into the browser bundle by `next build` below, so it must be an
+# address a reader's browser can reach — and it is frozen once this layer is
+# built. Changing it means rebuilding, not restarting.
+#
+# The `:-` fallback is load-bearing, not decoration. Coolify passes every
+# variable through as `--build-arg NAME` with no value, which sets the ARG to
+# the empty string when the UI field is blank and overrides whatever the
+# compose file computed. An empty value here is not a harmless default: axios
+# falls back to a same-origin `/api/v1`, every client-side call lands on the
+# Next.js server instead of the API, and the site renders server-side while
+# silently failing to refresh.
 ARG NEXT_PUBLIC_API_BASE_URL=""
-ENV NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL}
+ENV NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL:-https://atlas-api.ancodalabs.com}
 RUN npm run build
 
 FROM node:22-alpine AS run
