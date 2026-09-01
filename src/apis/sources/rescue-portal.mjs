@@ -116,6 +116,12 @@ const contentCache = new Map();
 async function cachedContent(key, loader) {
   const hit = contentCache.get(key);
   if (hit && Date.now() - hit.at < CONTENT_TTL_MS) return hit.value;
+  // Drop an expired entry before the reload rather than overwriting it after.
+  // The register is the largest value in this map by orders of magnitude, and
+  // leaving the stale copy reachable for the length of the sweep that replaces
+  // it means both are resident at once — on a 128 MB isolate that alone can be
+  // the difference between answering and being killed.
+  if (hit) contentCache.delete(key);
   const value = await loader();
   contentCache.set(key, { value, at: Date.now() });
   return value;
@@ -352,7 +358,7 @@ function personRow(row, fallbackType) {
  * register is being written to while it is being read, and `total` moves
  * between requests.
  */
-async function collectPersons(query) {
+async function collectPersons(query, fallbackType = null) {
   const items = [];
   let total = null;
   const deadline = Date.now() + PERSON_SWEEP_BUDGET_MS;
@@ -372,7 +378,13 @@ async function collectPersons(query) {
     if (page > 1) await new Promise(r => setTimeout(r, PERSON_PAGE_PAUSE_MS));
     const data = await getPortalJson(`/api/person-reports?${query}&page=${page}&limit=${PERSON_PAGE}`);
     const rows = Array.isArray(data.items) ? data.items : [];
-    items.push(...rows);
+    // Slimmed here rather than after the loop. The portal ships a base64
+    // thumbnail inline on every row that carries a photograph, so holding the
+    // raw pages until the sweep ends is tens of megabytes of data URI that
+    // personRow was only going to discard. Mapping per page lets each raw page
+    // be collected immediately and keeps the sweep's peak proportional to one
+    // page instead of the whole register.
+    for (const raw of rows) items.push(personRow(raw, fallbackType));
     if (typeof data.total === 'number') total = data.total;
     if (!rows.length || rows.length < PERSON_PAGE) break;
     if (total != null && items.length >= total) break;
@@ -393,8 +405,8 @@ export async function getPersonReports({ type, status = 'open' } = {}) {
       const params = [status ? `status=${encodeURIComponent(status)}` : null, type ? `type=${encodeURIComponent(type)}` : null]
         .filter(Boolean)
         .join('&');
-      const { rows, total } = await collectPersons(params);
-      return { items: rows.map(r => personRow(r, type)), total, error: null, source, fetchedAt };
+      const { rows, total } = await collectPersons(params, type);
+      return { items: rows, total, error: null, source, fetchedAt };
     });
   } catch (err) {
     console.error(`[Rescue portal persons:${type || 'all'}] Unavailable:`, err.message);
@@ -424,8 +436,7 @@ export async function getPersonRegister() {
       const lost = [];
       const found = [];
       const other = [];
-      for (const raw of rows) {
-        const row = personRow(raw, null);
+      for (const row of rows) {
         if (row.type === 'lost') lost.push(row);
         else if (row.type === 'found') found.push(row);
         else other.push(row);

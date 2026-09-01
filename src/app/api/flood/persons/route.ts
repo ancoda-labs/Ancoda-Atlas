@@ -1,6 +1,4 @@
 import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
-import { gzipSync } from 'zlib';
 import { getFloodStore } from '@/lib/flood-cron';
 import { cacheFor, noStore } from '@/lib/http-cache';
 import type { OpmcmPersonRegister, OpmcmPersonReport } from '@/types';
@@ -29,33 +27,24 @@ const CACHE_TTL_S = CACHE_TTL_MS / 1000;
 let pending: Promise<OpmcmPersonRegister> | null = null;
 
 /**
- * The register, gzipped once per refresh.
+ * The register, compressed on the way out — but not by us.
  *
  * Eight thousand rows is four megabytes of JSON and compresses to about a
- * third of one — names and place names repeat heavily. That ratio is the
- * difference between this page working and not working on a phone on a Nepali
- * mobile network, which is what most people reading it are on.
+ * third of one, and that ratio is the difference between this page working and
+ * not working on a phone on a Nepali mobile network, which is what most people
+ * reading it are on. It is not negotiable; who performs it is.
  *
- * Compressing four megabytes costs real CPU, so the result is held against the
- * refresh it came from and reused until the next cycle replaces it.
+ * This route used to gzip the body itself and hold the compressed buffer in
+ * module scope. On the Workers deployment that was the worst place for it:
+ * `gzipSync` over four megabytes is real CPU inside an invocation that has a
+ * budget, it needs the JSON string and the output buffer resident at the same
+ * time, and the cached buffer then stayed pinned for the isolate's whole life
+ * alongside the register it was made from. Cloudflare already negotiates gzip
+ * or brotli on the way out, so the reader gets the same compressed bytes and
+ * the isolate holds none of it.
  */
-let gzipped: { key: string; body: Buffer } | null = null;
-
-function encodedJson(req: NextRequest, data: OpmcmPersonRegister): NextResponse {
-  const json = JSON.stringify(data);
-  if (!(req.headers.get('accept-encoding') || '').toLowerCase().includes('gzip')) {
-    return new NextResponse(json, { headers: { 'Content-Type': 'application/json' } });
-  }
-  // `fetchedAt` changes on every refresh, so it identifies this exact register.
-  const key = `${data.fetchedAt}:${data.fetched}`;
-  if (gzipped?.key !== key) gzipped = { key, body: gzipSync(Buffer.from(json, 'utf8')) };
-  return new NextResponse(new Uint8Array(gzipped.body), {
-    headers: {
-      'Content-Type': 'application/json',
-      'Content-Encoding': 'gzip',
-      Vary: 'Accept-Encoding',
-    },
-  });
+function encodedJson(data: OpmcmPersonRegister): NextResponse {
+  return NextResponse.json(data);
 }
 
 function empty(error: string): OpmcmPersonRegister {
@@ -71,10 +60,10 @@ function empty(error: string): OpmcmPersonRegister {
   };
 }
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   const store = getFloodStore();
   if (store.opmcmPersons) {
-    const res = encodedJson(req, store.opmcmPersons);
+    const res = encodedJson(store.opmcmPersons);
     res.headers.set('X-Atlas-Cache', 'cron');
     return cacheFor(res, { edge: CACHE_TTL_S });
   }
@@ -105,7 +94,7 @@ export async function GET(req: NextRequest) {
 
   try {
     const data = await pending;
-    const res = encodedJson(req, data);
+    const res = encodedJson(data);
     res.headers.set('X-Atlas-Cache', 'miss');
     // An empty register with an error is a failed sweep, not an empty list.
     // Caching that would keep a family staring at "not found" after the portal
