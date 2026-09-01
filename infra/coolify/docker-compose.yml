@@ -10,8 +10,13 @@
 #
 # Three other differences from infra/prod, all forced by how Coolify deploys:
 #
-#   env_file      gone. Coolify injects environment variables into each
-#                 container from its own UI; there is no .env in the checkout.
+#   env_file      gone — there is no .env in the checkout. Coolify writes the
+#                 variables you set in its UI to an env file it passes to
+#                 `docker compose`, which makes them available for ${...}
+#                 substitution but does NOT put them inside a container. So
+#                 every setting the backend reads is listed explicitly in the
+#                 x-backend-env anchor below. A variable missing from that
+#                 list cannot be configured from the Coolify UI at all.
 #   runs/         a named volume instead of a host bind mount. Coolify builds
 #                 in a temp directory, so a relative bind path would land
 #                 inside the checkout and be discarded on the next deploy.
@@ -22,6 +27,65 @@
 #
 # `worker` is the sole writer of runs/ and must stay at one replica. `api`
 # mounts the same volume read-only. Do not scale either past 1 in Coolify.
+
+# Everything the backend reads, passed through from Coolify's environment.
+# Empty is the correct default for every secret here — an unset key makes its
+# feature hide itself rather than fail. The numeric ones carry their real
+# defaults instead of an empty string, which would not parse as an int.
+x-backend-env: &backend-env
+  APP_ENV: production
+  REDIS_URL: redis://redis:6379/0
+  LOG_LEVEL: ${LOG_LEVEL:-INFO}
+
+  # Hazard source keys. Unset degrades that one panel, never the sweep.
+  FIRMS_MAP_KEY: ${FIRMS_MAP_KEY:-}
+  RELIEFWEB_APPNAME: ${RELIEFWEB_APPNAME:-}
+  YOUTUBE_API_KEY: ${YOUTUBE_API_KEY:-}
+
+  # Must be identical on api and worker: the worker signs image URLs the api
+  # later verifies. Unset mints a random key per process, so every image link
+  # breaks on restart and across containers.
+  ATLAS_MEDIA_SECRET: ${ATLAS_MEDIA_SECRET:-}
+  # Unset resets upload rate limits on every restart.
+  ATLAS_IP_SALT: ${ATLAS_IP_SALT:-}
+  # Unset makes photo takedown answer 404, with no path but the database.
+  FLOOD_ADMIN_TOKEN: ${FLOOD_ADMIN_TOKEN:-}
+  FLOOD_REFRESH_TOKEN: ${FLOOD_REFRESH_TOKEN:-}
+
+  # Optional. Backs photos, news digests and rescue corrections.
+  NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL:-}
+  SUPABASE_URL: ${SUPABASE_URL:-}
+  SUPABASE_SECRET_KEY: ${SUPABASE_SECRET_KEY:-}
+  SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:-}
+
+  # Optional. Ground-report photo bytes; needs Supabase too.
+  MINIO_ENDPOINT: ${MINIO_ENDPOINT:-}
+  MINIO_PUBLIC_ENDPOINT: ${MINIO_PUBLIC_ENDPOINT:-}
+  MINIO_ROOT_USER: ${MINIO_ROOT_USER:-}
+  MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-}
+  MINIO_SECURE: ${MINIO_SECURE:-true}
+  MINIO_BUCKET: ${MINIO_BUCKET:-atlas}
+  MINIO_REGION: ${MINIO_REGION:-us-east-1}
+  MINIO_PRESIGNED_EXPIRY_SECONDS: ${MINIO_PRESIGNED_EXPIRY_SECONDS:-3600}
+
+  # Optional. Unset gives rule-based reads and briefs in Nepali and English.
+  LLM_PROVIDER: ${LLM_PROVIDER:-}
+  LLM_API_KEY: ${LLM_API_KEY:-}
+  LLM_MODEL: ${LLM_MODEL:-}
+  LLM_BASE_URL: ${LLM_BASE_URL:-}
+  OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-}
+  LLM_REASONING_EFFORT: ${LLM_REASONING_EFFORT:-}
+
+  # Optional, one-way. The interactive bots are not implemented.
+  TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+  TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
+  DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL:-}
+
+  REFRESH_INTERVAL_MINUTES: ${REFRESH_INTERVAL_MINUTES:-15}
+  FLOOD_REFRESH_INTERVAL_MINUTES: ${FLOOD_REFRESH_INTERVAL_MINUTES:-10}
+  ASK_SANDBOX_MAX_TURNS_PER_HOUR: ${ASK_SANDBOX_MAX_TURNS_PER_HOUR:-12}
+  ASK_SANDBOX_MAX_GLOBAL_TURNS_PER_HOUR: ${ASK_SANDBOX_MAX_GLOBAL_TURNS_PER_HOUR:-80}
+  ASK_SANDBOX_MAX_OUTPUT_TOKENS: ${ASK_SANDBOX_MAX_OUTPUT_TOKENS:-500}
 
 services:
   redis:
@@ -40,14 +104,13 @@ services:
       context: ../../backend
       dockerfile: ../infra/prod/Dockerfile.api
     environment:
+      <<: *backend-env
       # Coolify fills this from the domain you set on this service.
-      - SERVICE_FQDN_API_8000
-      - APP_ENV=production
-      - REDIS_URL=redis://redis:6379/0
-      - ATLAS_RUNS_DIR=/app/runs
+      SERVICE_FQDN_API_8000: ""
+      ATLAS_RUNS_DIR: /app/runs
       # Must name the frontend's public origin or every browser call fails
       # CORS preflight — the SSE stream included — and the site renders blank.
-      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-}
     volumes:
       - atlas-runs:/app/runs:ro
     expose:
@@ -62,9 +125,8 @@ services:
       context: ../../backend
       dockerfile: ../infra/prod/Dockerfile.api
     environment:
-      - APP_ENV=production
-      - REDIS_URL=redis://redis:6379/0
-      - ATLAS_RUNS_DIR=/app/runs
+      <<: *backend-env
+      ATLAS_RUNS_DIR: /app/runs
     volumes:
       - atlas-runs:/app/runs
     command: /app/docker/worker-entrypoint.sh
@@ -77,8 +139,7 @@ services:
       context: ../../backend
       dockerfile: ../infra/prod/Dockerfile.api
     environment:
-      - APP_ENV=production
-      - REDIS_URL=redis://redis:6379/0
+      <<: *backend-env
     command: /app/docker/beat-entrypoint.sh
     depends_on:
       redis: {condition: service_healthy}
@@ -92,13 +153,13 @@ services:
       args:
         # BUILD time, baked into the browser bundle. Must be the API's public
         # URL — changing it means rebuilding, not restarting.
-        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL}
+        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-}
     environment:
-      - SERVICE_FQDN_FRONTEND_3117
+      SERVICE_FQDN_FRONTEND_3117: ""
       # RUNTIME, for the server-rendered first paint. The API container sits
       # beside this one, so the render shortcuts the proxy.
-      - ATLAS_API_BASE_URL=http://api:8000
-      - PORT=3117
+      ATLAS_API_BASE_URL: http://api:8000
+      PORT: "3117"
     expose:
       - "3117"
     depends_on:
