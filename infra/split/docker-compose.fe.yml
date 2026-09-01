@@ -1,0 +1,82 @@
+name: atlas-fe
+
+# Atlas frontend, alone on its own machine. `make fe`.
+#
+# Use this when the frontend runs on a host you control — a second VPS, a
+# staging box. On Cloudflare you do not need this file at all: Cloudflare
+# builds and runs the Next app itself, and the only thing that matters is that
+# the two variables below are set in its build settings. Keep this stack as
+# the way to reproduce that deployment somewhere you can put a shell.
+#
+# There is nothing to persist here. The frontend holds no state, touches no
+# database, and never writes runs/ — it renders and calls the API. That is
+# exactly why it is safe to move off the backend's machine, and why the old
+# Cloudflare deploy failed: the Node build kept its flood store in a module
+# global behind a filesystem the edge does not have.
+#
+# ── What must be set ─────────────────────────────────────────────────────────
+#
+#   NEXT_PUBLIC_API_BASE_URL   baked into the browser bundle at BUILD time, so
+#                              changing it means rebuilding, not restarting.
+#                              Must be reachable from a reader's browser.
+#   ATLAS_API_BASE_URL         read at RUNTIME by the server renderer. On a
+#                              split deploy this is the same public URL — the
+#                              internal `http://api:8000` of a single-host
+#                              stack does not resolve from another machine.
+#
+# The API must also name this frontend's origin in ALLOWED_ORIGINS, or every
+# call it makes fails CORS preflight. See infra/split/docker-compose.be.yml.
+
+services:
+  traefik:
+    image: traefik:v3
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+      - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL:-research@ancodalabs.com}"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+      - "--log.level=INFO"
+      - "--accesslog=true"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik-certificates:/letsencrypt
+    networks: [atlas_public]
+    restart: unless-stopped
+
+  frontend:
+    image: atlas-frontend:latest
+    build:
+      context: ../../frontend
+      dockerfile: ../infra/prod/Dockerfile.frontend
+      args:
+        # Build-time. The public API hostname, not an internal service name —
+        # this string ends up in the JavaScript a reader downloads.
+        NEXT_PUBLIC_API_BASE_URL: "${NEXT_PUBLIC_API_BASE_URL:-https://${DOMAIN_API:-atlas-api.ancodalabs.com}}"
+    environment:
+      # Runtime, for the server-rendered first paint. Public URL here too:
+      # there is no API container beside this one to shortcut to.
+      ATLAS_API_BASE_URL: "${ATLAS_API_BASE_URL:-https://${DOMAIN_API:-atlas-api.ancodalabs.com}}"
+      PORT: "3117"
+    networks: [atlas_public]
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=atlas-fe_atlas_public"
+      - "traefik.http.routers.frontend.rule=Host(`${DOMAIN_FRONTEND:-atlas.ancodalabs.com}`)"
+      - "traefik.http.routers.frontend.entrypoints=websecure"
+      - "traefik.http.routers.frontend.tls.certresolver=letsencrypt"
+      - "traefik.http.services.frontend.loadbalancer.server.port=3117"
+    restart: unless-stopped
+
+volumes:
+  traefik-certificates:
+
+networks:
+  atlas_public:

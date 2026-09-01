@@ -1,0 +1,124 @@
+name: atlas-be
+
+# Atlas backend, alone on its own machine. `make be`.
+#
+# This is infra/prod minus the frontend: Traefik terminating TLS for the API
+# hostname, the FastAPI API, one Celery worker, one scheduler, and Redis. Use
+# it when the frontend lives somewhere this box does not control — Cloudflare,
+# Vercel, a second VPS — and reaches the API over the public internet.
+#
+# The single-host constraint from infra/prod still applies here and is the
+# reason this file exists at all: runs/ is a host-local bind mount, the worker
+# is its only writer, and every process that touches it has to sit on this
+# machine. Splitting the FRONTEND off is safe precisely because the frontend
+# never touches runs/ — it renders and calls the API. Splitting the worker off
+# is not, and this file does not offer a way to.
+#
+# ── What must be set before this is reachable ────────────────────────────────
+#
+#   ALLOWED_ORIGINS   the frontend's origin, exactly, no trailing slash. The
+#                     frontend is cross-origin in this topology, so without
+#                     this every browser call fails CORS preflight — the SSE
+#                     stream included — and the site renders blank.
+#   DOMAIN_API        the hostname Traefik requests a certificate for.
+#   ATLAS_RUNS_PATH   absolute host path, on a disk that survives a redeploy.
+#   ATLAS_MEDIA_SECRET  unset means image signatures die on every restart.
+
+services:
+  traefik:
+    image: traefik:v3
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+      - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL:-research@ancodalabs.com}"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+      - "--log.level=INFO"
+      - "--accesslog=true"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik-certificates:/letsencrypt
+    networks: [atlas_public]
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes: ["redis-data:/data"]
+    networks: [atlas_internal]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      retries: 5
+    restart: unless-stopped
+
+  api:
+    image: atlas-api:latest
+    build:
+      context: ../../backend
+      dockerfile: ../infra/prod/Dockerfile.api
+    env_file: ../../.env
+    environment:
+      APP_ENV: production
+      REDIS_URL: redis://redis:6379/0
+      ATLAS_RUNS_DIR: /app/runs
+      # The one setting this topology needs that a same-origin deploy does not.
+      # Falls back to the frontend hostname rather than to localhost, because
+      # localhost is never right on this box.
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-https://${DOMAIN_FRONTEND:-atlas.ancodalabs.com}}
+    volumes:
+      - ${ATLAS_RUNS_PATH:-./runs}:/app/runs:ro
+    networks: [atlas_internal, atlas_public]
+    depends_on:
+      redis: {condition: service_healthy}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=atlas-be_atlas_public"
+      - "traefik.http.routers.api.rule=Host(`${DOMAIN_API:-atlas-api.ancodalabs.com}`)"
+      - "traefik.http.routers.api.entrypoints=websecure"
+      - "traefik.http.routers.api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.api.loadbalancer.server.port=8000"
+    restart: unless-stopped
+
+  # One replica, always. It is the sole writer of runs/.
+  worker:
+    image: atlas-api:latest
+    env_file: ../../.env
+    environment:
+      APP_ENV: production
+      REDIS_URL: redis://redis:6379/0
+      ATLAS_RUNS_DIR: /app/runs
+    volumes:
+      - ${ATLAS_RUNS_PATH:-./runs}:/app/runs
+    command: /app/docker/worker-entrypoint.sh
+    networks: [atlas_internal]
+    depends_on:
+      redis: {condition: service_healthy}
+    restart: unless-stopped
+
+  beat:
+    image: atlas-api:latest
+    env_file: ../../.env
+    environment:
+      APP_ENV: production
+      REDIS_URL: redis://redis:6379/0
+    command: /app/docker/beat-entrypoint.sh
+    networks: [atlas_internal]
+    depends_on:
+      redis: {condition: service_healthy}
+    restart: unless-stopped
+
+volumes:
+  redis-data:
+  traefik-certificates:
+
+networks:
+  atlas_internal:
+  atlas_public:
