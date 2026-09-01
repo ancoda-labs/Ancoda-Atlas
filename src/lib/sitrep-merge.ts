@@ -47,11 +47,11 @@ export function reconcile(breakdowns: SitrepBreakdown[] | undefined): SitrepDisc
  * Whether a live panel is safe to lay over the reviewed group of the same id.
  *
  * Deaths never go down: this disaster's toll is recovered bodies, and a
- * compilation that has not caught up would otherwise put 794 back over 903.
+ * compilation that has not caught up would otherwise put 794 back over 987.
  * Other groups may fall (uncontacted, as people are found). A panel whose
  * parts do not add up to its stated total is left as reviewed — including
  * overlapping air-rescue rows. The bulletin's air KPI has drifted to NDRRMA's
- * all-rescued graphic (10,451 air and ground); that must not replace the
+ * all-rescued graphic (11,814 air and ground); that must not replace the
  * SitRep helicopter tile. `no_total_check` only silences the page warning.
  */
 export function shouldOverlay(reviewed: SitrepBreakdown | undefined, live: SitrepBreakdown): boolean {

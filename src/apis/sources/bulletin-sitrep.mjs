@@ -18,7 +18,7 @@
 //
 // Overlay never lowers the death toll: recovered-body counts in this disaster
 // only rise, and a compilation that lags must not put an older 794 back
-// over 903.
+// over 987.
 //
 // Numerals arrive in Devanagari and are parsed, not reformatted — ५७९ is 579,
 // and a value the page writes as "२००+" keeps its plus. A row whose value is a
