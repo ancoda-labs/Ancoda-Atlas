@@ -1,0 +1,110 @@
+# Atlas on Coolify. Point a Docker Compose resource at this file.
+#
+# ── Why this file exists, and is not infra/prod ──────────────────────────────
+#
+# infra/prod runs its own Traefik on :80 and :443 and terminates TLS itself.
+# Coolify already runs a proxy on those ports and issues the certificates, so
+# deploying infra/prod under Coolify fails on a port conflict before anything
+# starts. This file drops Traefik and the host port bindings and lets Coolify
+# route; everything else about the stack is unchanged.
+#
+# Three other differences from infra/prod, all forced by how Coolify deploys:
+#
+#   env_file      gone. Coolify injects environment variables into each
+#                 container from its own UI; there is no .env in the checkout.
+#   runs/         a named volume instead of a host bind mount. Coolify builds
+#                 in a temp directory, so a relative bind path would land
+#                 inside the checkout and be discarded on the next deploy.
+#   build context relative to this file, which sits two levels below the repo
+#                 root Coolify clones.
+#
+# ── The one constraint that survives every topology ──────────────────────────
+#
+# `worker` is the sole writer of runs/ and must stay at one replica. `api`
+# mounts the same volume read-only. Do not scale either past 1 in Coolify.
+
+services:
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      retries: 5
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ../../backend
+      dockerfile: ../infra/prod/Dockerfile.api
+    environment:
+      # Coolify fills this from the domain you set on this service.
+      - SERVICE_FQDN_API_8000
+      - APP_ENV=production
+      - REDIS_URL=redis://redis:6379/0
+      - ATLAS_RUNS_DIR=/app/runs
+      # Must name the frontend's public origin or every browser call fails
+      # CORS preflight — the SSE stream included — and the site renders blank.
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
+    volumes:
+      - atlas-runs:/app/runs:ro
+    expose:
+      - "8000"
+    depends_on:
+      redis: {condition: service_healthy}
+    restart: unless-stopped
+
+  # One replica, always. The sole writer of runs/.
+  worker:
+    build:
+      context: ../../backend
+      dockerfile: ../infra/prod/Dockerfile.api
+    environment:
+      - APP_ENV=production
+      - REDIS_URL=redis://redis:6379/0
+      - ATLAS_RUNS_DIR=/app/runs
+    volumes:
+      - atlas-runs:/app/runs
+    command: /app/docker/worker-entrypoint.sh
+    depends_on:
+      redis: {condition: service_healthy}
+    restart: unless-stopped
+
+  beat:
+    build:
+      context: ../../backend
+      dockerfile: ../infra/prod/Dockerfile.api
+    environment:
+      - APP_ENV=production
+      - REDIS_URL=redis://redis:6379/0
+    command: /app/docker/beat-entrypoint.sh
+    depends_on:
+      redis: {condition: service_healthy}
+    restart: unless-stopped
+
+  # Drop this service if the frontend is going on Cloudflare instead.
+  frontend:
+    build:
+      context: ../../frontend
+      dockerfile: ../infra/prod/Dockerfile.frontend
+      args:
+        # BUILD time, baked into the browser bundle. Must be the API's public
+        # URL — changing it means rebuilding, not restarting.
+        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL}
+    environment:
+      - SERVICE_FQDN_FRONTEND_3117
+      # RUNTIME, for the server-rendered first paint. The API container sits
+      # beside this one, so the render shortcuts the proxy.
+      - ATLAS_API_BASE_URL=http://api:8000
+      - PORT=3117
+    expose:
+      - "3117"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  redis-data:
+  atlas-runs:
