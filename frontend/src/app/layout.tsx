@@ -4,7 +4,7 @@ import Providers from '@/app/providers';
 
 export const metadata: Metadata = {
   title: 'ANCODA ATLAS INTELLIGENCE DASHBOARD',
-  description: 'Nepal Focus · 19 Sources · Local',
+  description: 'Nepal Focus · Natural hazards · Local',
   icons: {
     icon: [
       { url: '/images/atlas-black.png', media: '(prefers-color-scheme: light)' },

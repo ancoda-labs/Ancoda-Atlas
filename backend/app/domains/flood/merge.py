@@ -35,14 +35,14 @@ def should_overlay(
     """Whether a live panel is safe to lay over the reviewed group of the same id.
 
     Deaths never go down. This disaster's toll is recovered bodies, and a
-    compilation that has not caught up would otherwise put 794 back over 903 —
+    compilation that has not caught up would otherwise put 794 back over 987 —
     which on a page families are reading is not a display bug.
 
     Other groups may fall: uncontacted drops as people are found.
 
     A panel whose parts do not add up to its stated total is left as reviewed,
     including the overlapping air-rescue rows. The bulletin's air KPI has
-    drifted to NDRRMA's all-rescued graphic (10,451 air and ground), and that
+    drifted to NDRRMA's all-rescued graphic (11,814 air and ground), and that
     must not replace the SitRep helicopter tile.
     """
     total = live.get("total")
