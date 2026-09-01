@@ -4,8 +4,8 @@ Atlas is two services: a Python/FastAPI backend that does every fetch, scrape
 and schedule, and a Next.js frontend that renders. Compose runs both.
 
 ```bash
-git clone https://github.com/ancodalabs/atlas.git
-cd atlas
+git clone https://github.com/ancoda-labs/Ancoda-Atlas.git
+cd Ancoda-Atlas
 cp .env.example .env   # every key is optional
 make up
 ```
