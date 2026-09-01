@@ -25,6 +25,32 @@ export interface SpiderBounds {
 /** Switch from a ring to a spiral once this many photographs share a pin. */
 export const CIRCLE_SPIRAL_SWITCHOVER = 8;
 
+/** Never fan more leaves than this — a 20-pin press stack belongs in the list. */
+export const MAX_SPIDER_LEAVES = 9;
+
+/**
+ * How many thumbnails can sit around the hub without being crushed into each
+ * other. The list still shows every item; only this many leave the pin.
+ */
+export function spiderLeafBudget(bounds: SpiderBounds, leafSize = 40, minGap = 48): number {
+  const padT = bounds.padTop ?? bounds.pad;
+  const padR = bounds.padRight ?? bounds.pad;
+  const padB = bounds.padBottom ?? bounds.pad;
+  const padL = bounds.padLeft ?? bounds.pad;
+  const w = Math.max(0, bounds.w - padL - padR);
+  const h = Math.max(0, bounds.h - padT - padB);
+  const cell = Math.max(leafSize, minGap);
+  if (w < cell || h < cell) return 0;
+  const fit = Math.floor((w * h) / (cell * cell * 2.2));
+  return Math.max(0, Math.min(MAX_SPIDER_LEAVES, fit));
+}
+
+/** Prefer real photographs; empty dashed pins stay in the list. */
+export function pickSpiderItems<T extends { url?: string }>(items: T[], budget: number): T[] {
+  if (budget <= 0) return [];
+  return items.filter(item => Boolean(item.url)).slice(0, budget);
+}
+
 export function spiderOffsets(count: number, leafSize = 44): Pt[] {
   if (count <= 0) return [];
   const separation = Math.max(leafSize + 28, 72);
