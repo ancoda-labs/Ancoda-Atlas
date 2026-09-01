@@ -74,6 +74,32 @@ async def get_site(response: Response) -> dict[str, Any]:
     return {"site": load_flood_content().get("site")}
 
 
+@router.post("/content/reload", summary="Clear the reviewed-content cache")
+async def reload_content_cache(
+    response: Response,
+    authorization: str | None = Header(None),
+) -> dict[str, Any]:
+    """Force the API to re-read every file under content/.
+
+    The content caches check file modification times automatically every
+    thirty seconds, so edits take effect on their own.  This endpoint is
+    for when a maintainer wants the change live immediately.
+
+    Answers 404 rather than 401 when no token is configured — an endpoint
+    that says "wrong password" tells a prober it exists.
+    """
+    expected = settings.FLOOD_ADMIN_TOKEN
+    presented = (authorization or "").removeprefix("Bearer ").strip()
+    if not expected or not hmac.compare_digest(presented, expected):
+        response.status_code = 404
+        return {"error": "not_found"}
+
+    from app.domains.flood.content import reload_content
+
+    no_store(response)
+    return reload_content()
+
+
 @router.get("/situation", summary="Incidents, alerts and live filings")
 async def get_situation(response: Response) -> dict[str, Any]:
     store = service.get_store()

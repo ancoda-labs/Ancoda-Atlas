@@ -12,7 +12,7 @@ picks it up on the next reload.
 """
 
 import json
-from functools import lru_cache
+import time
 from pathlib import Path
 from typing import Any
 
@@ -22,6 +22,76 @@ log = get_logger(__name__)
 
 CONTENT_DIR = Path(__file__).resolve().parents[3] / "content" / "bhotekoshi-flood"
 GEO_DIR = Path(__file__).resolve().parents[3] / "content" / "geo"
+
+
+# Mtime-aware content cache 
+#
+# The previous @lru_cache(maxsize=1) loaded each file once and never re-read
+# it, so editing a helpline or fund file had no effect until the container
+# restarted. This replacement re-stats the source directory every
+# _CHECK_INTERVAL_S seconds — a handful of stat() calls on ~15 files — and
+# reloads only when a file's mtime has actually changed.  The admin reload
+# endpoint calls clear() for immediate effect.
+
+_CHECK_INTERVAL_S = 30
+
+_SENTINEL = object()
+
+
+def _max_mtime(directory: Path, pattern: str = "**/*.json") -> float:
+    """The newest mtime across all matching files, or 0 if none exist."""
+    newest = 0.0
+    try:
+        for p in directory.glob(pattern):
+            try:
+                newest = max(newest, p.stat().st_mtime)
+            except OSError:
+                continue
+    except OSError:
+        pass
+    return newest
+
+
+class _MtimeCache:
+    """Cache a computed value; invalidate when source files change on disk."""
+
+    __slots__ = ("_value", "_mtime", "_checked_at", "_directory", "_pattern")
+
+    def __init__(self, directory: Path, pattern: str = "**/*.json") -> None:
+        self._value: Any = _SENTINEL
+        self._mtime: float = 0.0
+        self._checked_at: float = 0.0
+        self._directory = directory
+        self._pattern = pattern
+
+    def get(self, loader: Any) -> Any:
+        now = time.monotonic()
+        if self._value is not _SENTINEL and (now - self._checked_at) < _CHECK_INTERVAL_S:
+            return self._value
+
+        current_mtime = _max_mtime(self._directory, self._pattern)
+        self._checked_at = now
+
+        if self._value is not _SENTINEL and current_mtime == self._mtime:
+            return self._value
+
+        # First load, or an mtime changed — reload from disk.
+        if self._value is not _SENTINEL:
+            log.info("content_reloaded", directory=str(self._directory), trigger="mtime")
+        self._value = loader()
+        self._mtime = current_mtime
+        return self._value
+
+    def clear(self) -> None:
+        """Force the next ``get()`` to reload regardless of mtime."""
+        self._value = _SENTINEL
+        self._mtime = 0.0
+        self._checked_at = 0.0
+
+
+_content_cache = _MtimeCache(CONTENT_DIR)
+_funds_cache = _MtimeCache(CONTENT_DIR / "relief-funds", pattern="*.json")
+_geo_cache = _MtimeCache(GEO_DIR, pattern="*.json")
 
 
 def _read(name: str) -> Any:
@@ -51,7 +121,7 @@ def reconcile(breakdowns: list[dict[str, Any]] | None) -> list[dict[str, Any]]:
     says so rather than picking whichever looks better.
 
     Groups whose parts overlap rather than partition the total opt out with
-    `no_total_check`; for them the arithmetic was never meant to close.
+    ``no_total_check``; for them the arithmetic was never meant to close.
     """
     discrepancies: list[dict[str, Any]] = []
     for breakdown in breakdowns or []:
@@ -74,14 +144,8 @@ def reconcile(breakdowns: list[dict[str, Any]] | None) -> list[dict[str, Any]]:
     return discrepancies
 
 
-@lru_cache(maxsize=1)
-def relief_funds() -> list[dict[str, Any]]:
-    """Every reviewed donation route, most-trusted tier first.
-
-    Tier 3 is community-submitted. Nothing ships at tier 3 today, but the gate
-    exists so an unreviewed donation link can never reach the page — this is
-    money reaching people during a disaster.
-    """
+def _load_relief_funds() -> list[dict[str, Any]]:
+    """Read every reviewed donation route from disk."""
     funds_dir = CONTENT_DIR / "relief-funds"
     funds: list[dict[str, Any]] = []
     if not funds_dir.is_dir():
@@ -104,8 +168,18 @@ def relief_funds() -> list[dict[str, Any]]:
     return sorted(funds, key=lambda f: f.get("tier") or 9)
 
 
-@lru_cache(maxsize=1)
-def load_flood_content() -> dict[str, Any]:
+def relief_funds() -> list[dict[str, Any]]:
+    """Every reviewed donation route, most-trusted tier first.
+
+    Tier 3 is community-submitted. Nothing ships at tier 3 today, but the gate
+    exists so an unreviewed donation link can never reach the page — this is
+    money reaching people during a disaster.
+    """
+    return _funds_cache.get(_load_relief_funds)
+
+
+def _load_flood_content() -> dict[str, Any]:
+    """Build the full content dict from disk."""
     sitrep = _read("sitrep.json") or {}
     if sitrep:
         sitrep = {**sitrep, "discrepancies": reconcile(sitrep.get("breakdowns"))}
@@ -130,6 +204,34 @@ def load_flood_content() -> dict[str, Any]:
     }
 
 
+def load_flood_content() -> dict[str, Any]:
+    """The reviewed content, cached and invalidated by file mtime."""
+    return _content_cache.get(_load_flood_content)
+
+
+def reload_content() -> dict[str, Any]:
+    """Clear all content caches, forcing a full re-read from disk.
+
+    Called by the admin ``POST /content/reload`` endpoint.  The mtime watcher
+    picks up edits within ``_CHECK_INTERVAL_S`` seconds on its own; this is
+    for when a maintainer wants the change live immediately.
+    """
+    _content_cache.clear()
+    _funds_cache.clear()
+    _geo_cache.clear()
+    log.info("content_reloaded", trigger="admin")
+
+    # Eagerly reload so the response can confirm what was loaded.
+    content = load_flood_content()
+    shapes = _district_shapes()
+    return {
+        "reloaded": True,
+        "contentKeys": sorted(content.keys()),
+        "funds": len(content.get("funds") or []),
+        "districtShapes": len(shapes),
+    }
+
+
 # ─── District lookup ─────────────────────────────────────────────────────────
 #
 # A gauge's district used to be typed in beside its name. Five of the fourteen
@@ -143,8 +245,8 @@ def load_flood_content() -> dict[str, Any]:
 # longer disagree with where the pin lands, because there is one source for both.
 
 
-@lru_cache(maxsize=1)
-def _district_shapes() -> list[dict[str, Any]]:
+def _load_district_shapes() -> list[dict[str, Any]]:
+    """Read the district boundary GeoJSON from disk."""
     path = GEO_DIR / "flood-affected-districts.json"
     try:
         with path.open("r", encoding="utf-8") as handle:
@@ -169,8 +271,12 @@ def _district_shapes() -> list[dict[str, Any]]:
     return shapes
 
 
+def _district_shapes() -> list[dict[str, Any]]:
+    return _geo_cache.get(_load_district_shapes)
+
+
 def _point_in_ring(lon: float, lat: float, ring: list[list[float]]) -> bool:
-    """Ray casting. `ring` is [lon, lat] pairs, as GeoJSON stores them."""
+    """Ray casting. ``ring`` is [lon, lat] pairs, as GeoJSON stores them."""
     inside = False
     count = len(ring)
     j = count - 1

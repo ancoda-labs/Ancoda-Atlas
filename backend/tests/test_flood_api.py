@@ -5,6 +5,7 @@ from fastapi.testclient import TestClient
 
 from app.core import runs_store
 from app.domains.flood import store as desk_store
+from app.domains.flood.content import CONTENT_DIR
 from app.main import app
 
 client = TestClient(app)
@@ -125,6 +126,29 @@ class TestAuthGating:
         monkeypatch.setattr("app.domains.flood.routers.settings.FLOOD_ADMIN_TOKEN", "")
         assert client.get("/api/v1/flood/rescue/correction").status_code == 404
 
+    def test_reloading_content_needs_the_admin_token(self, monkeypatch):
+        monkeypatch.setattr("app.domains.flood.routers.settings.FLOOD_ADMIN_TOKEN", "")
+        assert client.post("/api/v1/flood/content/reload").status_code == 404
+
+    def test_a_wrong_admin_token_is_also_404(self, monkeypatch):
+        monkeypatch.setattr("app.domains.flood.routers.settings.FLOOD_ADMIN_TOKEN", "secret")
+        response = client.post(
+            "/api/v1/flood/content/reload", headers={"Authorization": "Bearer wrong"}
+        )
+        assert response.status_code == 404
+
+    def test_content_reload_succeeds_with_correct_token(self, monkeypatch):
+        monkeypatch.setattr("app.domains.flood.routers.settings.FLOOD_ADMIN_TOKEN", "secret")
+        response = client.post(
+            "/api/v1/flood/content/reload",
+            headers={"Authorization": "Bearer secret"},
+        )
+        assert response.status_code == 200
+        body = response.json()
+        assert body["reloaded"] is True
+        assert "funds" in body
+        assert "districtShapes" in body
+
 
 class TestOptionalDatabase:
     def test_the_digest_hides_itself_without_a_database(self, monkeypatch):
@@ -144,6 +168,43 @@ class TestOptionalDatabase:
             "/api/v1/flood/rescue/correction", json={"message": "wrong spelling"}
         )
         assert response.status_code == 503
+
+
+class TestMtimeCache:
+    """The content cache re-reads files when their mtime changes."""
+
+    def test_cache_returns_same_object_within_check_interval(self):
+        from app.domains.flood.content import _MtimeCache
+
+        calls = 0
+
+        def loader():
+            nonlocal calls
+            calls += 1
+            return {"loaded": calls}
+
+        cache = _MtimeCache(CONTENT_DIR)
+        first = cache.get(loader)
+        second = cache.get(loader)
+        assert first is second
+        assert calls == 1
+
+    def test_clear_forces_reload(self):
+        from app.domains.flood.content import _MtimeCache
+
+        calls = 0
+
+        def loader():
+            nonlocal calls
+            calls += 1
+            return {"loaded": calls}
+
+        cache = _MtimeCache(CONTENT_DIR)
+        cache.get(loader)
+        assert calls == 1
+        cache.clear()
+        cache.get(loader)
+        assert calls == 2
 
 
 class TestCorrectionValidation:
@@ -168,3 +229,4 @@ class TestCorrectionValidation:
         digest = hash_ip("203.0.113.7")
         assert "203.0.113.7" not in digest
         assert len(digest) == 64
+
