@@ -389,20 +389,22 @@ export default function FloodDonateView() {
         <a href="#received" className={onJump === 'received' ? 'on' : undefined}>
           <b>2</b>
           <strong>{t('jumpReceived')}</strong>
-          <span>
-            {pmInFund
-              ? `${money(pmInFund.value, lang === 'ne' ? pmInFund.unit_ne || pmInFund.unit_en : pmInFund.unit_en)} · ${t('jumpReceivedSub')}`
-              : t('jumpReceivedSub')}
-          </span>
+          {pmInFund && (
+            <em>
+              {money(pmInFund.value, lang === 'ne' ? pmInFund.unit_ne || pmInFund.unit_en : pmInFund.unit_en)}
+            </em>
+          )}
+          <span>{t('jumpReceivedSub')}</span>
         </a>
         <a href="#needed" className={onJump === 'needed' ? 'on' : undefined}>
           <b>3</b>
           <strong>{t('jumpNeeded')}</strong>
-          <span>
-            {needHouseholds
-              ? `${needHouseholds.value.toLocaleString('en-IN')} ${lang === 'ne' ? 'परिवार' : 'households'} · ${t('jumpNeededSub')}`
-              : t('jumpNeededSub')}
-          </span>
+          {needHouseholds && (
+            <em>
+              {needHouseholds.value.toLocaleString('en-IN')} {lang === 'ne' ? 'परिवार' : 'households'}
+            </em>
+          )}
+          <span>{t('jumpNeededSub')}</span>
         </a>
       </nav>
 

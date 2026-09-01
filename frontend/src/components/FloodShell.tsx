@@ -30,13 +30,11 @@ interface NavItem {
 const NAV: NavItem[] = [
   { href: '/bhotekoshi-flood', en: 'Overview', ne: 'सारांश' },
   { href: '/bhotekoshi-flood/rescue', en: 'People', ne: 'व्यक्ति' },
-  // Giving sits early: after a reader has the picture, before they go
-  // looking for a way to help and find a fake QR code somewhere else.
-  { href: '/bhotekoshi-flood/donate', en: 'Donate', ne: 'सहयोग' },
-  { href: '/bhotekoshi-flood/situation', en: 'Situation', ne: 'अवस्था' },
-  { href: '/bhotekoshi-flood/damage', en: 'Damage', ne: 'क्षति' },
-  { href: '/bhotekoshi-flood/media', en: 'Coverage', ne: 'समाचार' },
   { href: '/bhotekoshi-flood/contacts', en: 'Contacts', ne: 'सम्पर्क' },
+  { href: '/bhotekoshi-flood/donate', en: 'Donate', ne: 'सहयोग' },
+  { href: '/bhotekoshi-flood/damage', en: 'Damage', ne: 'क्षति' },
+  { href: '/bhotekoshi-flood/situation', en: 'Situation', ne: 'अवस्था' },
+  { href: '/bhotekoshi-flood/media', en: 'Coverage', ne: 'समाचार' },
 ];
 
 export function FloodNav({ lang }: { lang: Lang }) {
@@ -87,7 +85,7 @@ export default function FloodShell({ lang, setLang, kicker, title, standfirst, c
     <div className="fl" lang={lang}>
       <div className="fl-rail">
         <div className="fl-wrap" style={{ paddingTop: '8px', paddingBottom: '8px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '18px', flexWrap: 'wrap', marginBottom: safety ? '6px' : '0' }}>
+          <div className="fl-rail-lines" style={{ marginBottom: safety ? '6px' : '0' }}>
             <span className="fl-rail-tag">{lang === 'ne' ? 'आपतकालीन' : 'Emergency'}</span>
             {lines.map(line => (
               <a key={line.id} href={`tel:${line.number}`} style={{ color: '#2a0508', textDecoration: 'none', fontSize: '13px', whiteSpace: 'nowrap' }}>

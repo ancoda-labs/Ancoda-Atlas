@@ -287,11 +287,12 @@ export default function FloodDamageView() {
         <a href="#power" className={onJump === 'power' ? 'on' : undefined}>
           <b>2</b>
           <strong>{t('jumpPower')}</strong>
-          <span>
-            {power?.affected_mw != null
-              ? `${power.affected_mw} ${t('mw')} · ${t('jumpPowerSub')}`
-              : t('jumpPowerSub')}
-          </span>
+          {power?.affected_mw != null && (
+            <em>
+              {power.affected_mw} {t('mw')}
+            </em>
+          )}
+          <span>{t('jumpPowerSub')}</span>
         </a>
       </nav>
 

@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import type { AffectedDistrictProps, FloodGauge, GeoCollection, Geometry, PhotoGeoSource } from '@/types';
 import { orientationTransform } from '@/lib/photo-orientation';
-import { fitLeaves, separateLeaves, spiderOffsets } from '@/lib/spiderfy';
+import { clusterByPlace, spiderLayout, type OverlayLayer } from '@/lib/spiderfy';
 
 // The flood corridor map.
 //
@@ -13,10 +13,9 @@ import { fitLeaves, separateLeaves, spiderOffsets } from '@/lib/spiderfy';
 // would have to survive an outage of. Equirectangular projection, scaled to the
 // district bbox — over two degrees of Nepal the distortion is not visible.
 //
-// Press photographs and ground reports land on the same few districts, so the
-// overview is a cluster at 1×. Tap a stack to spiderfy it (a ring, or a spiral
-// once the pile is large) and scroll the headline list; zoom still splits
-// clusters that are only near each other, not on top of each other.
+// Press photographs, DHM station photos and ground reports land on the same
+// few districts. Press stacks sit on the district the headline names; DHM
+// thumbnails stay on the station. Tap a stack to spiderfy it inside the map.
 //
 // The map draws four things, and the distinction between the first two is the
 // one that matters most:
@@ -35,12 +34,14 @@ export interface MapPhoto {
   /** When set, the pin is the photograph itself rather than a coloured dot. */
   url?: string;
   orientation?: number;
-  /** Ground reports vs press photographs — drawn differently, labelled differently. */
-  layer?: 'ground' | 'news';
+  /** Ground reports, press photographs, or a DHM station photo. */
+  layer?: OverlayLayer;
   /** Press items open the outlet's page; ground reports open the map dialog. */
   href?: string;
   /** Overrides the default hover subtitle. */
   sub?: string;
+  /** District or station name, used to keep thumbnails on that place. */
+  place?: string;
 }
 
 export interface MapPathPoint {
@@ -77,6 +78,7 @@ const CONFIRMED = '#ff4d5c';
 const ESTIMATED = '#ffb020';
 const PHOTO = '#7ce0b4';
 const NEWS = '#6ec8ff';
+const GAUGE_SHOT = '#ffd27a';
 const ENTRY = '#6ec8ff';
 
 const MIN_ZOOM = 1;
@@ -172,13 +174,17 @@ interface OverlayPin {
   id: string;
   x: number;
   y: number;
-  url: string;
+  url?: string;
   orientation?: number;
-  layer: 'ground' | 'news';
+  layer: OverlayLayer;
   href?: string;
   title: string;
   sub: string;
   approximate: boolean;
+  /** District or station name — press stacks sit here, the list groups here. */
+  place?: string;
+  /** When set, the pin opens the gauge dialog rather than a photograph. */
+  gaugeId?: number;
 }
 
 interface OverlayStack {
@@ -188,37 +194,18 @@ interface OverlayStack {
   items: OverlayPin[];
 }
 
-/**
- * Group pins that would sit on top of each other at this zoom into one stack.
- * Neighbour-of-neighbour counts: a jittered Rasuwa pile is one pin, not five
- * overlapping ones that then spill into the brief beside the map.
- */
-function clusterOverlays(pins: OverlayPin[], gap: number): OverlayStack[] {
-  const n = pins.length;
-  const parent = pins.map((_, i) => i);
-  const find = (i: number): number => (parent[i] === i ? i : (parent[i] = find(parent[i])));
-  for (let i = 0; i < n; i++) {
-    for (let j = i + 1; j < n; j++) {
-      if (Math.hypot(pins[j].x - pins[i].x, pins[j].y - pins[i].y) < gap) {
-        const a = find(i);
-        const b = find(j);
-        if (a !== b) parent[a] = b;
-      }
-    }
+function groupPinsByPlace(pins: OverlayPin[]): Array<{ place: string; items: OverlayPin[] }> {
+  const groups = new Map<string, OverlayPin[]>();
+  const north = [...pins].sort((a, b) => a.y - b.y || a.x - b.x);
+  for (const pin of north) {
+    const key = pin.place || '';
+    const g = groups.get(key);
+    if (g) g.push(pin);
+    else groups.set(key, [pin]);
   }
-  const groups = new Map<number, OverlayPin[]>();
-  for (let i = 0; i < n; i++) {
-    const root = find(i);
-    const items = groups.get(root);
-    if (items) items.push(pins[i]);
-    else groups.set(root, [pins[i]]);
-  }
-  return [...groups.values()].map(items => ({
-    id: items.map(p => p.id).join('|'),
-    x: items.reduce((s, p) => s + p.x, 0) / items.length,
-    y: items.reduce((s, p) => s + p.y, 0) / items.length,
-    items,
-  }));
+  return [...groups.entries()]
+    .sort((a, b) => a[1][0].y - b[1][0].y)
+    .map(([place, items]) => ({ place, items }));
 }
 
 function stacksEqual(a: OverlayStack[], b: OverlayStack[]): boolean {
@@ -246,6 +233,7 @@ export default function FloodDistrictMap({ points = [], photos = [], gauges = []
   const [hover, setHover] = useState<Hover | null>(null);
   const [stacks, setStacks] = useState<OverlayStack[]>([]);
   const [openStack, setOpenStack] = useState<string | null>(null);
+  const [focusLayer, setFocusLayer] = useState<OverlayLayer | null>(null);
   const [view, setView] = useState<View>({ zoom: 1, panX: 0, panY: 0 });
   const viewRef = useRef<View>(view);
   const drawRef = useRef<() => void>(() => {});
@@ -442,10 +430,32 @@ export default function FloodDistrictMap({ points = [], photos = [], gauges = []
         });
       }
 
+      const nextOverlays: OverlayPin[] = [];
       for (const g of gauges) {
         if (g.lat == null || g.lon == null) continue;
         const [gtx, gty] = project(g.lon, g.lat);
         const colour = GAUGE_COLOUR[g.level] || GAUGE_COLOUR.unknown;
+        const title = ne ? g.labelNe : g.label;
+        const sub = g.stale
+          ? ne ? 'हालको तथ्यांक छैन' : 'No current reading'
+          : `${g.waterLevel != null ? `${g.waterLevel.toFixed(2)} m` : '—'} · ${ne ? 'डीएचएम मापन केन्द्र' : 'DHM gauge'}`;
+
+        if (g.photo) {
+          nextOverlays.push({
+            id: `gauge:${g.id}`,
+            x: gtx,
+            y: gty,
+            url: g.photo,
+            layer: 'gauge',
+            title,
+            sub,
+            approximate: false,
+            place: ne ? g.districtNe : g.district,
+            gaugeId: g.id,
+          });
+          continue;
+        }
+
         const s = 5 * Math.min(1.35, 0.7 + zoom * 0.25);
         const { x, y } = deOverlap(gtx, gty, placed, s * 2 + 4);
         placed.push({ x, y });
@@ -467,73 +477,71 @@ export default function FloodDistrictMap({ points = [], photos = [], gauges = []
 
         hits.push({
           selection: { kind: 'gauge', id: g.id },
-          title: ne ? g.labelNe : g.label,
-          sub: g.stale
-            ? ne ? 'हालको तथ्यांक छैन' : 'No current reading'
-            : `${g.waterLevel != null ? `${g.waterLevel.toFixed(2)} m` : '—'} · ${ne ? 'मापन केन्द्र' : 'DHM gauge'}`,
+          title,
+          sub,
           x, y, r: s + 6,
         });
       }
 
-      const nextOverlays: OverlayPin[] = [];
       for (const photo of photos) {
         const [ptx, pty] = project(photo.lon, photo.lat);
-        const layer = photo.layer === 'news' ? 'news' : 'ground';
+        const layer: OverlayLayer = photo.layer === 'news' ? 'news' : photo.layer === 'gauge' ? 'gauge' : 'ground';
         const approximate = photo.geoSource === 'district' || layer === 'news';
         const hasImage = Boolean(photo.url);
         const sub = photo.sub
           || (layer === 'news'
-            ? (ne ? 'समाचारको तस्बिर — जिल्ला शीर्षकबाट' : 'Press photograph — district from the headline')
+            ? (ne ? 'समाचार — जिल्ला शीर्षकबाट' : 'Press — district from the headline')
+            : layer === 'gauge'
+            ? (ne ? 'डीएचएम मापन केन्द्र' : 'DHM gauge station')
             : approximate
               ? (ne ? 'जिल्ला अनुसार अनुमानित स्थान' : 'Approximate — district only')
               : (ne ? 'जनताको तस्बिर — खोल्न थिच्नुहोस्' : 'Ground report — click to open'));
 
-        if (hasImage && photo.url) {
-          nextOverlays.push({
-            id: photo.id,
-            x: ptx,
-            y: pty,
-            url: photo.url,
-            orientation: photo.orientation,
-            layer,
-            href: photo.href,
-            title: photo.label,
-            sub,
-            approximate,
-          });
-        } else {
-          const { x, y } = deOverlap(ptx, pty, placed, approximate ? 10 : 13);
-          placed.push({ x, y });
-          ctx.beginPath();
-          ctx.arc(x, y, approximate ? 3.5 : 5.5, 0, Math.PI * 2);
-          ctx.fillStyle = layer === 'news' ? NEWS : PHOTO;
-          ctx.strokeStyle = '#08120e';
-          ctx.lineWidth = 1.5;
-          ctx.fill();
-          ctx.stroke();
-          hits.push({
-            selection: { kind: 'photo', id: photo.id },
-            title: photo.label,
-            sub,
-            x, y, r: approximate ? 15 : 9,
-          });
-        }
+        nextOverlays.push({
+          id: photo.id,
+          x: ptx,
+          y: pty,
+          url: hasImage ? photo.url : undefined,
+          orientation: photo.orientation,
+          layer,
+          href: photo.href,
+          title: photo.label,
+          sub,
+          approximate,
+          place: photo.place,
+        });
       }
 
-      const stacks = clusterOverlays(nextOverlays, viewRef.current.zoom < 1.8 ? 80 : 56);
+      const coverFirst = (items: OverlayPin[]) =>
+        [...items].sort((a, b) => Number(Boolean(b.url)) - Number(Boolean(a.url)));
+      const stacks: OverlayStack[] = clusterByPlace(nextOverlays, viewRef.current.zoom < 1.8 ? 72 : 52).map(items => ({
+        id: items.map(p => p.id).join('|'),
+        x: items.reduce((s, p) => s + p.x, 0) / items.length,
+        y: items.reduce((s, p) => s + p.y, 0) / items.length,
+        items: coverFirst(items),
+      }));
       for (const stack of stacks) {
         const many = stack.items.length > 1;
-        const r = many ? 30 : 28;
-        const { x, y } = deOverlap(stack.x, stack.y, placed, r);
-        stack.x = clamp(x, r, w - r);
-        stack.y = clamp(y, r, h - r);
+        const r = many ? 28 : 26;
+        const { x, y } = deOverlap(stack.x, stack.y, placed, r + 8);
+        stack.x = clamp(x, r + 8, w - r - 8);
+        stack.y = clamp(y, r + 36, h - r - 8);
         placed.push({ x: stack.x, y: stack.y });
-        if (stack.items.length === 1 && stack.items[0].layer === 'ground') {
+        const top = stack.items[0];
+        if (stack.items.length === 1 && top.layer === 'ground') {
           hits.push({
-            selection: { kind: 'photo', id: stack.items[0].id },
-            title: stack.items[0].title,
-            sub: stack.items[0].sub,
-            x, y, r: 22,
+            selection: { kind: 'photo', id: top.id },
+            title: top.title,
+            sub: top.sub,
+            x: stack.x, y: stack.y, r: 22,
+          });
+        }
+        if (stack.items.length === 1 && top.gaugeId != null) {
+          hits.push({
+            selection: { kind: 'gauge', id: top.gaugeId },
+            title: top.title,
+            sub: top.sub,
+            x: stack.x, y: stack.y, r: 22,
           });
         }
       }
@@ -744,53 +752,89 @@ export default function FloodDistrictMap({ points = [], photos = [], gauges = []
   };
 
   const ne = lang === 'ne';
-  const open = stacks.find(s => s.id === openStack && s.items.length > 1) || null;
+  const countOf = (layer: OverlayLayer) =>
+    stacks.reduce((n, s) => n + (s.items[0]?.layer === layer ? s.items.length : 0), 0);
+  const topicLabel = (layer: OverlayLayer, n: number) => {
+    if (layer === 'gauge') return ne ? `डीएचएम ${n}` : `DHM ${n}`;
+    if (layer === 'news') return ne ? `समाचार ${n}` : `Press ${n}`;
+    return ne ? `जनता ${n}` : `Ground ${n}`;
+  };
+  const listTitle = (layer: OverlayLayer, n: number) => {
+    if (layer === 'gauge') return ne ? `${n} मापन केन्द्र` : `${n} DHM stations`;
+    if (layer === 'news') return ne ? `${n} समाचार` : `${n} headlines`;
+    return ne ? `${n} तस्बिर` : `${n} ground reports`;
+  };
+  const visibleStacks = focusLayer ? stacks.filter(s => s.items[0]?.layer === focusLayer) : stacks;
+  const open = visibleStacks.find(s => s.id === openStack && s.items.length > 1) || null;
   const stageW = stageSizeRef.current.w;
   const stageH = stageSizeRef.current.h;
-  // The overview map sits in a 60% column of a 1000px wrap, so the stage is
-  // ~550px wide. 560 sent the headline list to the bottom of the map.
-  const listSide = stageW >= 400;
-  const listW = open && listSide ? Math.min(240, Math.round(stageW * 0.42)) : 0;
-  const listH = open && !listSide ? Math.min(176, Math.max(120, Math.round(stageH * 0.38))) : 0;
+  const listItems = open
+    ? open.items
+    : focusLayer
+      ? stacks.filter(s => s.items[0]?.layer === focusLayer).flatMap(s => s.items)
+      : [];
+  const listGroups = groupPinsByPlace(listItems);
+  const showList = listItems.length > 0;
+  const listH = showList ? Math.min(152, Math.max(108, Math.round(stageH * 0.30))) : 0;
   const origin = open ? { x: open.x, y: open.y } : { x: 0, y: 0 };
   const spiderBounds = {
     w: stageW,
     h: stageH,
-    pad: 28,
-    padLeft: listW ? listW + 18 : 28,
-    padRight: 48,
-    padBottom: listH ? listH + 12 : 28,
+    pad: 26,
+    padTop: 48,
+    padLeft: 26,
+    padRight: 52,
+    padBottom: listH ? listH + 16 : 28,
   };
-  const spider = open
-    ? fitLeaves(
-        origin,
-        separateLeaves(fitLeaves(origin, spiderOffsets(open.items.length, 40), spiderBounds), 52),
-        spiderBounds,
-      )
-    : [];
+  const spider = open ? spiderLayout(origin, open.items.length, spiderBounds, 36, 44) : [];
+  const tipMaxY = stageH - (listH || 0) - 56;
   const tipFlip = hover != null && hover.x > stageW * 0.55;
+  const tipLeft = hover
+    ? clamp(hover.x + (tipFlip ? -12 : 12), 8, stageW - 8)
+    : 0;
+  const tipTop = hover ? clamp(hover.y + 12, 44, Math.max(44, tipMaxY)) : 0;
+  const topics: OverlayLayer[] = (['gauge', 'ground', 'news'] as OverlayLayer[]).filter(l => countOf(l) > 0);
 
   const shotBody = (pins: OverlayPin[], stacked: boolean) => (
     <span className="flood-map-shot-stack" aria-hidden="true">
       {pins.map((pin, i) => (
-        <img
+        <span
           key={pin.id}
-          src={pin.url}
-          alt=""
+          className="flood-map-shot-frame"
           style={{
-            transform: [
-              orientationTransform(pin.orientation || 1),
-              stacked ? `rotate(${(i - 1) * 7}deg) translate(${(i - 1) * 3}px, ${(1 - i) * 2}px)` : undefined,
-            ].filter(Boolean).join(' ') || undefined,
             zIndex: pins.length - i,
+            transform: stacked ? `rotate(${(i - 1) * 7}deg) translate(${(i - 1) * 3}px, ${(1 - i) * 2}px)` : undefined,
           }}
-          onError={ev => {
-            ev.currentTarget.style.display = 'none';
-          }}
-        />
+        >
+          <span className={`flood-map-shot-ph${pin.layer === 'news' ? ' news' : pin.layer === 'gauge' ? ' gauge' : ''}`} />
+          {pin.url && (
+            <img
+              src={pin.url}
+              alt=""
+              style={{ transform: orientationTransform(pin.orientation || 1) }}
+              onError={ev => {
+                ev.currentTarget.style.display = 'none';
+              }}
+            />
+          )}
+        </span>
       ))}
     </span>
   );
+
+  const activatePin = (pin: OverlayPin) => {
+    if (pin.gaugeId != null) {
+      onSelect?.({ kind: 'gauge', id: pin.gaugeId });
+      return;
+    }
+    if (onPhotoSelect) onPhotoSelect(pin.id);
+    onSelect?.({ kind: 'photo', id: pin.id });
+  };
+
+  const toggleTopic = (layer: OverlayLayer) => {
+    setOpenStack(null);
+    setFocusLayer(prev => (prev === layer ? null : layer));
+  };
 
   return (
     <div className="flood-map" ref={wrapRef}>
@@ -807,7 +851,7 @@ export default function FloodDistrictMap({ points = [], photos = [], gauges = []
         {hover && (
           <div
             className={`flood-map-tip${tipFlip ? ' flip' : ''}`}
-            style={{ left: hover.x + (tipFlip ? -12 : 12), top: Math.min(hover.y + 12, stageH - 64) }}
+            style={{ left: tipLeft, top: tipTop }}
           >
             <strong>{hover.title}</strong>
             {hover.sub && <span>{hover.sub}</span>}
@@ -830,14 +874,22 @@ export default function FloodDistrictMap({ points = [], photos = [], gauges = []
             })}
           </svg>
         )}
-        {stacks.map(stack => {
+        {visibleStacks.map(stack => {
           const many = stack.items.length > 1;
           const spidered = open?.id === stack.id;
           const top = stack.items[0];
-          const news = stack.items.some(p => p.layer === 'news');
-          const className = `flood-map-shot${news ? ' news' : ''}${many ? ' stack' : ''}${spidered ? ' hub' : ''}${top.approximate && !many ? ' approx' : ''}`;
+          const news = top.layer === 'news';
+          const gauge = top.layer === 'gauge';
+          const placeLabel = top.place
+            ? (many ? `${top.place} · ${stack.items.length}` : top.place)
+            : null;
+          const className = `flood-map-shot${news ? ' news' : ''}${gauge ? ' gauge' : ''}${many ? ' stack' : ''}${spidered ? ' hub' : ''}${top.approximate && !many ? ' approx' : ''}`;
           const onEnter = (x: number, y: number) => () => {
-            setHover({ title: top.title, sub: top.sub, x, y });
+            setHover({
+              title: placeLabel || top.title,
+              sub: many && top.place ? top.sub : top.sub,
+              x, y,
+            });
           };
           if (many && !spidered) {
             return (
@@ -847,9 +899,19 @@ export default function FloodDistrictMap({ points = [], photos = [], gauges = []
                 className={className}
                 style={{ left: stack.x, top: stack.y }}
                 aria-expanded={false}
-                aria-label={ne ? `${stack.items.length} तस्बिर` : `${stack.items.length} photographs`}
+                aria-label={placeLabel || listTitle(top.layer, stack.items.length)}
+                onMouseEnter={() => setHover({
+                  title: placeLabel || top.title,
+                  sub: top.sub,
+                  x: stack.x,
+                  y: stack.y,
+                })}
+                onMouseLeave={() => setHover(null)}
                 onPointerDown={e => e.stopPropagation()}
-                onClick={() => setOpenStack(stack.id)}
+                onClick={() => {
+                  setFocusLayer(top.layer);
+                  setOpenStack(stack.id);
+                }}
               >
                 {shotBody(stack.items.slice(0, 3), true)}
                 <em className="flood-map-shot-count">{stack.items.length}</em>
@@ -898,10 +960,7 @@ export default function FloodDistrictMap({ points = [], photos = [], gauges = []
               onMouseEnter={onEnter(stack.x, stack.y)}
               onMouseLeave={() => setHover(null)}
               onPointerDown={e => e.stopPropagation()}
-              onClick={() => {
-                if (onPhotoSelect) onPhotoSelect(top.id);
-                onSelect?.({ kind: 'photo', id: top.id });
-              }}
+              onClick={() => activatePin(top)}
             >
               {shotBody([top], false)}
             </button>
@@ -913,7 +972,7 @@ export default function FloodDistrictMap({ points = [], photos = [], gauges = []
           const x = open.x + pt.x;
           const y = open.y + pt.y;
           const news = pin.layer === 'news';
-          const className = `flood-map-shot leaf${news ? ' news' : ''}${pin.approximate ? ' approx' : ''}`;
+          const className = `flood-map-shot leaf${news ? ' news' : ''}${pin.layer === 'gauge' ? ' gauge' : ''}${pin.approximate ? ' approx' : ''}`;
           const onEnter = () => setHover({ title: pin.title, sub: pin.sub, x, y });
           if (pin.href) {
             return (
@@ -941,56 +1000,93 @@ export default function FloodDistrictMap({ points = [], photos = [], gauges = []
               onMouseEnter={onEnter}
               onMouseLeave={() => setHover(null)}
               onPointerDown={e => e.stopPropagation()}
-              onClick={() => {
-                if (onPhotoSelect) onPhotoSelect(pin.id);
-                onSelect?.({ kind: 'photo', id: pin.id });
-              }}
+              onClick={() => activatePin(pin)}
             >
               {shotBody([pin], false)}
             </button>
           );
         })}
-        {open && (
+        {topics.length > 0 && (
+          <div className="flood-map-chips" role="toolbar" aria-label={ne ? 'नक्साका विषय' : 'Map topics'} onPointerDown={e => e.stopPropagation()}>
+            {topics.map(layer => (
+              <button
+                key={layer}
+                type="button"
+                className={focusLayer === layer ? 'on' : undefined}
+                aria-pressed={focusLayer === layer}
+                onClick={() => toggleTopic(layer)}
+              >
+                {topicLabel(layer, countOf(layer))}
+              </button>
+            ))}
+          </div>
+        )}
+        {showList && (
           <div
-            className={`flood-map-stack-list${listSide ? ' side' : ''}`}
-            style={listSide ? { width: listW } : { height: listH }}
+            className="flood-map-stack-list"
+            style={{ height: listH }}
             onPointerDown={e => e.stopPropagation()}
             onWheel={e => e.stopPropagation()}
           >
             <p>
-              {ne ? `${open.items.length} तस्बिर` : `${open.items.length} photographs`}
-              <button type="button" onClick={() => setOpenStack(null)} aria-label={ne ? 'बन्द' : 'Close'}>×</button>
+              {open
+                ? (open.items[0].place
+                  ? `${open.items[0].place} · ${open.items.length}`
+                  : listTitle(open.items[0].layer, open.items.length))
+                : focusLayer
+                  ? listTitle(focusLayer, listItems.length)
+                  : (ne ? 'विषय' : 'Topics')}
+              <button
+                type="button"
+                onClick={() => {
+                  setOpenStack(null);
+                  setFocusLayer(null);
+                }}
+                aria-label={ne ? 'बन्द' : 'Close'}
+              >
+                ×
+              </button>
             </p>
             <ul>
-              {open.items.map(pin => {
-                const inner = (
-                  <>
-                    <img src={pin.url} alt="" />
-                    <span>
-                      <strong>{pin.title}</strong>
-                      <em>{pin.sub}</em>
-                    </span>
-                  </>
-                );
-                return (
-                  <li key={pin.id}>
-                    {pin.href ? (
-                      <a href={pin.href} target="_blank" rel="noopener noreferrer">{inner}</a>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (onPhotoSelect) onPhotoSelect(pin.id);
-                          onSelect?.({ kind: 'photo', id: pin.id });
-                          setOpenStack(null);
-                        }}
-                      >
-                        {inner}
-                      </button>
-                    )}
-                  </li>
-                );
-              })}
+              {listGroups.map(group => (
+                <React.Fragment key={group.place || group.items[0]?.id}>
+                  {group.place && listGroups.length > 1 && (
+                    <li className="place">{group.place}</li>
+                  )}
+                  {group.items.map(pin => {
+                    const inner = (
+                      <>
+                        {pin.url ? (
+                          <img src={pin.url} alt="" onError={ev => { ev.currentTarget.style.display = 'none'; }} />
+                        ) : (
+                          <span className={`flood-map-shot-ph${pin.layer === 'news' ? ' news' : pin.layer === 'gauge' ? ' gauge' : ''}`} />
+                        )}
+                        <span>
+                          <strong>{pin.title}</strong>
+                          <em>{pin.sub}</em>
+                        </span>
+                      </>
+                    );
+                    return (
+                      <li key={pin.id}>
+                        {pin.href ? (
+                          <a href={pin.href} target="_blank" rel="noopener noreferrer">{inner}</a>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              activatePin(pin);
+                              setOpenStack(null);
+                            }}
+                          >
+                            {inner}
+                          </button>
+                        )}
+                      </li>
+                    );
+                  })}
+                </React.Fragment>
+              ))}
             </ul>
           </div>
         )}
@@ -1020,18 +1116,21 @@ export default function FloodDistrictMap({ points = [], photos = [], gauges = []
             )}
           </>
         )}
-        {gauges.length > 0 && <span><i className="sq" style={{ background: GAUGE_COLOUR.normal }} />{ne ? 'डीएचएम मापन केन्द्र' : 'DHM gauge'}</span>}
-        {photos.some(p => (p.layer || 'ground') === 'ground') && (
+        {gauges.some(g => !g.photo) && <span><i className="sq" style={{ background: GAUGE_COLOUR.normal }} />{ne ? 'डीएचएम मापन केन्द्र' : 'DHM gauge'}</span>}
+        {countOf('gauge') > 0 && (
+          <span><i style={{ background: GAUGE_SHOT, borderRadius: '2px' }} />{ne ? 'डीएचएम तस्बिर' : 'DHM station photo'}</span>
+        )}
+        {countOf('ground') > 0 && (
           <span><i style={{ background: PHOTO, borderRadius: '50%' }} />{ne ? 'जनताका तस्बिर' : 'Ground reports'}</span>
         )}
-        {photos.some(p => p.layer === 'news') && (
-          <span><i style={{ background: NEWS, borderRadius: '50%' }} />{ne ? 'समाचारका तस्बिर' : 'Press photos'}</span>
+        {countOf('news') > 0 && (
+          <span><i style={{ background: NEWS, borderRadius: '50%' }} />{ne ? 'समाचार' : 'Press'}</span>
         )}
       </div>
       <p className="flood-map-zoom-hint">
         {ne
-          ? 'थुप्रो तस्बिर थिचेर फिँजाउनुहोस्। सूची स्क्रोल गरेर हरेक शीर्षक पढ्नुहोस्।'
-          : 'Tap a stacked pin to fan the photographs out. Scroll the list for every headline.'}
+          ? 'विषय छानेर सूची खोल्नुहोस्। थुप्रो तस्बिर थिचेर फिँजाउनुहोस् — नक्साभित्रै रहन्छ।'
+          : 'Pick a topic to open its list. Tap a stacked pin to fan it out inside the map.'}
       </p>
     </div>
   );

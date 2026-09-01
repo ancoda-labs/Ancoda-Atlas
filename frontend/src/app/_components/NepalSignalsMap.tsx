@@ -4,6 +4,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import { provinceOf } from '@/lib/nepal-geo';
 import type { GeoCollection, Geometry, BipadPayload, BipadRiverStation, BipadRainStation, BipadAlert, BipadIncident, BipadEarthquake, BipadRainAverage } from '@/types';
 import { errorMessage } from '@/types';
+import LoadingUI from '@/components/LoadingUI';
 
 /** A province or district outline, flattened to rings for canvas drawing. */
 type Ring = Array<[number, number]>;
@@ -930,7 +931,16 @@ export default function NepalSignalsMap({ stories, bipadData }: NepalSignalsMapP
     draw();
   };
 
-  if (loading) return <div className="nml-empty">Loading Nepal boundaries...</div>;
+  if (loading) {
+    return (
+      <LoadingUI
+        variant="map"
+        active
+        message="Loading Nepal map…"
+        hint="Drawing boundaries and connecting to BIPAD live telemetry."
+      />
+    );
+  }
   if (error) return <div className="nml-empty">Failed to load Nepal map: {error}</div>;
 
   return (

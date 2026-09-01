@@ -341,9 +341,19 @@ export default function FloodRescueView() {
     }
   };
 
-  const summary = data?.summary;
-  const lostCount = portalRegister?.lost?.length ?? 0;
-  const foundCount = portalRegister?.found?.length ?? 0;
+  const summary = data?.summary ?? desk.rescueSummary;
+  const portalPersons = desk.portal?.persons;
+  // Prefer the portal's own headline counters for the tiles. The eight-thousand-
+  // row register is what a family searches; it is not what these three figures
+  // are. On Cloudflare that sweep never finishes, so waiting on it left "—".
+  const lostCount =
+    portalPersons?.lostOpen ??
+    portalPersons?.lost ??
+    (portalRegister && !portalRegister.error ? portalRegister.lost.length : null);
+  const foundCount =
+    portalPersons?.found ??
+    portalPersons?.foundOpen ??
+    (portalRegister && !portalRegister.error ? portalRegister.found.length : null);
   const fig = (n: number) => (lang === 'ne' ? toNeDigits(n.toLocaleString()) : n.toLocaleString());
   const anyHits = (showRescued && rescuedHits.length > 0) || (showMissing && missingHits.length > 0) || (showFound && foundHits.length > 0);
 
@@ -375,12 +385,12 @@ export default function FloodRescueView() {
           <dt>{t('total')}</dt>
         </div>
         <div className="t-critical">
-          <dd>{portalRegister ? fig(lostCount) : '—'}</dd>
+          <dd>{lostCount != null ? fig(lostCount) : '—'}</dd>
           <dt>{t('missingTile')}</dt>
           <small>{t('reports')}</small>
         </div>
         <div>
-          <dd>{portalRegister ? fig(foundCount) : '—'}</dd>
+          <dd>{foundCount != null ? fig(foundCount) : '—'}</dd>
           <dt>{t('foundTile')}</dt>
           <small>{t('reports')}</small>
         </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import FloodShell from '@/components/FloodShell';
 import FloodWarehouses from '@/app/bhotekoshi-flood/_components/FloodWarehouses';
 import { useFloodLang } from '@/hooks/use-flood-lang';
@@ -11,9 +11,18 @@ import { useJumpSection } from '@/hooks/use-jump-section';
 import { useFloodDesk } from '@/app/bhotekoshi-flood/_components/FloodDeskProvider';
 import {
   COLLAPSED_BUCKETS,
+  COLLAPSED_PORTAL_BUCKETS,
+  dialKey,
+  filterDirectory,
+  filterPortalDirectory,
+  foldHay,
   normalizePhone,
+  parseContactQuery,
   structureDistricts,
+  structurePortalContacts,
   type ContactBucket,
+  type PortalBucket,
+  type PortalLine,
   type StructuredDistrict,
 } from '@/lib/contact-groups';
 
@@ -30,8 +39,8 @@ const T = {
   kicker: { en: 'Contacts', ne: 'सम्पर्क' },
   title: { en: 'Who to call', ne: 'कसलाई फोन गर्ने' },
   standfirst: {
-    en: 'National emergency lines first, then the warehouses that take in-kind goods, then district offices. Tap a number to call.',
-    ne: 'पहिले राष्ट्रिय आपतकालीन नम्बर, त्यसपछि सामग्री बुझाउने गोदाम, अनि जिल्ला कार्यालय। फोन गर्न नम्बर थिच्नुहोस्।',
+    en: 'National emergency lines first, then the warehouses that take in-kind goods, then district offices, then the Prime Minister’s rescue-portal directory. Tap a number to call.',
+    ne: 'पहिले राष्ट्रिय आपतकालीन नम्बर, त्यसपछि सामग्री बुझाउने गोदाम, जिल्ला कार्यालय, अनि प्रधानमन्त्री कार्यालयको उद्धार पोर्टलको सूची। फोन गर्न नम्बर थिच्नुहोस्।',
   },
   jumpLabel: { en: 'On this page', ne: 'यस पृष्ठमा' },
   jumpHint: { en: 'Tap a box to jump', ne: 'जान बाकस थिच्नुहोस्' },
@@ -40,7 +49,13 @@ const T = {
   jumpWarehouses: { en: 'Emergency warehouses', ne: 'आपत्कालीन गोदाम' },
   jumpWarehousesSub: { en: 'Where to hand in goods', ne: 'सामग्री कहाँ बुझाउने' },
   jumpDistricts: { en: 'District offices', ne: 'जिल्ला कार्यालय' },
-  jumpDistrictsSub: { en: 'Focal persons, DAO, police', ne: 'सम्पर्क अधिकृत, जिप्रका, प्रहरी' },
+  jumpDistrictsSub: { en: 'Pick a district', ne: 'जिल्ला छान्नुहोस्' },
+  jumpPortal: { en: 'OPMCM rescue portal', ne: 'उद्धार पोर्टल' },
+  jumpPortalSub: { en: 'Prime Minister’s Office directory', ne: 'प्रधानमन्त्री कार्यालयको सूची' },
+  jumpSites: { en: 'sites', ne: 'ठाउँ' },
+  jumpSite: { en: 'site', ne: 'ठाउँ' },
+  jumpLines: { en: 'lines', ne: 'नम्बर' },
+  jumpLine: { en: 'line', ne: 'नम्बर' },
   national: { en: 'National emergency lines', ne: 'राष्ट्रिय आपतकालीन नम्बर' },
   warehousesTitle: { en: 'Emergency warehouses', ne: 'आपत्कालीन गोदाम' },
   warehousesIntro: {
@@ -49,6 +64,15 @@ const T = {
   },
   otherLines: { en: 'Other national lines', ne: 'अन्य राष्ट्रिय नम्बर' },
   districts: { en: 'District contacts', ne: 'जिल्ला सम्पर्क' },
+  districtsIntro: {
+    en: 'Pick a district. These are the local government’s own numbers on the BIPAD Portal, grouped by role. Atlas has not rung them — use the national lines above first.',
+    ne: 'जिल्ला छान्नुहोस्। यी नेपाल सरकारको बिपद् पोर्टलमा रहेका स्थानीय सरकारकै नम्बर हुन्, भूमिकाअनुसार मिलाइएका। एट्लसले फोन गरेर जाँचेको छैन — पहिले माथिका राष्ट्रिय नम्बर प्रयोग गर्नुहोस्।',
+  },
+  districtCount: { en: 'districts', ne: 'जिल्ला' },
+  pickDistrict: {
+    en: 'Open a district to see who to call there. Ward chairs, committee members and volunteers are behind the summaries inside.',
+    ne: 'त्यहाँ कसलाई फोन गर्ने हेर्न जिल्ला खोल्नुहोस्। वडा अध्यक्ष, समिति सदस्य र स्वयंसेवक भित्रका सारांशमा छन्।',
+  },
   tapToCall: { en: 'Tap to call', ne: 'फोन गर्न थिच्नुहोस्' },
   pending: {
     en: 'District-level numbers are not published here yet. Atlas will not show an emergency number it has not checked against an official source — a wrong number costs someone the minutes they had. Use the national lines above, which are verified, or contact your District Administration Office directly.',
@@ -58,20 +82,26 @@ const T = {
   source: { en: 'Source', ne: 'स्रोत' },
   portalTitle: { en: 'From the OPMCM rescue portal', ne: 'प्रधानमन्त्री कार्यालयको उद्धार पोर्टलबाट' },
   portalNote: {
-    en: 'Published on the Office of the Prime Minister’s rescue portal. Atlas reproduces the directory as listed there and has not separately checked each line.',
-    ne: 'प्रधानमन्त्री कार्यालयको उद्धार पोर्टलमा प्रकाशित। एट्लसले त्यहाँ सूचीकृत विवरण जस्ताको तस्तै देखाउँछ र हरेक लाइन छुट्टै जाँचेको छैन।',
+    en: 'Published on the Office of the Prime Minister’s rescue portal, grouped by role. Nationwide 100 / 101 / 102 sit behind the first summary — they are the same numbers as above. District lines are underneath. Atlas has not separately checked each line.',
+    ne: 'प्रधानमन्त्री कार्यालयको उद्धार पोर्टलमा प्रकाशित, भूमिकाअनुसार मिलाइएको। देशव्यापी १०० / १०१ / १०२ पहिलो सारांशभित्र छन् — माथिकै नम्बर हुन्। जिल्लाका नम्बर तल छन्। एट्लसले हरेक लाइन छुट्टै जाँचेको छैन।',
   },
+  portalLocal: { en: 'District lines on the portal', ne: 'पोर्टलका जिल्ला नम्बर' },
   nationwide: { en: 'Nationwide', ne: 'देशव्यापी' },
   around: { en: '24/7', ne: '२४/७' },
-  bipadTitle: { en: 'District offices, from the BIPAD Portal', ne: 'जिल्ला कार्यालय, बिपद् पोर्टलबाट' },
-  bipadNote: {
-    en: 'The local government’s own register on the Government of Nepal BIPAD Portal, grouped by role. Atlas has not rung them — use the verified national numbers above first. Ward chairs, committee members and volunteers are behind the summaries.',
-    ne: 'नेपाल सरकारको बिपद् पोर्टलमा रहेको स्थानीय सरकारकै नामावली, भूमिकाअनुसार मिलाइएको। एट्लसले यी नम्बरमा फोन गरेर जाँचेको छैन — पहिले माथिका प्रमाणित राष्ट्रिय नम्बर प्रयोग गर्नुहोस्। वडा अध्यक्ष, समिति सदस्य र स्वयंसेवक सारांशभित्र छन्।',
-  },
   drrFocal: { en: 'Disaster focal person', ne: 'विपद् सम्पर्क अधिकृत' },
   read: { en: 'Read', ne: 'पढिएको' },
-  distJump: { en: 'Jump to a district', ne: 'जिल्लामा जानुहोस्' },
+  distJump: { en: 'Districts on this register', ne: 'यस अभिलेखका जिल्ला' },
   uniqueLines: { en: 'unique lines', ne: 'फरक नम्बर' },
+  search: { en: 'Search a district, name, or number', ne: 'जिल्ला, नाम वा नम्बर खोज्नुहोस्' },
+  searchHint: {
+    en: 'Type a district, an officer’s name, a role, or part of a number. Matching lines stay; the rest hide.',
+    ne: 'जिल्ला, अधिकृतको नाम, भूमिका वा नम्बरको अंश लेख्नुहोस्। मिल्ने लाइन मात्र देखिन्छ।',
+  },
+  searchCount: { en: 'matching lines', ne: 'मिल्ने नम्बर' },
+  noHits: {
+    en: 'No district office or number on this page matches that search.',
+    ne: 'त्यो खोजसँग मिल्ने जिल्ला कार्यालय वा नम्बर यस पृष्ठमा छैन।',
+  },
   loading: { en: 'Loading…', ne: 'लोड हुँदै…' },
 };
 
@@ -86,21 +116,12 @@ const BUCKET: Record<ContactBucket, { en: string; ne: string }> = {
   volunteer: { en: 'Volunteers', ne: 'स्वयंसेवक' },
 };
 
-const CATEGORY: Record<string, { en: string; ne: string }> = {
-  POLICE: { en: 'Police', ne: 'प्रहरी' },
-  AMBULANCE: { en: 'Ambulance', ne: 'एम्बुलेन्स' },
-  FIRE: { en: 'Fire', ne: 'दमकल' },
-  HOSPITAL: { en: 'Hospitals', ne: 'अस्पताल' },
-  HOSPITALS: { en: 'Hospitals', ne: 'अस्पताल' },
-  HEALTH: { en: 'Health', ne: 'स्वास्थ्य' },
-  DISASTER: { en: 'Disaster response', ne: 'विपद् प्रतिकार्य' },
-  DISASTER_AUTHORITY: { en: 'Disaster response', ne: 'विपद् प्रतिकार्य' },
-  ARMY: { en: 'Nepal Army', ne: 'नेपाली सेना' },
-  RESCUE: { en: 'Rescue', ne: 'उद्धार' },
-  RED_CROSS: { en: 'Red Cross', ne: 'रेडक्रस' },
-  HELPLINE: { en: 'Helplines', ne: 'हेल्पलाइन' },
-  HELPLINES: { en: 'Helplines', ne: 'हेल्पलाइन' },
-  OTHER: { en: 'Other', ne: 'अन्य' },
+const PORTAL_BUCKET: Record<PortalBucket, { en: string; ne: string }> = {
+  emergency: { en: 'Nationwide emergency (same as above)', ne: 'देशव्यापी आपतकालीन (माथिकै)' },
+  authority: { en: 'Disaster offices', ne: 'विपद् कार्यालय' },
+  health: { en: 'Hospitals', ne: 'अस्पताल' },
+  welfare: { en: 'Helplines and welfare', ne: 'हेल्पलाइन र कल्याण' },
+  local: { en: 'District lines', ne: 'जिल्ला नम्बर' },
 };
 
 function PhoneIcon() {
@@ -117,6 +138,8 @@ function PhoneIcon() {
 function telHref(phone: string): string {
   const digits = normalizePhone(phone) || phone.replace(/\D/g, '');
   if (digits.length === 10 && digits.startsWith('9')) return `tel:+977${digits}`;
+  const short = dialKey(phone);
+  if (short && short.length <= 4) return `tel:${short}`;
   return `tel:${digits || phone}`;
 }
 
@@ -156,46 +179,81 @@ function BipadRow({ contact, lang }: { contact: BipadContact; lang: 'en' | 'ne' 
   );
 }
 
+function portalLineLabel(line: PortalLine, lang: 'en' | 'ne'): string {
+  const who = displayMergedName(line.name || line.organization || '', lang);
+  const bits = [who];
+  if (line.organization && line.organization !== line.name) {
+    const org = displayMergedName(line.organization, lang);
+    if (org && org !== who) bits.push(org);
+  }
+  if (line.isNationwide) bits.push(T.nationwide[lang]);
+  if (line.available24x7) bits.push(T.around[lang]);
+  return bits.filter(Boolean).join(' · ');
+}
+
+function PortalRow({ line, lang }: { line: PortalLine; lang: 'en' | 'ne' }) {
+  return (
+    <a href={telHref(line.phone)}>
+      <b>{line.phone}</b>
+      <span>{portalLineLabel(line, lang)}</span>
+    </a>
+  );
+}
+
+function PortalLines({ lines, lang }: { lines: PortalLine[]; lang: 'en' | 'ne' }) {
+  return (
+    <div className="fl-calls-more">
+      {lines.map(line => (
+        <PortalRow key={line.id} line={line} lang={lang} />
+      ))}
+    </div>
+  );
+}
+
 function DistrictDirectory({
   district,
   lang,
+  searching,
 }: {
   district: StructuredDistrict;
   lang: 'en' | 'ne';
+  searching: boolean;
 }) {
   return (
-    <article id={`district-${district.slug}`} className="fl-dist">
-      <h3>
-        {lang === 'ne' ? district.nameNe : district.name}
+    <details id={`district-${district.slug}`} className="fl-dist" open={searching || undefined}>
+      <summary>
+        <strong>{lang === 'ne' ? district.nameNe : district.name}</strong>
         <em>
           {district.unique} {lang === 'ne' ? 'नम्बर' : 'lines'}
         </em>
-      </h3>
-      {district.groups.map(group => {
-        const title = `${BUCKET[group.bucket][lang]} · ${group.contacts.length}`;
-        const body = (
-          <div className="fl-calls-more">
-            {group.contacts.map(c => (
-              <BipadRow key={c.id} contact={c} lang={lang} />
-            ))}
-          </div>
-        );
-        if (bucketCollapsed(group.bucket, group.contacts.length)) {
-          return (
-            <details key={group.bucket} className="fl-dist-more">
-              <summary>{title}</summary>
-              {body}
-            </details>
+      </summary>
+      <div className="fl-dist-body">
+        {district.groups.map(group => {
+          const title = `${BUCKET[group.bucket][lang]} · ${group.contacts.length}`;
+          const body = (
+            <div className="fl-calls-more">
+              {group.contacts.map(c => (
+                <BipadRow key={c.id} contact={c} lang={lang} />
+              ))}
+            </div>
           );
-        }
-        return (
-          <React.Fragment key={group.bucket}>
-            <h4 className="fl-minor">{title}</h4>
-            {body}
-          </React.Fragment>
-        );
-      })}
-    </article>
+          if (bucketCollapsed(group.bucket, group.contacts.length) && !searching) {
+            return (
+              <details key={group.bucket} className="fl-dist-more">
+                <summary>{title}</summary>
+                {body}
+              </details>
+            );
+          }
+          return (
+            <React.Fragment key={group.bucket}>
+              <h4 className="fl-minor">{title}</h4>
+              {body}
+            </React.Fragment>
+          );
+        })}
+      </div>
+    </details>
   );
 }
 
@@ -206,8 +264,9 @@ export default function FloodContactsView() {
   // route rather than the desk payload every page loads.
   // Emergency numbers are the last thing that should go stale on an open tab.
   const { data: official = null } = useContacts();
+  const [q, setQ] = useState('');
   const t = (key: keyof typeof T) => T[key][lang];
-  const onJump = useJumpSection(['national', 'warehouses', 'districts']);
+  const onJump = useJumpSection(['national', 'warehouses', 'districts', 'portal']);
 
   const lines = data?.helplines?.lines || [];
   const primary = lines.filter(l => l.primary);
@@ -217,8 +276,51 @@ export default function FloodContactsView() {
   const districts: FloodDistrictContacts[] = (data?.districtContacts?.districts || []).filter(
     d => d.verified && (d.contacts?.length ?? 0) > 0,
   );
-  const directory = structureDistricts(official?.items || []);
-  const uniqueLines = directory.reduce((n, d) => n + d.unique, 0);
+  const directory = useMemo(() => structureDistricts(official?.items || []), [official]);
+  const portalDir = useMemo(
+    () => structurePortalContacts(data?.portalContacts?.items || []),
+    [data?.portalContacts],
+  );
+  const searching = parseContactQuery(q).length > 0;
+  const shownDistricts = useMemo(() => {
+    const tokens = parseContactQuery(q);
+    if (!tokens.length) return districts;
+    return districts.flatMap(d => {
+      const nameHay = foldHay(d.name_en, d.name_ne);
+      if (tokens.every(tok => nameHay.includes(tok))) return [d];
+      const contacts = (d.contacts || []).filter(c => {
+        const hay = foldHay(d.name_en, d.name_ne, c.role_en, c.role_ne, c.number, normalizePhone(c.number));
+        return tokens.every(tok => hay.includes(tok));
+      });
+      return contacts.length ? [{ ...d, contacts }] : [];
+    });
+  }, [districts, q]);
+  const shownDirectory = useMemo(() => filterDirectory(directory, q), [directory, q]);
+  const shownPortal = useMemo(() => filterPortalDirectory(portalDir, q), [portalDir, q]);
+  const uniqueLines = shownDirectory.reduce((n, d) => n + d.unique, 0);
+  const matchCount =
+    uniqueLines +
+    shownDistricts.reduce((n, d) => n + (d.contacts?.length ?? 0), 0) +
+    shownPortal.unique;
+  const canSearch = districts.length > 0 || directory.length > 0 || portalDir.unique > 0 || official === null;
+  const noHits =
+    searching &&
+    shownDistricts.length === 0 &&
+    shownDirectory.length === 0 &&
+    shownPortal.unique === 0 &&
+    official !== null;
+
+  useEffect(() => {
+    const openFromHash = () => {
+      const id = window.location.hash.replace(/^#/, '');
+      if (!id.startsWith('district-')) return;
+      const el = document.getElementById(id);
+      if (el instanceof HTMLDetailsElement) el.open = true;
+    };
+    openFromHash();
+    window.addEventListener('hashchange', openFromHash);
+    return () => window.removeEventListener('hashchange', openFromHash);
+  }, [shownDirectory]);
 
   const label = (o: { label_en?: string; label_ne?: string }) =>
     (lang === 'ne' ? o.label_ne || o.label_en : o.label_en) || '';
@@ -231,7 +333,7 @@ export default function FloodContactsView() {
 
   return (
     <FloodShell lang={lang} setLang={setLang} kicker={t('kicker')} title={t('title')} standfirst={t('standfirst')}>
-      <nav className="fl-jump" aria-label={t('jumpLabel')}>
+      <nav className="fl-jump fl-jump-4" aria-label={t('jumpLabel')}>
         <p className="fl-jump-kicker">{t('jumpHint')}</p>
         <a href="#national" className={onJump === 'national' ? 'on' : undefined}>
           <b>1</b>
@@ -241,20 +343,32 @@ export default function FloodContactsView() {
         <a href="#warehouses" className={onJump === 'warehouses' ? 'on' : undefined}>
           <b>2</b>
           <strong>{t('jumpWarehouses')}</strong>
-          <span>
-            {warehouses.length
-              ? `${warehouses.length} ${lang === 'ne' ? 'ठाउँ' : 'sites'} · ${t('jumpWarehousesSub')}`
-              : t('jumpWarehousesSub')}
-          </span>
+          {warehouses.length > 0 && (
+            <em>
+              {warehouses.length} {warehouses.length === 1 ? t('jumpSite') : t('jumpSites')}
+            </em>
+          )}
+          <span>{t('jumpWarehousesSub')}</span>
         </a>
         <a href="#districts" className={onJump === 'districts' ? 'on' : undefined}>
           <b>3</b>
           <strong>{t('jumpDistricts')}</strong>
-          <span>
-            {uniqueLines
-              ? `${uniqueLines} ${t('uniqueLines')}`
-              : t('jumpDistrictsSub')}
-          </span>
+          {directory.length > 0 && (
+            <em>
+              {directory.length} {t('districtCount')}
+            </em>
+          )}
+          <span>{t('jumpDistrictsSub')}</span>
+        </a>
+        <a href="#portal" className={onJump === 'portal' ? 'on' : undefined}>
+          <b>4</b>
+          <strong>{t('jumpPortal')}</strong>
+          {portalDir.unique > 0 && (
+            <em>
+              {portalDir.unique} {portalDir.unique === 1 ? t('jumpLine') : t('jumpLines')}
+            </em>
+          )}
+          <span>{t('jumpPortalSub')}</span>
         </a>
       </nav>
 
@@ -326,11 +440,48 @@ export default function FloodContactsView() {
         <div className="fl-sec-head">
           <span>{lang === 'ne' ? '३ · जिल्ला' : '3 · District'}</span>
           <h2>{t('districts')}</h2>
-          {uniqueLines > 0 && <em>{uniqueLines}</em>}
+          {directory.length > 0 && (
+            <em>
+              {searching
+                ? `${shownDirectory.length} / ${directory.length} ${t('districtCount')}`
+                : `${directory.length} ${t('districtCount')}`}
+            </em>
+          )}
         </div>
 
-        {districts.length > 0 &&
-          districts.map(d => (
+        {directory.length > 0 && !searching && (
+          <p className="fl-note fl-pending">{t('districtsIntro')}</p>
+        )}
+
+        {canSearch && (
+          <>
+            <input
+              id="fl-dist-q"
+              className="fl-search"
+              type="search"
+              value={q}
+              onChange={e => setQ(e.target.value)}
+              placeholder={t('search')}
+              aria-label={t('search')}
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck={false}
+            />
+            <p className="fl-find-hint">{searching ? t('searchHint') : t('pickDistrict')}</p>
+            {searching && matchCount > 0 && (
+              <p className="fl-find-count" aria-live="polite">
+                <b>{matchCount}</b> {t('searchCount')}
+                {' · '}
+                {shownDirectory.length} {t('districtCount')}
+              </p>
+            )}
+          </>
+        )}
+
+        {noHits && <p className="fl-empty">{t('noHits')}</p>}
+
+        {shownDistricts.length > 0 &&
+          shownDistricts.map(d => (
             <React.Fragment key={d.id}>
               <h4 className="fl-minor">{lang === 'ne' ? d.name_ne || d.name_en : d.name_en}</h4>
               <div className="fl-calls-more">
@@ -344,29 +495,27 @@ export default function FloodContactsView() {
             </React.Fragment>
           ))}
 
-        {official === null ? null : directory.length === 0 && districts.length === 0 ? (
+        {official === null ? null : shownDirectory.length === 0 && shownDistricts.length === 0 && !searching ? (
           <p className="fl-note fl-pending">{t('pending')}</p>
         ) : null}
 
-        {directory.length > 0 && (
+        {shownDirectory.length > 0 && (
           <>
-            <p className="fl-note fl-pending">{t('bipadNote')}</p>
-            <nav className="fl-dist-toc" aria-label={t('distJump')}>
-              {directory.map(d => (
-                <a key={d.id} href={`#district-${d.slug}`}>
-                  {lang === 'ne' ? d.nameNe : d.name}
-                  <em>{d.unique}</em>
-                </a>
+            <div className="fl-dist-list" role="list" aria-label={t('distJump')}>
+              {shownDirectory.map(d => (
+                <DistrictDirectory
+                  key={`${d.id}-${searching ? 'q' : 'all'}`}
+                  district={d}
+                  lang={lang}
+                  searching={searching}
+                />
               ))}
-            </nav>
-            {directory.map(d => (
-              <DistrictDirectory key={d.id} district={d} lang={lang} />
-            ))}
+            </div>
             {official && (
               <p className="fl-note">
                 {t('read')} {ageFrom(official.fetchedAt, lang)}
                 {' · '}
-                {uniqueLines} {t('uniqueLines')}
+                {uniqueLines} {searching ? t('searchCount') : t('uniqueLines')}
                 {' · '}
                 <a href={official.source.url} target="_blank" rel="noopener noreferrer">
                   {official.source.label} &#8599;
@@ -383,63 +532,77 @@ export default function FloodContactsView() {
         )}
       </section>
 
-      {(() => {
-        const contacts = data?.portalContacts?.items || [];
-        if (!contacts.length) return null;
-        const groups = new Map<string, typeof contacts>();
-        for (const c of contacts) {
-          const key = c.category || 'OTHER';
-          if (!groups.has(key)) groups.set(key, []);
-          groups.get(key)!.push(c);
-        }
-        const seen = new Set<string>();
-        return (
-          <section className="fl-sec">
-            <div className="fl-sec-head">
-              <span>{lang === 'ne' ? 'पोर्टल' : 'Portal'}</span>
-              <h2>{t('portalTitle')}</h2>
-              <em>{contacts.length}</em>
-            </div>
-            <p className="fl-note fl-pending">{t('portalNote')}</p>
-            {[...groups.entries()].map(([cat, list]) => {
-              const catLabel = CATEGORY[cat]
-                ? CATEGORY[cat][lang]
-                : cat.replace(/_/g, ' ').toLowerCase();
+      {shownPortal.unique > 0 && (
+        <section id="portal" className="fl-sec">
+          <div className="fl-sec-head">
+            <span>{lang === 'ne' ? '४ · पोर्टल' : '4 · Portal'}</span>
+            <h2>{t('portalTitle')}</h2>
+            <em>
+              {searching
+                ? `${shownPortal.unique} / ${portalDir.unique}`
+                : portalDir.unique}
+            </em>
+          </div>
+          {!searching && <p className="fl-note fl-pending">{t('portalNote')}</p>}
+
+          {shownPortal.groups.map(group => {
+            const title = `${PORTAL_BUCKET[group.bucket][lang]} · ${group.contacts.length}`;
+            const body = <PortalLines lines={group.contacts} lang={lang} />;
+            if (COLLAPSED_PORTAL_BUCKETS.has(group.bucket) && !searching) {
               return (
-                <React.Fragment key={cat}>
-                  <h4 className="fl-minor">{catLabel}</h4>
-                  <div className="fl-calls-more">
-                    {list.flatMap(c =>
-                      c.phones.flatMap(phone => {
-                        const key = normalizePhone(phone) || phone;
-                        if (seen.has(`${cat}:${key}`)) return [];
-                        seen.add(`${cat}:${key}`);
-                        return [
-                          <a key={`${c.id}-${phone}`} href={telHref(phone)}>
-                            <b>{phone}</b>
-                            <span>
-                              {(lang === 'ne' ? c.nameNe || c.name : c.name) || c.organization}
-                              {c.isNationwide ? ` · ${t('nationwide')}` : ''}
-                              {c.available24x7 ? ` · ${t('around')}` : ''}
-                            </span>
-                          </a>,
-                        ];
-                      }),
-                    )}
-                  </div>
-                </React.Fragment>
+                <details key={group.bucket} className="fl-dist-more">
+                  <summary>{title}</summary>
+                  {body}
+                </details>
               );
-            })}
-            {data?.portalContacts && (
-              <p className="fl-note">
-                <a href={data.portalContacts.source.url} target="_blank" rel="noopener noreferrer">
-                  {data.portalContacts.source.label} &#8599;
-                </a>
-              </p>
-            )}
-          </section>
-        );
-      })()}
+            }
+            return (
+              <React.Fragment key={group.bucket}>
+                <h4 className="fl-minor">{title}</h4>
+                {body}
+              </React.Fragment>
+            );
+          })}
+
+          {shownPortal.local.length > 0 && (
+            <>
+              <h4 className="fl-minor">{t('portalLocal')}</h4>
+              <div className="fl-dist-list" role="list">
+                {shownPortal.local.map(district => (
+                  <details
+                    key={district.name}
+                    className="fl-dist"
+                    open
+                  >
+                    <summary>
+                      <strong>{district.name}</strong>
+                      <em>
+                        {district.contacts.length}{' '}
+                        {lang === 'ne' ? 'नम्बर' : district.contacts.length === 1 ? 'line' : 'lines'}
+                      </em>
+                    </summary>
+                    <div className="fl-dist-body">
+                      <PortalLines lines={district.contacts} lang={lang} />
+                    </div>
+                  </details>
+                ))}
+              </div>
+            </>
+          )}
+
+          {data?.portalContacts && (
+            <p className="fl-note">
+              {t('read')} {ageFrom(data.portalContacts.fetchedAt, lang)}
+              {' · '}
+              {shownPortal.unique} {searching ? t('searchCount') : t('uniqueLines')}
+              {' · '}
+              <a href={data.portalContacts.source.url} target="_blank" rel="noopener noreferrer">
+                {data.portalContacts.source.label} &#8599;
+              </a>
+            </p>
+          )}
+        </section>
+      )}
     </FloodShell>
   );
 }

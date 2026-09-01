@@ -150,3 +150,105 @@ export function separateLeaves(offsets: Pt[], minGap: number): Pt[] {
   }
   return pts;
 }
+
+/**
+ * Place a cluster's photographs: ring or spiral, then shrink and clamp so
+ * nothing leaves the stage. `fitLeaves` runs last because `separateLeaves`
+ * can push a squeezed leaf back over the edge.
+ */
+export function spiderLayout(
+  origin: Pt,
+  count: number,
+  bounds: SpiderBounds,
+  leafSize = 40,
+  minGap = 48,
+): Pt[] {
+  const raw = spiderOffsets(count, leafSize);
+  return fitLeaves(
+    origin,
+    separateLeaves(fitLeaves(origin, raw, bounds), minGap),
+    bounds,
+  );
+}
+
+export type OverlayLayer = 'ground' | 'news' | 'gauge';
+
+const TOPIC_ORDER: OverlayLayer[] = ['gauge', 'ground', 'news'];
+
+/** Group pins that would sit on top of each other at this zoom into stacks. */
+export function clusterOverlays<T extends { x: number; y: number }>(pins: T[], gap: number): T[][] {
+  const n = pins.length;
+  const parent = pins.map((_, i) => i);
+  const find = (i: number): number => (parent[i] === i ? i : (parent[i] = find(parent[i])));
+  for (let i = 0; i < n; i++) {
+    for (let j = i + 1; j < n; j++) {
+      if (Math.hypot(pins[j].x - pins[i].x, pins[j].y - pins[i].y) < gap) {
+        const a = find(i);
+        const b = find(j);
+        if (a !== b) parent[a] = b;
+      }
+    }
+  }
+  const groups = new Map<number, T[]>();
+  for (let i = 0; i < n; i++) {
+    const root = find(i);
+    const items = groups.get(root);
+    if (items) items.push(pins[i]);
+    else groups.set(root, [pins[i]]);
+  }
+  return [...groups.values()];
+}
+
+/**
+ * Cluster each map topic on its own. A DHM station and a press pin can share
+ * a pixel at this scale; mixing them into one stack hides which is which.
+ */
+export function clusterByTopic<T extends { x: number; y: number; layer: OverlayLayer }>(
+  pins: T[],
+  gap: number,
+): T[][] {
+  const out: T[][] = [];
+  for (const layer of TOPIC_ORDER) {
+    const subset = pins.filter(p => p.layer === layer);
+    if (subset.length) out.push(...clusterOverlays(subset, gap));
+  }
+  return out;
+}
+
+/**
+ * Same topic split, but press pins that name a district stay on that
+ * district — they do not merge with a neighbour just because a wide overview
+ * gap puts them a few pixels apart. DHM stations only stack when they truly
+ * sit on top of each other.
+ */
+export function clusterByPlace<T extends { x: number; y: number; layer: OverlayLayer; place?: string }>(
+  pins: T[],
+  gap: number,
+): T[][] {
+  const out: T[][] = [];
+  for (const layer of TOPIC_ORDER) {
+    const subset = pins.filter(p => p.layer === layer);
+    if (!subset.length) continue;
+    if (layer === 'news') {
+      const byPlace = new Map<string, T[]>();
+      const rest: T[] = [];
+      for (const p of subset) {
+        const key = p.place?.trim();
+        if (!key) {
+          rest.push(p);
+          continue;
+        }
+        const group = byPlace.get(key);
+        if (group) group.push(p);
+        else byPlace.set(key, [p]);
+      }
+      out.push(...byPlace.values());
+      if (rest.length) out.push(...clusterOverlays(rest, gap));
+    } else if (layer === 'gauge') {
+      out.push(...clusterOverlays(subset, 14));
+    } else {
+      out.push(...clusterOverlays(subset, gap));
+    }
+  }
+  return out;
+}
