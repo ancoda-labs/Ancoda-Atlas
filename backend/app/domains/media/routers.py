@@ -13,7 +13,7 @@ log = get_logger(__name__)
 router = APIRouter(tags=["flood"])
 
 MAX_BYTES = 8 * 1024 * 1024
-STATION_MAX_BYTES = 6 * 1024 * 1024
+STATION_MAX_BYTES = 20 * 1024 * 1024
 FETCH_TIMEOUT_S = 15.0
 
 FETCH_HEADERS = {

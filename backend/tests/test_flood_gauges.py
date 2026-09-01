@@ -5,11 +5,13 @@ import respx
 
 from app.domains.flood.content import reconcile
 from app.domains.flood.gauges import (
+    CORRIDOR_STATION_SITES,
     CORRIDOR_STATIONS,
     STALE_AFTER_MINUTES,
     build_gauge,
     classify,
     fetch_corridor_gauges,
+    photo_path,
 )
 
 
@@ -90,11 +92,31 @@ class TestBuildGauge:
         assert g["lat"] == 27.96
         assert g["lon"] == 85.18
 
-    def test_no_photo_url_when_the_station_has_no_image(self):
-        g = build_gauge(CORRIDOR_STATIONS[4], self._station())
-        assert g["photo"] is None
-        g = build_gauge(CORRIDOR_STATIONS[4], self._station(image="http://x/y.jpg"))
-        assert g["photo"] == "/api/flood/station-photo?id=1"
+    def test_a_corridor_gauge_always_has_a_photo(self):
+        """Its portrait is bundled, so a BIPAD outage costs the reading only."""
+        spec = CORRIDOR_STATIONS[4]
+        assert spec.id in CORRIDOR_STATION_SITES
+        for station in (self._station(), self._station(image="http://x/y.jpg"), None):
+            g = build_gauge(spec, station)
+            assert g["photo"] == f"/api/flood/station-photo?id={spec.id}"
+
+    def test_no_photo_url_for_a_station_with_neither_source(self):
+        assert photo_path(999_999, None) is None
+        assert photo_path(999_999, "http://x/y.jpg") == "/api/flood/station-photo?id=999999"
+
+    def test_a_gauge_with_no_bipad_row_carries_no_reading(self):
+        """The pin and the label survive an outage. The numbers must not."""
+        g = build_gauge(CORRIDOR_STATIONS[4], None)
+        assert g["waterLevel"] is None
+        assert g["warningLevel"] is None
+        assert g["dangerLevel"] is None
+        assert g["measuredAt"] is None
+        assert g["percentOfDanger"] is None
+        assert g["level"] == "unknown"
+        assert g["stale"] is True
+        # Bundled position, so the corridor still draws.
+        assert g["lat"] == CORRIDOR_STATION_SITES[CORRIDOR_STATIONS[4].id].lat
+        assert g["id"] == CORRIDOR_STATIONS[4].id
 
 
 @respx.mock
@@ -104,9 +126,14 @@ async def test_bipad_being_down_yields_an_honest_error_not_empty_gauges():
         return_value=httpx.Response(503)
     )
     out = await fetch_corridor_gauges()
-    assert out["gauges"] == []
     assert out["error"] is not None
     assert out["fetchedAt"]
+    # The corridor is still drawn — with every reading absent and stale, which
+    # is what an outage actually looks like. An empty map would instead say
+    # the corridor has no gauges.
+    assert len(out["gauges"]) == len(CORRIDOR_STATIONS)
+    assert all(g["waterLevel"] is None for g in out["gauges"])
+    assert all(g["level"] == "unknown" and g["stale"] for g in out["gauges"])
 
 
 @respx.mock
@@ -130,8 +157,18 @@ async def test_stations_bipad_does_not_return_are_skipped_not_faked():
         )
     )
     out = await fetch_corridor_gauges()
-    assert len(out["gauges"]) == 1
-    assert out["gauges"][0]["label"] == "Narayani at Devghat"
+    assert len(out["gauges"]) == len(CORRIDOR_STATIONS)
+
+    devghat = next(g for g in out["gauges"] if g["label"] == "Narayani at Devghat")
+    assert devghat["warningLevel"] == 2.0
+
+    # Every station BIPAD did not return is listed with nothing in it, never
+    # with a borrowed or carried-over reading.
+    for gauge in out["gauges"]:
+        if gauge["label"] != "Narayani at Devghat":
+            assert gauge["waterLevel"] is None
+            assert gauge["warningLevel"] is None
+            assert gauge["stale"] is True
 
 
 class TestReconcile:
