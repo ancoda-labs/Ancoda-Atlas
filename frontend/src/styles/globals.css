@@ -1814,6 +1814,27 @@ body.low-perf .logo-ring::before, body.low-perf .logo-ring::after, body.low-perf
   font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase;
   color: #1c7a4b; border: 1px solid #1c7a4b;
 }
+.fl-hero-portal {
+  display: inline-block;
+  margin: 16px 0 0;
+  padding: 10px 14px;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: #fff;
+  background: #9f1239;
+}
+.fl-hero-portal:hover { filter: brightness(1.08); }
+.fl-hero-portal-hint {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--ink-2);
+  max-width: 42ch;
+}
 
 /* Numbered jumps so a reader does not have to hunt. They are the page's
    table of contents: index in its own square, title on its own line, a
