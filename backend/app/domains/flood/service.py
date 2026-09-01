@@ -22,6 +22,7 @@ __all__ = ["desk_payload", "empty_feed", "get_store", "is_warm", "now_iso"]
 from app.domains.flood import store as desk_store
 from app.domains.flood.content import load_flood_content
 from app.domains.flood.merge import merge_damage, merge_sitrep
+from app.domains.media.proxy import proxy_url_for, resign_proxy_url
 
 
 def get_store() -> dict[str, Any]:
@@ -31,6 +32,36 @@ def get_store() -> dict[str, Any]:
 def is_warm(store: dict[str, Any] | None = None) -> bool:
     """Whether a cycle has ever completed."""
     return bool((store or get_store()).get("lastRunAt"))
+
+
+def _serve_gov_images(feed: dict[str, Any] | None) -> dict[str, Any] | None:
+    """Mint imageProxy with this process's key, and never hand the raw URL out.
+
+    Stored rows may carry a stale signature (worker and API on different
+    secrets) and may still hold the upstream `image` the cycle signed from.
+    Prefer re-signing that URL; fall back to decoding the stored path. The
+    raw URL is dropped either way — nepal.gov.np sets
+    Cross-Origin-Resource-Policy: same-origin, so a browser cannot load it
+    directly, and leaving it in the payload invites a component to try.
+    """
+    if not feed:
+        return feed
+    items = []
+    for item in feed.get("items") or []:
+        images = []
+        for image in item.get("images") or []:
+            proxy = proxy_url_for(image.get("image")) or resign_proxy_url(
+                image.get("imageProxy")
+            )
+            images.append(
+                {
+                    "filename": image.get("filename"),
+                    "mimeType": image.get("mimeType"),
+                    "imageProxy": proxy,
+                }
+            )
+        items.append({**item, "images": images})
+    return {**feed, "items": items}
 
 
 def empty_feed(label: str, url: str, reason: str = "awaiting_first_cycle") -> dict[str, Any]:
@@ -71,6 +102,7 @@ def desk_payload() -> dict[str, Any]:
         "dailyBulletin": store.get("dailyBulletin"),
         "advisories": store.get("advisories"),
         "govEfforts": store.get("govEfforts"),
+        "govUpdates": _serve_gov_images(store.get("govUpdates")),
         "portalContacts": store.get("portalContacts"),
         "popups": store.get("popups"),
         # The cycle's own timings, so every page can say how old its figures

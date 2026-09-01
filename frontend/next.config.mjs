@@ -1,14 +1,20 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const root = path.dirname(fileURLToPath(import.meta.url));
+const frontendRoot = path.dirname(fileURLToPath(import.meta.url));
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Parent ~/package-lock.json is outside this repo; pin Turbopack to the app root.
+  // ~/package-lock.json sits outside this git repo. Without an explicit root
+  // Turbopack walks up to it, then either warns or treats the home directory
+  // as the app and cannot find `src/app`. Must match outputFileTracingRoot if
+  // that is ever set — Next 16 refuses two different values.
   turbopack: {
-    root,
+    root: frontendRoot,
   },
+  // AGENTS.md already lives at the repository root with the Next.js marker.
+  // `next dev` otherwise writes a second copy under frontend/ on every start.
+  agentRules: false,
   reactStrictMode: true,
 
   /**

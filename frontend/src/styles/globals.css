@@ -5690,42 +5690,86 @@ body.dark-theme .fl {
   .fl-official-scroll { max-height: 320px; }
 }
 
-/* Per-layer provenance under the overview map, grouped by topic. */
+/* Ministry posts often say "see the photo below", and the photo is a scan of a
+   printed notice. Thumbnails are large enough to read a headline off before
+   deciding to open the post. A broken one is hidden in the component rather
+   than shown as a filename. */
+.fl-gov-updates > .fl-note { margin-top: 6px; margin-bottom: 18px; }
+.fl-gov-updates .fl-split.fl-official-pair { align-items: stretch; }
+.fl-gov-updates .fl-minor { margin-top: 0; }
+.fl-gov-updates .fl-official-pane .fl-note-tight {
+  max-width: none;
+  margin: 0 0 10px;
+  font-size: 12.5px;
+}
+.fl-gov-updates .fl-alerts h3 a {
+  color: inherit; text-decoration: none;
+}
+.fl-gov-updates .fl-alerts h3 a:hover { text-decoration: underline; }
+.fl-gov-updates .fl-alerts p {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  overflow: hidden;
+  max-width: none;
+  overflow-wrap: anywhere;
+}
+.fl-gov-shots {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+  gap: 8px;
+  margin: 10px 0 8px;
+}
+.fl-gov-shots img {
+  display: block; width: 100%; height: 110px; object-fit: cover;
+  background: #0d1117; border: 1px solid var(--rule);
+}
+.fl-gov-shots a:hover img { border-color: var(--ink-3); }
+
+/* Hazard posts that are not about this corridor. The amber rule the desk uses
+   for corridor items is dropped here: on a page about one flood, two lists
+   that look alike get read as one list. */
+.fl-gov-elsewhere .fl-alerts li { border-left-color: var(--rule-2); }
+.fl-gov-elsewhere .fl-alerts h3 { color: var(--ink-2); }
+
+/* Per-layer provenance under the overview map: a caption, not a card grid. */
 .fl-overview-map .atlas-map-pending {
   min-height: 340px;
   margin-bottom: 8px;
 }
 .fl-map-topics {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-  margin-top: 14px;
+  gap: 5px 0;
+  margin: 8px 0 0;
+  padding: 8px 0 0;
+  border-top: 1px solid var(--rule);
 }
 .fl-map-topic {
+  display: grid;
+  grid-template-columns: 7.5em minmax(0, 1fr);
+  gap: 2px 12px;
   min-width: 0;
-  padding: 12px 13px 13px;
-  border: 1px solid var(--rule);
-  background: var(--paper-2, var(--panel));
+  align-items: baseline;
 }
-.fl-map-topic h3 {
-  margin: 0 0 6px;
+.fl-map-topic dt {
+  margin: 0;
   font-family: var(--mono);
-  font-size: 10.5px;
+  font-size: 10px;
   font-weight: 650;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--ink-2);
+  color: var(--ink-3);
 }
-.fl-map-topic p {
+.fl-map-topic dd {
   margin: 0;
   font-size: 12.5px;
-  line-height: 1.45;
-  color: var(--ink-3);
+  line-height: 1.4;
+  color: var(--ink-2);
 }
 .fl-map-topic a { color: var(--ink); }
 .fl-map-topic .fl-blank { color: var(--ink-3); }
 @media (max-width: 620px) {
-  .fl-map-topics { grid-template-columns: 1fr; }
+  .fl-map-topic { grid-template-columns: 1fr; gap: 1px; }
 }
 
 .fl-map-sources .fl-note { margin: 0 0 5px; font-size: 12px; }

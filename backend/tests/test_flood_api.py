@@ -168,3 +168,52 @@ class TestCorrectionValidation:
         digest = hash_ip("203.0.113.7")
         assert "203.0.113.7" not in digest
         assert len(digest) == 64
+
+
+class TestGovUpdateImages:
+    def test_a_stale_notice_signature_is_reissued_and_the_raw_url_is_dropped(self):
+        """Thumbnails 403 when the store was signed by a different process."""
+        import base64
+        from urllib.parse import parse_qs, quote, urlparse
+
+        from app.domains.media.proxy import resolve_signed_url
+
+        original = "https://nepal.gov.np/api/updates/abc/attachments/def"
+        encoded = base64.urlsafe_b64encode(original.encode()).rstrip(b"=").decode()
+        stale = f"/api/flood/media/image?u={quote(encoded, safe='')}&s=not-the-signature"
+        _warm(
+            govUpdates={
+                "items": [
+                    {
+                        "id": "abc",
+                        "title": None,
+                        "titleNe": "सूचना",
+                        "bodyEn": None,
+                        "bodyNe": "बाढी",
+                        "topic": "flood",
+                        "corridor": True,
+                        "district": "Rasuwa",
+                        "ministry": "OPMCM",
+                        "publishedAt": "t",
+                        "link": "https://nepal.gov.np/updates/abc",
+                        "images": [
+                            {
+                                "filename": "notice.jpg",
+                                "mimeType": "image/jpeg",
+                                "image": original,
+                                "imageProxy": stale,
+                            }
+                        ],
+                        "documents": [],
+                    }
+                ],
+                "error": None,
+                "source": {"label": "x", "url": "https://nepal.gov.np/updates"},
+                "fetchedAt": "t",
+            }
+        )
+        image = client.get("/api/v1/flood").json()["govUpdates"]["items"][0]["images"][0]
+        assert "image" not in image
+        assert image["imageProxy"] != stale
+        query = parse_qs(urlparse(image["imageProxy"]).query)
+        assert resolve_signed_url(query["u"][0], query["s"][0]) == original

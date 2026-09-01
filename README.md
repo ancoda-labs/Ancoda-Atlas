@@ -500,12 +500,23 @@ Five hazard sources in the sweep. Three need no key.
 | **ReliefWeb** | UN OCHA declared disasters and situation reports for Nepal, hazard-filtered HDX fallback | Appname |
 
 The flood desk additionally reads the **NDRRMA BIPAD Portal** (river gauges,
-bulletins, notices) and the **OPMCM rescue portal**.
+bulletins, notices), the **OPMCM rescue portal**, and the **Government of Nepal
+updates portal** at [nepal.gov.np](https://nepal.gov.np/updates), where
+ministries post operational updates directly. That feed carries the whole
+government, so every post passes the news wire's hazard gate before it reaches
+the desk, and nothing in it is parsed into a figure.
 
 ### Live hazard news aggregator
 
 Separate from the sweep, `backend/app/domains/news/sources/nepal_news.py` powers
 the `/api/v1/news` route and every news panel.
+
+Every headline that actually reaches a panel is also appended, once, to
+`runs/news-ledger.csv` and served at `GET /api/v1/news/ledger.csv`. That is the
+collected-news table behind [issue #37](https://github.com/ancoda-labs/Ancoda-Atlas/issues/37):
+title, outlet, time, topic, and a stable `id` to score sentiment against. The
+[News Data](https://docs.google.com/spreadsheets/d/1vjfxH1iCnaWxynNE25cR3cPw-TSo5-ygkVldvr6YKgE/edit) sheet
+pulls it with `IMPORTDATA`. See `docs/news-ledger.md`.
 
 | Topic | Panel |
 |-------|-------|
@@ -618,6 +629,7 @@ Everything is under `/api/v1`. Interactive docs at `http://localhost:8000/docs`.
 |----------|-------------|
 | `GET /api/v1/data` | The synthesized hazard snapshot |
 | `GET /api/v1/news` | Disaster-filtered news. Params: `topic`, `window`, `limit`, `sourceCap` |
+| `GET /api/v1/news/ledger.csv` | Every headline Atlas has shown, as CSV — for [issue #37](https://github.com/ancoda-labs/Ancoda-Atlas/issues/37) and the News Data sheet |
 | `GET /api/v1/flood` | The flood desk overview — reviewed content plus live gauges |
 | `GET /api/v1/flood/situation` | Incidents, alerts and live filings |
 | `GET /api/v1/flood/insights?lang=` | The overview brief, in a chosen language |
