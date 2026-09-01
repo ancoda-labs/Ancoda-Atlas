@@ -6,15 +6,39 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   CIRCLE_SPIRAL_SWITCHOVER,
+  MAX_SPIDER_LEAVES,
   circleOffsets,
   clusterByPlace,
   clusterByTopic,
   fitLeaves,
+  pickSpiderItems,
   separateLeaves,
   spiderLayout,
+  spiderLeafBudget,
   spiderOffsets,
   spiralOffsets,
 } from '../src/lib/spiderfy.ts';
+
+test('pickSpiderItems prefers photographs and respects the budget', () => {
+  const items = [
+    { id: 'a' },
+    { id: 'b', url: '/b.jpg' },
+    { id: 'c', url: '/c.jpg' },
+    { id: 'd' },
+    { id: 'e', url: '/e.jpg' },
+  ];
+  assert.deepEqual(pickSpiderItems(items, 2).map(i => i.id), ['b', 'c']);
+  assert.equal(pickSpiderItems(items, 0).length, 0);
+  assert.equal(pickSpiderItems(items, 9).length, 3);
+});
+
+test('spiderLeafBudget never fans a crowded press stack', () => {
+  const tight = spiderLeafBudget({ w: 420, h: 300, pad: 24, padTop: 44, padRight: 48, padBottom: 28, padLeft: 286 }, 36, 48);
+  assert.ok(tight <= MAX_SPIDER_LEAVES);
+  assert.ok(tight < 24);
+  const roomy = spiderLeafBudget({ w: 800, h: 500, pad: 24 }, 36, 48);
+  assert.equal(roomy, MAX_SPIDER_LEAVES);
+});
 
 test('a small cluster sits on a ring, a large one on a spiral', () => {
   assert.equal(spiderOffsets(3).length, 3);

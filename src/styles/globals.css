@@ -2433,11 +2433,17 @@ body.low-perf .logo-ring::before, body.low-perf .logo-ring::after, body.low-perf
   color: #fff;
   overscroll-behavior: contain;
 }
+.flood-map-stack-list.rail {
+  top: 44px;
+  right: auto;
+  width: min(268px, 42%);
+  height: auto;
+}
 .flood-map-chips {
   position: absolute;
   left: 8px;
   top: 8px;
-  z-index: 6;
+  z-index: 7;
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
@@ -2514,7 +2520,7 @@ body.low-perf .logo-ring::before, body.low-perf .logo-ring::after, body.low-perf
   grid-template-columns: 52px minmax(0, 1fr);
   gap: 10px;
   width: 100%;
-  padding: 9px 10px;
+  padding: 7px 10px;
   text-align: left;
   text-decoration: none;
   color: #fff;
@@ -2539,7 +2545,7 @@ body.low-perf .logo-ring::before, body.low-perf .logo-ring::after, body.low-perf
 }
 .flood-map-stack-list strong {
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   font-size: 13px;
