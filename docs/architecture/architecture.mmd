@@ -1,0 +1,36 @@
+flowchart LR
+    subgraph gov["Upstream feeds"]
+        USGS["USGS · Open-Meteo<br/>FIRMS · ReliefWeb"]
+        NP["BIPAD · NDRRMA<br/>OPMCM · Nepali dailies"]
+    end
+
+    subgraph be["Backend — one machine"]
+        BEAT["beat<br/><i>the clock</i>"]
+        WORKER["worker<br/><i>sole writer</i>"]
+        API["api<br/><i>read-only</i>"]
+        REDIS[("redis<br/><i>broker + signal</i>")]
+        RUNS[["runs/*.json<br/><i>atomic writes</i>"]]
+    end
+
+    subgraph fe["Frontend — anywhere"]
+        NEXT["Next.js"]
+        BROWSER["Browser"]
+    end
+
+    DB[("Supabase<br/><i>optional</i>")]
+    MINIO[("MinIO<br/><i>optional</i>")]
+
+    BEAT -->|"15 min sweep<br/>10 min flood"| REDIS
+    REDIS -->|task| WORKER
+    WORKER -->|fetch| USGS
+    WORKER -->|fetch| NP
+    WORKER -->|"write<br/>tmp+fsync+rename"| RUNS
+    WORKER -->|"signal only"| REDIS
+    RUNS -->|read| API
+    REDIS -->|"sweep landed"| API
+    API -->|SSE| BROWSER
+    API -->|photos, digests| DB
+    API -->|photo bytes| MINIO
+    NEXT -->|"SSR first paint"| API
+    BROWSER -->|axios| API
+    BROWSER --> NEXT
