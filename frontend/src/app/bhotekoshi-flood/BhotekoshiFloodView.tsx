@@ -399,17 +399,19 @@ export default function BhotekoshiFloodView() {
           <>
             {safety && (
               <aside className="fl-standfirst" role="note">
-                <div>
-                  <span style={{ display: 'block' }}>{t('safetyNotice')}</span>
+                <div className="fl-standfirst-kicker">
+                  <span>{t('safetyNotice')}</span>
                   <img
+                    className="fl-standfirst-mark"
                     src="/images/nepal-police.png"
                     alt="Nepal Police"
-                    style={{ height: '80px', width: 'auto', display: 'block', marginTop: '16px' }}
                   />
                 </div>
                 <p>{safety}</p>
               </aside>
             )}
+
+            <FloodGovUpdates govUpdates={data?.govUpdates} lang={lang} />
 
             <FloodSummary
               section="rest"
@@ -422,9 +424,9 @@ export default function BhotekoshiFloodView() {
               rescueFetchedAt={data?.rescueFetchedAt || null}
             />
           </>
-        ) : null}
-
-        <FloodGovUpdates govUpdates={data?.govUpdates} lang={lang} />
+        ) : (
+          <FloodGovUpdates govUpdates={data?.govUpdates} lang={lang} />
+        )}
 
         <FloodOfficial govEfforts={data?.govEfforts} dailyBulletin={data?.dailyBulletin} lang={lang} />
 
