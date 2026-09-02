@@ -39,6 +39,11 @@ const T = {
   read: { en: 'Read', ne: 'पढिएको' },
   attachment: { en: 'Attachment', ne: 'संलग्न कागजात' },
   notice: { en: 'Notice image', ne: 'सूचनाको तस्बिर' },
+  empty: {
+    en: 'No hazard posts have been collected this cycle. The ministries still publish on the national portal.',
+    ne: 'यो चक्रमा विपद्सम्बन्धी अपडेट संकलन भएको छैन। मन्त्रालयहरूले राष्ट्रिय पोर्टलमा अझै प्रकाशित गर्छन्।',
+  },
+  openPortal: { en: 'Open nepal.gov.np/updates', ne: 'nepal.gov.np/updates खोल्नुहोस्' },
 };
 
 const TOPICS: Record<NewsTopic, { en: string; ne: string }> = {
@@ -127,21 +132,21 @@ export default function FloodGovUpdates({
   const updates = govUpdates?.items || [];
   const corridor = updates.filter(u => u.corridor);
   const elsewhere = updates.filter(u => !u.corridor);
-
-  if (!updates.length) return null;
+  const portalUrl = govUpdates?.source.url || 'https://nepal.gov.np/updates';
+  const portalLabel = govUpdates?.source.label || 'Government of Nepal updates portal';
 
   return (
     <section className="fl-sec fl-gov-updates">
       <div className="fl-sec-head">
         <span>{t('eyebrow')}</span>
         <h2>{t('title')}</h2>
-        <em>{updates.length}</em>
+        {updates.length > 0 && <em>{updates.length}</em>}
       </div>
       <p className="fl-note">{t('intro')}</p>
 
-      {/* Same pair as the NDRRMA bulletin / OPMCM log above: two open-ended
-          feeds, each capped and scrolling, so a long ministry post cannot
-          push the rest of the desk off the page. */}
+      {updates.length === 0 ? (
+        <p className="fl-empty">{t('empty')}</p>
+      ) : (
       <div className="fl-split fl-official-pair">
         {corridor.length > 0 && (
           <div className="fl-official-pane">
@@ -174,13 +179,19 @@ export default function FloodGovUpdates({
           </div>
         )}
       </div>
+      )}
 
       <p className="fl-note">
-        {t('read')} {ageFrom(govUpdates?.fetchedAt, lang)}
-        {' · '}
-        <a href={govUpdates?.source.url} target="_blank" rel="noopener noreferrer">
-          {govUpdates?.source.label} &#8599;
+        {updates.length > 0 && govUpdates?.fetchedAt && (
+          <>
+            {t('read')} {ageFrom(govUpdates.fetchedAt, lang)}
+            {' · '}
+          </>
+        )}
+        <a href={portalUrl} target="_blank" rel="noopener noreferrer">
+          {t('openPortal')} &#8599;
         </a>
+        {portalLabel && updates.length > 0 && <> ({portalLabel})</>}
       </p>
     </section>
   );

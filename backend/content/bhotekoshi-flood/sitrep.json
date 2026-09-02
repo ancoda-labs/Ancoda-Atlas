@@ -24,7 +24,10 @@
     { "label": "PM / NDRRMA via Nepal News (9,435 rescued; 20,618 deployed; 267 injured)", "url": "https://english.nepalnews.com/s/nation/bhote-koshi-floods-over-9400-rescued/" },
     { "label": "NDRRMA / MoHA", "url": "https://ndrrma.gov.np/np/rasuwa" },
     { "label": "NDRRMA rescued-persons register", "url": "https://ndrrma.gov.np/np/rasuwa/rescue" },
-    { "label": "Rasuwa flood bulletin (compilation)", "url": "https://nirajbhusal.github.io/rasuwa-flood-bulletin/" }
+    { "label": "Rasuwa flood bulletin (compilation)", "url": "https://nirajbhusal.github.io/rasuwa-flood-bulletin/" },
+    { "label": "OPMCM on nepal.gov.np (16 Bhadra: Rs 1 billion from the PM fund to be sent)", "url": "https://nepal.gov.np/updates/4936218f-255b-42a3-bba8-a22d1340ebdc" },
+    { "label": "MoHA on nepal.gov.np (16 Bhadra: Rs 6.75 crore more to 15 local governments)", "url": "https://nepal.gov.np/updates/e3d3d6c3-f39e-44b3-bd97-2a3715fa5f5f" },
+    { "label": "Government of Nepal updates portal", "url": "https://nepal.gov.np/updates" }
   ],
 
   "headline": [
@@ -243,6 +246,20 @@
       "title_ne": "नुवाकोट कारागार",
       "body_en": "About 1,000 inmates are safe. The building at Bidur-3 is damaged.",
       "body_ne": "करिब १,००० कैदी सुरक्षित छन्। बिदुर-३ को भवनमा क्षति भएको छ।"
+    },
+    {
+      "id": "pm-fund-send",
+      "title_en": "Rs 1 billion from the PM fund, to be sent",
+      "title_ne": "प्रधानमन्त्री कोषबाट एक अर्ब पठाइने",
+      "body_en": "The Prime Minister's Disaster Relief Fund operating committee decided on 16 Bhadra to send Rs 1 billion immediately to flood-affected areas. That is a disbursement from the fund, not extra cash on top of the Rs 7.15 billion already in the banks. Source: Office of the Prime Minister on nepal.gov.np.",
+      "body_ne": "प्रधानमन्त्री दैवी प्रकोप उद्धार कोष सञ्चालन समितिले १६ भदौमा बाढी प्रभावित क्षेत्रमा एक अर्ब तत्काल पठाउने निर्णय गरेको छ। यो कोषबाट बाहिरिने रकम हो, बैंकमा रहेको ७ अर्ब १५ करोडमाथि थप होइन। स्रोत: प्रधानमन्त्री कार्यालय, nepal.gov.np।"
+    },
+    {
+      "id": "palika-transfers",
+      "title_en": "Rs 6.75 crore to 15 local governments",
+      "title_ne": "१५ स्थानीय तहलाई ६ करोड ७५ लाख",
+      "body_en": "The monsoon response command at the Ministry of Home Affairs decided on 16 Bhadra to send Rs 6.75 crore to 15 palikas in Rasuwa, Nuwakot, Dhading, Gorkha and Tanahun. That matches an allocation the DRRM executive committee made on 11 Bhadra — count it once, and do not add it onto the Prime Minister's fund cash total. Source: MoHA on nepal.gov.np.",
+      "body_ne": "गृह मन्त्रालयको मनसुन प्रतिकार्य कमाण्डले १६ भदौमा रसुवा, नुवाकोट, धादिङ, गोरखा र तनहुँका १५ पालिकालाई ६ करोड ७५ लाख पठाउने निर्णय गरेको छ। यो ११ भदौको विपद् कार्यकारी समितिको विनियोजनसँग मेल खान्छ — एक पटक मात्र गन्नुहोस्, प्रधानमन्त्री कोषको मौज्दातमाथि नजोड्नुहोस्। स्रोत: गृह मन्त्रालय, nepal.gov.np।"
     }
   ],
 

@@ -102,9 +102,18 @@ export default function FloodOfficial({
               <ul className="fl-alerts">
                 {efforts.map(e => {
                   const body = pick(lang, e.bodyEn, e.bodyNe);
+                  const title = pick(lang, e.title, e.titleNe);
                   return (
                     <li key={e.id}>
-                      <h3>{pick(lang, e.title, e.titleNe)}</h3>
+                      <h3>
+                        {e.link ? (
+                          <a href={e.link} target="_blank" rel="noopener noreferrer">
+                            {title}
+                          </a>
+                        ) : (
+                          title
+                        )}
+                      </h3>
                       {body && <p style={{ whiteSpace: 'pre-line' }}>{body}</p>}
                       <span className="fl-report-meta">
                         {e.agency && <b>{e.agency}</b>}
