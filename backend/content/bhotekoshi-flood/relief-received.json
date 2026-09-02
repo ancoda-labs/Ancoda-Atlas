@@ -8,7 +8,10 @@
     { "label": "MoF / PMDRF via Rasuwa flood bulletin (15 Bhadra: 7,153,582,117 = 12 Bhadra nine-bank 6,553,362,011 + 600,220,106)", "url": "https://nirajbhusal.github.io/rasuwa-flood-bulletin/donate.html#aid" },
     { "label": "Prime Minister's Office appeal (PDF)", "url": "https://opmcm.gov.np/content/586/heartfelt-appeal/" },
     { "label": "UAE $10m pledge (Rising Nepal / RSS, 30 Aug)", "url": "https://risingnepaldaily.com/news/85819" },
-    { "label": "UAE $10m pledge (Khaleej Times)", "url": "https://www.khaleejtimes.com/uae/uae-10-million-aid-nepal-floods-landslide-victims" }
+    { "label": "UAE $10m pledge (Khaleej Times)", "url": "https://www.khaleejtimes.com/uae/uae-10-million-aid-nepal-floods-landslide-victims" },
+    { "label": "OPMCM on nepal.gov.np (16 Bhadra: Rs 1 billion from the PM fund to be sent to affected areas)", "url": "https://nepal.gov.np/updates/4936218f-255b-42a3-bba8-a22d1340ebdc" },
+    { "label": "MoHA on nepal.gov.np (16 Bhadra: Rs 6.75 crore more to 15 local governments)", "url": "https://nepal.gov.np/updates/e3d3d6c3-f39e-44b3-bd97-2a3715fa5f5f" },
+    { "label": "Government of Nepal updates portal", "url": "https://nepal.gov.np/updates" }
   ],
 
   "headline": [
@@ -70,6 +73,8 @@
     { "id": "world-bank", "label_en": "World Bank emergency package (pledge)", "label_ne": "विश्व बैंक आपत्कालीन प्याकेज", "value": 25000000000, "unit_en": "NPR", "unit_ne": "रु.", "detail_en": "Rs 25 billion. Not cash in the Prime Minister's fund.", "detail_ne": "रु. २५ अर्ब। प्रधानमन्त्री कोषमा आएको नगद होइन।" },
     { "id": "ifrc-appeal", "label_en": "IFRC emergency appeal", "label_ne": "आईएफआरसी आपत्कालीन अपिल", "value": 25000000, "unit_en": "CHF", "unit_ne": "CHF", "detail_en": "Appeal, not a government account.", "detail_ne": "अपिल, सरकारी खाता होइन।" },
     { "id": "ifrc-dref", "label_en": "IFRC DREF to Nepal Red Cross", "label_ne": "आईएफआरसी डीआरईएफ · नेपाल रेडक्रस", "value": 1200000, "unit_en": "USD", "unit_ne": "USD", "detail_en": "Emergency fund for the Red Cross. Not the Prime Minister's accounts.", "detail_ne": "नेपाल रेडक्रसलाई आपत्कालीन कोष। सरकारको खातामा आएको होइन।" },
-    { "id": "india-inkind", "label_en": "India, two HADR flights", "label_ne": "भारत, दुई उडान", "value": 47.5, "unit_en": "tonnes", "unit_ne": "टन", "detail_en": "10 tonnes then 37.5 tonnes. In-kind, not cash. Transfer at Tribhuvan not confirmed.", "detail_ne": "१० टन त्यसपछि ३७.५ टन। सामग्री, नगद होइन। त्रिभुवन हस्तान्तरण पुष्टि छैन।" }
+    { "id": "india-inkind", "label_en": "India, two HADR flights", "label_ne": "भारत, दुई उडान", "value": 47.5, "unit_en": "tonnes", "unit_ne": "टन", "detail_en": "10 tonnes then 37.5 tonnes. In-kind, not cash. Transfer at Tribhuvan not confirmed.", "detail_ne": "१० टन त्यसपछि ३७.५ टन। सामग्री, नगद होइन। त्रिभुवन हस्तान्तरण पुष्टि छैन।" },
+    { "id": "pm-fund-send-1bn", "label_en": "PM fund: Rs 1 billion to be sent to affected areas", "label_ne": "प्रधानमन्त्री कोष: प्रभावित क्षेत्रमा एक अर्ब पठाइने", "value": 1000000000, "unit_en": "NPR", "unit_ne": "रु.", "detail_en": "OPMCM, 16 Bhadra — the fund operating committee decided to send Rs 1 billion immediately. That is money leaving the fund, not extra cash on top of the Rs 7.15 billion already in the banks.", "detail_ne": "प्रधानमन्त्री कार्यालय, १६ भदौ — कोष सञ्चालन समितिले एक अर्ब तत्काल पठाउने निर्णय गरेको। यो कोषबाट बाहिरिने रकम हो, बैंकमा रहेको ७ अर्ब १५ करोडमाथि थप होइन।" },
+    { "id": "palika-675m", "label_en": "Rs 6.75 crore to 15 local governments", "label_ne": "१५ स्थानीय तहलाई ६ करोड ७५ लाख", "value": 67500000, "unit_en": "NPR", "unit_ne": "रु.", "detail_en": "MoHA monsoon command, 16 Bhadra — Rasuwa, Nuwakot, Dhading, Gorkha and Tanahun palikas. Matches the 11 Bhadra DRRM executive-committee allocation; count once. Not the PM fund cash total. 75+100+30+20 + 150+75+25+50 + 30+20+20+20 + 20 + 20+20 = 675 lakh.", "detail_ne": "गृह, मनसुन कमाण्ड, १६ भदौ — रसुवा, नुवाकोट, धादिङ, गोरखा र तनहुँका पालिका। ११ भदौको विपद् कार्यकारी समितिको विनियोजनसँग मेल; एक पटक मात्र गन्नुहोस्। प्रधानमन्त्री कोषको मौज्दात होइन। ७५+१००+३०+२० + १५०+७५+२५+५० + ३०+२०+२०+२० + २० + २०+२० = ६७५ लाख।" }
   ]
 }

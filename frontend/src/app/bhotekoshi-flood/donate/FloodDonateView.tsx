@@ -51,6 +51,7 @@ const T = {
   copied: { en: 'Copied', ne: 'कपी भयो' },
   sameFund: { en: 'Same fund, other banks', ne: 'सोही कोष · अन्य बैंक' },
   orgs: { en: 'Recognised organisations', ne: 'मान्यताप्राप्त संस्थाहरू' },
+  nationalPortal: { en: 'Read ministry posts on nepal.gov.np', ne: 'nepal.gov.np मा मन्त्रालयका अपडेट पढ्नुहोस्' },
   source: { en: 'Source', ne: 'स्रोत' },
   close: { en: 'Close', ne: 'बन्द' },
   checkPayee: {
@@ -93,11 +94,11 @@ const T = {
   receivedAsOf: { en: 'Figures as of', ne: 'तथ्यांक मिति' },
   doNotAdd: { en: 'Do not add these together', ne: 'यी संख्या नजोड्नुहोस्' },
   receivedWarn: {
-    en: 'The amount already in the fund before the flood is inside the 7.15 billion, not on top of it. PhonePe QR, foreign pledges, the World Bank package and in-kind cargo are not this fund.',
-    ne: 'विपद्अघिको मौज्दात ७ अर्ब १५ करोडभित्र छ, माथि होइन। फोनपे QR, वैदेशिक घोषणा, विश्व बैंक प्याकेज र सामग्री यो कोष होइनन्।',
+    en: 'The amount already in the fund before the flood is inside the 7.15 billion, not on top of it. The Rs 1 billion being sent to affected areas is money leaving that total, not extra cash. The Rs 6.75 crore to 15 palikas, PhonePe QR, foreign pledges, the World Bank package and in-kind cargo are not this fund.',
+    ne: 'विपद्अघिको मौज्दात ७ अर्ब १५ करोडभित्र छ, माथि होइन। प्रभावित क्षेत्रमा पठाइने एक अर्ब त्यही जम्माबाट बाहिरिने रकम हो, थप होइन। १५ पालिकालाई ६ करोड ७५ लाख, फोनपे QR, वैदेशिक घोषणा, विश्व बैंक प्याकेज र सामग्री यो कोष होइनन्।',
   },
   notInRupee: { en: 'Counted separately, not in the rupee total', ne: 'छुट्टै गनिएको, नेपाली जम्मामा छैन' },
-  notInFund: { en: 'Not in the Prime Minister’s fund', ne: 'प्रधानमन्त्री कोषमा होइन' },
+  notInFund: { en: 'Counted separately — not added to the Rs 7.15 billion', ne: 'छुट्टै गनिएको — रु. ७ अर्ब १५ करोडमा जोडिँदैन' },
   discrepancy: {
     en: 'These figures no longer add up and have not been corrected yet. Treat the group totals as provisional.',
     ne: 'यी तथ्यांक मिल्दैनन् र अझै सच्याइएको छैन। समूहका जम्मा संख्यालाई अस्थायी मान्नुहोस्।',
@@ -698,6 +699,11 @@ export default function FloodDonateView() {
             )}
 
             <h4 className="fl-minor">{t('orgs')}</h4>
+            <p className="fl-note">
+              <a href="https://nepal.gov.np/updates" target="_blank" rel="noopener noreferrer">
+                {t('nationalPortal')} &#8599;
+              </a>
+            </p>
             <ul className="fl-orgs">
               {(data.funds || []).map(f => (
                 <li key={f.id}>

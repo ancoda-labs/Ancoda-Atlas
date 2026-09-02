@@ -109,8 +109,8 @@ const T = {
     ne: 'यी तथ्यांक कुनै पोर्टलले डेटाका रूपमा प्रकाशित गर्दैन, त्यसैले डेस्कले सम्पादन गर्दा मात्र परिवर्तन हुन्छन्।',
   },
   damageNote: {
-    en: 'SitRep-3 still holds the 80 bridges and 40 km of paved road. Towers are NDRRMA 16 Bhadra 13:00 (NTC 110 restored, Ncell 75 of 78). Houses are Copernicus EMSR927 — a mapped area of interest, not the national sitrep. None of this is BIPAD’s register, and these collections are not added together.',
-    ne: 'सिटरेप-३ मा अझै ८० पुल र ४० कि.मी. पक्की सडक छन्। टावर एनडीआरआरएमए १६ भदौ १३:०० (एनटीसी ११० पुनर्स्थापना, एनसेल ७८ मध्ये ७५)। घर कोपर्निकस EMSR927 हुन् — नक्साको क्षेत्र, राष्ट्रिय सिटरेप होइन। यो बिपद्को अभिलेख होइन, र यी संकलन जोडिँदैनन्।',
+    en: 'SitRep-3 still holds the 80 bridges and 40 km of paved road. Towers are NDRRMA 17 Bhadra 09:00 (NTC 110 restored, Ncell 75 of 78). Houses are Copernicus EMSR927 — a mapped area of interest, not the national sitrep. None of this is BIPAD’s register, and these collections are not added together.',
+    ne: 'सिटरेप-३ मा अझै ८० पुल र ४० कि.मी. पक्की सडक छन्। टावर एनडीआरआरएमए १७ भदौ ०९:०० (एनटीसी ११० पुनर्स्थापना, एनसेल ७८ मध्ये ७५)। घर कोपर्निकस EMSR927 हुन् — नक्साको क्षेत्र, राष्ट्रिय सिटरेप होइन। यो बिपद्को अभिलेख होइन, र यी संकलन जोडिँदैनन्।',
   },
   fullGrading: { en: 'Full Copernicus grading', ne: 'पूरा कोपर्निकस ग्रेडिङ' },
   liveRow: { en: 'live', ne: 'प्रत्यक्ष' },

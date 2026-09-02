@@ -185,6 +185,34 @@ _LEAD_SYMBOLS = re.compile(
     "]+"
 )
 
+# The rescue portal appends this to every nepal.gov.np reprint. It is mostly
+# Latin, so a script split would file it as the English body and hide the
+# Nepali post an English reader came to see.
+_PORTAL_SOURCE_FOOTER = re.compile(
+    r"\[स्रोत\s*/\s*Source:\s*nepal\.gov\.np[^\]]*\]",
+    re.IGNORECASE,
+)
+
+_NEPAL_HOME = re.compile(r"^https?://(?:www\.)?nepal\.gov\.np/?$", re.IGNORECASE)
+_NEPAL_REF = re.compile(
+    r"^nepal-([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$",
+    re.IGNORECASE,
+)
+
+
+def effort_link(row: dict[str, Any]) -> str | None:
+    """The URL a reader should open for one government-effort row.
+
+    The rescue portal republishes nepal.gov.np posts with `link` set to the
+    homepage and the actual post id in `nepalRef` (`nepal-<uuid>`). Sending a
+    reader to nepal.gov.np with no path looks as though the post is missing.
+    """
+    link = text(row.get("link"))
+    match = _NEPAL_REF.match(text(row.get("nepalRef")) or "")
+    if match and (not link or _NEPAL_HOME.match(link)):
+        return f"https://nepal.gov.np/updates/{match.group(1)}"
+    return link
+
 
 def split_bilingual(raw: Any) -> dict[str, str | None]:
     """Split a government-effort description into its Nepali and English halves.
@@ -196,6 +224,9 @@ def split_bilingual(raw: Any) -> dict[str, str | None]:
     both rather than leaving a blank panel.
     """
     source = text(raw)
+    if not source:
+        return {"en": None, "ne": None}
+    source = text(_PORTAL_SOURCE_FOOTER.sub("", source))
     if not source:
         return {"en": None, "ne": None}
 
@@ -260,6 +291,8 @@ async def get_government_efforts(limit: int = 20) -> dict[str, Any]:
         rows = data.get("items") or []
         items = []
         for r in rows:
+            if not isinstance(r, dict):
+                continue
             title = split_title(r.get("title"))
             body = split_bilingual(r.get("description"))
             items.append(
@@ -272,7 +305,7 @@ async def get_government_efforts(limit: int = 20) -> dict[str, Any]:
                     "agency": text(r.get("agency")),
                     "district": text(r.get("district")),
                     "province": text(r.get("province")),
-                    "link": text(r.get("link")),
+                    "link": effort_link(r),
                     "createdAt": text(r.get("createdAt")) or text(r.get("updatedAt")),
                 }
             )

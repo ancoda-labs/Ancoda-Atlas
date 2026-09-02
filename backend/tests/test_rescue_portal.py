@@ -54,6 +54,38 @@ class TestSplitBilingual:
         out = rp.split_bilingual("Real content\n\nOfficial live updates")
         assert "Official live updates" not in (out["en"] or "")
 
+    def test_a_nepal_gov_np_source_footer_is_not_the_english_body(self):
+        """The rescue portal appends a Latin source line to Nepali reprints.
+
+        Filed as English, that footer is what an English reader sees instead of
+        the post. Strip it so the Nepali body stands in for both languages.
+        """
+        out = rp.split_bilingual(
+            "प्रधानमन्त्री कोषबाट एक अर्ब पठाइने।\n\n"
+            "[स्रोत / Source: nepal.gov.np — National Portal of Nepal]"
+        )
+        assert "एक अर्ब" in (out["en"] or "")
+        assert "एक अर्ब" in (out["ne"] or "")
+        assert "nepal.gov.np" not in (out["en"] or "")
+        assert "nepal.gov.np" not in (out["ne"] or "")
+
+
+class TestEffortLink:
+    def test_a_homepage_link_is_rewritten_from_nepal_ref(self):
+        assert rp.effort_link(
+            {
+                "link": "https://nepal.gov.np",
+                "nepalRef": "nepal-4936218f-255b-42a3-bba8-a22d1340ebdc",
+            }
+        ) == "https://nepal.gov.np/updates/4936218f-255b-42a3-bba8-a22d1340ebdc"
+
+    def test_an_already_deep_link_is_left_alone(self):
+        url = "https://nepal.gov.np/updates/4936218f-255b-42a3-bba8-a22d1340ebdc"
+        assert rp.effort_link({"link": url, "nepalRef": "nepal-aaaa"}) == url
+
+    def test_a_row_without_a_ref_keeps_its_link(self):
+        assert rp.effort_link({"link": "https://nepal.gov.np"}) == "https://nepal.gov.np"
+
 
 class TestSplitTitle:
     def test_a_nepali_dash_english_title_splits(self):
@@ -179,6 +211,42 @@ async def test_no_filer_contact_details_reach_the_payload():
     serialized = str(out)
     assert "9851000000" not in serialized
     assert "Ram Bahadur" not in serialized
+
+
+@respx.mock
+async def test_government_efforts_keep_nepal_gov_np_bodies_and_deep_links():
+    """Reprints arrived as homepage links with the post body hidden behind a
+    Latin source footer. English readers then saw only the attribution.
+    """
+    rp._cache.clear()
+    respx.get(url__startswith=f"{rp.BASE}/api/government-efforts").mock(
+        return_value=_ok(
+            {
+                "items": [
+                    {
+                        "_id": "1",
+                        "title": "स्थानीय तहलाई थप ६ करोड ७५ लाख · राष्ट्रिय पोर्टल",
+                        "description": (
+                            "मनसुन प्रतिकार्य कमाण्डले १५ पालिकालाई ६ करोड ७५ लाख "
+                            "पठाउने निर्णय गरेको छ।\n\n"
+                            "[स्रोत / Source: nepal.gov.np — National Portal of Nepal]"
+                        ),
+                        "agency": "नेपाल सरकार — राष्ट्रिय पोर्टल (nepal.gov.np)",
+                        "link": "https://nepal.gov.np",
+                        "nepalRef": "nepal-e3d3d6c3-f39e-44b3-bd97-2a3715fa5f5f",
+                        "createdAt": "2026-09-01T13:48:00.000Z",
+                    }
+                ]
+            }
+        )
+    )
+    out = await rp.get_government_efforts()
+    item = out["items"][0]
+    assert "६ करोड ७५ लाख" in (item["bodyEn"] or "")
+    assert "nepal.gov.np" not in (item["bodyEn"] or "")
+    assert item["link"] == (
+        "https://nepal.gov.np/updates/e3d3d6c3-f39e-44b3-bd97-2a3715fa5f5f"
+    )
 
 
 @respx.mock
