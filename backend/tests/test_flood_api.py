@@ -206,6 +206,77 @@ class TestMtimeCache:
         cache.get(loader)
         assert calls == 2
 
+    def test_mtime_change_triggers_reload(self, tmp_path, monkeypatch):
+        import os
+        import time
+
+        from app.domains.flood import content
+        from app.domains.flood.content import _MtimeCache
+
+        monkeypatch.setattr(content, "_CHECK_INTERVAL_S", 0)
+
+        file1 = tmp_path / "a.json"
+        file1.write_text('{"val": 1}')
+
+        calls = 0
+
+        def loader():
+            nonlocal calls
+            calls += 1
+            return file1.read_text()
+
+        cache = _MtimeCache(tmp_path, "*.json")
+        res1 = cache.get(loader)
+        assert res1 == '{"val": 1}'
+        assert calls == 1
+
+        new_time = time.time() + 10
+        file1.write_text('{"val": 2}')
+        os.utime(file1, (new_time, new_time))
+
+        res2 = cache.get(loader)
+        assert res2 == '{"val": 2}'
+        assert calls == 2
+
+    def test_deleting_file_triggers_reload(self, tmp_path, monkeypatch):
+        import os
+        import time
+
+        from app.domains.flood import content
+        from app.domains.flood.content import _MtimeCache
+
+        monkeypatch.setattr(content, "_CHECK_INTERVAL_S", 0)
+
+        file_old = tmp_path / "a.json"
+        file_new = tmp_path / "b.json"
+
+        file_old.write_text('{"file": "a"}')
+        t1 = time.time()
+        os.utime(file_old, (t1, t1))
+
+        t2 = t1 + 10
+        file_new.write_text('{"file": "b"}')
+        os.utime(file_new, (t2, t2))
+
+        calls = 0
+
+        def loader():
+            nonlocal calls
+            calls += 1
+            return [p.name for p in sorted(tmp_path.glob("*.json"))]
+
+        cache = _MtimeCache(tmp_path, "*.json")
+        res1 = cache.get(loader)
+        assert res1 == ["a.json", "b.json"]
+        assert calls == 1
+
+        # Delete older file (a.json). Max mtime does not change, but count changes!
+        file_old.unlink()
+
+        res2 = cache.get(loader)
+        assert res2 == ["b.json"]
+        assert calls == 2
+
 
 class TestCorrectionValidation:
     def test_a_correction_needs_a_message(self):
@@ -229,4 +300,3 @@ class TestCorrectionValidation:
         digest = hash_ip("203.0.113.7")
         assert "203.0.113.7" not in digest
         assert len(digest) == 64
-

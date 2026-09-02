@@ -14,7 +14,7 @@ picks it up on the next reload.
 import json
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable, Generic, TypeVar, cast
 
 from app.core.logging import get_logger
 
@@ -36,62 +36,64 @@ GEO_DIR = Path(__file__).resolve().parents[3] / "content" / "geo"
 _CHECK_INTERVAL_S = 30
 
 _SENTINEL = object()
+T = TypeVar("T")
 
 
-def _max_mtime(directory: Path, pattern: str = "**/*.json") -> float:
-    """The newest mtime across all matching files, or 0 if none exist."""
-    newest = 0.0
+def _signature(directory: Path, pattern: str = "**/*.json") -> tuple[int, float]:
+    """The file count and newest mtime across matching files, or (0, 0.0) if none exist."""
+    count, newest = 0, 0.0
     try:
         for p in directory.glob(pattern):
             try:
                 newest = max(newest, p.stat().st_mtime)
             except OSError:
                 continue
+            count += 1
     except OSError:
         pass
-    return newest
+    return count, newest
 
 
-class _MtimeCache:
+class _MtimeCache(Generic[T]):
     """Cache a computed value; invalidate when source files change on disk."""
 
-    __slots__ = ("_value", "_mtime", "_checked_at", "_directory", "_pattern")
+    __slots__ = ("_value", "_sig", "_checked_at", "_directory", "_pattern")
 
     def __init__(self, directory: Path, pattern: str = "**/*.json") -> None:
-        self._value: Any = _SENTINEL
-        self._mtime: float = 0.0
+        self._value: T | object = _SENTINEL
+        self._sig: tuple[int, float] = (0, 0.0)
         self._checked_at: float = 0.0
         self._directory = directory
         self._pattern = pattern
 
-    def get(self, loader: Any) -> Any:
+    def get(self, loader: Callable[[], T]) -> T:
         now = time.monotonic()
         if self._value is not _SENTINEL and (now - self._checked_at) < _CHECK_INTERVAL_S:
-            return self._value
+            return cast(T, self._value)
 
-        current_mtime = _max_mtime(self._directory, self._pattern)
+        current_sig = _signature(self._directory, self._pattern)
         self._checked_at = now
 
-        if self._value is not _SENTINEL and current_mtime == self._mtime:
-            return self._value
+        if self._value is not _SENTINEL and current_sig == self._sig:
+            return cast(T, self._value)
 
-        # First load, or an mtime changed — reload from disk.
+        # First load, or a file was added/edited/deleted — reload from disk.
         if self._value is not _SENTINEL:
             log.info("content_reloaded", directory=str(self._directory), trigger="mtime")
         self._value = loader()
-        self._mtime = current_mtime
-        return self._value
+        self._sig = current_sig
+        return cast(T, self._value)
 
     def clear(self) -> None:
-        """Force the next ``get()`` to reload regardless of mtime."""
+        """Force the next `get()` to reload regardless of mtime."""
         self._value = _SENTINEL
-        self._mtime = 0.0
+        self._sig = (0, 0.0)
         self._checked_at = 0.0
 
 
-_content_cache = _MtimeCache(CONTENT_DIR)
-_funds_cache = _MtimeCache(CONTENT_DIR / "relief-funds", pattern="*.json")
-_geo_cache = _MtimeCache(GEO_DIR, pattern="*.json")
+_content_cache = _MtimeCache[dict[str, Any]](CONTENT_DIR)
+_funds_cache = _MtimeCache[list[dict[str, Any]]](CONTENT_DIR / "relief-funds", pattern="*.json")
+_geo_cache = _MtimeCache[list[dict[str, Any]]](GEO_DIR, pattern="*.json")
 
 
 def _read(name: str) -> Any:
@@ -121,7 +123,7 @@ def reconcile(breakdowns: list[dict[str, Any]] | None) -> list[dict[str, Any]]:
     says so rather than picking whichever looks better.
 
     Groups whose parts overlap rather than partition the total opt out with
-    ``no_total_check``; for them the arithmetic was never meant to close.
+    `no_total_check`; for them the arithmetic was never meant to close.
     """
     discrepancies: list[dict[str, Any]] = []
     for breakdown in breakdowns or []:
@@ -212,8 +214,8 @@ def load_flood_content() -> dict[str, Any]:
 def reload_content() -> dict[str, Any]:
     """Clear all content caches, forcing a full re-read from disk.
 
-    Called by the admin ``POST /content/reload`` endpoint.  The mtime watcher
-    picks up edits within ``_CHECK_INTERVAL_S`` seconds on its own; this is
+    Called by the admin `POST /content/reload` endpoint.  The mtime watcher
+    picks up edits within `_CHECK_INTERVAL_S` seconds on its own; this is
     for when a maintainer wants the change live immediately.
     """
     _content_cache.clear()
@@ -276,7 +278,7 @@ def _district_shapes() -> list[dict[str, Any]]:
 
 
 def _point_in_ring(lon: float, lat: float, ring: list[list[float]]) -> bool:
-    """Ray casting. ``ring`` is [lon, lat] pairs, as GeoJSON stores them."""
+    """Ray casting. `ring` is [lon, lat] pairs, as GeoJSON stores them."""
     inside = False
     count = len(ring)
     j = count - 1

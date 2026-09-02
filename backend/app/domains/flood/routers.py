@@ -85,6 +85,9 @@ async def reload_content_cache(
     thirty seconds, so edits take effect on their own.  This endpoint is
     for when a maintainer wants the change live immediately.
 
+    Clears origin process memory only; edge or CDN caches holding routes like
+    /site will still honor their s-maxage until TTL expiry.
+
     Answers 404 rather than 401 when no token is configured — an endpoint
     that says "wrong password" tells a prober it exists.
     """

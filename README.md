@@ -427,7 +427,7 @@ it — a paid tier is worth it if the multilingual panel matters to you.
 | `MINIO_BUCKET` | Bucket for uploaded photos (default `atlas`) |
 | `ATLAS_IP_SALT` | Random string. Salts hashed uploader IPs for rate limiting — set it, or the hashes are not worth much |
 | `ATLAS_MEDIA_SECRET` | Signs media proxy URLs. **Required in production and identical on every instance** — unset, a random key is minted per process and image links die on restart |
-| `FLOOD_ADMIN_TOKEN` | Bearer token for the photo moderation endpoints |
+| `FLOOD_ADMIN_TOKEN` | Bearer token for photo moderation and content reload endpoints |
 | `FLOOD_REFRESH_TOKEN` | Bearer token to trigger `POST /api/v1/flood/refresh` externally |
 | `YOUTUBE_API_KEY` | *(Optional)* Enriches the flood desk's video panel |
 
@@ -591,7 +591,7 @@ value. `.env.example` is the tracked template and lists every variable.
 | `MINIO_ENDPOINT` · `MINIO_BUCKET` | disabled · `atlas` | Object store for uploaded photos |
 | `ATLAS_IP_SALT` | — | Salt for hashed uploader IPs |
 | `ATLAS_MEDIA_SECRET` | — | Signs media proxy URLs. Required in production |
-| `FLOOD_ADMIN_TOKEN` | — | Bearer token for photo takedown |
+| `FLOOD_ADMIN_TOKEN` | — | Bearer token for photo takedown and content reload |
 | `YOUTUBE_API_KEY` | disabled | Enriches the flood desk video panel |
 | `TELEGRAM_BOT_TOKEN` · `TELEGRAM_CHAT_ID` | disabled | One-way Telegram alerts |
 | `DISCORD_WEBHOOK_URL` | disabled | One-way Discord alerts |
@@ -630,6 +630,7 @@ Everything is under `/api/v1`. Interactive docs at `http://localhost:8000/docs`.
 | `GET` · `POST /api/v1/flood/photos` | Ground reports (needs Supabase + MinIO) |
 | `POST /api/v1/flood/photos/report` | Flag a ground report |
 | `DELETE /api/v1/flood/photos/{id}` | Take one down (`FLOOD_ADMIN_TOKEN`) |
+| `POST /api/v1/flood/content/reload` | Clear reviewed-content cache (`FLOOD_ADMIN_TOKEN`) |
 | `GET /api/v1/flood/gallery` · `/videos` · `/press` | Media panels |
 | `GET /api/v1/flood/media/image` | Signed proxy for one news photograph |
 | `GET /api/v1/flood/station-photo?id=` | HTTPS proxy for a DHM gauge-station photo |
