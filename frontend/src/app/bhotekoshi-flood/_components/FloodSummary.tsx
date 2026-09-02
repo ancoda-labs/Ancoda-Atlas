@@ -866,38 +866,40 @@ export default function FloodSummary({
 
       {showRest && (whatHappened || (sitrep.notes && sitrep.notes.length > 0)) && (
         <section className="fl-sec">
-          <div className="fl-split">
-            <div>
+          <div className="fl-split fl-rest-pair">
+            <div className="fl-rest-pane">
               {whatHappened && (
                 <>
                   <div className="fl-sec-head">
                     <span>{lang === 'ne' ? 'पृष्ठभूमि' : 'Background'}</span>
                     <h2>{t('whatHappened')}</h2>
                   </div>
-                  <div className="fl-prose">
+                  <div className="fl-prose fl-rest-scroll">
                     {LBody(whatHappened).map((para, i) => (
                       <p key={i}>{para}</p>
                     ))}
+                    {(whatHappened.sources || []).length > 0 && (
+                      <p className="fl-note">
+                        {(whatHappened.sources || []).map((s, i) => (
+                          <a key={i} href={s.url} target="_blank" rel="noopener noreferrer">
+                            {s.label} &#8599;
+                          </a>
+                        ))}
+                      </p>
+                    )}
                   </div>
-                  <p className="fl-note">
-                    {(whatHappened.sources || []).map((s, i) => (
-                      <a key={i} href={s.url} target="_blank" rel="noopener noreferrer">
-                        {s.label} &#8599;
-                      </a>
-                    ))}
-                  </p>
                 </>
               )}
             </div>
 
-            <div>
+            <div className="fl-rest-pane">
               {sitrep.notes && sitrep.notes.length > 0 && (
                 <>
                   <div className="fl-sec-head">
                     <span>{lang === 'ne' ? 'ठाउँ' : 'On the ground'}</span>
                     <h2>{lang === 'ne' ? 'स्थानगत विवरण' : 'Place by place'}</h2>
                   </div>
-                  <div className="fl-prose">
+                  <div className="fl-prose fl-rest-scroll">
                     {sitrep.notes.map(note => (
                       <div key={note.id} className="fl-place-note">
                         <h3>{lang === 'ne' ? note.title_ne || note.title_en : note.title_en}</h3>

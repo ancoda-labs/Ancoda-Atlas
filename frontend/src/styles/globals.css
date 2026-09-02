@@ -2977,10 +2977,19 @@ body.dark-theme .atlas-mark {
   display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 18px;
   align-items: start; margin: 34px 0 0; padding: 20px 22px;
   border-left: 4px solid var(--red); background: rgba(255, 77, 92, 0.07);
+  overflow: hidden;
 }
+.fl-standfirst-kicker {
+  display: flex; flex-direction: column; gap: 10px; min-width: 0;
+}
+.fl-standfirst-kicker span,
 .fl-standfirst > span {
   font-family: var(--mono); font-size: 10px; letter-spacing: 0.18em;
   text-transform: uppercase; color: var(--red); white-space: nowrap; padding-top: 5px;
+}
+.fl-standfirst-mark {
+  display: block; height: 56px; width: auto; max-width: 72px;
+  object-fit: contain;
 }
 .fl-standfirst p {
   margin: 0; font-family: var(--serif); font-size: 19px; line-height: 1.5;
@@ -3751,6 +3760,26 @@ html[lang="ne"] .language-toggle button { font-size: 12px; }
 }
 .fl-place-note p { margin: 0; max-width: 68ch; }
 
+/* Background / place notes: two open-ended columns. Cap each so a long notes
+   list cannot push the rest of the desk off the page — same idea as the
+   official pair above it. */
+.fl-rest-pair { align-items: stretch; }
+.fl-rest-pane { display: flex; flex-direction: column; min-width: 0; }
+.fl-rest-pane .fl-sec-head { margin-bottom: 16px; }
+.fl-rest-scroll {
+  max-height: 420px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: var(--rule-2) transparent;
+  padding-right: 10px;
+  min-width: 0;
+}
+.fl-rest-scroll::-webkit-scrollbar { width: 6px; }
+.fl-rest-scroll::-webkit-scrollbar-thumb { background: var(--rule-2); border-radius: 3px; }
+.fl-rest-scroll .fl-place-note:last-child { margin-bottom: 0; }
+.fl-rest-scroll .fl-note { margin-bottom: 0; }
+
 /* --- Section links at the foot of the overview --- */
 .fl-sections {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(258px, 1fr));
@@ -3881,6 +3910,7 @@ body.low-perf .flood-cta-dot { animation: none; }
 
 @media (max-width: 900px) {
   .fl-split { grid-template-columns: 1fr; gap: 34px; }
+  .fl-rest-scroll { max-height: none; overflow: visible; padding-right: 0; }
   .fl-digests > li { grid-template-columns: 1fr; gap: 10px; }
   .fl-digest-when { flex-direction: row; gap: 12px; align-items: baseline; }
   .fl-hero { grid-template-columns: 1fr; gap: 22px; }
@@ -3934,6 +3964,7 @@ body.low-perf .flood-cta-dot { animation: none; }
   .fl-play { width: 34px; height: 34px; }
   .fl-search { font-size: 16px; }
   .fl-standfirst { grid-template-columns: 1fr; gap: 9px; padding: 16px 16px 16px 18px; }
+  .fl-standfirst-kicker span,
   .fl-standfirst > span { padding-top: 0; }
   .fl-standfirst p { font-size: 17px; }
   .fl-field-row { flex-direction: column; gap: 14px; }
