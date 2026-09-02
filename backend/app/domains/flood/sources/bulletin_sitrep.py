@@ -194,10 +194,21 @@ def rows_in(pane: str, dict_: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def total_for(html: str, panel: str) -> dict[str, Any] | None:
-    """The stated total, from the KPI button rather than re-added from parts."""
-    match = re.search(
-        rf'id="kpi-{panel}"[\s\S]{{0,400}}?<strong class="num">([^<]*)</strong>', html
+    """The stated total, from the KPI button rather than re-added from parts.
+
+    The bulletin put SVG icons inside each KPI button. A 400-character window
+    from the id to the figure used to work; the icons now sit 500+ characters
+    in front of the deaths and uncontacted totals, so the scrape skipped those
+    panels and left the reviewed morning floor standing on a page families
+    were reading.
+    """
+    button = re.search(
+        rf'<button[^>]*\bid="kpi-{re.escape(panel)}"[^>]*>([\s\S]*?)</button>',
+        html,
     )
+    if not button:
+        return None
+    match = re.search(r'<strong class="num">([^<]*)</strong>', button.group(1))
     return parse_bulletin_figure(match.group(1)) if match else None
 
 
