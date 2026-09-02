@@ -5,6 +5,7 @@ from fastapi.testclient import TestClient
 
 from app.core import runs_store
 from app.domains.flood import store as desk_store
+from app.domains.flood.content import CONTENT_DIR
 from app.main import app
 
 client = TestClient(app)
@@ -125,6 +126,29 @@ class TestAuthGating:
         monkeypatch.setattr("app.domains.flood.routers.settings.FLOOD_ADMIN_TOKEN", "")
         assert client.get("/api/v1/flood/rescue/correction").status_code == 404
 
+    def test_reloading_content_needs_the_admin_token(self, monkeypatch):
+        monkeypatch.setattr("app.domains.flood.routers.settings.FLOOD_ADMIN_TOKEN", "")
+        assert client.post("/api/v1/flood/content/reload").status_code == 404
+
+    def test_a_wrong_admin_token_is_also_404(self, monkeypatch):
+        monkeypatch.setattr("app.domains.flood.routers.settings.FLOOD_ADMIN_TOKEN", "secret")
+        response = client.post(
+            "/api/v1/flood/content/reload", headers={"Authorization": "Bearer wrong"}
+        )
+        assert response.status_code == 404
+
+    def test_content_reload_succeeds_with_correct_token(self, monkeypatch):
+        monkeypatch.setattr("app.domains.flood.routers.settings.FLOOD_ADMIN_TOKEN", "secret")
+        response = client.post(
+            "/api/v1/flood/content/reload",
+            headers={"Authorization": "Bearer secret"},
+        )
+        assert response.status_code == 200
+        body = response.json()
+        assert body["reloaded"] is True
+        assert "funds" in body
+        assert "districtShapes" in body
+
 
 class TestOptionalDatabase:
     def test_the_digest_hides_itself_without_a_database(self, monkeypatch):
@@ -144,6 +168,114 @@ class TestOptionalDatabase:
             "/api/v1/flood/rescue/correction", json={"message": "wrong spelling"}
         )
         assert response.status_code == 503
+
+
+class TestMtimeCache:
+    """The content cache re-reads files when their mtime changes."""
+
+    def test_cache_returns_same_object_within_check_interval(self):
+        from app.domains.flood.content import _MtimeCache
+
+        calls = 0
+
+        def loader():
+            nonlocal calls
+            calls += 1
+            return {"loaded": calls}
+
+        cache = _MtimeCache(CONTENT_DIR)
+        first = cache.get(loader)
+        second = cache.get(loader)
+        assert first is second
+        assert calls == 1
+
+    def test_clear_forces_reload(self):
+        from app.domains.flood.content import _MtimeCache
+
+        calls = 0
+
+        def loader():
+            nonlocal calls
+            calls += 1
+            return {"loaded": calls}
+
+        cache = _MtimeCache(CONTENT_DIR)
+        cache.get(loader)
+        assert calls == 1
+        cache.clear()
+        cache.get(loader)
+        assert calls == 2
+
+    def test_mtime_change_triggers_reload(self, tmp_path, monkeypatch):
+        import os
+        import time
+
+        from app.domains.flood import content
+        from app.domains.flood.content import _MtimeCache
+
+        monkeypatch.setattr(content, "_CHECK_INTERVAL_S", 0)
+
+        file1 = tmp_path / "a.json"
+        file1.write_text('{"val": 1}')
+
+        calls = 0
+
+        def loader():
+            nonlocal calls
+            calls += 1
+            return file1.read_text()
+
+        cache = _MtimeCache(tmp_path, "*.json")
+        res1 = cache.get(loader)
+        assert res1 == '{"val": 1}'
+        assert calls == 1
+
+        new_time = time.time() + 10
+        file1.write_text('{"val": 2}')
+        os.utime(file1, (new_time, new_time))
+
+        res2 = cache.get(loader)
+        assert res2 == '{"val": 2}'
+        assert calls == 2
+
+    def test_deleting_file_triggers_reload(self, tmp_path, monkeypatch):
+        import os
+        import time
+
+        from app.domains.flood import content
+        from app.domains.flood.content import _MtimeCache
+
+        monkeypatch.setattr(content, "_CHECK_INTERVAL_S", 0)
+
+        file_old = tmp_path / "a.json"
+        file_new = tmp_path / "b.json"
+
+        file_old.write_text('{"file": "a"}')
+        t1 = time.time()
+        os.utime(file_old, (t1, t1))
+
+        t2 = t1 + 10
+        file_new.write_text('{"file": "b"}')
+        os.utime(file_new, (t2, t2))
+
+        calls = 0
+
+        def loader():
+            nonlocal calls
+            calls += 1
+            return [p.name for p in sorted(tmp_path.glob("*.json"))]
+
+        cache = _MtimeCache(tmp_path, "*.json")
+        res1 = cache.get(loader)
+        assert res1 == ["a.json", "b.json"]
+        assert calls == 1
+
+        # Delete older file (a.json). Max mtime does not change, but count changes!
+        file_old.unlink()
+
+        res2 = cache.get(loader)
+        assert res2 == ["b.json"]
+        assert calls == 2
 
 
 class TestCorrectionValidation:
