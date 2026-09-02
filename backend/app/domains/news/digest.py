@@ -211,6 +211,100 @@ def resolve_digest_language(
     return requested_lang if translated else detect_digest_language(draft)
 
 
+def _cleaned_fields(draft: dict[str, Any]) -> list[str]:
+    """The brief as the list of strings a translation has to change."""
+    return [
+        clean(draft.get("headline"), 80),
+        clean(draft.get("summary"), 600),
+        *[b for b in (clean(x, 160) for x in (draft.get("bullets") or [])) if b],
+    ]
+
+
+# A real translation of a Nepali brief into French changes every line. A model
+# that echoes changes none. Between them sit the answers that actually caused
+# trouble: himalaya-gemma-4-q8 rewording one field and handing back the other
+# five in Nepali, which byte-equality on the whole brief does not catch.
+ECHO_RATIO = 0.5
+
+
+def is_echo(candidate: dict[str, Any], draft: dict[str, Any]) -> bool:
+    """Whether the model mostly handed the brief back instead of translating it.
+
+    Some hosts answer a translation prompt with the input verbatim. The shape
+    is perfect, so the bullet-count check passes and the brief ships labelled
+    as the reader's language while still being in Nepali — a French reader is
+    told they are reading French and shown Devanagari. That is exactly what
+    `needs_translation` guards on the way in, and nothing guarded on the way
+    out.
+
+    Not hypothetical, and not always total: Tarka's `himalaya-q8` and
+    `himalaya-bf16` echo byte for byte, while `himalaya-gemma-4-q8` sometimes
+    returns four of five lines unchanged. So this counts unchanged lines rather
+    than comparing the brief as a whole — more than half untouched is not a
+    translation.
+
+    What it cannot catch is a model that paraphrases into the *wrong* language:
+    a "Maithili" brief that is really reworded Nepali reads as fully changed.
+    Between two Devanagari languages that close, no cheap check settles it, and
+    the honest answer is that the label is only as good as the model.
+    """
+    source = _cleaned_fields(draft)
+    target = [candidate["headline"], candidate["summary"], *candidate["bullets"]]
+    if not source:
+        return False
+    unchanged = sum(1 for a, b in zip(target, source) if a == b)
+    return unchanged / len(source) > ECHO_RATIO
+
+
+# Small hosted models drop a bullet or hand the brief back unchanged often
+# enough that one attempt is not a fair test of whether they can translate at
+# all. Measured against Tarka's himalaya-gemma-4-q8 on a live 18-item flood
+# brief, six attempts per language came back:
+#
+#   Japanese  5 good, 1 malformed        French    3 good, 3 malformed
+#   Maithili  2 good, 4 malformed        English   1 good, 5 echoed
+#
+# so a single try discards a usable translation about half the time. Two
+# bounded attempts, behind the caller's ten-minute cache and its per-language
+# lock, cost one extra call per language per cycle at worst.
+TRANSLATE_ATTEMPTS = 2
+
+
+async def _translate_once(
+    provider: LLMProvider, draft: dict[str, Any], target: str
+) -> dict[str, Any] | None:
+    """One attempt. None means it did not produce a usable translation."""
+    user = (
+        f"Target language: {target}\n\n"
+        f"Translate this brief into {target}. Return only the JSON object.\n\n"
+        f"{jsonlib.dumps(draft, ensure_ascii=False)}"
+    )
+
+    result = await provider.complete(
+        TRANSLATE_PROMPT, user, max_tokens=900, timeout=45.0, json=True
+    )
+    parsed = extract_json(result.text) or {}
+    headline = clean(parsed.get("headline"), 80)
+    summary = clean(parsed.get("summary"), 600)
+    raw_bullets = parsed.get("bullets")
+    bullets = (
+        [b for b in (clean(x, 160) for x in raw_bullets) if b]
+        if isinstance(raw_bullets, list)
+        else []
+    )
+
+    # A translation that lost or gained a point is not a translation.
+    if not (headline and summary and len(bullets) == len(draft.get("bullets") or [])):
+        log.warning("digest_translation_incomplete", model=provider.model)
+        return None
+
+    candidate = {"headline": headline, "summary": summary, "bullets": bullets}
+    if is_echo(candidate, draft):
+        log.warning("digest_translation_echoed", model=provider.model)
+        return None
+    return candidate
+
+
 async def translate_digest(
     provider: LLMProvider | None,
     draft: dict[str, Any],
@@ -222,41 +316,32 @@ async def translate_digest(
     A failed call leaves the original standing rather than producing nothing,
     and the caller is told which happened — a headline is no longer verbatim
     once it has been through a model, and the reader is entitled to know that.
+
+    Retried up to TRANSLATE_ATTEMPTS times, because these models fail by
+    returning something unusable rather than by erroring. What is never
+    retried is the honesty: when every attempt fails the original stands,
+    labelled as the language it is actually written in.
     """
     if not provider or not provider.is_configured:
         return {"draft": draft, "model": None, "translated": False}
 
     target = LANGUAGE_NAME.get(lang) or language_name or "English"
-    user = (
-        f"Target language: {target}\n\n"
-        f"Translate this brief into {target}. Return only the JSON object.\n\n"
-        f"{jsonlib.dumps(draft, ensure_ascii=False)}"
+
+    for attempt in range(1, TRANSLATE_ATTEMPTS + 1):
+        try:
+            candidate = await _translate_once(provider, draft, target)
+        except Exception as exc:  # noqa: BLE001
+            log.warning("digest_translation_failed", error=str(exc), attempt=attempt)
+            continue
+        if candidate:
+            return {"draft": candidate, "model": provider.name, "translated": True}
+
+    log.warning(
+        "digest_translation_gave_up",
+        lang=lang,
+        attempts=TRANSLATE_ATTEMPTS,
+        detail="keeping the original, labelled as the language it is in",
     )
-
-    try:
-        result = await provider.complete(
-            TRANSLATE_PROMPT, user, max_tokens=900, timeout=45.0, json=True
-        )
-        parsed = extract_json(result.text) or {}
-        headline = clean(parsed.get("headline"), 80)
-        summary = clean(parsed.get("summary"), 600)
-        raw_bullets = parsed.get("bullets")
-        bullets = (
-            [b for b in (clean(x, 160) for x in raw_bullets) if b]
-            if isinstance(raw_bullets, list)
-            else []
-        )
-        # A translation that lost or gained a point is not a translation.
-        if headline and summary and len(bullets) == len(draft.get("bullets") or []):
-            return {
-                "draft": {"headline": headline, "summary": summary, "bullets": bullets},
-                "model": provider.name,
-                "translated": True,
-            }
-        log.warning("digest_translation_incomplete", detail="keeping the original")
-    except Exception as exc:  # noqa: BLE001
-        log.warning("digest_translation_failed", error=str(exc), detail="keeping the original")
-
     return {"draft": draft, "model": None, "translated": False}
 
 

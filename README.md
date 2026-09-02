@@ -371,7 +371,32 @@ Set `LLM_PROVIDER` to one of: `anthropic`, `openai`, `gemini`, `codex`,
 | `ollama` | None (local) — `OLLAMA_BASE_URL` to move the host | llama3.1:8b |
 | `grok` | `LLM_API_KEY` | grok-4-latest |
 | `groq` | `LLM_API_KEY` | openai/gpt-oss-120b |
-| `tarka` | `LLM_API_KEY` | himalaya-gemma-4-bf16 *(recommended; set explicitly)* |
+| `tarka` | `LLM_API_KEY` (`tk_live_…`) | **none — you must set `LLM_MODEL`** (see below) |
+
+> [!IMPORTANT]
+> **Tarka has no default model, and the wrong one fails silently.**
+> Its catalogue at `https://tarka.rest/v1/models` mixes chat, OCR, speech and
+> TTS ids behind one endpoint. Measured against the translation prompt the desk
+> actually sends, on a live 18-item flood brief:
+>
+> | Model | Translates? |
+> |---|---|
+> | `himalaya-gemma-4-q8` | **Yes** — English, French and Japanese all clean. Use this one. |
+> | `himalaya-gemma-4-bf16` | Mostly, but romanises Maithili instead of writing the script |
+> | `himalaya-q8` · `himalaya-bf16` | **No.** Returns the input verbatim for every target language |
+> | `qwen3.8-flash-next` | **No.** Answers with null content after ~40s |
+>
+> Even the good one is unreliable per call: six attempts each came back
+> `Japanese 5/6`, `French 3/6`, `Maithili 2/6`, `English 1/6` usable, failing by
+> dropping a bullet or handing the brief back untranslated. Two things absorb
+> that. `translate_digest` retries once (`TRANSLATE_ATTEMPTS`), and `is_echo`
+> refuses any answer with more than half its lines unchanged, so a brief that
+> was not really translated is served in Nepali with `fellBackFrom` set rather
+> than mislabelled as the reader's language.
+>
+> Nepal's own languages are the weak spot. Maithili usually comes back as
+> reworded Nepali, and the desk correctly falls back rather than claiming it.
+> If those matter more than the world languages, try a frontier provider.
 
 For Codex, run `npx @openai/codex login` to authenticate via your ChatGPT subscription.
 
