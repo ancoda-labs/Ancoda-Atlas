@@ -16,6 +16,8 @@ FILES = [
     runs_store.FLOOD_DESK,
     runs_store.FLOOD_PERSONS,
     runs_store.FLOOD_RESCUE,
+    runs_store.CLIMATE,
+    runs_store.CLIMATE_ARRIVED,
 ]
 
 

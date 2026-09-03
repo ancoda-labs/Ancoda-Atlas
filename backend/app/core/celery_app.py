@@ -17,7 +17,11 @@ celery_app = Celery(
     "atlas",
     broker=settings.broker_url,
     backend=settings.result_backend,
-    include=["app.domains.hazards.tasks", "app.domains.flood.tasks"],
+    include=[
+        "app.domains.hazards.tasks",
+        "app.domains.flood.tasks",
+        "app.domains.climate.tasks",
+    ],
 )
 
 celery_app.conf.update(
@@ -61,6 +65,16 @@ celery_app.conf.update(
             "options": {
                 "queue": "sweeps",
                 "expires": settings.flood_refresh_minutes * 60,
+            },
+        },
+        # Climate context. The CO₂ file is annual; a weekly retry is enough
+        # to pick up a new year and to recover from a failed read.
+        "climate-context": {
+            "task": "climate.context",
+            "schedule": 7 * 24 * 60 * 60.0,
+            "options": {
+                "queue": "sweeps",
+                "expires": 6 * 24 * 60 * 60,
             },
         },
     },

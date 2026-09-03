@@ -1637,3 +1637,137 @@ export interface BipadPayload {
   incidents: BipadIncident[];
   earthquakes: BipadEarthquake[];
 }
+
+// ─── Climate context ────────────────────────────────────────────────────────
+
+export type ClimateMetricId =
+  | 'cumulative_1750'
+  | 'cumulative_1850'
+  | 'annual_latest'
+  | 'per_capita'
+  | 'consumption';
+
+export interface ClimateMetricRow {
+  id: string;
+  labelEn: string;
+  labelNe: string;
+  value: number;
+}
+
+export interface ClimateMetric {
+  id: ClimateMetricId;
+  year: number;
+  unit: 'pct' | 'mt' | 't';
+  nameEn: string;
+  nameNe: string;
+  captionEn: string | null;
+  captionNe: string | null;
+  scaleCaptionEn: string | null;
+  scaleCaptionNe: string | null;
+  rows: ClimateMetricRow[];
+  scaleRows: ClimateMetricRow[];
+}
+
+export interface ClimateEmissions {
+  year: number | null;
+  defaultMetric: ClimateMetricId;
+  metrics: Partial<Record<ClimateMetricId, ClimateMetric>>;
+  error: string | null;
+  stale: boolean;
+  source: SourceRef & { datasetUrl?: string; attribution?: string };
+  fetchedAt: string | null;
+  lastAttemptAt: string | null;
+}
+
+export interface ClimateFact {
+  id: string;
+  statementEn: string;
+  statementNe: string;
+  organisation: string | null;
+  published: string | null;
+  url: string;
+}
+
+export interface ClimateArrivedHazard {
+  id: string;
+  labelEn: string;
+  labelNe: string;
+  incidents: number[];
+  deaths: Array<number | null>;
+  affected: Array<number | null>;
+  deathsRecords: number[];
+  affectedRecords: number[];
+}
+
+export interface ClimateArrived {
+  years: number[];
+  hazards: ClimateArrivedHazard[];
+  windowStart: number | null;
+  windowEnd: number | null;
+  truncated: boolean;
+  error: string | null;
+  stale: boolean;
+  source: SourceRef;
+  fetchedAt: string | null;
+  lastAttemptAt: string | null;
+}
+
+export interface ClimateSectionCopy {
+  headlineEn?: string | null;
+  headlineNe?: string | null;
+  captionEn?: string | null;
+  captionNe?: string | null;
+  truncatedEn?: string | null;
+  truncatedNe?: string | null;
+  percent?: number;
+  fromYear?: number;
+  toYear?: number;
+  factId?: string;
+  china?: number;
+  nepal?: number;
+  india?: number;
+}
+
+export interface ClimateSection {
+  titleEn: string | null;
+  titleNe: string | null;
+  standfirstEn: string | null;
+  standfirstNe: string | null;
+  ice: ClimateSectionCopy | null;
+  lakes: ClimateSectionCopy | null;
+  arrived: ClimateSectionCopy | null;
+  cause: ClimateSectionCopy | null;
+  news: ClimateSectionCopy | null;
+}
+
+export interface ClimatePanelFlag {
+  enabled: boolean;
+  todo: string | null;
+}
+
+/** A ministry post, quoted as published. Atlas does not paraphrase these. */
+export interface ClimateStatement {
+  id: string;
+  title: string | null;
+  titleNe: string | null;
+  bodyEn: string | null;
+  bodyNe: string | null;
+  ministry: string | null;
+  publishedAt: string | null;
+  link: string;
+  needleId?: string | null;
+  /** True when Atlas supplied English because the government published none. */
+  translated?: boolean;
+}
+
+export interface ClimateContextPayload {
+  emissions: ClimateEmissions;
+  arrived: ClimateArrived;
+  facts: ClimateFact[];
+  statements: ClimateStatement[];
+  section: ClimateSection;
+  panels: Record<'heat' | 'water' | 'air' | 'fire', ClimatePanelFlag>;
+  disclaimerEn: string | null;
+  disclaimerNe: string | null;
+  generatedAt: string;
+}

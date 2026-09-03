@@ -1,7 +1,9 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { useFloodLang } from '@/hooks/use-flood-lang';
+import { useHydrated } from '@/hooks/use-hydrated';
 import AtlasMark from '@/components/AtlasMark';
 import { useSite } from '@/hooks/useFlood';
 
@@ -54,6 +56,7 @@ const T = {
     en: 'Follow our work',
     ne: 'हाम्रो काम पछ्याउनुहोस्',
   },
+  climate: { en: 'Climate', ne: 'TODO' },
 };
 
 // Icon-only 18px links in the corner of a footer are, in practice, invisible.
@@ -109,9 +112,12 @@ const SOCIALS: Array<{ id: string; label: string; href: string; icon: React.Reac
 
 export default function FloodFooter() {
   const [lang] = useFloodLang();
+  const hydrated = useHydrated();
   const { data } = useSite();
   const reportEmail = data?.site?.report_contact_email || '';
-  const hasEmail = reportEmail.trim().length > 0;
+  // useSite is not snapshotted into the HTML. Rendering the mailto on the
+  // server and omitting it on the first client paint is a hydration error.
+  const hasEmail = hydrated && reportEmail.trim().length > 0;
 
   return (
     <footer className="fl-foot shared-footer">
@@ -151,6 +157,8 @@ export default function FloodFooter() {
           <AtlasMark className="footer-mark" />
           <p className="footer-brand-line">{T.brandLine[lang]}</p>
           <p className="footer-contribute">
+            <Link href={lang === 'ne' ? '/ne/climate' : '/climate'}>{T.climate[lang] === 'TODO' ? T.climate.en : T.climate[lang]}</Link>
+            {' · '}
             {T.contributeText[lang]}
             <a
               href="https://github.com/ancoda-labs/Ancoda-Atlas/blob/main/CONTRIBUTING.md"

@@ -67,8 +67,15 @@ Live data services
     NASA FIRMS                                  satellite fire detection
     ReliefWeb (UN OCHA)                         humanitarian reporting
     Humanitarian Data Exchange (HDX)            ReliefWeb fallback datasets
-    BIPAD Portal (NDRRMA, Government of Nepal)  river gauge telemetry
+    BIPAD Portal (NDRRMA, Government of Nepal)  river gauge telemetry;
+                                                national incident register
+                                                (climate What Arrived panel)
     Nepali news publishers                      hazard reporting via public RSS
+    Our World in Data / Global Carbon Project   territorial fossil CO₂ (weekly)
+
+Glacier, GLOF and ND-GAIN figures that cannot be parsed from a feed are
+reviewed by hand in backend/content/climate/source-facts.json. See that
+directory's README for how to update them.
 
 
 ================================================================================

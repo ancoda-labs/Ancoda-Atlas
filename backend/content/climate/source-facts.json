@@ -1,0 +1,177 @@
+{
+  "id": "climate-context",
+  "lastReviewed": "2026-09-03",
+  "disclaimer_en": "This is background on emissions and mountain hazards. It does not claim that this flood, or any specific flood, was caused by climate change or by any country's emissions.",
+  "disclaimer_ne": "यो उत्सर्जन र हिमाली जोखिमबारे पृष्ठभूमि हो। यो बाढी वा कुनै खास बाढी जलवायु परिवर्तन वा कुनै देशको उत्सर्जनका कारण भएको भन्ने दाबी होइन।",
+  "nepalScalePeers": [
+    "sriLanka",
+    "kenya",
+    "ghana",
+    "cambodia",
+    "laos",
+    "senegal",
+    "afghanistan",
+    "uganda"
+  ],
+  "scale_caption_en": "Axis rescaled to countries of similar magnitude to Nepal. Same metric.",
+  "scale_caption_ne": "अक्ष नेपालसँग मिल्दो परिमाणका देशहरूमा पुनः मापन गरिएको छ। उही मापक।",
+  "section": {
+    "title_en": "Climate",
+    "title_ne": "TODO",
+    "standfirst_en": "Change over time, and Nepal's exposure. Not a cause of any one flood.",
+    "standfirst_ne": "TODO",
+    "ice": {
+      "headline_en": "Hindu Kush Himalaya glaciers lost 12 percent of their area.",
+      "headline_ne": "TODO",
+      "caption_en": "Share of glacier area gone between 1990 and 2020.",
+      "caption_ne": "TODO",
+      "percent": 12,
+      "fromYear": 1990,
+      "toYear": 2020,
+      "factId": "icimod-2026-ice-loss"
+    },
+    "lakes": {
+      "headline_en": "47 potentially dangerous glacial lakes sit in three basins.",
+      "headline_ne": "TODO",
+      "caption_en": "25 in China, 21 in Nepal, 1 in India. More than half are upstream.",
+      "caption_ne": "TODO",
+      "china": 25,
+      "nepal": 21,
+      "india": 1,
+      "factId": "icimod-undp-2020-pdgl"
+    },
+    "arrived": {
+      "headline_en": "What BIPAD recorded, year by year, by hazard.",
+      "headline_ne": "TODO",
+      "caption_en": "Deaths and people affected only from incidents that carried figures. Recorded counts also reflect changing reporting coverage over time.",
+      "caption_ne": "TODO",
+      "truncated_en": "Some years were capped.",
+      "truncated_ne": "TODO"
+    },
+    "cause": {
+      "headline_en": "Nepal's share of territorial fossil carbon dioxide.",
+      "headline_ne": "TODO"
+    },
+    "news": {
+      "headline_en": "What the climate wire is reporting.",
+      "headline_ne": "TODO",
+      "caption_en": "Glacier, GLOF, drought and climate headlines Atlas already ranks. Not a cause of any one flood.",
+      "caption_ne": "TODO"
+    }
+  },
+  "panels": {
+    "heat": {
+      "enabled": false,
+      "todo": "Nepal temperature anomaly by elevation. Needs a reviewed DHM or ICIMOD time series before this panel can render."
+    },
+    "water": {
+      "enabled": false,
+      "todo": "Monsoon onset/withdrawal drift and extreme-rainfall days. Needs a reviewed DHM series before this panel can render."
+    },
+    "air": {
+      "enabled": false,
+      "todo": "Hazardous air days per year. Needs a reviewed national series (not live station snapshots) before this panel can render."
+    },
+    "fire": {
+      "enabled": false,
+      "todo": "Forest fire detections per year. Needs a reviewed annual FIRMS or ICIMOD series before this panel can render."
+    }
+  },
+  "metrics": {
+    "cumulative_1750": {
+      "name_en": "Since 1750",
+      "name_ne": "सन् १७५० यता",
+      "caption_en": "Territorial fossil CO₂ and cement, cumulative since 1750. Excludes land-use change. Counted where the fuel was burned, not where goods were consumed.",
+      "caption_ne": "क्षेत्रीय जीवाश्म CO₂ र सिमेन्ट, सन् १७५० देखिको संचयी। भू-उपयोग परिवर्तनबाहेक। इन्धन जलेको ठाउँमा गनिने, उपभोग भएको ठाउँमा होइन।"
+    },
+    "cumulative_1850": {
+      "name_en": "Since 1850",
+      "name_ne": "सन् १८५० यता",
+      "caption_en": "Territorial fossil CO₂ and cement, cumulative since 1850. Excludes land-use change and everything emitted before 1850. Counted where the fuel was burned.",
+      "caption_ne": "क्षेत्रीय जीवाश्म CO₂ र सिमेन्ट, सन् १८५० देखिको संचयी। भू-उपयोग परिवर्तन र १८५० अघिको उत्सर्जनबाहेक। इन्धन जलेको ठाउँमा गनिने।"
+    },
+    "annual_latest": {
+      "name_en": "{year}",
+      "name_ne": "{year}",
+      "caption_en": "Territorial fossil CO₂ and cement in {year}. Excludes land-use change. Counted where the fuel was burned that year, not where goods were consumed.",
+      "caption_ne": "{year} को क्षेत्रीय जीवाश्म CO₂ र सिमेन्ट। भू-उपयोग परिवर्तनबाहेक। सो वर्ष इन्धन जलेको ठाउँमा गनिने, उपभोग भएको ठाउँमा होइन।"
+    },
+    "per_capita": {
+      "name_en": "Per person",
+      "name_ne": "प्रतिव्यक्ति",
+      "caption_en": "Territorial fossil CO₂ and cement per person in {year}. Excludes land-use change. Counted where the fuel was burned.",
+      "caption_ne": "{year} मा प्रतिव्यक्ति क्षेत्रीय जीवाश्म CO₂ र सिमेन्ट। भू-उपयोग परिवर्तनबाहेक। इन्धन जलेको ठाउँमा गनिने।"
+    },
+    "consumption": {
+      "name_en": "Consumption",
+      "name_ne": "उपभोग",
+      "caption_en": "Consumption-based fossil CO₂ in {year}: production plus imports minus exports. Excludes land-use change.",
+      "caption_ne": "{year} को उपभोगमा आधारित जीवाश्म CO₂: उत्पादनमा आयात जोडी निर्यात घटाएको। भू-उपयोग परिवर्तनबाहेक।"
+    }
+  },
+  "facts": [
+    {
+      "id": "icimod-2026-ice-loss",
+      "statement_en": "HKH glacier ice-loss rates have doubled since 2000. The region's glaciers lost about 12% of their area between 1990 and 2020, with the sharpest losses among glaciers under 0.5 km², which are about three-quarters of the region's glaciers.",
+      "statement_ne": "हिन्दुकुश हिमालय क्षेत्रका हिमनदीको बरफ घट्ने दर सन् २००० यता दोब्बर भएको छ। क्षेत्रका हिमनदीले १९९० देखि २०२० सम्म करिब १२ प्रतिशत क्षेत्रफल गुमाएका छन्। सबैभन्दा बढी क्षति ०.५ वर्ग किलोमिटरभन्दा साना हिमनदीमा देखिएको छ, जुन क्षेत्रका करिब तीन चौथाइ हिमनदी हुन्।",
+      "organisation": "ICIMOD",
+      "published": "2026-03-18",
+      "url": "https://www.icimod.org/press-releases/hindu-kush-himalaya-glaciers-losing-ice-at-double-the-rate-since-2000-new-icimod-report-confirm/"
+    },
+    {
+      "id": "icimod-2023-mass-loss",
+      "statement_en": "HKH glaciers lost ice about 65% faster in 2011–2020 than in the preceding decade.",
+      "statement_ne": "हिन्दुकुश हिमालयका हिमनदीले २०११–२०२० मा अघिल्लो दशकको तुलनामा करिब ६५ प्रतिशत छिटो बरफ गुमाए।",
+      "organisation": "ICIMOD",
+      "published": "2023-06-20",
+      "url": "https://www.icimod.org/press-release/landmark-report-on-impacts-of-disappearing-snow-and-ice-in-the-hindu-kush-himalaya-current-emissions-path-threatens-two-billion-people-and-is-accelerating-species-extinction/"
+    },
+    {
+      "id": "icimod-undp-2020-pdgl",
+      "statement_en": "47 potentially dangerous glacial lakes across the Koshi, Gandaki and Karnali basins — 25 in China, 21 in Nepal, 1 in India. More than half sit upstream of Nepal's border.",
+      "statement_ne": "कोशी, गण्डकी र कर्णाली बेसिनमा ४७ वटा सम्भावित जोखिमपूर्ण हिमताल छन् — २५ चीनमा, २१ नेपालमा, १ भारतमा। आधाभन्दा बढी नेपालको सीमापारि माथिल्लो तटीय क्षेत्रमा छन्।",
+      "organisation": "ICIMOD / UNDP",
+      "published": "2020-09-07",
+      "url": "https://www.icimod.org/new-glacial-lake-inventory-report-released-47-potentially-dangerous-glacial-lakes-ranked/"
+    },
+    {
+      "id": "nd-gain-nepal",
+      "statement_en": "Nepal is classified high vulnerability, low readiness.",
+      "statement_ne": "नेपाललाई उच्च जोखिम र न्यून तयारी भएको वर्गमा राखिएको छ।",
+      "organisation": "ND-GAIN",
+      "published": "2024",
+      "url": "https://gain-new.crc.nd.edu/country/nepal"
+    }
+  ],
+  "statementNeedles": [
+    {
+      "id": "climate-justice-mountain-agenda",
+      "needles": [
+        "climate justice",
+        "mountain agenda",
+        "जलवायु न्याय",
+        "माउन्टेन एजेन्डा"
+      ]
+    },
+    {
+      "id": "climate-finance",
+      "needles": [
+        "climate finance",
+        "जलवायु वित्त"
+      ]
+    },
+    {
+      "id": "himalayan-warming",
+      "needles": [
+        "himalayan warming",
+        "warming of the himalaya",
+        "himalayan region",
+        "हिमालयको तापक्रम",
+        "हिमालय क्षेत्रको तापक्रम",
+        "हिमालय क्षेत्रमा जलवायु"
+      ],
+      "title_en": "The risks we must bear are growing with climate change in the Himalayan region: Prime Minister",
+      "body_en": "Kathmandu, 15 Bhadra: Prime Minister Balendra Shah said the government is working with resolve and energy on search, rescue, treatment, relief and the safe management of people affected by the flood.\n\nOn social media today, Prime Minister Shah said the role of every security personnel, civil servant, the media, officials from various agencies, volunteer organisations and ordinary citizens deployed in the affected area — working on the front line without regard for their own lives — is worthy of respect and praise.\n\n“We express our sincere gratitude for the patience, support, help and coordination you have shown in this period. The backing and help the provincial and local governments have given the federal government in disaster management is very important. The goodwill and help shown by our friendly countries, domestic and foreign organisations, the media and all other stakeholders is also exemplary,” Prime Minister Shah said.\n\nPrime Minister Shah said the flood in the Bhotekoshi river was not ordinary. “It is among the largest disasters in this region, caused by an ice-and-rock avalanche in the Himalaya. This event has signalled that the risks we must bear are growing with climate change in the Himalayan region. This region must stay alert, and the time has also come for us to raise firmly with the international community the disasters we have had to face because of climate change,” he said.\n\nThe government is still focused on search and rescue in the affected area. Collecting and distributing relief for people there is also among its priorities. Prime Minister Shah said relief goods received from organisations and the public in Kathmandu and elsewhere in the country are being collected and delivered to affected people.\n\nNoting that the international community is also helping, he said support has so far been received from friendly countries including India, China, the United States, the UAE, Qatar, Japan, Switzerland and Australia.\n\n“Our security personnel have delivered aid to 3,696 affected people by air and road, through four collection centres in the affected area (Rasuwa, Nuwakot and Dhading) and 27 distribution centres in Rasuwa and Nuwakot districts,” he said. Provincial and local governments are also actively managing shelter and relief at those centres in coordination with the federal government, he said. The National Disaster Risk Reduction and Management Authority is also continuously briefing on relief collection and distribution.\n\nHe said members of the secretariat and staff have also been deployed to the affected area itself to see how effective relief collection and distribution has been. Prime Minister Shah said the part of Nuwakot across the Trishuli that the flood had cut off has been rejoined to the road network. A road along the right bank of the Trishuli under the Galchhi–Trishuli highway — through Kalleritar, Koshikhola, Piplatar, Darshantar, Chhatrekhola and Gauribesi to Trishuli Bazaar — has been brought into operation.\n\nA large number of people in Nuwakot now have a direct road link to the district headquarters again, he said. “This will make rescue, relief distribution and the supply of essentials in the affected areas easier. Most of the bridges from Rasuwa and Nuwakot through Dhading have collapsed. That has affected movement. The government has given priority to building temporary bridges in those areas. We have six Bailey bridges of 48 metres and one of 70 metres. A study has already been done on placing Bailey bridges at three sites (the Tadi river at Devighat, Trishuli Bazaar and Betravati Bazaar),” Prime Minister Shah said. A 230-foot single-lane modular steel bridge has also been received from the Government of India. India has committed to send seven more Bailey bridges, and 30 Bailey bridges are due shortly from the Government of China, he said.\n\nPrime Minister Shah said that alongside search and rescue, the government has also begun discussions on how to rehabilitate affected people. Collection of the number of affected people and of physical damage has already started, in coordination with local government, he said.\n\n“Thousands of people have lost homes, families, loved ones and property. The government understands the pain they have endured. Easing that pain and returning them to ordinary life through rehabilitation is the path now. The government will work to rehabilitate them, strengthening them mentally and physically. The work of raising the funds needed for rehabilitation is ongoing,” Prime Minister Shah said."
+    }
+  ]
+}

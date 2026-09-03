@@ -221,6 +221,9 @@ def reload_content() -> dict[str, Any]:
     _content_cache.clear()
     _funds_cache.clear()
     _geo_cache.clear()
+    from app.domains.climate.content import clear_source_facts
+
+    clear_source_facts()
     log.info("content_reloaded", trigger="admin")
 
     # Eagerly reload so the response can confirm what was loaded.

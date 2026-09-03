@@ -74,12 +74,16 @@ async def _get_json(path: str) -> Any:
     return data
 
 
-async def _collect(path: str, max_pages: int = 10) -> list[dict[str, Any]]:
-    """Page through a list endpoint.
+async def collect_pages(path: str, max_pages: int = 10) -> list[dict[str, Any]]:
+    """Page through a BIPAD list endpoint.
 
     BIPAD reports `count` as 2^63-1 on every list — a sentinel, not a total — so
     termination is decided by a short page or an absent `next`, never by count.
     """
+    return await _collect(path, max_pages)
+
+
+async def _collect(path: str, max_pages: int = 10) -> list[dict[str, Any]]:
     out: list[dict[str, Any]] = []
     for page in range(max_pages):
         joiner = "&" if "?" in path else "?"
