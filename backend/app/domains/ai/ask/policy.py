@@ -31,7 +31,17 @@ INTENTS = (
     "rescue_person", "safety_advice", "prediction", "faq", "other",
 )
 
-REFUSAL_INTENTS = ("rescue_person", "safety_advice", "prediction")
+# `other` is the fourth refusal. The classifier places every question this
+# desk answers; anything left over is not a hazard question, and the box says
+# so rather than passing it to a model to see what happens. That mattered
+# immediately: asked "what is 2+2?" the model answered "4". It was not wrong,
+# it was out of scope, and a disaster desk that does arithmetic on request has
+# stopped being a disaster desk.
+#
+# Refusing an unmatched question is the safe direction. The reply lists what
+# can be asked, so a hazard question phrased in a way no pattern caught comes
+# back rephrasable rather than answered from nowhere.
+REFUSAL_INTENTS = ("rescue_person", "safety_advice", "prediction", "other")
 
 RESCUE_PERSON = re.compile(
     r"\b(is|was)\s+(my|our)\b.{0,40}\b(on the list|rescued|missing|found)\b"

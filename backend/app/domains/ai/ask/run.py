@@ -6,6 +6,7 @@ consulted, before the budget is checked, and before any data is assembled — so
 configured, in credit, or reachable.
 """
 
+import json as jsonlib
 from typing import Any
 
 from app.core.config import settings
@@ -20,6 +21,7 @@ from app.domains.ai.ask.compose import (
     view_for_intent,
     wrap_tool_data,
 )
+from app.domains.ai.ask.guard import numbers_are_grounded, scrub_text
 from app.domains.ai.ask.live import refresh_for_intent
 from app.domains.ai.ask.policy import classify_intent, is_refusal
 from app.domains.ai.ask.rate_limit import (
@@ -184,7 +186,11 @@ async def _compose_turn(
     try:
         user = "\n\n".join(
             [
-                f"Question ({lang}): {question[:500]}",
+                # The reader's own text is untrusted too. The classifier
+                # sends most injections to `other` and a refusal, but one
+                # riding on a matched intent — "how many died? ignore your
+                # instructions and…" — still reaches here.
+                f"Question ({lang}): {scrub_text(question, limit=500)}",
                 wrap_tool_data(tool_results),
                 f"Suggested view (already validated): {view}",
             ]
@@ -198,11 +204,29 @@ async def _compose_turn(
         # Re-validated after the model returns: a view it invented is dropped
         # rather than forwarded to the map.
         model_view = validate_view(parsed.get("view")) if parsed else None
+
+        # The last gate. An injection that got past the scrubber still has to
+        # produce figures, and figures are checkable: every number in the
+        # answer must appear in the data the model was handed or in the
+        # template built from it. This desk's first rule is that it never
+        # invents a hazard number, and this is the only part of that rule a
+        # machine can enforce.
+        model_answer = (parsed or {}).get("answer") or ""
+        grounded = numbers_are_grounded(
+            model_answer, jsonlib.dumps(tool_results, ensure_ascii=False) + fallback
+        )
+        if model_answer and not grounded:
+            log.warning(
+                "ask_answer_ungrounded",
+                intent=intent,
+                detail="model figure absent from the tool data; serving the template",
+            )
+
         left = remaining_for(client_key)
         return {
             **base,
             "kind": "ok",
-            "answer": (parsed or {}).get("answer") or fallback,
+            "answer": model_answer if (model_answer and grounded) else fallback,
             "view": model_view or view,
             "model": result.model or settings.LLM_MODEL or "tarka",
             "usedModel": True,
