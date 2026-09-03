@@ -84,3 +84,110 @@ tables and RPCs are reachable.
 Traefik v3 terminating TLS with automatic Let's Encrypt, the Next.js
 frontend, the API, one worker, one scheduler and Redis — all on a single
 host. See `prod/README.md`.
+
+## Continuous delivery (`infra/coolify`)
+
+A push to `main` runs the suite, publishes two images, and tells Coolify to
+pull them. The deployment host does not build anything.
+
+```
+push to main
+  │
+  ├─ test              ruff · mypy · pytest · npm run verify
+  │                    everything below is gated on this
+  ├─ build-and-push    two images -> ghcr.io, tagged `latest` and `<sha>`
+  │                    linux/amd64 + linux/arm64
+  └─ deploy            GET /api/v1/deploy on Coolify; it pulls and restarts
+```
+
+Three properties are deliberate.
+
+**The suite gates the image.** Before this, a green tick meant "Docker built",
+which is a different claim from "the code works" — the workflow had one job and
+it never ran a test. The pre-commit hook did, but it is local, `--no-verify`
+skips it, and it silently skips the entire backend when the developer's Docker
+daemon is not running.
+
+**Production runs the artifact CI tested.** One build, in one place. When the
+host rebuilt the same Dockerfiles itself, the bytes in production were never
+the bytes anything had executed, and the two could drift on a base-image
+refresh alone.
+
+**The CI token can deploy and nothing else.** It cannot change which image
+production runs, read the stack's environment, or edit configuration — so a
+leaked workflow secret cannot repoint the site at an attacker's image. That is
+why CI does not pass a tag: Coolify decides what `latest` means, and pinning is
+a human action in the UI. The cost is that rollback is manual, which is the
+right trade for a public-safety page.
+
+Removing the server-side build also closed a latent one. Coolify passed every
+variable to `docker compose build` as `--build-arg`, including `LLM_API_KEY`,
+`SUPABASE_SECRET_KEY`, `MINIO_ROOT_PASSWORD`, `ATLAS_MEDIA_SECRET` and
+`FLOOD_ADMIN_TOKEN`. Nothing leaked, because neither Dockerfile declares a
+matching `ARG` and an undeclared build arg is discarded — but adding one line
+would have baked a live key into a published layer. There is now no build on
+the host to pass them to.
+
+### One-time setup
+
+**1 · GitHub → Settings → Secrets and variables → Actions**
+
+| Kind | Name | Value |
+|---|---|---|
+| Secret | `COOLIFY_BASE_URL` | e.g. `https://coolify.example.com` — no trailing path |
+| Secret | `COOLIFY_TOKEN` | Coolify → Keys & Tokens → API tokens. Scope it to **deploy** only |
+| Secret | `COOLIFY_RESOURCE_UUID` | the resource UUID, visible in its Coolify URL |
+| Variable | `NEXT_PUBLIC_API_BASE_URL` | `https://atlas-api.ancodalabs.com` — baked into the browser bundle |
+| Variable | `DEPLOY_ENABLED` | `true` — the switch. Leave it unset until step 3 has passed once |
+
+`NEXT_PUBLIC_API_BASE_URL` is a *variable*, not a secret: it is a public URL
+that ships inside the JavaScript every visitor downloads, and masking it in
+logs would only make a wrong value harder to spot. Unset, the Dockerfile's own
+fallback applies.
+
+The `deploy` job targets a `production` environment. Adding a required reviewer
+to it under Settings → Environments turns every deploy into an approval, which
+is worth doing before a monsoon.
+
+**2 · Coolify → Keys & Tokens → Registry credentials**
+
+The packages are private, so add one for `ghcr.io`:
+
+| Field | Value |
+|---|---|
+| URL | `ghcr.io` |
+| Username | your GitHub username |
+| Password | a GitHub token with **`read:packages` and nothing else** |
+
+Read-only is the whole point: this credential lives on the deployment host, and
+it must not be able to publish an image or read the repository.
+
+**3 · Coolify → the Atlas resource**
+
+The compose file no longer has a `build:` section, so Coolify will pull. Deploy
+once by hand and confirm it authenticates to GHCR and comes up healthy. Only
+then set `DEPLOY_ENABLED` to `true`, so the first automated deploy is not also
+the first time the credential is exercised.
+
+Until that variable is set, pushes to `main` still run the suite and publish
+images; the deploy job shows as skipped rather than passing over nothing.
+
+To pin a version — a rollback, or holding a release still — set
+`ATLAS_IMAGE_TAG` in the resource's environment to a commit SHA. CI publishes
+one immutable tag per commit beside `latest`. Clear it to track `main` again.
+
+### Checking the host
+
+Slimming the images cut what a deploy unpacks from 1.38 GB to 1.03 GB, and
+pulling rather than building removes the build cache entirely. If a deploy
+still dies during unpack, the host is out of room:
+
+```bash
+df -h /
+docker system df
+docker builder prune -af      # stale build cache, usually the largest win
+docker image prune -af        # per-commit images from earlier deploys
+```
+
+Never `docker system prune --volumes` here: it would take `atlas-runs` and
+`redis-data` with it.
