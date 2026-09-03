@@ -112,7 +112,6 @@ export default function ClimateContext({
   const emissions = data.emissions;
   const metrics = emissions.metrics || {};
   const hasMetrics = Object.keys(metrics).length > 0;
-  const disclaimer = pick(lang, data.disclaimerEn, data.disclaimerNe);
   const source = emissions.source;
   const lake = data.facts.find(fact => fact.id === LAKE_FACT);
   const otherFacts = data.facts.filter(fact => fact.id !== LAKE_FACT);
@@ -131,7 +130,6 @@ export default function ClimateContext({
         <span>{T.eyebrow[lang]}</span>
         <h2 id="atlas-climate-title">{T.title[lang]}</h2>
       </div>
-      {disclaimer && <p className={variant === 'desk' ? 'fl-note' : 'atlas-climate-note'}>{disclaimer}</p>}
 
       {hasMetrics ? (
         <MetricSwitcher
