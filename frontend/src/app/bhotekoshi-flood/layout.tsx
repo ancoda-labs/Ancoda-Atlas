@@ -1,6 +1,7 @@
 import { FloodDeskProvider } from '@/app/bhotekoshi-flood/_components/FloodDeskProvider';
+import { ClimateSeedProvider } from '@/components/ClimateSeed';
 import { serverGet } from '@/lib/server-api';
-import type { FloodDeskPayload } from '@/types';
+import type { ClimateContextPayload, FloodDeskPayload } from '@/types';
 
 // Rendered per request. The reviewed content is fetched server-side so the
 // helplines, the sitrep and the donation routes are in the first HTML — this
@@ -13,6 +14,13 @@ export default async function BhotekoshiFloodLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const desk = await serverGet<FloodDeskPayload>('/flood');
-  return <FloodDeskProvider initialDesk={desk}>{children}</FloodDeskProvider>;
+  const [desk, climate] = await Promise.all([
+    serverGet<FloodDeskPayload>('/flood'),
+    serverGet<ClimateContextPayload>('/climate'),
+  ]);
+  return (
+    <FloodDeskProvider initialDesk={desk}>
+      <ClimateSeedProvider value={climate}>{children}</ClimateSeedProvider>
+    </FloodDeskProvider>
+  );
 }
