@@ -7,7 +7,7 @@ from app.domains.flood.merge import (
     should_overlay,
 )
 from app.domains.flood.sources.bulletin_damage import parse_damage_figure
-from app.domains.flood.sources.bulletin_sitrep import parse_bulletin_figure
+from app.domains.flood.sources.bulletin_sitrep import parse_bulletin_figure, total_for
 
 
 class TestParseBulletinFigure:
@@ -27,6 +27,34 @@ class TestParseBulletinFigure:
 
     def test_a_dash_is_not_a_zero(self):
         assert parse_bulletin_figure("-") is None
+
+
+class TestTotalFor:
+    def test_an_svg_icon_does_not_hide_the_kpi_total(self):
+        """The bulletin's KPI buttons now carry inline SVGs. Deaths sat 538
+        characters past the id — past the old 400-character window — so the
+        overlay never saw 1,204 and the desk kept printing 1,114."""
+        pad = "M" * 500
+        html = f"""
+        <button type="button" class="kpi" id="kpi-dead">
+          <span class="kpi-ico"><svg><path d="{pad}"/></svg></span>
+          <span class="kpi-k">मृतक संख्या</span>
+          <strong class="num">१,२०४</strong>
+        </button>
+        <button type="button" class="kpi" id="kpi-miss">
+          <span class="kpi-ico"><svg><path d="{pad}"/></svg></span>
+          <strong class="num">४,२१६</strong>
+        </button>
+        <button type="button" class="kpi" id="kpi-injured">
+          <strong class="num">३०१</strong>
+        </button>
+        """
+        assert total_for(html, "dead") == {"value": 1204}
+        assert total_for(html, "miss") == {"value": 4216}
+        assert total_for(html, "injured") == {"value": 301}
+
+    def test_a_missing_kpi_button_is_not_a_zero(self):
+        assert total_for("<div></div>", "dead") is None
 
 
 class TestParseDamageFigure:
