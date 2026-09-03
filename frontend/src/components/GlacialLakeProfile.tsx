@@ -39,14 +39,16 @@ const T = {
 export default function GlacialLakeProfile({
   lang,
   fact,
+  compact = false,
 }: {
   lang: Lang;
   fact: ClimateFact;
+  compact?: boolean;
 }) {
   const caption = lang === 'ne' ? fact.statementNe : fact.statementEn;
   const label = fact.organisation || fact.url;
   return (
-    <figure className="glp">
+    <figure className={compact ? 'glp glp-compact' : 'glp'}>
       <header className="glp-head">
         <p className="glp-kicker">{T.heading[lang]}</p>
         <p className="glp-sub">{T.basins[lang]}</p>
@@ -72,11 +74,13 @@ export default function GlacialLakeProfile({
             />
           ))}
         </div>
-        <div className="glp-axis">
-          <span className="glp-cut" style={{ left: `${(UPSTREAM / TOTAL) * 100}%` }}>
-            {T.border[lang]}
-          </span>
-        </div>
+        {!compact ? (
+          <div className="glp-axis">
+            <span className="glp-cut" style={{ left: `${(UPSTREAM / TOTAL) * 100}%` }}>
+              {T.border[lang]}
+            </span>
+          </div>
+        ) : null}
       </div>
 
       <figcaption>
