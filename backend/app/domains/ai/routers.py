@@ -37,7 +37,19 @@ async def flood_insights(response: Response, lang: str = "ne") -> dict[str, Any]
 
 
 def _snapshot() -> dict[str, Any]:
+    """Everything the box may answer from, and nothing else.
+
+    Both stores, because the widget sits on every page: a reader on the
+    dashboard asking about an earthquake used to fall through to the flood
+    desk's figures, which is the wrong answer stated confidently.
+
+    Neither call reaches a government portal. The worker fetched all of this
+    on its own cycle and wrote it to runs/; the API only reads. That is the
+    rule that keeps a slow portal from hanging a question, and it is why the
+    answers carry a sweep timestamp rather than pretending to be live.
+    """
     from app.domains.flood import service as flood_service
+    from app.domains.hazards import service as hazards_service
 
     store = flood_service.get_store()
     payload = flood_service.desk_payload()
@@ -46,6 +58,7 @@ def _snapshot() -> dict[str, Any]:
         sitrep=payload.get("sitrep"),
         gauges=(payload.get("river") or {}).get("gauges") or [],
         news=store.get("news") or [],
+        hazards=hazards_service.get_dashboard(),
     )
 
 

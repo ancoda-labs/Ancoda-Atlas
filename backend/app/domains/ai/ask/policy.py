@@ -23,8 +23,12 @@ import re
 
 INTENTS = (
     "figures", "worst_districts", "uncontacted", "gauges", "district",
-    "funds", "news", "helplines", "rescue_person", "safety_advice",
-    "prediction", "faq", "other",
+    "funds", "news", "helplines",
+    # The dashboard's hazards, not just the flood desk's. The box sits on every
+    # page now, so a reader on the homepage asking about an earthquake used to
+    # fall through to "other" and be answered with flood figures.
+    "earthquake", "air_quality", "wildfire", "weather",
+    "rescue_person", "safety_advice", "prediction", "faq", "other",
 )
 
 REFUSAL_INTENTS = ("rescue_person", "safety_advice", "prediction")
@@ -65,9 +69,40 @@ FUNDS = re.compile(r"\bdonat|\bgive (money|safely)\b|\bqr\b|\brelief fund\b|स�
 NEWS = re.compile(
     r"\b(news|headline|press|what are (they|outlets) saying)\b|समाचार", re.I
 )
-HELPLINES = re.compile(r"\b(who to call|helpline|phone number|1234)\b|फोन|हेल्पलाइन", re.I)
+HELPLINES = re.compile(
+    r"\bwho (to|do i|should i|can i) call\b|\b(helpline|phone number|1234)\b"
+    r"|फोन|हेल्पलाइन",
+    re.I,
+)
 FIGURES = re.compile(
     r"\bhow many (died|dead|deaths|killed|injured)\b|\bdeath toll\b|कति मृत्यु", re.I
+)
+# Every alternative carries its own plural. A trailing \b after a bare
+# singular is the classic version of this bug: "earthquakes" and "forest fires"
+# both failed to match, and the question then fell through to the flood desk's
+# death toll — the wrong number, answered confidently.
+EARTHQUAKE = re.compile(
+    r"\b(earthquakes?|quakes?|tremors?|aftershocks?|seismic|magnitudes?"
+    r"|richter|epicent\w*)\b"
+    r"|भूकम्प|पराकम्प|रिक्टर",
+    re.I,
+)
+AIR_QUALITY = re.compile(
+    r"\b(air quality|aqi|pm2\.?5|pm10|smog|haze|pollution|breathe)\b"
+    r"|वायु गुणस्तर|प्रदूषण|धुवाँ",
+    re.I,
+)
+WILDFIRE = re.compile(
+    r"\b(wildfires?|forest fires?|bush ?fires?|firms|burning|hotspots?)\b"
+    r"|डढेलो|वन आगलागी",
+    re.I,
+)
+WEATHER = re.compile(
+    r"\b(rains?|rainfall|monsoons?|storms?|lightning|hail|heat ?waves?"
+    r"|cold ?waves?|droughts?|snow|avalanches?|temperatures?)\b"
+    r"|\bweather (alert|warning|advisory)s?\b"
+    r"|वर्षा|मनसुन|चट्याङ|असिना|हिमपहिरो|खडेरी|मौसम",
+    re.I,
 )
 DISTRICT = re.compile(
     r"\b(rasuwa|nuwakot|dhading|chitwan|gorkha|tanahun|nawalparasi|syaphrubesi"
@@ -101,6 +136,18 @@ def classify_intent(question: str) -> str:
         return "news"
     if FIGURES.search(q):
         return "figures"
+    # Hazard intents sit below the flood desk's own, because this is a flood
+    # response desk first: "how many died" means the flood unless the question
+    # says otherwise. They sit above `district`, so "earthquake in Rasuwa"
+    # answers about the earthquake rather than the district's flood toll.
+    if EARTHQUAKE.search(q):
+        return "earthquake"
+    if AIR_QUALITY.search(q):
+        return "air_quality"
+    if WILDFIRE.search(q):
+        return "wildfire"
+    if WEATHER.search(q):
+        return "weather"
     if DISTRICT.search(q):
         return "district"
     return "other"

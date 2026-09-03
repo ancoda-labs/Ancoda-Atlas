@@ -101,6 +101,79 @@ def template_answer(intent: str, snap: dict[str, Any], lang: str, question: str)
     if intent in ("rescue_person", "safety_advice", "prediction"):
         return refusal_answer(intent, lang, snap)
 
+    # ── the dashboard's hazards ──────────────────────────────────────────────
+    #
+    # Each of these reports a reading and names where it came from. None of
+    # them forecasts: Atlas relays what DHM and Open-Meteo publish, and a
+    # sentence that sounds like Atlas predicting weather would be read as a
+    # warning this desk is not entitled to issue.
+    if intent == "earthquake":
+        q = snap.get("seismic") or {}
+        as_of = snap.get("hazardsAsOf") or "unknown time"
+        if not q.get("events24h") and not q.get("events7d"):
+            return (
+                "No earthquakes are loaded on the desk for Nepal right now "
+                f"(USGS, swept {as_of}). {MONITORING_NOTE}"
+            )
+        strongest = q.get("strongest") or {}
+        where = strongest.get("place") or strongest.get("region") or "Nepal"
+        return (
+            f"USGS lists {q.get('events24h') or 0} earthquake(s) in the last 24 hours "
+            f"and {q.get('events7d') or 0} in the last 7 days. Largest magnitude on the "
+            f"desk: {q.get('maxMagnitude') or '—'} near {where} (swept {as_of}). "
+            f"Confirm against the National Seismological Centre. {MONITORING_NOTE}"
+        )
+
+    if intent == "air_quality":
+        a = snap.get("airQuality") or {}
+        as_of = snap.get("hazardsAsOf") or "unknown time"
+        worst = a.get("worst") or {}
+        ktm = a.get("kathmandu") or {}
+        if not a.get("totalReadings"):
+            return f"No air quality readings are loaded (Open-Meteo, swept {as_of})."
+        readings = []
+        if ktm:
+            readings.append(f"Kathmandu US AQI {ktm.get('aqi') or '—'}")
+        if worst:
+            readings.append(f"worst {worst.get('city') or '—'} {worst.get('aqi') or '—'}")
+        return (
+            f"{'; '.join(readings) or 'Readings loaded'} across "
+            f"{a.get('totalReadings')} cities (Open-Meteo, swept {as_of}). "
+            f"{MONITORING_NOTE}"
+        )
+
+    if intent == "wildfire":
+        f = snap.get("fire") or {}
+        as_of = snap.get("hazardsAsOf") or "unknown time"
+        if f.get("status") != "ok":
+            return (
+                "The wildfire panel is unavailable — NASA FIRMS needs a key, or the "
+                f"feed did not answer this sweep ({as_of})."
+            )
+        return (
+            f"NASA FIRMS shows {f.get('totalDetections') or 0} detection(s) over Nepal, "
+            f"{f.get('nightDetections') or 0} of them overnight (swept {as_of}). "
+            "A detection is a thermal anomaly, not a confirmed fire. "
+            f"{MONITORING_NOTE}"
+        )
+
+    if intent == "weather":
+        w = snap.get("weather") or {}
+        as_of = snap.get("hazardsAsOf") or "unknown time"
+        total = w.get("totalAlerts") or 0
+        season = "Monsoon season is active. " if w.get("monsoonSeason") else ""
+        if not total:
+            return (
+                f"{season}No severe weather alerts are loaded for Nepal "
+                f"(Open-Meteo, swept {as_of}). Atlas relays published alerts and does "
+                f"not forecast; DHM issues Nepal's warnings. {MONITORING_NOTE}"
+            )
+        return (
+            f"{season}{total} severe weather alert(s) are loaded for Nepal "
+            f"(Open-Meteo, swept {as_of}). Atlas relays published alerts and does not "
+            f"forecast — DHM issues Nepal's warnings. {MONITORING_NOTE}"
+        )
+
     if intent == "funds":
         names = "; ".join(f["name"] for f in snap["funds"][:4] if f.get("name"))
         return (

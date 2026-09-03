@@ -268,3 +268,157 @@ class TestTurn:
         monkeypatch.setattr("app.domains.ai.ask.run._tarka", lambda: None)
         out = await run_ask_turn("How many died?", "en", "k", _SNAP)
         assert "not a warning system" in out["answer"]
+
+
+class TestHazardIntents:
+    """The box sits on every page, so it has to answer beyond the flood desk.
+
+    Before these intents existed, "how big was the earthquake" fell through to
+    `other` and was answered with the flood desk's death toll — the wrong
+    figure, stated confidently, which is the failure mode this project treats
+    as worse than no answer.
+    """
+
+    _snap = {
+        "meta": {"timestamp": "2026-09-03T03:00:00Z"},
+        "seismic": {
+            "events24h": 3, "events7d": 11, "maxMagnitude": 4.2,
+            "strongest": {"place": "Rasuwa"},
+        },
+        "airQuality": {
+            "worst": {"city": "Birgunj", "aqi": 168},
+            "kathmandu": {"aqi": 151}, "totalReadings": 10,
+        },
+        "fire": {"status": "ok", "totalDetections": 7, "nightDetections": 2},
+        "weather": {"monsoonSeason": True, "totalAlerts": 2},
+    }
+
+    def _built(self):
+        from app.domains.ai.ask.tools import build_snapshot
+
+        return build_snapshot(
+            content={}, sitrep={}, gauges=[], news=[], hazards=self._snap
+        )
+
+    @pytest.mark.parametrize(
+        "question,expected",
+        [
+            ("how big was the earthquake today", "earthquake"),
+            ("के आज भूकम्प गयो?", "earthquake"),
+            ("what is the AQI in Kathmandu", "air_quality"),
+            ("any forest fires burning", "wildfire"),
+            ("डढेलो कहाँ छ", "wildfire"),
+            ("are there weather alerts", "weather"),
+            # Plurals. A trailing \b after a bare singular used to drop these
+            # into the flood desk's figures instead.
+            ("how many earthquakes were there", "earthquake"),
+            ("any aftershocks", "earthquake"),
+            ("where is the epicentre", "earthquake"),
+            ("any forest fires", "wildfire"),
+            ("wildfires burning anywhere", "wildfire"),
+            ("heavy rains coming", "weather"),
+            ("any storms", "weather"),
+        ],
+    )
+    def test_hazard_questions_reach_their_own_intent(self, question, expected):
+        from app.domains.ai.ask.policy import classify_intent
+
+        assert classify_intent(question) == expected
+
+    def test_a_glof_question_is_still_refused_before_any_hazard_intent(self):
+        """Order matters. `prediction` is tested before the hazard intents.
+
+        "will the lake burst" reads as a weather question to a keyword matcher,
+        and answering it would make a monitoring aid sound like a warning
+        system.
+        """
+        from app.domains.ai.ask.policy import classify_intent, is_refusal
+
+        assert classify_intent("will the lake burst again tomorrow") == "prediction"
+        assert is_refusal("prediction") is True
+
+    def test_the_flood_desk_still_wins_its_own_questions(self):
+        """This is a flood response desk first: bare figures mean the flood."""
+        from app.domains.ai.ask.policy import classify_intent
+
+        assert classify_intent("how many died") == "figures"
+        assert classify_intent("who do I call") == "helplines"
+
+    @pytest.mark.parametrize(
+        "intent,must_contain",
+        [
+            ("earthquake", "USGS"),
+            ("air_quality", "Open-Meteo"),
+            ("wildfire", "FIRMS"),
+            ("weather", "Open-Meteo"),
+        ],
+    )
+    def test_every_hazard_answer_names_its_source_and_sweep_time(self, intent, must_contain):
+        from app.domains.ai.ask.compose import template_answer
+
+        answer = template_answer(intent, self._built(), "en", "q")
+        assert must_contain in answer
+        assert "2026-09-03T03:00:00Z" in answer
+
+    def test_the_weather_answer_refuses_to_sound_like_a_forecast(self):
+        """Atlas relays DHM and Open-Meteo. It does not forecast, and the
+        sentence has to say so — a reader cannot tell relayed from predicted."""
+        from app.domains.ai.ask.compose import template_answer
+
+        answer = template_answer("weather", self._built(), "en", "will it rain")
+        assert "does not forecast" in answer
+        assert "DHM" in answer
+
+    def test_a_fire_detection_is_not_called_a_fire(self):
+        from app.domains.ai.ask.compose import template_answer
+
+        answer = template_answer("wildfire", self._built(), "en", "q")
+        assert "thermal anomaly, not a confirmed fire" in answer
+
+    def test_an_empty_sweep_says_so_rather_than_reporting_zero(self):
+        """Zero is a claim. Nothing loaded is a different statement."""
+        from app.domains.ai.ask.compose import template_answer
+        from app.domains.ai.ask.tools import build_snapshot
+
+        cold = build_snapshot(content={}, sitrep={}, gauges=[], news=[], hazards={})
+        assert "No earthquakes are loaded" in template_answer("earthquake", cold, "en", "q")
+        assert "No air quality readings are loaded" in template_answer(
+            "air_quality", cold, "en", "q"
+        )
+
+
+class TestAskTurnShape:
+    """What a caller can rely on without reading the prose."""
+
+    def _turn(self, question, monkeypatch):
+        import asyncio
+
+        from app.domains.ai.ask.run import run_ask_turn
+        from app.domains.ai.ask.tools import build_snapshot
+
+        snap = build_snapshot(content={}, sitrep={}, gauges=[], news=[], hazards={})
+        return asyncio.run(
+            run_ask_turn(
+                question=question, lang="en", client_key="test",
+                snapshot=snap, use_model=False,
+            )
+        )
+
+    def test_a_refusal_says_it_refused(self, monkeypatch):
+        """The contract has always declared `refused`; nothing ever sent it, so
+        a refusal was indistinguishable from an answer to any caller that did
+        not string-match the prose."""
+        turn = self._turn("is my brother on the rescue list", monkeypatch)
+        assert turn["kind"] == "refused"
+        assert turn["intent"] == "rescue_person"
+
+    def test_an_answer_carries_its_intent(self, monkeypatch):
+        turn = self._turn("how big was the earthquake", monkeypatch)
+        assert turn["kind"] == "ok"
+        assert turn["intent"] == "earthquake"
+
+    def test_a_hazard_question_is_not_answered_with_flood_figures(self, monkeypatch):
+        """The regression that motivated the hazard intents."""
+        turn = self._turn("any forest fires", monkeypatch)
+        assert turn["intent"] == "wildfire"
+        assert "deaths" not in turn["answer"].lower()

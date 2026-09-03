@@ -77,6 +77,9 @@ async def run_ask_turn(
 
     base = {
         "lang": lang,
+        # The classifier's verdict, so a caller can tell a refusal from an
+        # answer without string-matching the prose.
+        "intent": intent,
         "view": view,
         "tools": tools,
         "citations": citations_from_snap(snapshot),
@@ -88,7 +91,9 @@ async def run_ask_turn(
     if is_refusal(intent):
         return {
             **base,
-            "kind": "ok",
+            # Was "ok", which made a refusal indistinguishable from an answer.
+            # The contract has always declared "refused"; nothing ever sent it.
+            "kind": "refused",
             "answer": refusal_answer(intent, lang, snapshot),
             "model": None,
             "usedModel": False,

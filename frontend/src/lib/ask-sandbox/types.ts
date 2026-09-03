@@ -15,6 +15,13 @@ export type AskIntent =
   | 'funds'
   | 'news'
   | 'helplines'
+  // The dashboard's hazards, not only the flood desk's. The widget sits on
+  // every page, so a question about an earthquake must not be answered with
+  // the flood desk's death toll.
+  | 'earthquake'
+  | 'air_quality'
+  | 'wildfire'
+  | 'weather'
   | 'rescue_person'
   | 'safety_advice'
   | 'prediction'
@@ -27,7 +34,11 @@ export type AskToolName =
   | 'get_district'
   | 'search_news'
   | 'get_relief_funds'
-  | 'get_faq';
+  | 'get_faq'
+  | 'get_seismic'
+  | 'get_air_quality'
+  | 'get_fire'
+  | 'get_weather';
 
 export interface AskToolCall {
   name: AskToolName;
@@ -91,6 +102,8 @@ export interface AskSnapshot {
 
 export interface AskTurnResult {
   kind: 'ok' | 'refused' | 'quota' | 'disabled';
+  /** The classifier's verdict, so a refusal is legible without reading prose. */
+  intent: AskIntent;
   answer: string;
   lang: 'en' | 'ne';
   view: ViewAction;

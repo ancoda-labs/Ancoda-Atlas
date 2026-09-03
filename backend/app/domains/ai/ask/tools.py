@@ -35,14 +35,59 @@ def sanitize_headline(title: str) -> str:
     return IMPERATIVE.sub("[removed]", title or "")[:240]
 
 
+def hazard_slice(hazards: dict[str, Any] | None) -> dict[str, Any]:
+    """The dashboard's hazards, trimmed to what an answer can cite.
+
+    Only the fields a template reads. The snapshot is pasted into a prompt, so
+    handing over the whole 8 MB sweep would cost tokens on data no answer uses
+    and give a prompt-injection payload more room to hide.
+    """
+    h = hazards or {}
+    seismic = h.get("seismic") or {}
+    weather = h.get("weather") or {}
+    fire = h.get("fire") or {}
+    air = h.get("airQuality") or {}
+    return {
+        "hazardsAsOf": (h.get("meta") or {}).get("timestamp"),
+        "seismic": {
+            "events24h": seismic.get("events24h"),
+            "events7d": seismic.get("events7d"),
+            "maxMagnitude": seismic.get("maxMagnitude"),
+            "strongest": seismic.get("strongest"),
+            "recent": (seismic.get("recent") or [])[:5],
+        },
+        "weather": {
+            "monsoonSeason": weather.get("monsoonSeason"),
+            "totalAlerts": weather.get("totalAlerts"),
+            "alerts": (weather.get("alerts") or [])[:5],
+            "stations": (weather.get("stations") or [])[:5],
+        },
+        "fire": {
+            "status": fire.get("status"),
+            "fireSeason": fire.get("fireSeason"),
+            "totalDetections": fire.get("totalDetections"),
+            "nightDetections": fire.get("nightDetections"),
+            "regions": (fire.get("regions") or [])[:5],
+        },
+        "airQuality": {
+            "totalReadings": air.get("totalReadings"),
+            "worst": air.get("worst"),
+            "kathmandu": air.get("kathmandu"),
+            "stations": (air.get("stations") or [])[:5],
+        },
+    }
+
+
 def build_snapshot(
     content: dict[str, Any],
     sitrep: dict[str, Any] | None,
     gauges: list[dict[str, Any]],
     news: list[dict[str, Any]],
+    hazards: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     sitrep = sitrep or {}
     return {
+        **hazard_slice(hazards),
         "sitrepAsOf": sitrep.get("as_of"),
         "sitrepAsOfLabelEn": sitrep.get("as_of_label_en"),
         "sitrepAsOfLabelNe": sitrep.get("as_of_label_ne"),
@@ -109,6 +154,10 @@ TOOLS_FOR_INTENT = {
     "news": ["search_news"],
     "helplines": ["get_faq"],
     "faq": ["get_faq"],
+    "earthquake": ["get_seismic"],
+    "air_quality": ["get_air_quality"],
+    "wildfire": ["get_fire"],
+    "weather": ["get_weather"],
 }
 
 
@@ -177,6 +226,17 @@ def run_tool(name: str, args: dict[str, Any], snap: dict[str, Any]) -> Any:
         return {"funds": snap["funds"]}
     if name == "get_faq":
         return {"helplines": snap["helplines"]}
+    # The hazard tools all answer from the 15-minute sweep, so each one hands
+    # back the sweep's timestamp with the reading. A figure without the moment
+    # it was taken is not a figure anyone can act on.
+    if name == "get_seismic":
+        return {**snap["seismic"], "as_of": snap.get("hazardsAsOf")}
+    if name == "get_air_quality":
+        return {**snap["airQuality"], "as_of": snap.get("hazardsAsOf")}
+    if name == "get_fire":
+        return {**snap["fire"], "as_of": snap.get("hazardsAsOf")}
+    if name == "get_weather":
+        return {**snap["weather"], "as_of": snap.get("hazardsAsOf")}
     return None
 
 
