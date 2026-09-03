@@ -22,12 +22,33 @@
  * disaster page reads as authoritative whether or not it has earned it.
  */
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Check, ChevronsUpDown } from 'lucide-react';
 
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useFloodLang } from '@/hooks/use-flood-lang';
-import { NEPAL_LANGUAGES, WORLD_LANGUAGES, findLanguage } from '@/lib/nepal-languages';
+import { ALL_LANGUAGES, NEPAL_LANGUAGES, WORLD_LANGUAGES, findLanguage } from '@/lib/nepal-languages';
 import { useAsk, useSandboxStatus } from '@/hooks/useAsk';
 import type { AskTurnResult } from '@/lib/ask-sandbox/types';
+
+/** The widget's own storage key.
+ *
+ *  `atlas_language` belongs to the site chrome and is deliberately not touched
+ *  here. This picker changes what the ask box answers in, and nothing else —
+ *  not the page, and not the AI Insights panel, which holds its own separate
+ *  state for the news brief.
+ */
+const ASK_LANG_KEY = 'atlas_ask_language';
 
 interface Turn {
   role: 'user' | 'assistant';
@@ -59,6 +80,8 @@ const COPY = {
     language: 'Answer language',
     groupNepal: 'Nepal',
     groupWorld: 'World',
+    searchLanguage: 'Search a language…',
+    noLanguage: 'No language matches.',
     fellBack: (name: string) => `Could not write ${name} — answered in English.`,
     intro:
       'I answer from what the desk last collected from Nepal government portals — NDRRMA/BIPAD, the OPMCM rescue portal, DHM and ReliefWeb — plus USGS, Open-Meteo and NASA FIRMS. Every answer carries the time it was collected.',
@@ -86,6 +109,8 @@ const COPY = {
     language: 'जवाफको भाषा',
     groupNepal: 'नेपाल',
     groupWorld: 'विश्व',
+    searchLanguage: 'भाषा खोज्नुहोस्…',
+    noLanguage: 'कुनै भाषा मिलेन।',
     fellBack: (name: string) => `${name} लेख्न सकिएन — नेपालीमा जवाफ दिइयो।`,
     intro:
       'म डेस्कले नेपाल सरकारका पोर्टलबाट पछिल्लो पटक संकलन गरेको तथ्यांकबाट जवाफ दिन्छु — NDRRMA/BIPAD, OPMCM उद्धार पोर्टल, DHM र ReliefWeb, साथै USGS, Open-Meteo र NASA FIRMS। हरेक जवाफसँग संकलन गरिएको समय हुन्छ।',
@@ -102,16 +127,45 @@ const COPY = {
 
 export default function AskAtlasWidget() {
   const [open, setOpen] = useState(false);
+  const [langOpen, setLangOpen] = useState(false);
   const [message, setMessage] = useState('');
   const [thread, setThread] = useState<Turn[]>([]);
   const [busy, setBusy] = useState(false);
 
+  // Read-only, and it has to stay that way. useFloodLang also returns a setter,
+  // and taking it here would let this picker retitle the entire site — the one
+  // thing it must not do. A node test asserts this file never imports the
+  // store's language action, so the guarantee does not rest on this comment.
   const [siteLang] = useFloodLang();
-  // The answer's language is the widget's own, not the site chrome's. A reader
-  // abroad wants the answer in Amharic without turning the whole page Amharic,
-  // and the page has no Amharic to turn into — only the answer is translated.
-  const [answerLang, setAnswerLang] = useState<string>(siteLang);
+
+  // The widget owns its answer language outright, under its own storage key.
+  // A reader abroad wants the answer in Amharic without turning the page
+  // Amharic — and there is no Amharic page to turn into; only the answer is
+  // translated.
+  const [answerLang, setAnswerLangState] = useState<string>(siteLang);
+
+  // Seeded from the site's choice once, then never again: after the reader
+  // picks a language here, switching the page between English and Nepali
+  // leaves this alone.
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(ASK_LANG_KEY);
+      if (saved && ALL_LANGUAGES.some(l => l.code === saved)) setAnswerLangState(saved);
+    } catch {
+      // Private windows and blocked site data both throw here. The seed stands.
+    }
+  }, []);
+
+  const setAnswerLang = useCallback((next: string) => {
+    setAnswerLangState(next);
+    try {
+      window.localStorage.setItem(ASK_LANG_KEY, next);
+    } catch {
+      // Failing to remember the choice is not a reason to refuse it.
+    }
+  }, []);
   const t = COPY[answerLang === 'ne' ? 'ne' : 'en'];
+  const selectedLanguage = useMemo(() => findLanguage(answerLang), [answerLang]);
 
   const ask = useAsk();
   // Only polled while the panel is open: the remaining budget is worthless to
@@ -208,47 +262,89 @@ export default function AskAtlasWidget() {
           <header className="border-b border-border px-4 py-3">
             <div className="flex items-baseline justify-between gap-2">
               <h2 className="text-sm font-semibold text-foreground">{t.title}</h2>
-              <div className="flex items-center gap-2">
-                {/* The box answers in these two. The ~100-language list belongs
-                    to the news brief, which translates listed headlines; this
-                    box composes sentences from desk figures, and offering a
-                    language it cannot actually write would be the same lie the
-                    brief's fellBackFrom exists to avoid. */}
-                {/* Every language the news brief offers. The answer is
-                    composed in English or Nepali and carried across; a
-                    language the model cannot write comes back in the composed
-                    language with fellBackFrom naming what was asked for. */}
-                <label className="sr-only" htmlFor="ask-atlas-lang">
-                  {t.language}
-                </label>
-                <select
-                  id="ask-atlas-lang"
-                  value={answerLang}
-                  onChange={e => setAnswerLang(e.target.value)}
-                  className="max-w-[9rem] rounded border border-border bg-background px-1.5 py-0.5 text-[11px] text-foreground"
-                >
-                  <optgroup label={t.groupNepal}>
-                    {NEPAL_LANGUAGES.map(l => (
-                      <option key={l.code} value={l.code}>{l.native}</option>
-                    ))}
-                  </optgroup>
-                  <optgroup label={t.groupWorld}>
-                    {WORLD_LANGUAGES.map(l => (
-                      <option key={l.code} value={l.code}>{l.native}</option>
-                    ))}
-                  </optgroup>
-                </select>
-                <button
-                  type="button"
-                  onClick={() => setOpen(false)}
-                  className="text-xs text-foreground/60 underline underline-offset-2 hover:text-foreground"
-                >
-                  {t.close}
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="shrink-0 text-xs text-foreground/60 underline underline-offset-2 hover:text-foreground"
+              >
+                {t.close}
+              </button>
             </div>
             <p className="mt-0.5 text-xs text-foreground/60">{t.subtitle}</p>
             <p className="mt-1 text-[11px] leading-snug text-foreground/50">{t.experiment}</p>
+
+            {/* Its own row and its own state. The AI Insights panel has a
+                separate picker for the news brief; a reader comparing the two
+                should be able to read the brief in Nepali and ask a question
+                in Amharic without one choice moving the other. */}
+            <div className="mt-2 flex items-center gap-2">
+              <span id="ask-atlas-lang" className="shrink-0 text-[11px] text-foreground/60">
+                {t.language}
+              </span>
+              <Popover open={langOpen} onOpenChange={setLangOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={langOpen}
+                    aria-labelledby="ask-atlas-lang"
+                    className="h-7 min-w-0 flex-1 justify-between px-2 text-xs font-normal"
+                  >
+                    <span className="truncate">
+                      {selectedLanguage.native} · {selectedLanguage.english}
+                    </span>
+                    <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                {/* Above the panel itself. The popover portals to the body, so
+                    it escapes the panel's overflow-hidden, but it would render
+                    behind the panel at anything below z-[4001]. */}
+                <PopoverContent
+                  align="end"
+                  className="z-[4002] w-[min(18rem,calc(100vw-3rem))] p-0"
+                >
+                  <Command
+                    filter={(value, search) =>
+                      value.toLowerCase().includes(search.toLowerCase()) ? 1 : 0
+                    }
+                  >
+                    <CommandInput placeholder={t.searchLanguage} />
+                    <CommandList>
+                      <CommandEmpty>{t.noLanguage}</CommandEmpty>
+                      {/* Nepal first, as on the brief's picker: this desk's own
+                          readers before everyone else. */}
+                      {[
+                        { label: t.groupNepal, items: NEPAL_LANGUAGES },
+                        { label: t.groupWorld, items: WORLD_LANGUAGES },
+                      ].map(group => (
+                        <CommandGroup key={group.label} heading={group.label}>
+                          {group.items.map(l => (
+                            <CommandItem
+                              key={l.code}
+                              value={`${l.native} ${l.english} ${l.code}`}
+                              onSelect={() => {
+                                setAnswerLang(l.code);
+                                setLangOpen(false);
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  'mr-2 h-4 w-4',
+                                  answerLang === l.code ? 'opacity-100' : 'opacity-0',
+                                )}
+                              />
+                              <span className="truncate">
+                                {l.native} · {l.english}
+                              </span>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      ))}
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            </div>
           </header>
 
           <div ref={logRef} className="flex-1 space-y-3 overflow-y-auto px-4 py-3">
