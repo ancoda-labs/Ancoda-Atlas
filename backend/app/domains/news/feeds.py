@@ -53,6 +53,12 @@ NEPAL_SOURCES: dict[str, list[dict[str, str]]] = {
         {"name": "Google Nepal Air Quality Nepali", "url": "https://news.google.com/rss/search?q=(%E0%A4%B5%E0%A4%BE%E0%A4%AF%E0%A5%81%20%E0%A4%AA%E0%A5%8D%E0%A4%B0%E0%A4%A6%E0%A5%82%E0%A4%B7%E0%A4%A3%20OR%20%E0%A4%B5%E0%A4%BE%E0%A4%AF%E0%A5%81%20%E0%A4%97%E0%A5%81%E0%A4%A3%E0%A4%B8%E0%A5%8D%E0%A4%A4%E0%A4%B0%20OR%20%E0%A4%A7%E0%A5%81%E0%A4%B5%E0%A4%BE%E0%A4%81%20OR%20%E0%A4%A4%E0%A5%81%E0%A4%B8%E0%A4%BE%E0%A4%B0%E0%A5%8B)%20%E0%A4%A8%E0%A5%87%E0%A4%AA%E0%A4%BE%E0%A4%B2%20when%3A21d&hl=ne&gl=NP&ceid=NP:ne"},
     ],
     "climate": [
+        # Local dailies often carry enclosure/og images; Google RSS usually does not.
+        # Hazard + climate gates still drop non-climate stories.
+        {"name": "Kathmandu Post", "url": "https://kathmandupost.com/rss"},
+        {"name": "Onlinekhabar English", "url": "https://english.onlinekhabar.com/feed"},
+        {"name": "The Rising Nepal", "url": "https://risingnepaldaily.com/rss"},
+        {"name": "Himal Khabar", "url": "https://www.himalkhabar.com/feed"},
         {"name": "Google Nepal Climate Hazard", "url": "https://news.google.com/rss/search?q=(glacier%20Nepal%20OR%20%22glacial%20lake%22%20Nepal%20OR%20GLOF%20Nepal%20OR%20ICIMOD%20OR%20snowmelt%20Nepal%20OR%20drought%20Nepal%20OR%20%22climate%20risk%22%20Nepal)%20when%3A30d&hl=en-US&gl=US&ceid=US:en"},
         {"name": "Google Nepal Climate Nepali", "url": "https://news.google.com/rss/search?q=(%E0%A4%B9%E0%A4%BF%E0%A4%AE%E0%A4%A4%E0%A4%BE%E0%A4%B2%20OR%20%E0%A4%B9%E0%A4%BF%E0%A4%AE%E0%A4%A8%E0%A4%A6%E0%A5%80%20OR%20%E0%A4%9C%E0%A4%B2%E0%A4%B5%E0%A4%BE%E0%A4%AF%E0%A5%81%20OR%20%E0%A4%96%E0%A4%A1%E0%A5%87%E0%A4%B0%E0%A5%80)%20%E0%A4%A8%E0%A5%87%E0%A4%AA%E0%A4%BE%E0%A4%B2%20when%3A30d&hl=ne&gl=NP&ceid=NP:ne"},
     ],

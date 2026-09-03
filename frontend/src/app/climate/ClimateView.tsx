@@ -56,7 +56,6 @@ export default function ClimateView({
   const lakeFact = facts.find(fact => fact.id === section?.lakes?.factId);
   const title = pickCopy(lang, section?.titleEn, section?.titleNe) || 'Climate';
   const standfirst = pickCopy(lang, section?.standfirstEn, section?.standfirstNe);
-  const disclaimer = pickCopy(lang, data?.disclaimerEn, data?.disclaimerNe);
   const showIce = Boolean(section?.ice && iceFact);
   const showLakes = Boolean(section?.lakes && lakeFact);
   const showArrived = Boolean(section?.arrived && data?.arrived?.hazards.length && data.arrived.source?.url);
@@ -113,7 +112,6 @@ export default function ClimateView({
       standfirst={standfirst}
     >
       <ClimateLang lang={lang} />
-      {disclaimer ? <p className="fl-note">{disclaimer}</p> : null}
       {jumps.length > 0 ? (
         <nav className="fl-jump fl-jump-fit" aria-label={pickCopy(lang, T.jumpLabel.en, T.jumpLabel.ne)}>
           <p className="fl-jump-kicker">{pickCopy(lang, T.jumpHint.en, T.jumpHint.ne)}</p>

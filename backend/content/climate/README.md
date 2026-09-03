@@ -18,6 +18,12 @@ when, and a URL a reader can open.
    - `organisation` — the publisher, as they name themselves
    - `published` — ISO date (`YYYY-MM-DD`) or a year if that is all they give
    - `url` — a page or PDF a reader can open; the UI links it next to the line
+   - optional `image_url` — an `https://` asset from the same publisher page
+     (or clearly attributed to that organisation). The API serves it only via
+     the signed media proxy; never hotlink. If set, also require
+     `image_alt_en` and `image_credit_en`. `image_alt_ne` / `image_credit_ne`
+     stay `TODO` until a human writes them. Do not reuse flood damage or
+     rescue photographs here — that implies causation.
 4. `disclaimer_*` is the one-line guard so the section cannot be read as
    attributing a specific flood to climate change or to any country's
    emissions. Do not drop it.

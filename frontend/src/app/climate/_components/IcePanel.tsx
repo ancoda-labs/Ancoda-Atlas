@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { ClimatePanel, SourceChip, pickCopy } from '@/app/climate/_components/ClimatePanel';
+import { ClimatePanel, FactFigure, SourceChip, pickCopy } from '@/app/climate/_components/ClimatePanel';
 import type { Lang } from '@/hooks/use-flood-lang';
 import type { ClimateFact, ClimateSectionCopy } from '@/types';
 
@@ -66,6 +66,7 @@ export default function IcePanel({
         </table>
       }
     >
+      <FactFigure fact={fact} lang={lang} />
       <div className="cl-ice">
         <p className="cl-hero">{percent}%</p>
         <IceGrid percent={percent} headline={headline} caption={caption} />

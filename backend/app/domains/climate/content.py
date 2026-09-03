@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from app.core.logging import get_logger
+from app.domains.media.proxy import proxy_url_for
 
 log = get_logger(__name__)
 
@@ -67,7 +68,11 @@ def clear_source_facts() -> None:
 
 
 def public_facts(raw: dict[str, Any] | None = None) -> list[dict[str, Any]]:
-    """Facts as the page renders them: statement, organisation, date, URL."""
+    """Facts as the page renders them: statement, organisation, date, URL.
+
+    Optional reviewed `image_url` becomes a signed `imageProxy` only — the raw
+    upstream URL never leaves the API.
+    """
     source = raw if raw is not None else load_source_facts()
     facts: list[dict[str, Any]] = []
     for item in source.get("facts") or []:
@@ -78,16 +83,45 @@ def public_facts(raw: dict[str, Any] | None = None) -> list[dict[str, Any]]:
         if not url or not statement_en:
             log.error("climate_fact_incomplete", id=item.get("id"))
             continue
-        facts.append(
-            {
-                "id": item.get("id"),
-                "statementEn": statement_en,
-                "statementNe": item.get("statement_ne") or statement_en,
-                "organisation": item.get("organisation"),
-                "published": item.get("published"),
-                "url": url,
-            }
-        )
+        out: dict[str, Any] = {
+            "id": item.get("id"),
+            "statementEn": statement_en,
+            "statementNe": item.get("statement_ne") or statement_en,
+            "organisation": item.get("organisation"),
+            "published": item.get("published"),
+            "url": url,
+            "imageProxy": None,
+            "imageAltEn": None,
+            "imageAltNe": None,
+            "imageCreditEn": None,
+            "imageCreditNe": None,
+        }
+        image_url = item.get("image_url")
+        if isinstance(image_url, str) and image_url.startswith("https://"):
+            proxy = proxy_url_for(image_url)
+            if proxy:
+                out["imageProxy"] = proxy
+                alt_en = item.get("image_alt_en")
+                out["imageAltEn"] = alt_en if isinstance(alt_en, str) and alt_en.strip() else None
+                alt_ne = item.get("image_alt_ne")
+                out["imageAltNe"] = (
+                    alt_ne if isinstance(alt_ne, str) and alt_ne.strip() and alt_ne != "TODO" else None
+                )
+                credit_en = item.get("image_credit_en")
+                out["imageCreditEn"] = (
+                    credit_en if isinstance(credit_en, str) and credit_en.strip() else None
+                )
+                credit_ne = item.get("image_credit_ne")
+                out["imageCreditNe"] = (
+                    credit_ne
+                    if isinstance(credit_ne, str) and credit_ne.strip() and credit_ne != "TODO"
+                    else None
+                )
+            else:
+                log.error("climate_fact_image_unproxyable", id=item.get("id"))
+        elif image_url:
+            log.error("climate_fact_image_not_https", id=item.get("id"))
+        facts.append(out)
     return facts
 
 

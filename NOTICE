@@ -75,7 +75,9 @@ Live data services
 
 Glacier, GLOF and ND-GAIN figures that cannot be parsed from a feed are
 reviewed by hand in backend/content/climate/source-facts.json. See that
-directory's README for how to update them.
+directory's README for how to update them. Optional reviewed context
+photographs on those facts (ICIMOD press assets) are streamed through
+Atlas's signed media proxy; the raw URLs never leave the API.
 
 
 ================================================================================

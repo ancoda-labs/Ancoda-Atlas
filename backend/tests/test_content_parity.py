@@ -50,6 +50,17 @@ def test_climate_source_facts_parse_and_every_fact_has_a_url():
         assert fact.get("organisation"), f"{fact.get('id')} has no organisation"
         assert fact.get("published"), f"{fact.get('id')} has no publication date"
         assert str(fact.get("url") or "").startswith("http"), f"{fact.get('id')} has no source URL"
+        image_url = fact.get("image_url")
+        if image_url:
+            assert str(image_url).startswith("https://"), f"{fact.get('id')} image_url must be https"
+            assert fact.get("image_alt_en"), f"{fact.get('id')} image needs image_alt_en"
+            assert fact.get("image_credit_en"), f"{fact.get('id')} image needs image_credit_en"
+            assert fact.get("image_alt_ne") == "TODO", (
+                f"{fact.get('id')} Nepali image alt must stay TODO until a human writes it"
+            )
+            assert fact.get("image_credit_ne") == "TODO", (
+                f"{fact.get('id')} Nepali image credit must stay TODO until a human writes it"
+            )
     metrics = data.get("metrics") or {}
     assert "cumulative_1750" in metrics
     for key, meta in metrics.items():

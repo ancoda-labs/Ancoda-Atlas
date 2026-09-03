@@ -116,7 +116,12 @@
       "statement_ne": "हिन्दुकुश हिमालय क्षेत्रका हिमनदीको बरफ घट्ने दर सन् २००० यता दोब्बर भएको छ। क्षेत्रका हिमनदीले १९९० देखि २०२० सम्म करिब १२ प्रतिशत क्षेत्रफल गुमाएका छन्। सबैभन्दा बढी क्षति ०.५ वर्ग किलोमिटरभन्दा साना हिमनदीमा देखिएको छ, जुन क्षेत्रका करिब तीन चौथाइ हिमनदी हुन्।",
       "organisation": "ICIMOD",
       "published": "2026-03-18",
-      "url": "https://www.icimod.org/press-releases/hindu-kush-himalaya-glaciers-losing-ice-at-double-the-rate-since-2000-new-icimod-report-confirm/"
+      "url": "https://www.icimod.org/press-releases/hindu-kush-himalaya-glaciers-losing-ice-at-double-the-rate-since-2000-new-icimod-report-confirm/",
+      "image_url": "https://www.icimod.org/wp-content/uploads/resource_Samjwol_080418_CIMG4705.jpg",
+      "image_alt_en": "Glacial ice and moraine in the Hindu Kush Himalaya. Photo: Samjwal Ratan Bajracharya.",
+      "image_alt_ne": "TODO",
+      "image_credit_en": "Samjwal Ratan Bajracharya / ICIMOD",
+      "image_credit_ne": "TODO"
     },
     {
       "id": "icimod-2023-mass-loss",
@@ -132,7 +137,12 @@
       "statement_ne": "कोशी, गण्डकी र कर्णाली बेसिनमा ४७ वटा सम्भावित जोखिमपूर्ण हिमताल छन् — २५ चीनमा, २१ नेपालमा, १ भारतमा। आधाभन्दा बढी नेपालको सीमापारि माथिल्लो तटीय क्षेत्रमा छन्।",
       "organisation": "ICIMOD / UNDP",
       "published": "2020-09-07",
-      "url": "https://www.icimod.org/new-glacial-lake-inventory-report-released-47-potentially-dangerous-glacial-lakes-ranked/"
+      "url": "https://www.icimod.org/new-glacial-lake-inventory-report-released-47-potentially-dangerous-glacial-lakes-ranked/",
+      "image_url": "https://www.icimod.org/wp-content/uploads/2020/11/Ponkar-lake-1366x681-1.png",
+      "image_alt_en": "Ponkar Lake, from the ICIMOD / UNDP inventory of potentially dangerous glacial lakes.",
+      "image_alt_ne": "TODO",
+      "image_credit_en": "ICIMOD",
+      "image_credit_ne": "TODO"
     },
     {
       "id": "nd-gain-nepal",

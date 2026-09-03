@@ -1686,6 +1686,12 @@ export interface ClimateFact {
   organisation: string | null;
   published: string | null;
   url: string;
+  /** Signed Atlas media proxy; raw upstream URL never leaves the API. */
+  imageProxy?: string | null;
+  imageAltEn?: string | null;
+  imageAltNe?: string | null;
+  imageCreditEn?: string | null;
+  imageCreditNe?: string | null;
 }
 
 export interface ClimateArrivedHazard {

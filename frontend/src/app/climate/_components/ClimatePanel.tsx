@@ -30,6 +30,29 @@ export function SourceChip({
   );
 }
 
+/** Reviewed context photo from a fact — proxied only, never hotlinked. */
+export function FactFigure({ fact, lang }: { fact: ClimateFact; lang: Lang }) {
+  const src = fact.imageProxy;
+  if (!src) return null;
+  const alt = pickCopy(lang, fact.imageAltEn, fact.imageAltNe) || '';
+  const credit = pickCopy(lang, fact.imageCreditEn, fact.imageCreditNe);
+  return (
+    <figure className="cl-figure">
+      <a href={fact.url} target="_blank" rel="noopener noreferrer">
+        <img src={src} alt={alt} loading="lazy" referrerPolicy="no-referrer" />
+      </a>
+      {credit ? (
+        <figcaption className="cl-figure-cap">
+          <a href={fact.url} target="_blank" rel="noopener noreferrer">
+            {credit}
+            {' ↗'}
+          </a>
+        </figcaption>
+      ) : null}
+    </figure>
+  );
+}
+
 export function ClimatePanel({
   id,
   index,

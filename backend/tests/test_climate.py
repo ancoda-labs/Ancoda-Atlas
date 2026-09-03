@@ -233,6 +233,35 @@ class TestReviewedFacts:
             assert fact["organisation"]
             assert fact["statementEn"]
             assert fact["published"]
+            assert "image_url" not in fact
+            if fact.get("imageProxy"):
+                assert fact["imageProxy"].startswith("/api/")
+                assert fact.get("imageAltEn")
+                assert fact.get("imageCreditEn")
+
+    def test_reviewed_images_are_proxied_not_raw(self):
+        facts = public_facts(
+            {
+                "facts": [
+                    {
+                        "id": "with-photo",
+                        "statement_en": "A claim with a photo.",
+                        "organisation": "ICIMOD",
+                        "published": "2026-01-01",
+                        "url": "https://www.icimod.org/example/",
+                        "image_url": "https://www.icimod.org/wp-content/uploads/example.jpg",
+                        "image_alt_en": "A glacier.",
+                        "image_credit_en": "ICIMOD",
+                    }
+                ]
+            }
+        )
+        assert len(facts) == 1
+        assert facts[0]["imageProxy"]
+        assert facts[0]["imageProxy"].startswith("/api/")
+        assert "icimod.org" not in (facts[0]["imageProxy"] or "")
+        assert facts[0]["imageAltEn"] == "A glacier."
+        assert facts[0]["imageCreditEn"] == "ICIMOD"
 
     def test_a_fact_without_a_url_is_dropped(self):
         facts = public_facts(
