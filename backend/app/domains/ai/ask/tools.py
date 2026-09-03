@@ -84,10 +84,21 @@ def build_snapshot(
     gauges: list[dict[str, Any]],
     news: list[dict[str, Any]],
     hazards: dict[str, Any] | None = None,
+    register: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     sitrep = sitrep or {}
+    reg = (register or {}).get("summary") or {}
     return {
         **hazard_slice(hazards),
+        # Counts only. The register holds thousands of named people and none of
+        # them belong in a prompt — the box refuses to search names, and the
+        # cheapest way to keep that true is to never hand it any.
+        "registerTotal": reg.get("total"),
+        "registerNepali": reg.get("nepali"),
+        "registerForeign": reg.get("foreign"),
+        "registerSource": ((register or {}).get("source") or {}).get("label"),
+        "registerUrl": ((register or {}).get("source") or {}).get("url"),
+        "registerFetchedAt": (register or {}).get("fetchedAt"),
         "sitrepAsOf": sitrep.get("as_of"),
         "sitrepAsOfLabelEn": sitrep.get("as_of_label_en"),
         "sitrepAsOfLabelNe": sitrep.get("as_of_label_ne"),
@@ -154,6 +165,8 @@ TOOLS_FOR_INTENT = {
     "news": ["search_news"],
     "helplines": ["get_faq"],
     "faq": ["get_faq"],
+    "rescued": ["get_figures"],
+    "nationality": ["get_register"],
     "earthquake": ["get_seismic"],
     "air_quality": ["get_air_quality"],
     "wildfire": ["get_fire"],
@@ -229,6 +242,15 @@ def run_tool(name: str, args: dict[str, Any], snap: dict[str, Any]) -> Any:
     # The hazard tools all answer from the 15-minute sweep, so each one hands
     # back the sweep's timestamp with the reading. A figure without the moment
     # it was taken is not a figure anyone can act on.
+    if name == "get_register":
+        return {
+            "total": snap.get("registerTotal"),
+            "nepali": snap.get("registerNepali"),
+            "foreign": snap.get("registerForeign"),
+            "source": snap.get("registerSource"),
+            "url": snap.get("registerUrl"),
+            "as_of": snap.get("registerFetchedAt"),
+        }
     if name == "get_seismic":
         return {**snap["seismic"], "as_of": snap.get("hazardsAsOf")}
     if name == "get_air_quality":

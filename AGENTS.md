@@ -47,9 +47,18 @@ supabase/    The SQL schema, applied out of band.
 
 | Service | Does | Constraint |
 |---|---|---|
-| `api` | Serves HTTP. **Reads** `runs/`, never writes it. | Never fetches from a government portal on the request path. |
+| `api` | Serves HTTP. **Reads** `runs/`, never writes it. | Fetches from a government portal on the request path in exactly one place — see below. |
 | `worker` | Runs every sweep and refresh. The **only** writer of `runs/`. | **Do not scale past one replica.** |
 | `beat` | The clock. 15-min hazard sweep, 10-min flood refresh. | Separate so restarting a worker mid-sweep does not lose the schedule. |
+
+The API's one exception is the ask box. `domains/ai/ask/live.py` may refresh a
+single collector while answering, and it is fenced: a reader's text is never
+turned into a URL, the callable set is a fixed dict of existing collectors whose
+endpoints are hardcoded in their own modules, it fires only when the desk's copy
+is past `STALE_AFTER_S`, and a per-topic cooldown means a burst of questions is
+still one request. A failed or slow refresh leaves the cached figure standing
+with its real timestamp. Everything else in `api` still reads `runs/` and
+nothing else.
 
 Redis is Celery's broker **and** the channel the worker uses to tell the API a sweep landed. It carries the signal, never the state — the payloads are the JSON files under `runs/`, which both services mount.
 

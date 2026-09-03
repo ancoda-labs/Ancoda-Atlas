@@ -275,7 +275,80 @@ def template_answer(intent: str, snap: dict[str, Any], lang: str, question: str)
         )
         return f"{name}: {death_bit}. {path_bit}. {gauge_bit}. {deaths_line(snap)}"
 
-    return deaths_line(snap)
+    if intent == "rescued":
+        heli = _headline(snap, "heli")
+        air = next((b for b in snap["breakdowns"] if b["id"] == "air-rescue"), None)
+        reg_total = snap.get("registerTotal")
+        if not heli and not air and not reg_total:
+            return "The desk has no rescue figure loaded."
+        rescue_bits: list[str] = []
+        if air:
+            rescue_bits.append(
+                f"{air.get('total')} rescued by air ("
+                + ", ".join(
+                    f"{i.get('label_en')} {i.get('value')}"
+                    for i in (air.get("items") or [])[:4]
+                )
+                + ")"
+            )
+        elif heli:
+            rescue_bits.append(f"{heli.get('value')} rescued by air")
+        if reg_total:
+            rescue_bits.append(
+                f"{reg_total} people on the NDRRMA rescued-persons register"
+            )
+        as_of = snap.get("sitrepAsOfLabelEn") or snap.get("sitrepAsOf") or "undated"
+        return (
+            f"{'; '.join(rescue_bits)} ({(heli or {}).get('source') or 'NDRRMA / MoHA'}, "
+            f"{as_of}). These are different counts of different things, not one "
+            f"total — do not add them together. {MONITORING_NOTE}"
+        )
+
+    if intent == "nationality":
+        nep, foreign = snap.get("registerNepali"), snap.get("registerForeign")
+        total = snap.get("registerTotal")
+        tourists = next((b for b in snap["breakdowns"] if b["id"] == "tourists"), None)
+        if nep is None and foreign is None and not tourists:
+            return "The desk has no nationality split loaded."
+        nat_bits: list[str] = []
+        if nep is not None or foreign is not None:
+            nat_bits.append(
+                f"NDRRMA's rescued-persons register lists {total or '—'} people: "
+                f"{nep if nep is not None else '—'} Nepali and "
+                f"{foreign if foreign is not None else '—'} foreign nationals "
+                f"({snap.get('registerSource') or 'NDRRMA'}, "
+                f"{snap.get('registerFetchedAt') or 'undated'})."
+            )
+        if tourists:
+            top = (tourists.get("items") or [])[:5]
+            nat_bits.append(
+                f"The separate tourist list has {tourists.get('total')} entries — "
+                + ", ".join(f"{i.get('label_en')} {i.get('value')}" for i in top)
+                + "."
+            )
+        return (
+            " ".join(nat_bits)
+            + " These are two separate lists and overlap; neither is a casualty "
+            f"figure. {MONITORING_NOTE}"
+        )
+
+    if intent == "figures":
+        return deaths_line(snap)
+
+    # Anything unrecognised. This used to return the death toll, which meant a
+    # question the classifier did not understand was answered with the single
+    # most consequential number on the desk — as if it had been asked for. On a
+    # page people use to decide what to do, saying what can be answered is the
+    # only honest reply to a question that was not understood.
+    return (
+        "I could not tell what that question is asking. This box answers from "
+        "the desk's own figures: deaths and injuries, people not yet contacted, "
+        "how many were rescued, the Nepali and foreign split, worst-hit "
+        "districts, river gauges, reviewed donation routes, helplines, and the "
+        "dashboard's earthquake, air quality, wildfire and weather readings. "
+        "It will not search for a person, will not say whether to stay or "
+        f"leave, and will not predict. {MONITORING_NOTE}"
+    )
 
 
 _OBJECT = re.compile(r"\{[\s\S]*\}")

@@ -104,8 +104,13 @@ export interface AskTurnResult {
   kind: 'ok' | 'refused' | 'quota' | 'disabled';
   /** The classifier's verdict, so a refusal is legible without reading prose. */
   intent: AskIntent;
+  /** Set when the answer could not be written in the language asked for. */
+  fellBackFrom?: string | null;
+  translated?: boolean;
+  liveRefresh?: boolean;
   answer: string;
-  lang: 'en' | 'ne';
+  /** The language the answer is actually written in — any registry code. */
+  lang: string;
   view: ViewAction;
   tools: AskToolCall[];
   citations: AskCitation[];

@@ -23,7 +23,7 @@ import re
 
 INTENTS = (
     "figures", "worst_districts", "uncontacted", "gauges", "district",
-    "funds", "news", "helplines",
+    "funds", "news", "helplines", "rescued", "nationality",
     # The dashboard's hazards, not just the flood desk's. The box sits on every
     # page now, so a reader on the homepage asking about an earthquake used to
     # fall through to "other" and be answered with flood figures.
@@ -74,13 +74,37 @@ HELPLINES = re.compile(
     r"|फोन|हेल्पलाइन",
     re.I,
 )
+# The words between "how many" and the death word matter: "how many have
+# died", "how many people were killed". The strict form only ever matched
+# "how many died", and everything else fell through to the catch-all — which
+# used to answer with the death toll anyway, so the gap stayed invisible until
+# the catch-all stopped guessing.
 FIGURES = re.compile(
-    r"\bhow many (died|dead|deaths|killed|injured)\b|\bdeath toll\b|कति मृत्यु", re.I
+    r"\bhow many\b[\w\s]{0,24}?\b(died|dead|deaths|killed|injured|casualt\w*)\b"
+    r"|\bdeath toll\b|\bhow many (casualties|fatalities)\b"
+    r"|कति मृत्यु|कति जनाको मृत्यु",
+    re.I,
 )
 # Every alternative carries its own plural. A trailing \b after a bare
 # singular is the classic version of this bug: "earthquakes" and "forest fires"
 # both failed to match, and the question then fell through to the flood desk's
 # death toll — the wrong number, answered confidently.
+# How many were rescued, not who. RESCUE_PERSON is tested first and keeps
+# "is my brother on the list" out of here.
+RESCUED = re.compile(
+    r"\bhow many\b.{0,30}\b(rescued|saved|evacuated|airlifted)\b"
+    r"|\b(rescue|evacuation) (count|total|numbers?)\b"
+    r"|\bhow many people (are|were) rescued\b"
+    r"|कति जनाको उद्धार|उद्धार संख्या",
+    re.I,
+)
+# The split between Nepali citizens and foreign nationals, which the register
+# and the tourist list both carry.
+NATIONALITY = re.compile(
+    r"\b(foreign(ers?|ationals?)?|tourists?|nepali(s| citizens)?|nationalit(y|ies))\b"
+    r"|विदेशी|पर्यटक|नेपाली नागरिक",
+    re.I,
+)
 EARTHQUAKE = re.compile(
     r"\b(earthquakes?|quakes?|tremors?|aftershocks?|seismic|magnitudes?"
     r"|richter|epicent\w*)\b"
@@ -134,6 +158,15 @@ def classify_intent(question: str) -> str:
         return "helplines"
     if NEWS.search(q) and not FIGURES.search(q):
         return "news"
+    # Both sit above FIGURES: "how many people are rescued" contains no death
+    # word, so it used to fall through to `other`, whose default tool is
+    # get_figures — and the reader was told the death toll instead. Answering
+    # a question nobody asked, with a number that reads as if they had, is the
+    # worst outcome available on this desk.
+    if RESCUED.search(q):
+        return "rescued"
+    if NATIONALITY.search(q):
+        return "nationality"
     if FIGURES.search(q):
         return "figures"
     # Hazard intents sit below the flood desk's own, because this is a flood

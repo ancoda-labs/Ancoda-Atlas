@@ -16,7 +16,9 @@ export function useSandboxStatus() {
 
 export function useAsk() {
   return useMutation({
-    mutationFn: ({ message, lang }: { message: string; lang: Lang }) =>
+    // Any code from the language registry, not just the site chrome's two:
+    // the ask box translates its answer without translating the page.
+    mutationFn: ({ message, lang }: { message: string; lang: Lang | string }) =>
       askService(message, lang),
   });
 }

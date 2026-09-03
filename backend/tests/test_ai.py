@@ -422,3 +422,180 @@ class TestAskTurnShape:
         turn = self._turn("any forest fires", monkeypatch)
         assert turn["intent"] == "wildfire"
         assert "deaths" not in turn["answer"].lower()
+
+
+class TestLiveRefresh:
+    """The one place the API may reach a portal while serving a request.
+
+    Drawn as narrowly as it can be, and these say where the edges are.
+    """
+
+    def test_a_question_can_never_become_a_url(self):
+        """The allowlist is a fixed set of existing collectors, each with its
+        endpoint hardcoded in its own module. Nothing a reader types reaches
+        the network layer."""
+        import inspect
+
+        from app.domains.ai.ask import live
+
+        assert set(live.COLLECTORS) == {"register", "portal", "sitrep"}
+        for fn in live.COLLECTORS.values():
+            src = inspect.getsource(fn)
+            assert "http" not in src, "a collector must not carry its own URL"
+
+    def test_only_some_intents_can_trigger_a_fetch(self):
+        from app.domains.ai.ask.live import INTENT_TOPIC
+
+        assert "earthquake" not in INTENT_TOPIC
+        assert "funds" not in INTENT_TOPIC
+        assert INTENT_TOPIC["rescued"] == "register"
+
+    def test_a_warm_snapshot_is_not_refreshed(self):
+        import time
+
+        from app.domains.ai.ask.live import is_stale
+
+        assert is_stale(time.time()) is False
+
+    def test_a_missing_timestamp_counts_as_stale(self):
+        from app.domains.ai.ask.live import is_stale
+
+        assert is_stale(None) is True
+
+    def test_an_old_snapshot_is_stale(self):
+        import time
+
+        from app.domains.ai.ask.live import STALE_AFTER_S, is_stale
+
+        assert is_stale(time.time() - STALE_AFTER_S - 1) is True
+
+    async def test_a_refused_intent_never_fetches(self):
+        """A refusal costs nothing, and must not become a ministry request."""
+        from app.domains.ai.ask.live import refresh_for_intent
+
+        assert await refresh_for_intent("rescue_person", None) is None
+        assert await refresh_for_intent("safety_advice", None) is None
+
+    async def test_the_cooldown_stops_a_burst_becoming_a_burst(self, monkeypatch):
+        """However many people ask at once, the portal sees one request."""
+        import app.domains.ai.ask.live as live
+
+        calls = {"n": 0}
+
+        async def fake():
+            calls["n"] += 1
+            return {"count": 1}
+
+        monkeypatch.setitem(live.COLLECTORS, "register", fake)
+        monkeypatch.setattr(live, "_last_attempt", {})
+
+        first = await live.refresh_for_intent("rescued", None)
+        second = await live.refresh_for_intent("rescued", None)
+        assert first is not None
+        assert second is None
+        assert calls["n"] == 1
+
+    async def test_a_failing_collector_leaves_the_cached_answer_standing(
+        self, monkeypatch
+    ):
+        import app.domains.ai.ask.live as live
+
+        async def boom():
+            raise RuntimeError("portal down")
+
+        monkeypatch.setitem(live.COLLECTORS, "sitrep", boom)
+        monkeypatch.setattr(live, "_last_attempt", {})
+        assert await live.refresh_for_intent("figures", None) is None
+
+    async def test_a_slow_portal_cannot_hang_the_turn(self, monkeypatch):
+        import asyncio
+
+        import app.domains.ai.ask.live as live
+
+        async def slow():
+            await asyncio.sleep(5)
+            return {"count": 1}
+
+        monkeypatch.setitem(live.COLLECTORS, "sitrep", slow)
+        monkeypatch.setattr(live, "_last_attempt", {})
+        monkeypatch.setattr(live, "TIMEOUT_S", 0.05)
+        assert await live.refresh_for_intent("figures", None) is None
+
+
+class TestAnswerTranslation:
+    """The box composes in English or Nepali and carries the sentence across.
+
+    The brief's guard is that a lost bullet can be counted. There are no
+    bullets in a composed answer, so the guard here is the figures.
+    """
+
+    _answer = "1114 deaths and 3916 uncontacted, source NDRRMA / MoHA."
+
+    def test_a_figure_that_changed_fails_the_translation(self):
+        """1,114 is not a translation of 1114 on a page people act on."""
+        from app.domains.ai.ask.translate import numbers_survived
+
+        assert numbers_survived(self._answer, "1,114 morts et 3916 sans contact") is False
+
+    def test_a_figure_that_vanished_fails_it(self):
+        from app.domains.ai.ask.translate import numbers_survived
+
+        assert numbers_survived(self._answer, "Des morts et 3916 sans contact") is False
+
+    def test_a_faithful_translation_passes(self):
+        from app.domains.ai.ask.translate import numbers_survived
+
+        assert numbers_survived(
+            self._answer, "1114 morts et 3916 sans contact, source NDRRMA / MoHA."
+        ) is True
+
+    def test_a_repeated_figure_must_stay_repeated(self):
+        from app.domains.ai.ask.translate import numbers_survived
+
+        assert numbers_survived("7 and 7 again", "7 et encore") is False
+        assert numbers_survived("7 and 7 again", "7 et 7 encore") is True
+
+    async def test_no_provider_keeps_the_composed_answer(self):
+        from app.domains.ai.ask.translate import translate_answer
+
+        out = await translate_answer(None, self._answer, "am", "Amharic")
+        assert out["translated"] is False
+        assert out["answer"] == self._answer
+        assert out["lang"] is None
+
+    async def test_an_echo_is_not_a_translation(self):
+        import json as jsonlib
+
+        from app.domains.ai.ask.translate import translate_answer
+        from tests.test_digest import FakeProvider
+
+        echoed = FakeProvider(jsonlib.dumps({"text": self._answer}))
+        out = await translate_answer(echoed, self._answer, "am", "Amharic")
+        assert out["translated"] is False
+
+    async def test_a_translation_that_changed_a_figure_is_refused(self):
+        """The whole reason numbers_survived exists: a wrong number in a
+        reader's own language reads exactly as true as a right one."""
+        import json as jsonlib
+
+        from app.domains.ai.ask.translate import translate_answer
+        from tests.test_digest import FakeProvider
+
+        bad = FakeProvider(jsonlib.dumps({"text": "1,114 morts et 3916 sans contact."}))
+        out = await translate_answer(bad, self._answer, "fr", "French")
+        assert out["translated"] is False
+        assert out["answer"] == self._answer
+
+    async def test_a_faithful_translation_is_taken(self):
+        import json as jsonlib
+
+        from app.domains.ai.ask.translate import translate_answer
+        from tests.test_digest import FakeProvider
+
+        good = FakeProvider(
+            jsonlib.dumps({"text": "1114 morts et 3916 sans contact, source NDRRMA / MoHA."})
+        )
+        out = await translate_answer(good, self._answer, "fr", "French")
+        assert out["translated"] is True
+        assert out["lang"] == "fr"
+        assert "1114" in out["answer"]

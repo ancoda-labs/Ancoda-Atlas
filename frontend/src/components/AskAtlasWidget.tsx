@@ -25,6 +25,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useFloodLang } from '@/hooks/use-flood-lang';
+import { NEPAL_LANGUAGES, WORLD_LANGUAGES, findLanguage } from '@/lib/nepal-languages';
 import { useAsk, useSandboxStatus } from '@/hooks/useAsk';
 import type { AskTurnResult } from '@/lib/ask-sandbox/types';
 
@@ -32,6 +33,8 @@ interface Turn {
   role: 'user' | 'assistant';
   text: string;
   refused?: boolean;
+  /** Set when the answer could not be written in the language asked for. */
+  fellBackFrom?: string | null;
 }
 
 interface Status {
@@ -53,6 +56,10 @@ const COPY = {
     error: 'Could not answer just now. The desk figures are still on the page.',
     modelOff: 'Model off — answering from desk figures',
     left: 'asks left this hour',
+    language: 'Answer language',
+    groupNepal: 'Nepal',
+    groupWorld: 'World',
+    fellBack: (name: string) => `Could not write ${name} — answered in English.`,
     intro:
       'I answer from what the desk last collected from Nepal government portals — NDRRMA/BIPAD, the OPMCM rescue portal, DHM and ReliefWeb — plus USGS, Open-Meteo and NASA FIRMS. Every answer carries the time it was collected.',
     scope:
@@ -76,6 +83,10 @@ const COPY = {
     error: 'अहिले जवाफ दिन सकिएन। डेस्कका तथ्यांक पृष्ठमै छन्।',
     modelOff: 'मोडेल बन्द — डेस्कका तथ्यांकबाट',
     left: 'प्रश्न बाँकी',
+    language: 'जवाफको भाषा',
+    groupNepal: 'नेपाल',
+    groupWorld: 'विश्व',
+    fellBack: (name: string) => `${name} लेख्न सकिएन — नेपालीमा जवाफ दिइयो।`,
     intro:
       'म डेस्कले नेपाल सरकारका पोर्टलबाट पछिल्लो पटक संकलन गरेको तथ्यांकबाट जवाफ दिन्छु — NDRRMA/BIPAD, OPMCM उद्धार पोर्टल, DHM र ReliefWeb, साथै USGS, Open-Meteo र NASA FIRMS। हरेक जवाफसँग संकलन गरिएको समय हुन्छ।',
     scope:
@@ -87,7 +98,7 @@ const COPY = {
       'कुन जिल्ला सबैभन्दा प्रभावित छन्?',
     ],
   },
-} as const;
+};
 
 export default function AskAtlasWidget() {
   const [open, setOpen] = useState(false);
@@ -95,8 +106,12 @@ export default function AskAtlasWidget() {
   const [thread, setThread] = useState<Turn[]>([]);
   const [busy, setBusy] = useState(false);
 
-  const [lang] = useFloodLang();
-  const t = COPY[lang === 'ne' ? 'ne' : 'en'];
+  const [siteLang] = useFloodLang();
+  // The answer's language is the widget's own, not the site chrome's. A reader
+  // abroad wants the answer in Amharic without turning the whole page Amharic,
+  // and the page has no Amharic to turn into — only the answer is translated.
+  const [answerLang, setAnswerLang] = useState<string>(siteLang);
+  const t = COPY[answerLang === 'ne' ? 'ne' : 'en'];
 
   const ask = useAsk();
   // Only polled while the panel is open: the remaining budget is worthless to
@@ -138,7 +153,7 @@ export default function AskAtlasWidget() {
       setThread(prev => [...prev, { role: 'user', text: q }]);
       setBusy(true);
       try {
-        const result = (await ask.mutateAsync({ message: q, lang })) as AskTurnResult;
+        const result = (await ask.mutateAsync({ message: q, lang: answerLang })) as AskTurnResult;
         setThread(prev => [
           ...prev,
           {
@@ -147,6 +162,7 @@ export default function AskAtlasWidget() {
             // A refusal is styled differently on purpose. It is a position the
             // desk holds, not a failure to find an answer.
             refused: result.kind === 'refused',
+            fellBackFrom: result.fellBackFrom ?? null,
           },
         ]);
       } catch {
@@ -155,7 +171,7 @@ export default function AskAtlasWidget() {
         setBusy(false);
       }
     },
-    [ask, busy, lang, t.error],
+    [ask, busy, answerLang, t.error],
   );
 
   return (
@@ -167,7 +183,7 @@ export default function AskAtlasWidget() {
         aria-controls="ask-atlas-panel"
         aria-label={t.open}
         onClick={() => setOpen(v => !v)}
-        className="fixed bottom-4 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full border border-border bg-primary text-background shadow-lg transition-transform hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary motion-reduce:transition-none sm:bottom-6 sm:right-6"
+        className="fixed bottom-4 right-4 z-[4000] flex h-14 w-14 items-center justify-center rounded-full border border-border bg-primary text-background shadow-lg transition-transform hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary motion-reduce:transition-none sm:bottom-6 sm:right-6"
       >
         {open ? (
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
@@ -187,18 +203,49 @@ export default function AskAtlasWidget() {
           role="dialog"
           aria-modal="false"
           aria-label={t.title}
-          className="fixed bottom-20 right-4 z-50 flex max-h-[min(32rem,calc(100dvh-6rem))] w-[calc(100vw-2rem)] max-w-sm flex-col overflow-hidden rounded-xl border border-border bg-background shadow-2xl sm:bottom-24 sm:right-6"
+          className="fixed bottom-20 right-4 z-[4001] flex max-h-[min(32rem,calc(100dvh-6rem))] w-[calc(100vw-2rem)] max-w-sm flex-col overflow-hidden rounded-xl border border-border bg-background shadow-2xl sm:bottom-24 sm:right-6"
         >
           <header className="border-b border-border px-4 py-3">
             <div className="flex items-baseline justify-between gap-2">
               <h2 className="text-sm font-semibold text-foreground">{t.title}</h2>
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                className="text-xs text-foreground/60 underline underline-offset-2 hover:text-foreground"
-              >
-                {t.close}
-              </button>
+              <div className="flex items-center gap-2">
+                {/* The box answers in these two. The ~100-language list belongs
+                    to the news brief, which translates listed headlines; this
+                    box composes sentences from desk figures, and offering a
+                    language it cannot actually write would be the same lie the
+                    brief's fellBackFrom exists to avoid. */}
+                {/* Every language the news brief offers. The answer is
+                    composed in English or Nepali and carried across; a
+                    language the model cannot write comes back in the composed
+                    language with fellBackFrom naming what was asked for. */}
+                <label className="sr-only" htmlFor="ask-atlas-lang">
+                  {t.language}
+                </label>
+                <select
+                  id="ask-atlas-lang"
+                  value={answerLang}
+                  onChange={e => setAnswerLang(e.target.value)}
+                  className="max-w-[9rem] rounded border border-border bg-background px-1.5 py-0.5 text-[11px] text-foreground"
+                >
+                  <optgroup label={t.groupNepal}>
+                    {NEPAL_LANGUAGES.map(l => (
+                      <option key={l.code} value={l.code}>{l.native}</option>
+                    ))}
+                  </optgroup>
+                  <optgroup label={t.groupWorld}>
+                    {WORLD_LANGUAGES.map(l => (
+                      <option key={l.code} value={l.code}>{l.native}</option>
+                    ))}
+                  </optgroup>
+                </select>
+                <button
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  className="text-xs text-foreground/60 underline underline-offset-2 hover:text-foreground"
+                >
+                  {t.close}
+                </button>
+              </div>
             </div>
             <p className="mt-0.5 text-xs text-foreground/60">{t.subtitle}</p>
             <p className="mt-1 text-[11px] leading-snug text-foreground/50">{t.experiment}</p>
@@ -238,6 +285,11 @@ export default function AskAtlasWidget() {
                 }
               >
                 <p className="whitespace-pre-wrap">{turn.text}</p>
+                {turn.fellBackFrom ? (
+                  <p className="mt-1.5 text-[11px] text-foreground/50">
+                    {t.fellBack(findLanguage(turn.fellBackFrom).native)}
+                  </p>
+                ) : null}
               </article>
             ))}
 

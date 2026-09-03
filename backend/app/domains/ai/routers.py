@@ -59,6 +59,7 @@ def _snapshot() -> dict[str, Any]:
         gauges=(payload.get("river") or {}).get("gauges") or [],
         news=store.get("news") or [],
         hazards=hazards_service.get_dashboard(),
+        register=store.get("rescue") or {},
     )
 
 
