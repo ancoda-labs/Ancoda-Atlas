@@ -314,8 +314,22 @@ body {
   margin: -1px;
   overflow: hidden;
   clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
   white-space: nowrap;
   border: 0;
+}
+
+/* Tables ignore width:1px under position:absolute and grow to their
+   content — that widens the document and mobile Safari zooms the whole
+   flood desk into a thin strip. Keep screen-reader tables clipped. */
+.fl table.sr-only {
+  table-layout: fixed;
+  width: 1px !important;
+  max-width: 1px;
+  white-space: normal;
+  overflow: hidden;
+  left: 0;
+  top: 0;
 }
 
 body.low-perf .atlas-loading-ring,
@@ -4526,7 +4540,8 @@ body.low-perf .flood-cta-dot { animation: none; }
   overflow: visible;
 }
 .atlas-climate-desk {
-  max-width: none;
+  max-width: 100%;
+  overflow-x: clip;
 }
 .atlas-climate-split {
   display: grid;
@@ -4534,9 +4549,13 @@ body.low-perf .flood-cta-dot { animation: none; }
   gap: 28px 32px;
   align-items: start;
   min-width: 0;
+  width: 100%;
+  max-width: 100%;
 }
 .atlas-climate-figures {
   min-width: 0;
+  max-width: 100%;
+  overflow-x: clip;
 }
 .atlas-climate-verdicts {
   min-width: 0;
@@ -4790,6 +4809,9 @@ body.low-perf .flood-cta-dot { animation: none; }
 /* MetricSwitcher — CSS grid + transform, no chart library. */
 .ms {
   min-width: 0;
+  max-width: 100%;
+  overflow-x: clip;
+  position: relative;
 }
 .ms-finding {
   margin: 0 0 14px;
