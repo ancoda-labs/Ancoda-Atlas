@@ -37,6 +37,12 @@ function pick(lang: Lang, en: string | null | undefined, ne: string | null | und
   return ((lang === 'ne' ? ne || en : en || ne) || '').trim();
 }
 
+/** Government statements stay in one language — no cross-fallback. */
+function statementCopy(lang: Lang, en: string | null | undefined, ne: string | null | undefined): string {
+  if (lang === 'ne') return (ne && ne.trim()) || '';
+  return (en && en.trim()) || '';
+}
+
 function SourceLink({ href, label }: { href: string; label: string }) {
   return (
     <a href={href} target="_blank" rel="noopener noreferrer" aria-label={label} className="atlas-climate-src">
@@ -57,15 +63,17 @@ function FactLine({ fact, lang }: { fact: ClimateFact; lang: Lang }) {
   );
 }
 
-function climateParagraph(paras: string[]): string {
-  return paras.find(para => /climate change|जलवायु/i.test(para)) || paras[0] || '';
+function climateParagraph(paras: string[], lang: Lang): string {
+  const re = lang === 'ne' ? /जलवायु/ : /climate change|climate crisis|climate justice/i;
+  return paras.find(para => re.test(para)) || paras[0] || '';
 }
 
 function StatementLine({ item, lang }: { item: ClimateStatement; lang: Lang }) {
-  const title = pick(lang, item.title, item.titleNe);
-  const body = pick(lang, item.bodyEn, item.bodyNe);
+  const title = statementCopy(lang, item.title, item.titleNe);
+  const body = statementCopy(lang, item.bodyEn, item.bodyNe);
+  if (!title && !body) return null;
   const paras = body.split(/\n+/).map(p => p.trim()).filter(Boolean);
-  const quote = climateParagraph(paras);
+  const quote = climateParagraph(paras, lang);
   const rest = paras.filter(para => para !== quote);
   return (
     <li>
