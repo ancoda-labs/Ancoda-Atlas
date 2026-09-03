@@ -1,15 +1,38 @@
-FROM python:3.12-slim
+# Two stages, for one reason: build-essential is ~370 MB of gcc, g++, binutils
+# and perl that production never runs. Built in a single stage it stayed in the
+# final image, and the deploy died unpacking it — the build itself succeeded
+# every time, then the export of a 561 MB image ran the host out of room.
+#
+# The compiler is still here, because a dependency without a manylinux wheel
+# has to be compiled somewhere. It just does not ship.
+
+# ─── builder ────────────────────────────────────────────────────────────────
+FROM python:3.12-slim AS builder
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        curl \
         build-essential \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
 COPY pyproject.toml ./
-# No dev extras: production runs the API and the worker, not the test suite.
-RUN pip install --no-cache-dir .
+# --prefix stages the install under /install so the next stage can take it
+# whole. No dev extras: production runs the API and the worker, not the tests.
+RUN pip install --no-cache-dir --prefix=/install .
+
+# ─── runtime ────────────────────────────────────────────────────────────────
+FROM python:3.12-slim
+
+# curl is here for the HEALTHCHECK below and nothing else.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# python:3.12-slim keeps its interpreter under /usr/local, which is what
+# --prefix=/install was shaped to land on.
+COPY --from=builder /install /usr/local
+
+WORKDIR /app
 
 COPY . .
 RUN chmod +x docker/*.sh
