@@ -120,7 +120,13 @@ class GroqProvider(OpenAICompatibleProvider):
 
 
 class TarkaProvider(OpenAICompatibleProvider):
-    """A self-hosted gateway. The model id is not guessable, so it is required."""
+    """Tarka, the Nepal-hosted inference gateway. Keys begin `tk_live_`.
+
+    Its catalogue mixes chat, OCR, speech and TTS ids behind one endpoint,
+    and only some of the chat ids can actually translate — the README's
+    provider table says which. So the model is required rather than
+    defaulted: guessing picks a transcription id as often as a usable one.
+    """
 
     name = "tarka"
     label = "Tarka"
@@ -134,7 +140,10 @@ class TarkaProvider(OpenAICompatibleProvider):
         **config: Any,
     ):
         super().__init__(api_key=api_key, model=model, **config)
-        self.base_url = (base_url or "https://api.tarka.ai/v1").rstrip("/")
+        # api.tarka.ai is not Tarka. It resolves to a parked host whose
+        # certificate does not match, so every call died in the TLS handshake
+        # before this was corrected. The published base is tarka.rest.
+        self.base_url = (base_url or "https://tarka.rest/v1").rstrip("/")
 
     def build_body(self, system_prompt, user_message, max_tokens, json):
         if not self.model:

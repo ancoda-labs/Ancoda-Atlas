@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import '@/styles/globals.css';
 import Providers from '@/app/providers';
+import AskAtlasWidget from '@/components/AskAtlasWidget';
 
 export const metadata: Metadata = {
   title: 'ANCODA ATLAS INTELLIGENCE DASHBOARD',
@@ -45,7 +46,12 @@ export default function RootLayout({
       <body className="bg-background text-foreground font-sans min-h-screen overflow-x-hidden selection:bg-primary selection:text-background" suppressHydrationWarning>
         <script dangerouslySetInnerHTML={{ __html: SEED_THEME }} />
         <script dangerouslySetInnerHTML={{ __html: SEED_LOW_PERF }} />
-        <Providers>{children}</Providers>
+        <Providers>
+          {children}
+          {/* Inside Providers: the widget reads the shared language choice from
+              the store and talks to the API through TanStack Query. */}
+          <AskAtlasWidget />
+        </Providers>
       </body>
     </html>
   );

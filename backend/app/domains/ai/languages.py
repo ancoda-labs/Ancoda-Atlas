@@ -1,11 +1,33 @@
 """The languages a flood brief can be written in.
 
 Generated from frontend/src/lib/nepal-languages.ts, which is the registry the
-language picker renders from. Two copies of 131 entries would drift; generating
+language picker renders from. Two copies of 100 entries would drift; generating
 this one means the codes the UI offers are exactly the codes the API accepts.
 
-Nepal's own languages come first, most-spoken first. The rest are alphabetical
-by English name.
+WHAT IS ON THE LIST, AND WHY IT IS SHORTER THAN IT WAS.
+
+A language earns a place by being official or co-official at national level in
+a sovereign state — the language a government actually publishes in. That rule
+excludes constructed and historical languages, sub-national languages of
+European and Pacific states, and regional languages of countries whose
+government publishes in another one.
+
+It is a coverage rule, not a quality measurement. Nobody has tested which of
+these the configured model writes well, and the model is the real limit: a
+brief it cannot carry is served in Nepali with `fellBackFrom` set rather than
+mislabelled, so a weak language degrades visibly instead of lying. Trim this
+list further when a specific language is found to read badly, and record what
+was seen.
+
+Nepali is not on the list for coverage. It is the fallback for any unrecognised
+code, one of the two languages the wire itself arrives in, and the language the
+extractive draft is built in — so it is first, and removing it would break the
+desk rather than shorten a menu. Nepal's other languages were dropped: Maithili,
+Bhojpuri, Tharu, Tamang, Newar, Bajjika, Magar Dhut, Awadhi and Doteli. That is
+a real loss of reach downstream of the Bhotekoshi, and it is a deliberate
+choice, not an oversight.
+
+The rest are alphabetical by English name.
 """
 
 from typing import NamedTuple
@@ -23,15 +45,6 @@ class BriefLanguage(NamedTuple):
 
 ALL_LANGUAGES: list[BriefLanguage] = [
     BriefLanguage("ne", "नेपाली", "Nepali", "nepal"),
-    BriefLanguage("mai", "मैथिली", "Maithili", "nepal"),
-    BriefLanguage("bho", "भोजपुरी", "Bhojpuri", "nepal"),
-    BriefLanguage("thr", "थारू", "Tharu", "nepal"),
-    BriefLanguage("taj", "तामाङ", "Tamang", "nepal"),
-    BriefLanguage("new", "नेपाल भाषा", "Newar", "nepal"),
-    BriefLanguage("bjj", "बज्जिका", "Bajjika", "nepal"),
-    BriefLanguage("mag", "मगर ढुट", "Magar Dhut", "nepal"),
-    BriefLanguage("awa", "अवधी", "Awadhi", "nepal"),
-    BriefLanguage("dty", "डोटेली", "Doteli", "nepal"),
     BriefLanguage("af", "Afrikaans", "Afrikaans", "world"),
     BriefLanguage("sq", "Shqip", "Albanian", "world"),
     BriefLanguage("am", "አማርኛ", "Amharic", "world"),
@@ -40,15 +53,12 @@ ALL_LANGUAGES: list[BriefLanguage] = [
     BriefLanguage("as", "অসমীয়া", "Assamese", "world"),
     BriefLanguage("ay", "Aymar aru", "Aymara", "world"),
     BriefLanguage("az", "Azərbaycan", "Azerbaijani", "world"),
-    BriefLanguage("bm", "Bamanankan", "Bambara", "world"),
-    BriefLanguage("eu", "Euskara", "Basque", "world"),
     BriefLanguage("be", "Беларуская", "Belarusian", "world"),
     BriefLanguage("bn", "বাংলা", "Bengali", "world"),
     BriefLanguage("bs", "Bosanski", "Bosnian", "world"),
     BriefLanguage("bg", "Български", "Bulgarian", "world"),
     BriefLanguage("my", "မြန်မာ", "Burmese", "world"),
     BriefLanguage("ca", "Català", "Catalan", "world"),
-    BriefLanguage("ceb", "Cebuano", "Cebuano", "world"),
     BriefLanguage("ny", "Chichewa", "Chichewa", "world"),
     BriefLanguage("zh", "简体中文", "Chinese (Simplified)", "world"),
     BriefLanguage("zh-TW", "繁體中文", "Chinese (Traditional)", "world"),
@@ -59,31 +69,23 @@ ALL_LANGUAGES: list[BriefLanguage] = [
     BriefLanguage("nl", "Nederlands", "Dutch", "world"),
     BriefLanguage("dz", "རྫོང་ཁ", "Dzongkha", "world"),
     BriefLanguage("en", "English", "English", "world"),
-    BriefLanguage("eo", "Esperanto", "Esperanto", "world"),
     BriefLanguage("et", "Eesti", "Estonian", "world"),
-    BriefLanguage("ee", "Eʋegbe", "Ewe", "world"),
     BriefLanguage("fi", "Suomi", "Finnish", "world"),
     BriefLanguage("fr", "Français", "French", "world"),
-    BriefLanguage("fy", "Frysk", "Frisian", "world"),
-    BriefLanguage("ff", "Fulfulde", "Fula", "world"),
-    BriefLanguage("gl", "Galego", "Galician", "world"),
     BriefLanguage("ka", "ქართული", "Georgian", "world"),
     BriefLanguage("de", "Deutsch", "German", "world"),
     BriefLanguage("el", "Ελληνικά", "Greek", "world"),
+    BriefLanguage("gn", "Avañe'ẽ", "Guarani", "world"),
     BriefLanguage("gu", "ગુજરાતી", "Gujarati", "world"),
     BriefLanguage("ht", "Kreyòl Ayisyen", "Haitian Creole", "world"),
-    BriefLanguage("ha", "Hausa", "Hausa", "world"),
-    BriefLanguage("haw", "ʻŌlelo Hawaiʻi", "Hawaiian", "world"),
     BriefLanguage("he", "עברית", "Hebrew", "world"),
     BriefLanguage("hi", "हिन्दी", "Hindi", "world"),
     BriefLanguage("hu", "Magyar", "Hungarian", "world"),
     BriefLanguage("is", "Íslenska", "Icelandic", "world"),
-    BriefLanguage("ig", "Igbo", "Igbo", "world"),
     BriefLanguage("id", "Bahasa Indonesia", "Indonesian", "world"),
     BriefLanguage("ga", "Gaeilge", "Irish", "world"),
     BriefLanguage("it", "Italiano", "Italian", "world"),
     BriefLanguage("ja", "日本語", "Japanese", "world"),
-    BriefLanguage("jv", "Basa Jawa", "Javanese", "world"),
     BriefLanguage("kn", "ಕನ್ನಡ", "Kannada", "world"),
     BriefLanguage("kk", "Қазақ", "Kazakh", "world"),
     BriefLanguage("km", "ខ្មែរ", "Khmer", "world"),
@@ -92,11 +94,9 @@ ALL_LANGUAGES: list[BriefLanguage] = [
     BriefLanguage("ku", "Kurdî", "Kurdish", "world"),
     BriefLanguage("ky", "Кыргызча", "Kyrgyz", "world"),
     BriefLanguage("lo", "ລາວ", "Lao", "world"),
-    BriefLanguage("la", "Latina", "Latin", "world"),
     BriefLanguage("lv", "Latviešu", "Latvian", "world"),
     BriefLanguage("lt", "Lietuvių", "Lithuanian", "world"),
     BriefLanguage("lb", "Lëtzebuergesch", "Luxembourgish", "world"),
-    BriefLanguage("lg", "Luganda", "Luganda", "world"),
     BriefLanguage("mk", "Македонски", "Macedonian", "world"),
     BriefLanguage("mg", "Malagasy", "Malagasy", "world"),
     BriefLanguage("ms", "Bahasa Melayu", "Malay", "world"),
@@ -117,7 +117,6 @@ ALL_LANGUAGES: list[BriefLanguage] = [
     BriefLanguage("ro", "Română", "Romanian", "world"),
     BriefLanguage("ru", "Русский", "Russian", "world"),
     BriefLanguage("sm", "Gagana Samoa", "Samoan", "world"),
-    BriefLanguage("gd", "Gàidhlig", "Scottish Gaelic", "world"),
     BriefLanguage("nso", "Sepedi", "Sepedi", "world"),
     BriefLanguage("sr", "Српски", "Serbian", "world"),
     BriefLanguage("sn", "ChiShona", "Shona", "world"),
@@ -128,7 +127,6 @@ ALL_LANGUAGES: list[BriefLanguage] = [
     BriefLanguage("so", "Soomaali", "Somali", "world"),
     BriefLanguage("st", "Sesotho", "Sesotho", "world"),
     BriefLanguage("es", "Español", "Spanish", "world"),
-    BriefLanguage("su", "Basa Sunda", "Sundanese", "world"),
     BriefLanguage("sw", "Kiswahili", "Swahili", "world"),
     BriefLanguage("sv", "Svenska", "Swedish", "world"),
     BriefLanguage("tl", "Tagalog", "Tagalog", "world"),
@@ -136,22 +134,15 @@ ALL_LANGUAGES: list[BriefLanguage] = [
     BriefLanguage("ta", "தமிழ்", "Tamil", "world"),
     BriefLanguage("te", "తెలుగు", "Telugu", "world"),
     BriefLanguage("th", "ไทย", "Thai", "world"),
-    BriefLanguage("bo", "བོད་སྐད", "Tibetan", "world"),
     BriefLanguage("ti", "ትግርኛ", "Tigrinya", "world"),
     BriefLanguage("tn", "Setswana", "Tswana", "world"),
     BriefLanguage("tr", "Türkçe", "Turkish", "world"),
     BriefLanguage("tk", "Türkmen", "Turkmen", "world"),
-    BriefLanguage("tw", "Twi", "Twi", "world"),
     BriefLanguage("uk", "Українська", "Ukrainian", "world"),
     BriefLanguage("ur", "اردو", "Urdu", "world"),
-    BriefLanguage("ug", "ئۇيغۇرچە", "Uyghur", "world"),
     BriefLanguage("uz", "Oʻzbek", "Uzbek", "world"),
     BriefLanguage("vi", "Tiếng Việt", "Vietnamese", "world"),
-    BriefLanguage("cy", "Cymraeg", "Welsh", "world"),
-    BriefLanguage("wo", "Wolof", "Wolof", "world"),
     BriefLanguage("xh", "isiXhosa", "Xhosa", "world"),
-    BriefLanguage("yi", "ייִדיש", "Yiddish", "world"),
-    BriefLanguage("yo", "Yorùbá", "Yoruba", "world"),
     BriefLanguage("zu", "isiZulu", "Zulu", "world"),
 ]
 

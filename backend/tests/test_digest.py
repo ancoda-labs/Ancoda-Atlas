@@ -1,11 +1,13 @@
 """The ten-minute digests, and the editorial rule behind them."""
 
+import json
 from datetime import datetime, timezone
 
 import pytest
 
 from app.domains.ai.providers.base import Completion, LLMProvider
 from app.domains.news.digest import (
+    TRANSLATE_ATTEMPTS,
     bucket_end_for,
     bucket_start_for,
     clean,
@@ -13,9 +15,30 @@ from app.domains.news.digest import (
     draft_digest,
     extract_json,
     extractive_digest,
+    is_echo,
     resolve_digest_language,
     translate_digest,
 )
+
+
+class SequenceProvider(LLMProvider):
+    """Answers each call with the next scripted body, and counts the calls."""
+
+    name = "sequence"
+
+    def __init__(self, *texts: str):
+        super().__init__()
+        self._texts = list(texts)
+        self.calls = 0
+
+    @property
+    def is_configured(self) -> bool:
+        return True
+
+    async def complete(self, system_prompt, user_message, **kwargs):
+        text = self._texts[min(self.calls, len(self._texts) - 1)]
+        self.calls += 1
+        return Completion(text=text, model="sequence-1")
 
 
 class FakeProvider(LLMProvider):
@@ -178,6 +201,110 @@ class TestTranslateDigest:
         out = await translate_digest(FakeProvider(fail=True), self._draft, "ne")
         assert out["translated"] is False
         assert out["draft"] == self._draft
+
+    async def test_a_brief_handed_straight_back_is_not_a_translation(self):
+        """Some hosts echo the input instead of translating it.
+
+        The shape is perfect, so every other check passes. Without this the
+        brief ships labelled French and still written in Devanagari. Tarka's
+        himalaya-q8 and himalaya-bf16 both do exactly this.
+        """
+        echoed = json.dumps(self._draft, ensure_ascii=False)
+        out = await translate_digest(FakeProvider(echoed), self._draft, "fr", "French")
+        assert out["translated"] is False
+        assert out["model"] is None
+        assert out["draft"] == self._draft
+
+    async def test_an_echo_that_differs_only_in_whitespace_is_still_an_echo(self):
+        """`clean` collapses runs of whitespace, so a re-spaced echo is one too."""
+        provider = FakeProvider(
+            '{"headline": "Flood  ", "summary": "A   summary.", "bullets": ["one", " two"]}'
+        )
+        out = await translate_digest(provider, self._draft, "fr", "French")
+        assert out["translated"] is False
+
+    async def test_one_reworded_line_does_not_launder_an_echo(self):
+        """The failure that motivated counting lines instead of comparing briefs.
+
+        himalaya-gemma-4-q8 rewords the headline and hands the rest back in
+        Nepali. Byte-equality on the whole brief calls that a translation.
+        """
+        provider = FakeProvider(
+            '{"headline": "Inondation", "summary": "A summary.", "bullets": ["one", "two"]}'
+        )
+        out = await translate_digest(provider, self._draft, "fr", "French")
+        assert out["translated"] is False
+        assert out["draft"] == self._draft
+
+    async def test_a_real_translation_is_still_taken(self):
+        provider = FakeProvider(
+            '{"headline": "Inondation", "summary": "Un resume.", "bullets": ["un", "deux"]}'
+        )
+        out = await translate_digest(provider, self._draft, "fr", "French")
+        assert out["translated"] is True
+        assert out["draft"]["headline"] == "Inondation"
+
+
+class TestIsEcho:
+    """More than half the lines untouched is not a translation."""
+
+    _draft = {"headline": "Flood", "summary": "A summary.", "bullets": ["one", "two"]}
+
+    def test_an_identical_brief_is_an_echo(self):
+        assert is_echo(dict(self._draft), self._draft) is True
+
+    def test_one_changed_line_out_of_four_is_still_an_echo(self):
+        candidate = {**self._draft, "headline": "Inondation"}
+        assert is_echo(candidate, self._draft) is True
+
+    def test_half_changed_is_not_a_majority_so_it_stands(self):
+        candidate = {**self._draft, "headline": "Inondation", "summary": "Un resume."}
+        assert is_echo(candidate, self._draft) is False
+
+    def test_a_fully_changed_brief_is_not_an_echo(self):
+        candidate = {"headline": "Inondation", "summary": "Un resume.", "bullets": ["un", "deux"]}
+        assert is_echo(candidate, self._draft) is False
+
+    def test_one_bullet_left_alone_does_not_condemn_a_translation(self):
+        """A proper noun or an already-English headline can survive intact."""
+        candidate = {"headline": "Inondation", "summary": "Un resume.", "bullets": ["un", "two"]}
+        assert is_echo(candidate, self._draft) is False
+
+
+class TestTranslateRetries:
+    """These models fail by returning something unusable, not by erroring."""
+
+    _draft = {"headline": "Flood", "summary": "A summary.", "bullets": ["one", "two"]}
+    _good = '{"headline": "Inondation", "summary": "Un resume.", "bullets": ["un", "deux"]}'
+
+    async def test_a_second_attempt_rescues_a_dropped_bullet(self):
+        provider = SequenceProvider(
+            '{"headline": "Inondation", "summary": "Un resume.", "bullets": ["un"]}',
+            self._good,
+        )
+        out = await translate_digest(provider, self._draft, "fr", "French")
+        assert out["translated"] is True
+        assert provider.calls == 2
+
+    async def test_a_second_attempt_rescues_an_echo(self):
+        provider = SequenceProvider(json.dumps(self._draft, ensure_ascii=False), self._good)
+        out = await translate_digest(provider, self._draft, "fr", "French")
+        assert out["translated"] is True
+        assert provider.calls == 2
+
+    async def test_a_good_first_answer_is_not_retried(self):
+        """Every retry is a real call to a real host. One good answer ends it."""
+        provider = SequenceProvider(self._good)
+        out = await translate_digest(provider, self._draft, "fr", "French")
+        assert out["translated"] is True
+        assert provider.calls == 1
+
+    async def test_retries_are_bounded_and_the_original_survives(self):
+        provider = SequenceProvider(json.dumps(self._draft, ensure_ascii=False))
+        out = await translate_digest(provider, self._draft, "fr", "French")
+        assert out["translated"] is False
+        assert out["draft"] == self._draft
+        assert provider.calls == TRANSLATE_ATTEMPTS
 
 
 @pytest.mark.parametrize("lang", ["en", "ne"])

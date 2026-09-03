@@ -38,7 +38,7 @@ An open-source project by [Ancoda Labs](https://github.com/ancoda-labs).
 
 Atlas pulls earthquake activity, monsoon and flood forecasts, satellite fire detection, air quality and humanitarian response reporting from five open hazard feeds — all scoped to Nepal, in parallel, every 15 minutes — plus a disaster-filtered live news layer from Nepali dailies, and renders everything on a single self-contained dashboard.
 
-Hook it up to an LLM and it gains a **reading layer** — multi-tier alerts pushed to Telegram and Discord when hazard conditions change, actionable reads grounded in real cross-layer hazard data, and the flood desk's news brief carried into any of ~130 languages for families reading from outside Nepal.
+Hook it up to an LLM and it gains a **reading layer** — multi-tier alerts pushed to Telegram and Discord when hazard conditions change, actionable reads grounded in real cross-layer hazard data, and the flood desk's news brief carried into any of ~100 languages for families reading from outside Nepal.
 
 No cloud. No telemetry. No subscriptions.
 
@@ -56,7 +56,7 @@ During the Rasuwa–Bhotekoshi flood, critical updates were scattered across
 social posts and press briefings. The flood desk is one unified portal for
 keeping communities informed and tracking ground realities.
 
-- **News briefs in your language** — the wire, carried into Nepal's languages and ~130 more, for families reading from outside the country
+- **News briefs in your language** — the wire, carried into ~100 languages, for families reading from outside the country
 - **Send updates from the ground** — photos and reports from the corridor, moderated before they appear
 - **Live affected-area map** — districts, the flood path, and river gauges from the NDRRMA BIPAD Portal
 - **Verified donation routes** — including the PM Disaster Relief Fund, each one human-checked with its source recorded
@@ -198,7 +198,7 @@ affected families, volunteers and donors rather than analysts: emergency numbers
 as tap-to-call buttons, plain safety guidance, an affected-district map, live
 river gauges from the NDRRMA BIPAD Portal, a searchable rescue register,
 crowdsourced ground photos, and **human-verified** donation routes. Bilingual
-English / नेपाली throughout, with the news brief available in ~130 languages.
+English / नेपाली throughout, with the news brief available in ~100 languages.
 
 Donation links are curated, never scraped. Disaster fundraising scams peak in the
 first 48–72 hours, so an aggregator that auto-surfaces unverified fundraisers is
@@ -209,13 +209,22 @@ worse than none at all. Every fund is a reviewed JSON record under
 
 Rasuwa is a trekking corridor and a labour-migration source district, so a large
 share of the people refreshing the flood desk are reading from outside Nepal —
-relatives abroad, embassies, responding agencies. And the communities downstream
-of the Bhotekoshi are disproportionately Tamang, Tharu and Maithili speakers. A
-relief notice someone cannot read is a notice that did not reach them.
+relatives abroad, embassies, responding agencies. A relief notice someone cannot
+read is a notice that did not reach them.
 
-The **AI Insights** panel therefore offers its brief in ~130 languages, listed in
-[`backend/app/domains/ai/languages.py`](backend/app/domains/ai/languages.py) in two groups: Nepal's
-own languages first, then the rest of the world.
+The **AI Insights** panel offers its brief in ~100 languages, listed in
+[`backend/app/domains/ai/languages.py`](backend/app/domains/ai/languages.py). A language earns a
+place by being official or co-official at national level in a sovereign state —
+the language a government actually publishes in.
+
+> [!NOTE]
+> **Nepal's own regional languages are not on that list, and that is a real
+> gap.** The communities downstream of the Bhotekoshi are disproportionately
+> Tamang, Tharu and Maithili speakers, and those three — along with Bhojpuri,
+> Newar, Bajjika, Magar Dhut, Awadhi and Doteli — were removed. Nepali stays,
+> because it is what an unrecognised code falls back to, one of the two
+> languages the wire arrives in, and the language the extractive draft is built
+> in. Restoring the others is a list change in two files, not a code change.
 
 Two things about how this works are deliberate and worth stating plainly:
 
@@ -372,7 +381,32 @@ Set `LLM_PROVIDER` to one of: `anthropic`, `openai`, `gemini`, `codex`,
 | `ollama` | None (local) — `OLLAMA_BASE_URL` to move the host | llama3.1:8b |
 | `grok` | `LLM_API_KEY` | grok-4-latest |
 | `groq` | `LLM_API_KEY` | openai/gpt-oss-120b |
-| `tarka` | `LLM_API_KEY` | himalaya-gemma-4-bf16 *(recommended; set explicitly)* |
+| `tarka` | `LLM_API_KEY` (`tk_live_…`) | **none — you must set `LLM_MODEL`** (see below) |
+
+> [!IMPORTANT]
+> **Tarka has no default model, and the wrong one fails silently.**
+> Its catalogue at `https://tarka.rest/v1/models` mixes chat, OCR, speech and
+> TTS ids behind one endpoint. Measured against the translation prompt the desk
+> actually sends, on a live 18-item flood brief:
+>
+> | Model | Translates? |
+> |---|---|
+> | `himalaya-gemma-4-q8` | **Yes** — English, French and Japanese all clean. Use this one. |
+> | `himalaya-gemma-4-bf16` | Mostly, but romanises Maithili instead of writing the script |
+> | `himalaya-q8` · `himalaya-bf16` | **No.** Returns the input verbatim for every target language |
+> | `qwen3.8-flash-next` | **No.** Answers with null content after ~40s |
+>
+> Even the good one is unreliable per call: six attempts each came back
+> `Japanese 5/6`, `French 3/6`, `Maithili 2/6`, `English 1/6` usable, failing by
+> dropping a bullet or handing the brief back untranslated. Two things absorb
+> that. `translate_digest` retries once (`TRANSLATE_ATTEMPTS`), and `is_echo`
+> refuses any answer with more than half its lines unchanged, so a brief that
+> was not really translated is served in Nepali with `fellBackFrom` set rather
+> than mislabelled as the reader's language.
+>
+> Nepal's own languages are the weak spot. Maithili usually comes back as
+> reworded Nepali, and the desk correctly falls back rather than claiming it.
+> If those matter more than the world languages, try a frontier provider.
 
 For Codex, run `npx @openai/codex login` to authenticate via your ChatGPT subscription.
 
@@ -385,7 +419,7 @@ change.
 
 #### Multilingual briefs
 
-**Which provider you pick determines how many of the ~130 languages actually
+**Which provider you pick determines how many of the ~100 languages actually
 work.** Frontier models (Anthropic, Gemini, OpenAI) handle most of the list.
 Open-weight models served on Groq are fast and cheap but are materially weaker on
 low-resource languages — including nine of the ten Nepal languages the picker
@@ -539,8 +573,8 @@ pulls it with `IMPORTDATA`. See `docs/news-ledger.md`.
 - **Weather alerts are model output, not warnings.** Open-Meteo forecasts drive the flood and landslide thresholds. They are a reason to check DHM, never a substitute for it.
 - **FIRMS needs a free key.** Without `FIRMS_MAP_KEY` the wildfire layer reports `no_key` and stays empty.
 - **Hazard news panels go quiet out of season.** An empty wildfire panel in August is correct behaviour, not a failure — Nepal's fire season runs March to May.
-- **Language coverage is provider-dependent.** The picker offers ~130 languages; how many arrive translated depends on the model you configure, and low-resource languages fail most often. Atlas falls back to Nepali and says so rather than substituting silently.
-- **The stored ten-minute digests are English and Nepali only.** The ~130-language brief is the live AI Insights panel; the digest timeline and the page-level toggle are bilingual.
+- **Language coverage is provider-dependent.** The picker offers ~100 languages; how many arrive translated depends on the model you configure, and low-resource languages fail most often. Atlas falls back to Nepali and says so rather than substituting silently.
+- **The stored ten-minute digests are English and Nepali only.** The ~100-language brief is the live AI Insights panel; the digest timeline and the page-level toggle are bilingual.
 - **The insights cache is in-process.** Fine on a single container. Behind multiple replicas each instance translates independently, which multiplies rate-limit pressure.
 
 ---
@@ -698,7 +732,7 @@ Common causes, in order:
 
 The stored ten-minute digests need Supabase. Without it, `/api/v1/flood/digest`
 returns `enabled: false` with `reason: "database_not_configured"` and the panel
-hides itself. The digest route is bilingual by design — the ~130-language brief
+hides itself. The digest route is bilingual by design — the ~100-language brief
 is the AI Insights panel, not this one.
 
 ### Photo uploads fail

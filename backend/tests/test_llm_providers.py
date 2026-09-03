@@ -175,6 +175,18 @@ class TestTarka:
         body = TarkaProvider(api_key="k", model="m").build_body("sys", "user", 4096, True)
         assert body["response_format"] == {"type": "json_object"}
 
+    def test_the_default_base_url_is_the_published_one(self):
+        """api.tarka.ai is a parked host whose certificate does not match.
+
+        Pointed there, every call died in the TLS handshake before it became a
+        request, so nothing in a log said the URL was wrong.
+        """
+        assert TarkaProvider(api_key="k", model="m").base_url == "https://tarka.rest/v1"
+
+    def test_an_explicit_base_url_still_wins(self):
+        provider = TarkaProvider(api_key="k", model="m", base_url="http://tarka/v1/")
+        assert provider.base_url == "http://tarka/v1"
+
 
 def test_openrouter_sends_its_attribution_headers():
     headers = OpenRouterProvider(api_key="k").headers()
