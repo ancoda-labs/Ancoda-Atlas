@@ -23,6 +23,7 @@ import { useFloodDesk } from '@/app/bhotekoshi-flood/_components/FloodDeskProvid
 
 interface NavItem {
   href: string;
+  neHref?: string;
   en: string;
   ne: string;
 }
@@ -35,22 +36,30 @@ const NAV: NavItem[] = [
   { href: '/bhotekoshi-flood/damage', en: 'Damage', ne: 'क्षति' },
   { href: '/bhotekoshi-flood/situation', en: 'Situation', ne: 'अवस्था' },
   { href: '/bhotekoshi-flood/media', en: 'Coverage', ne: 'समाचार' },
+  { href: '/climate', neHref: '/ne/climate', en: 'Climate', ne: 'TODO' },
 ];
 
 export function FloodNav({ lang }: { lang: Lang }) {
   const pathname = usePathname();
   return (
     <nav className="fl-nav" aria-label={lang === 'ne' ? 'खण्डहरू' : 'Sections'}>
-      {NAV.map(item => (
-        <Link
-          key={item.href}
-          href={item.href}
-          className={pathname === item.href ? 'on' : ''}
-          aria-current={pathname === item.href ? 'page' : undefined}
-        >
-          {lang === 'ne' ? item.ne : item.en}
-        </Link>
-      ))}
+      {NAV.map(item => {
+        const href = lang === 'ne' && item.neHref ? item.neHref : item.href;
+        const on = item.neHref
+          ? pathname === '/climate' || pathname === '/ne/climate'
+          : pathname === item.href;
+        const label = lang === 'ne' && item.ne !== 'TODO' ? item.ne : item.en;
+        return (
+          <Link
+            key={item.href}
+            href={href}
+            className={on ? 'on' : ''}
+            aria-current={on ? 'page' : undefined}
+          >
+            {label}
+          </Link>
+        );
+      })}
     </nav>
   );
 }

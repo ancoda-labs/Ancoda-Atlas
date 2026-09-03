@@ -12,6 +12,10 @@ const nextConfig = {
   turbopack: {
     root: frontendRoot,
   },
+  // `next dev` binds to localhost. Opening the same port as 127.0.0.1 is a
+  // different origin, and Next 16 blocks its own runtime from that host unless
+  // it is listed here.
+  allowedDevOrigins: ['127.0.0.1'],
   // AGENTS.md already lives at the repository root with the Next.js marker.
   // `next dev` otherwise writes a second copy under frontend/ on every start.
   agentRules: false,

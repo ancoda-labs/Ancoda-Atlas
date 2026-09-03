@@ -3,7 +3,7 @@ BE      := docker compose -f infra/split/docker-compose.be.yml --env-file .env
 FE      := docker compose -f infra/split/docker-compose.fe.yml --env-file .env
 
 .DEFAULT_GOAL := help
-.PHONY: help up down restart build logs ps shell sweep flood diag migrate \
+.PHONY: help up down restart build logs ps shell sweep flood climate diag migrate \
         test lint typecheck hooks fe-install fe-dev fe-build clean storage \
         be fe
 
@@ -16,6 +16,7 @@ up: ## Start the dev stack
 	@echo ""
 	@echo "Dashboard   http://localhost:$${PORT:-3117}"
 	@echo "Flood desk  http://localhost:$${PORT:-3117}/bhotekoshi-flood"
+	@echo "Climate     http://localhost:$${PORT:-3117}/climate"
 	@echo "API         http://localhost:$${API_HOST_PORT:-8000}"
 	@echo "API docs    http://localhost:$${API_HOST_PORT:-8000}/docs"
 	@echo ""
@@ -51,6 +52,9 @@ sweep: ## Run one national hazard sweep by hand
 
 flood: ## Run one flood desk refresh by hand
 	$(COMPOSE) exec api python -m scripts.flood_refresh
+
+climate: ## Run one climate refresh (OWID + BIPAD yearly) by hand
+	$(COMPOSE) exec api python -m scripts.climate_context
 
 diag: ## Check Python, imports, ports and which keys are set
 	$(COMPOSE) exec api python -m scripts.diag

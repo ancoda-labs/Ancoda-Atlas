@@ -48,6 +48,7 @@ TAGS_METADATA = [
     {"name": "health", "description": "Liveness and readiness."},
     {"name": "hazards", "description": "The national hazard sweep and its dashboard snapshot."},
     {"name": "flood", "description": "The Rasuwa–Bhotekoshi flood response desk."},
+    {"name": "climate", "description": "Climate context — OWID emissions, reviewed glacier facts, and BIPAD yearly arrivals."},
     {"name": "news", "description": "The Nepali news wire and coverage."},
     {"name": "photos", "description": "Community ground reports."},
     {"name": "ai", "description": "Actionable reads, translation and the ask sandbox."},

@@ -126,6 +126,7 @@ make up
 |---|---|
 | Dashboard | http://localhost:3117 |
 | Flood desk | http://localhost:3117/bhotekoshi-flood |
+| Climate | http://localhost:3117/climate |
 | API docs | http://localhost:8000/docs |
 
 **Requirements:** Docker and Docker Compose. Nothing else — Python 3.12 and
@@ -506,6 +507,8 @@ ministries post operational updates directly. That feed carries the whole
 government, so every post passes the news wire's hazard gate before it reaches
 the desk, and nothing in it is parsed into a figure.
 
+**Climate** lives at `/climate` (and `/ne/climate`), linked from the site footer — not nested in any event. A weekly task reads the [Our World in Data CO₂ dataset](https://github.com/owid/co2-data) (Global Carbon Project + OWID, public domain / CC-BY) into `runs/climate-context.json`, and a national BIPAD yearly reduce into `runs/climate-arrived.json`. Glacier and GLOF figures cannot be parsed from those PDFs — they live in the reviewed file [`backend/content/climate/source-facts.json`](backend/content/climate/source-facts.json). Heat, water, air and fire panels stay off until a reviewed series is wired. How to update the reviewed file is in [`backend/content/climate/README.md`](backend/content/climate/README.md). The section does not attribute any specific flood to climate change or to any country's emissions.
+
 ### Live hazard news aggregator
 
 Separate from the sweep, `backend/app/domains/news/sources/nepal_news.py` powers
@@ -554,6 +557,7 @@ container, so there is no local Python to install.
 | `make restart` | Restart the API, worker and scheduler |
 | `make sweep` | Run one national hazard sweep by hand |
 | `make flood` | Run one flood desk refresh by hand |
+| `make climate` | Run one climate refresh (OWID CO₂ + BIPAD yearly) by hand |
 | `make diag` | Python, imports, ports, and which keys are set |
 | `make migrate` | Check the Supabase schema is reachable (it does not migrate) |
 | `make clean` | Delete the runtime sweep and desk files in `runs/` |
@@ -631,6 +635,7 @@ Everything is under `/api/v1`. Interactive docs at `http://localhost:8000/docs`.
 | `GET /api/v1/news` | Disaster-filtered news. Params: `topic`, `window`, `limit`, `sourceCap` |
 | `GET /api/v1/news/ledger.csv` | Every headline Atlas has shown, as CSV — for [issue #37](https://github.com/ancoda-labs/Ancoda-Atlas/issues/37) and the News Data sheet |
 | `GET /api/v1/flood` | The flood desk overview — reviewed content plus live gauges |
+| `GET /api/v1/climate` | Climate page — OWID emissions, BIPAD yearly arrivals, reviewed glacier/GLOF facts |
 | `GET /api/v1/flood/situation` | Incidents, alerts and live filings |
 | `GET /api/v1/flood/insights?lang=` | The overview brief, in a chosen language |
 | `GET /api/v1/flood/digest?lang=&limit=` | Stored ten-minute digests (needs Supabase) |
