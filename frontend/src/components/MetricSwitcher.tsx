@@ -68,18 +68,21 @@ export default function MetricSwitcher({
   defaultMetric,
   lang,
   showFinding = true,
+  compact = false,
 }: {
   metrics: Partial<Record<ClimateMetricId, ClimateMetric>>;
   defaultMetric: ClimateMetricId;
   lang: Lang;
   showFinding?: boolean;
+  /** Overview desk: Nepal-scale peers by default, tighter rows. */
+  compact?: boolean;
 }) {
   const hydrated = useHydrated();
   const groupId = useId();
   const [metricId, setMetricId] = useState<ClimateMetricId>(
     metrics[defaultMetric] ? defaultMetric : ORDER.find(id => metrics[id]) || defaultMetric,
   );
-  const [scale, setScale] = useState(false);
+  const [scale, setScale] = useState(compact);
 
   const metric = metrics[metricId] || metrics[defaultMetric];
   const available = ORDER.filter(id => metrics[id]);
@@ -88,6 +91,7 @@ export default function MetricSwitcher({
     return sortMetricRows(scale ? metric.scaleRows : metric.rows);
   }, [metric, scale]);
   const max = rows[0]?.value ?? 0;
+  const rowPx = compact ? 28 : ROW_PX;
 
   if (!metric || rows.length === 0) return null;
 
@@ -102,7 +106,7 @@ export default function MetricSwitcher({
   const lead = finding(metric, rows, lang);
 
   return (
-    <div className="ms">
+    <div className={compact ? 'ms ms-compact' : 'ms'}>
       {showFinding && lead ? <p className="ms-finding">{lead}</p> : null}
 
       <table className={hydrated ? 'sr-only' : 'ms-table'}>
@@ -152,14 +156,14 @@ export default function MetricSwitcher({
 
         <div
           className="ms-chart"
-          style={{ height: rows.length * ROW_PX }}
+          style={{ height: rows.length * rowPx }}
           aria-hidden="true"
         >
           {rows.map((row, index) => (
             <div
               key={row.id}
               className={row.id === 'nepal' ? 'ms-row is-np' : 'ms-row'}
-              style={{ transform: `translateY(${index * ROW_PX}px)` }}
+              style={{ transform: `translateY(${index * rowPx}px)` }}
             >
               <span className="ms-name">{pick(lang, row.labelEn, row.labelNe)}</span>
               <span className="ms-val">{fmtValue(row.value, metric.unit)}</span>
