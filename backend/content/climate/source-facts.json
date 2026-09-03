@@ -49,7 +49,7 @@
       "truncated_ne": "TODO"
     },
     "cause": {
-      "headline_en": "Nepal's share of territorial fossil carbon dioxide.",
+      "headline_en": "Nepal's share of territorial fossil CO₂ — about 0.05% in 2024, under 0.02% of all emissions since 1750.",
       "headline_ne": "TODO"
     },
     "news": {
@@ -79,10 +79,10 @@
   },
   "metrics": {
     "cumulative_1750": {
-      "name_en": "Since 1750",
-      "name_ne": "सन् १७५० यता",
-      "caption_en": "Territorial fossil CO₂ and cement, cumulative since 1750. Excludes land-use change. Counted where the fuel was burned, not where goods were consumed.",
-      "caption_ne": "क्षेत्रीय जीवाश्म CO₂ र सिमेन्ट, सन् १७५० देखिको संचयी। भू-उपयोग परिवर्तनबाहेक। इन्धन जलेको ठाउँमा गनिने, उपभोग भएको ठाउँमा होइन।"
+      "name_en": "Since 1750 (cumulative)",
+      "name_ne": "सन् १७५० यता (संचयी)",
+      "caption_en": "Territorial fossil CO₂ and cement, cumulative since 1750. Nepal's share is under 0.02% of all emissions ever recorded — a different measure from the annual share (~0.05% in 2024). Excludes land-use change. Counted where the fuel was burned, not where goods were consumed.",
+      "caption_ne": "क्षेत्रीय जीवाश्म CO₂ र सिमेन्ट, सन् १७५० देखिको संचयी। नेपालको हिस्सा अहिलेसम्मको कुल उत्सर्जनको ०.०२ प्रतिशतभन्दा कम छ — जुन वार्षिक हिस्सा (२०२४ मा करिब ०.०५%) भन्दा फरक मापक हो। भू-उपयोग परिवर्तनबाहेक। इन्धन जलेको ठाउँमा गनिने, उपभोग भएको ठाउँमा होइन।"
     },
     "cumulative_1850": {
       "name_en": "Since 1850",
@@ -91,10 +91,10 @@
       "caption_ne": "क्षेत्रीय जीवाश्म CO₂ र सिमेन्ट, सन् १८५० देखिको संचयी। भू-उपयोग परिवर्तन र १८५० अघिको उत्सर्जनबाहेक। इन्धन जलेको ठाउँमा गनिने।"
     },
     "annual_latest": {
-      "name_en": "{year}",
-      "name_ne": "{year}",
-      "caption_en": "Territorial fossil CO₂ and cement in {year}. Excludes land-use change. Counted where the fuel was burned that year, not where goods were consumed.",
-      "caption_ne": "{year} को क्षेत्रीय जीवाश्म CO₂ र सिमेन्ट। भू-उपयोग परिवर्तनबाहेक। सो वर्ष इन्धन जलेको ठाउँमा गनिने, उपभोग भएको ठाउँमा होइन।"
+      "name_en": "{year} annual",
+      "name_ne": "{year} वार्षिक",
+      "caption_en": "Territorial fossil CO₂ and cement in {year}. Nepal emitted ~18.8 Mt — about 0.05% of the ~37,400 Mt global total. Excludes land-use change. Counted where the fuel was burned that year, not where goods were consumed.",
+      "caption_ne": "{year} को क्षेत्रीय जीवाश्म CO₂ र सिमेन्ट। नेपालले करिब १८.८ मेट्रिक टन उत्सर्जन गर्यो — विश्वको करिब ३७,४०० मेट्रिक टनको लगभग ०.०५ प्रतिशत। भू-उपयोग परिवर्तनबाहेक। सो वर्ष इन्धन जलेको ठाउँमा गनिने, उपभोग भएको ठाउँमा होइन।"
     },
     "per_capita": {
       "name_en": "Per person",

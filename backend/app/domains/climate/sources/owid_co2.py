@@ -35,7 +35,7 @@ UA = "AncodaAtlas/4.0 (Nepal hazard monitoring; +https://github.com/ancoda-labs/
 HEADERS = {"Accept": "text/csv,text/plain,*/*", "User-Agent": UA}
 TIMEOUT_S = 60.0
 
-DEFAULT_METRIC = "cumulative_1750"
+DEFAULT_METRIC = "annual_latest"
 METRIC_IDS = (
     "cumulative_1750",
     "cumulative_1850",
