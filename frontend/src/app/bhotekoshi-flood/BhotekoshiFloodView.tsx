@@ -15,6 +15,7 @@ import { useFloodLang } from '@/hooks/use-flood-lang';
 import { ageFrom } from '@/lib/relative-time';
 import FloodFooter from '@/components/FloodFooter';
 import FloodThemeToggle from '@/components/FloodThemeToggle';
+import ClimateContext from '@/components/ClimateContext';
 import { useFloodDesk } from '@/app/bhotekoshi-flood/_components/FloodDeskProvider';
 import { usePhotos } from '@/hooks/usePhotos';
 import { useTopicNews } from '@/hooks/useHazards';
@@ -394,6 +395,10 @@ export default function BhotekoshiFloodView() {
             {heavyReady ? <FloodAiInsights lang={lang} /> : null}
           </div>
         </section>
+
+        {/* Climate context (emissions, glacial lakes, government statements)
+            sits under the map / AI brief — not a claim about this flood. */}
+        <ClimateContext lang={lang} variant="desk" />
 
         {sitrep ? (
           <>
