@@ -52,19 +52,17 @@ def bucket_end_for(start: datetime) -> datetime:
 
 
 # How each language is named to the model. Only the codes with a script worth
-# naming are listed; callers that know the language pass its name directly.
+# naming are listed; callers that know the language pass its name directly,
+# which is the path every other language takes — insights hands over the
+# registry's English name.
+#
+# This was ten entries, one per Nepali language, spelling out "Devanagari
+# script" so a model would not answer a Maithili request in Latin. Nine of
+# those languages are no longer offered, so their entries named a code nothing
+# can request.
 LANGUAGE_NAME = {
     "en": "English",
     "ne": "Nepali (Devanagari script)",
-    "mai": "Maithili (Devanagari script)",
-    "bho": "Bhojpuri (Devanagari script)",
-    "thr": "Tharu (Devanagari script)",
-    "taj": "Tamang (Devanagari script)",
-    "new": "Nepal Bhasa / Newar (Devanagari script)",
-    "bjj": "Bajjika (Devanagari script)",
-    "mag": "Magar Dhut (Devanagari script)",
-    "awa": "Awadhi (Devanagari script)",
-    "dty": "Doteli (Devanagari script)",
 }
 
 SYSTEM_PROMPT = """You are the wire editor for Ancoda Atlas, a Nepal natural-hazard monitoring desk, writing a short brief on the Rasuwa-Bhotekoshi flood.

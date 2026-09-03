@@ -57,9 +57,43 @@ class TestLanguages:
     def test_the_registry_carries_every_language_the_picker_offers(self):
         from app.domains.ai.languages import ALL_LANGUAGES, NEPAL_LANGUAGES
 
-        assert len(ALL_LANGUAGES) == 131
-        assert len(NEPAL_LANGUAGES) == 10
+        assert len(ALL_LANGUAGES) == 100
+        assert len(NEPAL_LANGUAGES) == 1
         assert NEPAL_LANGUAGES[0].code == "ne"
+
+    def test_nepali_is_the_only_nepal_entry_and_cannot_be_dropped(self):
+        """Nepali is not on the list for coverage.
+
+        It is what `find_language` falls back to, one of the two languages the
+        wire arrives in, and the language the extractive draft is built in.
+        Nepal's other nine were removed deliberately; removing this one breaks
+        the desk rather than shortening a menu.
+        """
+        from app.domains.ai.languages import ALL_LANGUAGES, NEPAL_LANGUAGES
+
+        assert [lang.code for lang in NEPAL_LANGUAGES] == ["ne"]
+        assert ALL_LANGUAGES[0].code == "ne"
+
+    def test_the_two_registries_offer_exactly_the_same_codes(self):
+        """The picker and the API must not drift.
+
+        languages.py says it is generated from the TypeScript registry, and
+        until this existed nothing checked that claim — so a language could be
+        offered in the dropdown and rejected by the API, or removed from one
+        copy and left in the other.
+        """
+        import re
+        from pathlib import Path
+
+        from app.domains.ai.languages import ALL_LANGUAGES
+
+        ts = Path(__file__).resolve().parents[2] / "frontend" / "src" / "lib" / "nepal-languages.ts"
+        if not ts.exists():  # the backend image ships without the frontend tree
+            pytest.skip("frontend registry not present in this checkout")
+
+        offered = re.findall(r"\{ code: '([^']+)'", ts.read_text(encoding="utf-8"))
+        accepted = [lang.code for lang in ALL_LANGUAGES]
+        assert sorted(offered) == sorted(accepted)
 
     def test_an_unknown_code_falls_back_to_nepali(self):
         """This is a desk for people in Nepal; a bad code is likelier a typo."""

@@ -1,21 +1,28 @@
 // The languages this desk can brief in.
 //
-// Two groups, for two different readers.
+// A language earns a place by being official or co-official at national level
+// in a sovereign state — the language a government actually publishes in. That
+// rule excludes constructed and historical languages, sub-national languages of
+// European and Pacific states, and regional languages of countries whose
+// government publishes in another one.
 //
-//   Nepal. The people downstream of the Bhotekoshi are disproportionately
-//   Tamang, Tharu and Maithili speakers, and a relief notice someone cannot
-//   read is a notice that did not reach them.
+// Rasuwa is a trekking corridor and a labour-migration source district, so a
+// good share of the people refreshing this page are reading from outside Nepal
+// — relatives abroad, embassies, responding agencies. That is who the world
+// list is for.
 //
-//   The world. Rasuwa is a trekking corridor and a labour-migration source
-//   district, so a good share of the people refreshing this page are reading
-//   from outside Nepal — relatives abroad, embassies, responding agencies.
+// Nepali is here for a different reason: it is the fallback for any
+// unrecognised code, one of the two languages the wire itself arrives in, and
+// the language the extractive draft is built in. Nepal's other languages —
+// Maithili, Bhojpuri, Tharu, Tamang, Newar, Bajjika, Magar Dhut, Awadhi,
+// Doteli — were removed. The communities downstream of the Bhotekoshi are
+// disproportionately Tamang, Tharu and Maithili speakers, so that is a real
+// loss of reach, made deliberately.
 //
-// Only languages a model can actually write are listed. Nepal's census records
-// 124 mother tongues, but general-purpose models do not write most of the
-// smaller ones, and confident-sounding malformed Limbu on a page people use to
-// decide whether to move is worse than Nepali they can partly read — a reader
-// cannot tell the difference. Those languages are therefore absent rather than
-// offered and quietly substituted.
+// The list is coverage, not a quality measurement: nothing here has been
+// tested against the configured model. The model is the real limit, and it
+// fails visibly — a brief it cannot carry is served in Nepali with the
+// language it fell back from named on the page, never relabelled.
 //
 // Note the remaining constraint: with no model configured nothing can be
 // translated at all. The extractive fallback reproduces headlines, and those
@@ -34,15 +41,6 @@ export interface BriefLanguage {
 /** Nepal's languages, most-spoken first. */
 const NEPAL: BriefLanguage[] = [
   { code: 'ne',  native: 'नेपाली',      english: 'Nepali',     region: 'nepal' },
-  { code: 'mai', native: 'मैथिली',       english: 'Maithili',   region: 'nepal' },
-  { code: 'bho', native: 'भोजपुरी',      english: 'Bhojpuri',   region: 'nepal' },
-  { code: 'thr', native: 'थारू',         english: 'Tharu',      region: 'nepal' },
-  { code: 'taj', native: 'तामाङ',        english: 'Tamang',     region: 'nepal' },
-  { code: 'new', native: 'नेपाल भाषा',    english: 'Newar',      region: 'nepal' },
-  { code: 'bjj', native: 'बज्जिका',       english: 'Bajjika',    region: 'nepal' },
-  { code: 'mag', native: 'मगर ढुट',      english: 'Magar Dhut', region: 'nepal' },
-  { code: 'awa', native: 'अवधी',         english: 'Awadhi',     region: 'nepal' },
-  { code: 'dty', native: 'डोटेली',        english: 'Doteli',     region: 'nepal' },
 ];
 
 /** Everything else, alphabetical by English name. */
@@ -55,15 +53,12 @@ const WORLD: BriefLanguage[] = [
   { code: 'as',  native: 'অসমীয়া',            english: 'Assamese',       region: 'world' },
   { code: 'ay',  native: 'Aymar aru',        english: 'Aymara',         region: 'world' },
   { code: 'az',  native: 'Azərbaycan',       english: 'Azerbaijani',    region: 'world' },
-  { code: 'bm',  native: 'Bamanankan',       english: 'Bambara',        region: 'world' },
-  { code: 'eu',  native: 'Euskara',          english: 'Basque',         region: 'world' },
   { code: 'be',  native: 'Беларуская',       english: 'Belarusian',     region: 'world' },
   { code: 'bn',  native: 'বাংলা',              english: 'Bengali',        region: 'world' },
   { code: 'bs',  native: 'Bosanski',         english: 'Bosnian',        region: 'world' },
   { code: 'bg',  native: 'Български',        english: 'Bulgarian',      region: 'world' },
   { code: 'my',  native: 'မြန်မာ',            english: 'Burmese',        region: 'world' },
   { code: 'ca',  native: 'Català',           english: 'Catalan',        region: 'world' },
-  { code: 'ceb', native: 'Cebuano',          english: 'Cebuano',        region: 'world' },
   { code: 'ny',  native: 'Chichewa',         english: 'Chichewa',       region: 'world' },
   { code: 'zh',  native: '简体中文',           english: 'Chinese (Simplified)',  region: 'world' },
   { code: 'zh-TW', native: '繁體中文',         english: 'Chinese (Traditional)', region: 'world' },
@@ -74,32 +69,23 @@ const WORLD: BriefLanguage[] = [
   { code: 'nl',  native: 'Nederlands',       english: 'Dutch',          region: 'world' },
   { code: 'dz',  native: 'རྫོང་ཁ',             english: 'Dzongkha',       region: 'world' },
   { code: 'en',  native: 'English',          english: 'English',        region: 'world' },
-  { code: 'eo',  native: 'Esperanto',        english: 'Esperanto',      region: 'world' },
   { code: 'et',  native: 'Eesti',            english: 'Estonian',       region: 'world' },
-  { code: 'ee',  native: 'Eʋegbe',           english: 'Ewe',            region: 'world' },
   { code: 'fi',  native: 'Suomi',            english: 'Finnish',        region: 'world' },
   { code: 'fr',  native: 'Français',         english: 'French',         region: 'world' },
-  { code: 'fy',  native: 'Frysk',            english: 'Frisian',        region: 'world' },
-  { code: 'ff',  native: 'Fulfulde',         english: 'Fula',           region: 'world' },
-  { code: 'gl',  native: 'Galego',           english: 'Galician',       region: 'world' },
   { code: 'ka',  native: 'ქართული',          english: 'Georgian',       region: 'world' },
   { code: 'de',  native: 'Deutsch',          english: 'German',         region: 'world' },
   { code: 'el',  native: 'Ελληνικά',         english: 'Greek',          region: 'world' },
   { code: 'gn',  native: "Avañe'ẽ",          english: 'Guarani',        region: 'world' },
   { code: 'gu',  native: 'ગુજરાતી',           english: 'Gujarati',       region: 'world' },
   { code: 'ht',  native: 'Kreyòl Ayisyen',   english: 'Haitian Creole', region: 'world' },
-  { code: 'ha',  native: 'Hausa',            english: 'Hausa',          region: 'world' },
-  { code: 'haw', native: 'ʻŌlelo Hawaiʻi',   english: 'Hawaiian',       region: 'world' },
   { code: 'he',  native: 'עברית',            english: 'Hebrew',         region: 'world' },
   { code: 'hi',  native: 'हिन्दी',             english: 'Hindi',          region: 'world' },
   { code: 'hu',  native: 'Magyar',           english: 'Hungarian',      region: 'world' },
   { code: 'is',  native: 'Íslenska',         english: 'Icelandic',      region: 'world' },
-  { code: 'ig',  native: 'Igbo',             english: 'Igbo',           region: 'world' },
   { code: 'id',  native: 'Bahasa Indonesia', english: 'Indonesian',     region: 'world' },
   { code: 'ga',  native: 'Gaeilge',          english: 'Irish',          region: 'world' },
   { code: 'it',  native: 'Italiano',         english: 'Italian',        region: 'world' },
   { code: 'ja',  native: '日本語',            english: 'Japanese',       region: 'world' },
-  { code: 'jv',  native: 'Basa Jawa',        english: 'Javanese',       region: 'world' },
   { code: 'kn',  native: 'ಕನ್ನಡ',             english: 'Kannada',        region: 'world' },
   { code: 'kk',  native: 'Қазақ',            english: 'Kazakh',         region: 'world' },
   { code: 'km',  native: 'ខ្មែរ',              english: 'Khmer',          region: 'world' },
@@ -108,11 +94,9 @@ const WORLD: BriefLanguage[] = [
   { code: 'ku',  native: 'Kurdî',            english: 'Kurdish',        region: 'world' },
   { code: 'ky',  native: 'Кыргызча',         english: 'Kyrgyz',         region: 'world' },
   { code: 'lo',  native: 'ລາວ',              english: 'Lao',            region: 'world' },
-  { code: 'la',  native: 'Latina',           english: 'Latin',          region: 'world' },
   { code: 'lv',  native: 'Latviešu',         english: 'Latvian',        region: 'world' },
   { code: 'lt',  native: 'Lietuvių',         english: 'Lithuanian',     region: 'world' },
   { code: 'lb',  native: 'Lëtzebuergesch',   english: 'Luxembourgish',  region: 'world' },
-  { code: 'lg',  native: 'Luganda',          english: 'Luganda',        region: 'world' },
   { code: 'mk',  native: 'Македонски',       english: 'Macedonian',     region: 'world' },
   { code: 'mg',  native: 'Malagasy',         english: 'Malagasy',       region: 'world' },
   { code: 'ms',  native: 'Bahasa Melayu',    english: 'Malay',          region: 'world' },
@@ -133,7 +117,6 @@ const WORLD: BriefLanguage[] = [
   { code: 'ro',  native: 'Română',           english: 'Romanian',       region: 'world' },
   { code: 'ru',  native: 'Русский',          english: 'Russian',        region: 'world' },
   { code: 'sm',  native: 'Gagana Samoa',     english: 'Samoan',         region: 'world' },
-  { code: 'gd',  native: 'Gàidhlig',         english: 'Scottish Gaelic', region: 'world' },
   { code: 'nso', native: 'Sepedi',           english: 'Sepedi',         region: 'world' },
   { code: 'sr',  native: 'Српски',           english: 'Serbian',        region: 'world' },
   { code: 'sn',  native: 'ChiShona',         english: 'Shona',          region: 'world' },
@@ -144,7 +127,6 @@ const WORLD: BriefLanguage[] = [
   { code: 'so',  native: 'Soomaali',         english: 'Somali',         region: 'world' },
   { code: 'st',  native: 'Sesotho',          english: 'Sesotho',        region: 'world' },
   { code: 'es',  native: 'Español',          english: 'Spanish',        region: 'world' },
-  { code: 'su',  native: 'Basa Sunda',       english: 'Sundanese',      region: 'world' },
   { code: 'sw',  native: 'Kiswahili',        english: 'Swahili',        region: 'world' },
   { code: 'sv',  native: 'Svenska',          english: 'Swedish',        region: 'world' },
   { code: 'tl',  native: 'Tagalog',          english: 'Tagalog',        region: 'world' },
@@ -152,22 +134,15 @@ const WORLD: BriefLanguage[] = [
   { code: 'ta',  native: 'தமிழ்',             english: 'Tamil',          region: 'world' },
   { code: 'te',  native: 'తెలుగు',            english: 'Telugu',         region: 'world' },
   { code: 'th',  native: 'ไทย',              english: 'Thai',           region: 'world' },
-  { code: 'bo',  native: 'བོད་སྐད',            english: 'Tibetan',        region: 'world' },
   { code: 'ti',  native: 'ትግርኛ',             english: 'Tigrinya',       region: 'world' },
   { code: 'tn',  native: 'Setswana',         english: 'Tswana',         region: 'world' },
   { code: 'tr',  native: 'Türkçe',           english: 'Turkish',        region: 'world' },
   { code: 'tk',  native: 'Türkmen',          english: 'Turkmen',        region: 'world' },
-  { code: 'tw',  native: 'Twi',              english: 'Twi',            region: 'world' },
   { code: 'uk',  native: 'Українська',       english: 'Ukrainian',      region: 'world' },
   { code: 'ur',  native: 'اردو',             english: 'Urdu',           region: 'world' },
-  { code: 'ug',  native: 'ئۇيغۇرچە',          english: 'Uyghur',         region: 'world' },
   { code: 'uz',  native: 'Oʻzbek',           english: 'Uzbek',          region: 'world' },
   { code: 'vi',  native: 'Tiếng Việt',       english: 'Vietnamese',     region: 'world' },
-  { code: 'cy',  native: 'Cymraeg',          english: 'Welsh',          region: 'world' },
-  { code: 'wo',  native: 'Wolof',            english: 'Wolof',          region: 'world' },
   { code: 'xh',  native: 'isiXhosa',         english: 'Xhosa',          region: 'world' },
-  { code: 'yi',  native: 'ייִדיש',            english: 'Yiddish',        region: 'world' },
-  { code: 'yo',  native: 'Yorùbá',           english: 'Yoruba',         region: 'world' },
   { code: 'zu',  native: 'isiZulu',          english: 'Zulu',           region: 'world' },
 ];
 
