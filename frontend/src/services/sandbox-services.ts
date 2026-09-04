@@ -34,8 +34,16 @@ export async function askService(
   return data;
 }
 
-export async function retranslateService(texts: string[], lang: string) {
-  const { data } = await api.post('/sandbox/ask/translate', { texts, lang });
+export async function retranslateService(
+  texts: string[],
+  lang: string,
+  sourceLangs?: string[],
+) {
+  const { data } = await api.post('/sandbox/ask/translate', {
+    texts,
+    lang,
+    ...(sourceLangs && sourceLangs.length > 0 ? { sourceLangs } : {}),
+  });
   return data as {
     kind: 'ok' | 'quota';
     items: RetranslatedItem[];

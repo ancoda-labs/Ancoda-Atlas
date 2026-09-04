@@ -137,6 +137,7 @@ class TarkaProvider(OpenAICompatibleProvider):
         api_key: str | None = None,
         model: str | None = None,
         base_url: str | None = None,
+        reasoning_effort: str | None = None,
         **config: Any,
     ):
         super().__init__(api_key=api_key, model=model, **config)
@@ -144,6 +145,10 @@ class TarkaProvider(OpenAICompatibleProvider):
         # certificate does not match, so every call died in the TLS handshake
         # before this was corrected. The published base is tarka.rest.
         self.base_url = (base_url or "https://tarka.rest/v1").rstrip("/")
+        # qwen*-flash/next ids think before they write. Without a low effort
+        # cap the whole max_tokens budget goes to hidden reasoning and the
+        # translation comes back empty with finish_reason "length".
+        self.reasoning_effort = reasoning_effort or "low"
 
     def build_body(self, system_prompt, user_message, max_tokens, json):
         if not self.model:
@@ -151,6 +156,8 @@ class TarkaProvider(OpenAICompatibleProvider):
                 f"Tarka: LLM_MODEL is not set. Pick an id from {self.base_url}/models"
             )
         body = super().build_body(system_prompt, user_message, max_tokens, json)
+        if self.reasoning_effort:
+            body["reasoning_effort"] = self.reasoning_effort
         # Tarka's local utility models can answer a JSON prompt as plain text
         # unless the response constraint is explicit. Atlas uses this for
         # translations and digests, where malformed JSON is discarded.

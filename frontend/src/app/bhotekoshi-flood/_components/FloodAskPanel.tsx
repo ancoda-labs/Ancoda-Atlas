@@ -44,6 +44,8 @@ interface Turn {
   role: 'user' | 'assistant';
   /** As the desk composed it (en/ne) — written once, never overwritten. */
   source: string;
+  /** Declared compose language for `source` (`en` or `ne`). */
+  sourceLang: string;
   /** language code → this turn in that language */
   byLang: Record<string, string>;
   refused?: boolean;
@@ -61,17 +63,17 @@ const COPY = {
   en: {
     kicker: 'Ask',
     title: 'Ask Atlas',
-    subtitle: 'Nepal natural hazards only',
-    experiment: 'Experiment. Monitoring aid, not a warning system.',
-    placeholder: 'Ask about this flood, gauges, funds…',
-    send: 'Send',
+    tagline: 'Ask about this flood, or tap a starter.',
+    experiment: 'Monitoring aid, not a warning system.',
+    placeholder: 'Ask about this flood…',
+    send: 'Ask',
     close: 'Close',
     open: 'Ask Atlas about this flood',
     thinking: 'Reading the desk…',
     error: 'Could not answer just now. The desk figures are still on the page.',
     modelOff: 'Model off — answering from desk figures',
-    left: 'asks left this hour',
-    language: 'Answer language',
+    left: 'translations left this hour',
+    language: 'Language',
     groupNepal: 'Nepal',
     groupWorld: 'Worldwide',
     searchLanguage: 'Search a language…',
@@ -82,32 +84,32 @@ const COPY = {
     basedOn: 'from',
     reports: 'reports',
     byList: 'Headlines only',
+    tryThese: 'Try',
+    briefLabel: 'Brief',
     fellBack: (name: string) => `Could not write ${name} — answered in English.`,
-    intro:
-      'I answer from what the desk last collected from Nepal government portals — NDRRMA/BIPAD, the OPMCM rescue portal, DHM and ReliefWeb — plus USGS, Open-Meteo, NASA FIRMS, and reviewed climate facts on /climate. Desk death figures are for this Rasuwa–Bhotekoshi flood event. Every answer carries the time it was collected.',
-    scope:
-      'I will not search for a person, will not tell anyone to stay or leave, will not predict, and will not claim climate change caused this flood.',
+    needModel: 'Turn the model on to answer in other languages.',
+    scope: 'Names from desk lists · no stay/leave · no forecasts',
     starters: [
-      'How many have died in the Bhotekoshi flood?',
-      'Which districts are worst hit?',
-      'What about Betrawati water level?',
-      'Where can I donate?',
+      'What’s the death toll?',
+      'How many still uncontacted?',
+      'Worst-hit districts?',
+      'How many were rescued?',
     ],
   },
   ne: {
     kicker: 'सोध्नुहोस्',
     title: 'एट्लसलाई सोध्नुहोस्',
-    subtitle: 'नेपालका प्राकृतिक प्रकोप मात्र',
-    experiment: 'प्रयोग। यो निगरानी सहायक हो, चेतावनी प्रणाली होइन।',
-    placeholder: 'यो बाढी, ग्याज, सहयोगबारे सोध्नुहोस्…',
-    send: 'पठाउनुहोस्',
+    tagline: 'यो बाढीबारे सोध्नुहोस्, वा तलको छान्नुहोस्।',
+    experiment: 'निगरानी सहायक, चेतावनी प्रणाली होइन।',
+    placeholder: 'यो बाढीबारे सोध्नुहोस्…',
+    send: 'सोध्नुहोस्',
     close: 'बन्द',
     open: 'यो बाढीबारे एट्लसलाई सोध्नुहोस्',
     thinking: 'डेस्क पढिँदै…',
     error: 'अहिले जवाफ दिन सकिएन। डेस्कका तथ्यांक पृष्ठमै छन्।',
     modelOff: 'मोडेल बन्द — डेस्कका तथ्यांकबाट',
-    left: 'प्रश्न बाँकी',
-    language: 'जवाफको भाषा',
+    left: 'अनुवाद बाँकी यो घण्टा',
+    language: 'भाषा',
     groupNepal: 'नेपाल',
     groupWorld: 'विश्वभर',
     searchLanguage: 'भाषा खोज्नुहोस्…',
@@ -118,16 +120,16 @@ const COPY = {
     basedOn: 'स्रोत',
     reports: 'समाचार',
     byList: 'शीर्षक मात्र',
+    tryThese: 'छान्नुहोस्',
+    briefLabel: 'संक्षेप',
     fellBack: (name: string) => `${name} लेख्न सकिएन — नेपालीमा जवाफ दिइयो।`,
-    intro:
-      'म डेस्कले नेपाल सरकारका पोर्टलबाट पछिल्लो पटक संकलन गरेको तथ्यांकबाट जवाफ दिन्छु — NDRRMA/BIPAD, OPMCM उद्धार पोर्टल, DHM र ReliefWeb, साथै USGS, Open-Meteo, NASA FIRMS र /climate का जाँचिएका जलवायु तथ्य। डेस्कका मृत्युका अंक यस रसुवा–भोटेकोशी बाढीका हुन्। हरेक जवाफसँग संकलन गरिएको समय हुन्छ।',
-    scope:
-      'म कुनै व्यक्ति खोज्दिनँ, बस्ने कि जाने भन्दिनँ, भविष्यवाणी गर्दिनँ, र यो बाढी जलवायु परिवर्तनले भएको भन्दिनँ।',
+    needModel: 'अन्य भाषामा जवाफ दिन मोडेल चाहिन्छ।',
+    scope: 'डेस्क सूचीबाट नाम · बस्ने/जाने होइन · भविष्यवाणी होइन',
     starters: [
-      'भोटेकोशी बाढीमा कति जनाको मृत्यु भयो?',
-      'कुन जिल्ला सबैभन्दा प्रभावित छन्?',
-      'बेत्रावतीको पानीको सतह कस्तो छ?',
-      'कहाँ सहयोग गर्न सकिन्छ?',
+      'मृत्यु संख्या कति?',
+      'सम्पर्कविहीन कति?',
+      'कुन जिल्ला प्रभावित?',
+      'कति जना उद्धार?',
     ],
   },
 };
@@ -148,6 +150,33 @@ function displayText(turn: Turn, lang: string): string {
   return turn.byLang[lang] ?? turn.source;
 }
 
+/** Mark figures, desk paths and known source names so a skim finds the claim. */
+function highlightAnswer(text: string): React.ReactNode {
+  const pattern =
+    /(\d{1,3}(?:,\d{3})+(?:\.\d+)?%?|\d{2,}(?::\d{2})?(?:\.\d+)?%?|\/(?:bhotekoshi-flood|climate)[\w\-./]*|\b(?:NDRRMA|BIPAD|MoHA|DHM|USGS|FIRMS|OPMCM|IFRC)\b)/g;
+  const nodes: React.ReactNode[] = [];
+  let last = 0;
+  let match: RegExpExecArray | null;
+  let key = 0;
+  while ((match = pattern.exec(text)) !== null) {
+    if (match.index > last) nodes.push(text.slice(last, match.index));
+    const token = match[0];
+    const kind = token.startsWith('/')
+      ? 'fl-ask-path'
+      : /^\d/.test(token)
+        ? 'fl-ask-figure'
+        : 'fl-ask-source';
+    nodes.push(
+      <span key={key++} className={kind}>
+        {token}
+      </span>,
+    );
+    last = match.index + token.length;
+  }
+  if (last < text.length) nodes.push(text.slice(last));
+  return nodes.length > 0 ? nodes : text;
+}
+
 interface Props {
   lang: SiteLang;
 }
@@ -166,7 +195,15 @@ export default function FloodAskPanel({ lang }: Props) {
   const t = COPY[answerLang === 'ne' ? 'ne' : 'en'];
   const selectedLanguage = useMemo(() => findLanguage(answerLang), [answerLang]);
 
-  const { data: feed, isLoading, isError } = useInsights(answerLang);
+  // Wire brief paints immediately. Non-wire languages carry in the background —
+  // a 30s+ model call used to leave the whole panel stuck on "Reading…".
+  const wireLang = answerLang === 'ne' ? 'ne' : 'en';
+  const carrying = !isWireLanguage(answerLang);
+  const wireQuery = useInsights(wireLang);
+  const carryQuery = useInsights(answerLang, { enabled: carrying });
+  const feed = carrying && carryQuery.data ? carryQuery.data : wireQuery.data;
+  const isLoading = !feed && (wireQuery.isLoading || (carrying && carryQuery.isFetching));
+  const isError = !feed && (wireQuery.isError || (carrying && carryQuery.isError && wireQuery.isError));
   const ask = useAsk();
   const retranslate = useRetranslate();
   const statusQuery = useSandboxStatus();
@@ -185,15 +222,17 @@ export default function FloodAskPanel({ lang }: Props) {
     const insight = feed?.insight;
     if (!insight) return null;
     const text = briefSource(insight);
-    const writtenLang = insight.lang || answerLang;
+    const writtenLang = insight.lang || wireLang;
+    const stillCarrying = carrying && !carryQuery.data;
     return {
       role: 'assistant',
       source: text,
+      sourceLang: writtenLang === 'ne' ? 'ne' : 'en',
       byLang: { [writtenLang]: text },
       seeded: true,
-      fellBackFrom: insight.fellBackFrom ?? null,
+      fellBackFrom: stillCarrying ? null : (insight.fellBackFrom ?? null),
     };
-  }, [feed?.insight, answerLang]);
+  }, [feed?.insight, carrying, carryQuery.data, wireLang]);
 
   useEffect(() => {
     logRef.current?.scrollTo({ top: logRef.current.scrollHeight, behavior: 'smooth' });
@@ -240,10 +279,11 @@ export default function FloodAskPanel({ lang }: Props) {
     if ((!docked || dockOpen) && !busy) inputRef.current?.focus();
   }, [docked, dockOpen, busy]);
 
-  // Carry assistant turns missing this language. Depend on answerLang only —
-  // depending on thread would re-run on every message. Never assign to source.
+  // Carry earlier answers when the picker language is missing from byLang.
+  // Depend on answerLang only — depending on thread would re-run on every
+  // message. Never assign source. English-only frames (e.g. news) still need
+  // a carry into Nepali even though ne is a wire language for the brief.
   useEffect(() => {
-    if (isWireLanguage(answerLang)) return;
     let cancelled = false;
 
     const missing = thread.filter(
@@ -252,9 +292,14 @@ export default function FloodAskPanel({ lang }: Props) {
     if (missing.length === 0) return;
 
     const sources = missing.map(t => t.source);
+    const sourceLangs = missing.map(t => t.sourceLang || 'en');
     void (async () => {
       try {
-        const result = await retranslate.mutateAsync({ texts: sources, lang: answerLang });
+        const result = await retranslate.mutateAsync({
+          texts: sources,
+          lang: answerLang,
+          sourceLangs,
+        });
         if (cancelled) return;
         if (result.kind === 'quota' || !result.items?.length) {
           setThread(prev =>
@@ -305,7 +350,7 @@ export default function FloodAskPanel({ lang }: Props) {
       setMessage('');
       setThread(prev => [
         ...prev,
-        { role: 'user', source: q, byLang: { [answerLang]: q } },
+        { role: 'user', source: q, sourceLang: answerLang === 'ne' ? 'ne' : 'en', byLang: { [answerLang]: q } },
       ]);
       setBusy(true);
       try {
@@ -324,8 +369,12 @@ export default function FloodAskPanel({ lang }: Props) {
         })) as AskTurnResult;
         const composed = result.source ?? result.answer;
         const shown = result.answer;
-        // Prefer the wire compose language for source cache keys.
-        const sourceLang = answerLang === 'ne' ? 'ne' : 'en';
+        const sourceLang =
+          result.sourceLang === 'ne' || result.sourceLang === 'en'
+            ? result.sourceLang
+            : answerLang === 'ne'
+              ? 'ne'
+              : 'en';
         const byLang: Record<string, string> = { [sourceLang]: composed };
         if (shown) byLang[result.lang || answerLang] = shown;
 
@@ -334,18 +383,21 @@ export default function FloodAskPanel({ lang }: Props) {
           {
             role: 'assistant',
             source: composed,
+            sourceLang,
             byLang,
             refused: result.kind === 'refused',
             fellBackFrom: result.fellBackFrom ?? null,
           },
         ]);
         if (docked && !dockOpen) setUnread(true);
+        void statusQuery.refetch();
       } catch {
         setThread(prev => [
           ...prev,
           {
             role: 'assistant',
             source: t.error,
+            sourceLang: 'en',
             byLang: { en: t.error, [answerLang]: t.error },
           },
         ]);
@@ -354,11 +406,10 @@ export default function FloodAskPanel({ lang }: Props) {
         setBusy(false);
       }
     },
-    [ask, busy, answerLang, thread, opening, docked, dockOpen, t.error],
+    [ask, busy, answerLang, thread, opening, docked, dockOpen, t.error, statusQuery],
   );
 
   const insight = feed?.insight ?? null;
-  const hasModel = feed?.hasModel ?? false;
 
   const panelVisible = !docked || dockOpen;
 
@@ -367,110 +418,118 @@ export default function FloodAskPanel({ lang }: Props) {
       id="flood-ask-panel"
       ref={panelRef}
       className={cn(
-        'fl-insights',
-        docked &&
-          'fixed bottom-4 right-4 z-[4001] w-[calc(100vw-2rem)] max-w-sm overflow-hidden rounded-xl border border-border bg-background shadow-2xl sm:bottom-24 sm:right-6',
+        'fl-insights fl-ask',
+        docked && 'fl-ask--docked fixed bottom-4 right-4 z-[4001] w-[calc(100vw-2rem)] max-w-sm sm:bottom-24 sm:right-6',
       )}
       aria-labelledby="flood-ask-title"
       role={docked ? 'dialog' : undefined}
       aria-modal={docked ? false : undefined}
     >
-      <div className="fl-sec-head">
-        <span>{t.kicker}</span>
-        <h2 id="flood-ask-title">{t.title}</h2>
-        {docked && (
-          <button
-            type="button"
-            onClick={() => setDockOpen(false)}
-            className="ml-auto shrink-0 text-xs text-foreground/60 underline underline-offset-2 hover:text-foreground"
-          >
-            {t.close}
-          </button>
-        )}
-      </div>
-      <p className="mb-2 px-0 text-[11px] leading-snug text-foreground/50">{t.experiment}</p>
-      <p className="mb-3 text-xs text-foreground/60">{t.subtitle}</p>
+      <header className="fl-ask-top">
+        <div className="fl-ask-title-row">
+          <div className="fl-sec-head fl-ask-head">
+            <span>{t.kicker}</span>
+            <h2 id="flood-ask-title">{t.title}</h2>
+          </div>
+          {docked && (
+            <button
+              type="button"
+              onClick={() => setDockOpen(false)}
+              className="fl-ask-close"
+            >
+              {t.close}
+            </button>
+          )}
+        </div>
+        <p className="fl-ask-lede">
+          <span className="fl-ask-tagline">{t.tagline}</span>
+          <span className="fl-ask-meta">{t.experiment}</span>
+        </p>
+        <p className="fl-ask-scope">{t.scope}</p>
 
-      <div className="fl-insights-lang">
-        <span id="flood-ask-lang-label">{t.language}</span>
-        <Popover open={langOpen} onOpenChange={setLangOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              role="combobox"
-              aria-expanded={langOpen}
-              aria-labelledby="flood-ask-lang-label"
-              className="w-full justify-between font-normal"
+        <div className="fl-insights-lang fl-ask-lang">
+          <span id="flood-ask-lang-label">{t.language}</span>
+          <Popover open={langOpen} onOpenChange={setLangOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={langOpen}
+                aria-labelledby="flood-ask-lang-label"
+                className="fl-ask-lang-btn w-full justify-between font-normal"
+              >
+                <span className="truncate">
+                  {selectedLanguage.native} · {selectedLanguage.english}
+                </span>
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent
+              className={cn(
+                'w-[var(--radix-popover-trigger-width)] p-0',
+                docked && 'z-[4002]',
+              )}
             >
-              <span className="truncate">
-                {selectedLanguage.native} · {selectedLanguage.english}
-              </span>
-              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent
-            className={cn(
-              'w-[var(--radix-popover-trigger-width)] p-0',
-              docked && 'z-[4002]',
-            )}
-          >
-            <Command
-              filter={(value, search) =>
-                value.toLowerCase().includes(search.toLowerCase()) ? 1 : 0
-              }
-            >
-              <CommandInput placeholder={t.searchLanguage} />
-              <CommandList>
-                <CommandEmpty>{t.noLanguage}</CommandEmpty>
-                {[
-                  { label: t.groupNepal, items: NEPAL_LANGUAGES },
-                  { label: t.groupWorld, items: WORLD_LANGUAGES },
-                ].map(group => (
-                  <CommandGroup key={group.label} heading={group.label}>
-                    {group.items.map(l => (
-                      <CommandItem
-                        key={l.code}
-                        value={`${l.native} ${l.english} ${l.code}`}
-                        onSelect={() => {
-                          setAnswerLang(l.code);
-                          setLangOpen(false);
-                        }}
-                      >
-                        <Check
-                          className={cn(
-                            'mr-2 h-4 w-4',
-                            answerLang === l.code ? 'opacity-100' : 'opacity-0',
-                          )}
-                        />
-                        <span className="truncate">
-                          {l.native} · {l.english}
-                        </span>
-                        {!hasModel && !isWireLanguage(l.code) && (
-                          <span className="fl-lang-via ml-2"> — via Nepali</span>
-                        )}
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                ))}
-              </CommandList>
-            </Command>
-          </PopoverContent>
-        </Popover>
-      </div>
+              <Command
+                filter={(value, search) =>
+                  value.toLowerCase().includes(search.toLowerCase()) ? 1 : 0
+                }
+              >
+                <CommandInput placeholder={t.searchLanguage} />
+                <CommandList>
+                  <CommandEmpty>{t.noLanguage}</CommandEmpty>
+                  {[
+                    { label: t.groupNepal, items: NEPAL_LANGUAGES },
+                    { label: t.groupWorld, items: WORLD_LANGUAGES },
+                  ].map(group => (
+                    <CommandGroup key={group.label} heading={group.label}>
+                      {group.items.map(l => (
+                        <CommandItem
+                          key={l.code}
+                          value={`${l.native} ${l.english} ${l.code}`}
+                          onSelect={() => {
+                            setAnswerLang(l.code);
+                            setLangOpen(false);
+                          }}
+                        >
+                          <Check
+                            className={cn(
+                              'mr-2 h-4 w-4',
+                              answerLang === l.code ? 'opacity-100' : 'opacity-0',
+                            )}
+                          />
+                          <span className="truncate">
+                            {l.native} · {l.english}
+                          </span>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  ))}
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
+        </div>
+      </header>
 
       <div
         ref={logRef}
-        className={cn(
-          'mt-3 space-y-3 overflow-y-auto',
-          docked
-            ? 'max-h-[min(20rem,calc(100dvh-22rem))] px-1'
-            : 'max-h-[min(28rem,calc(100dvh-16rem))]',
-        )}
+        className={cn('fl-ask-log', docked ? 'fl-ask-log--docked' : 'fl-ask-log--inline')}
       >
-        <div className="rounded-lg bg-foreground/5 p-3 text-xs leading-relaxed text-foreground/80">
-          <p>{t.intro}</p>
-          <p className="mt-2 text-foreground/60">{t.scope}</p>
-        </div>
+        {thread.length === 0 && (
+          <div className="fl-ask-starters">
+            <p className="fl-ask-starters-label">{t.tryThese}</p>
+            <ul>
+              {t.starters.map(s => (
+                <li key={s}>
+                  <button type="button" onClick={() => send(s)} disabled={busy}>
+                    {s}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {isLoading && !feed ? (
           <p className="fl-empty">{t.loading}</p>
@@ -478,24 +537,17 @@ export default function FloodAskPanel({ lang }: Props) {
           <p className="fl-empty">
             {feed?.reason === 'no_reporting' ? t.none : t.unavailable}
           </p>
-        ) : opening ? (
-          <article className="fl-insights-body mr-2 rounded-lg px-3 py-2 text-xs leading-relaxed text-foreground">
+        ) : opening && thread.length === 0 ? (
+          <article className="fl-insights-body fl-ask-brief">
+            <p className="fl-ask-brief-label">{t.briefLabel}</p>
             {opening.fellBackFrom && (
-              <p className="fl-insights-note mb-2" role="note">
-                {t.fellBack(findLanguage(opening.fellBackFrom).native)}
+              <p className="fl-insights-note" role="note">
+                {status && !status.tarka
+                  ? t.needModel
+                  : t.fellBack(findLanguage(opening.fellBackFrom).native)}
               </p>
             )}
             <h3>{insight.headline}</h3>
-            {insight.generator === 'llm' && insight.summary && (
-              <p className="fl-insights-summary">{insight.summary}</p>
-            )}
-            {insight.bullets.length > 0 && (
-              <ul className="fl-insights-points">
-                {insight.bullets.map((b, i) => (
-                  <li key={i}>{b}</li>
-                ))}
-              </ul>
-            )}
             <div className="fl-insights-foot">
               {insight.generator !== 'llm' && (
                 <span className="g-list">{t.byList}</span>
@@ -508,45 +560,32 @@ export default function FloodAskPanel({ lang }: Props) {
           </article>
         ) : null}
 
-        {thread.length === 0 && (
-          <ul className="space-y-1.5">
-            {t.starters.map(s => (
-              <li key={s}>
-                <button
-                  type="button"
-                  onClick={() => send(s)}
-                  className="w-full rounded-md border border-border px-3 py-2 text-left text-xs text-foreground/80 transition-colors hover:bg-foreground/5 motion-reduce:transition-none"
-                >
-                  {s}
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-
         {thread.map((turn, i) => (
           <article
             key={i}
-            className={
-              turn.role === 'user'
-                ? 'ml-6 rounded-lg bg-primary/10 px-3 py-2 text-xs text-foreground'
-                : turn.refused
-                  ? 'mr-2 rounded-lg border border-border bg-foreground/5 px-3 py-2 text-xs leading-relaxed text-foreground/80'
-                  : 'mr-2 rounded-lg px-3 py-2 text-xs leading-relaxed text-foreground'
-            }
+            className={cn(
+              'fl-ask-bubble',
+              turn.role === 'user' && 'fl-ask-bubble--user',
+              turn.role === 'assistant' && 'fl-ask-bubble--assistant',
+              turn.refused && 'fl-ask-bubble--refused',
+            )}
           >
             <p className="whitespace-pre-wrap">
-              {turn.role === 'user' ? turn.source : displayText(turn, answerLang)}
+              {turn.role === 'user'
+                ? turn.source
+                : highlightAnswer(displayText(turn, answerLang))}
             </p>
             {turn.role === 'assistant' && turn.fellBackFrom ? (
-              <p className="mt-1.5 text-[11px] text-foreground/50">
-                {t.fellBack(findLanguage(turn.fellBackFrom).native)}
+              <p className="fl-ask-fallback">
+                {status && !status.tarka
+                  ? t.needModel
+                  : t.fellBack(findLanguage(turn.fellBackFrom).native)}
               </p>
             ) : null}
           </article>
         ))}
 
-        {busy && <p className="px-3 text-xs text-foreground/50">{t.thinking}</p>}
+        {busy && <p className="fl-ask-thinking">{t.thinking}</p>}
       </div>
 
       <form
@@ -554,32 +593,28 @@ export default function FloodAskPanel({ lang }: Props) {
           e.preventDefault();
           void send(message);
         }}
-        className="mt-3 border-t border-border pt-3"
+        className="fl-ask-composer"
       >
-        <div className="flex gap-2">
+        <div className="fl-ask-composer-row">
           <input
             ref={inputRef}
             value={message}
             onChange={e => setMessage(e.target.value)}
             placeholder={t.placeholder}
             maxLength={500}
-            className="min-w-0 flex-1 rounded-md border border-border bg-background px-3 py-2 text-xs text-foreground placeholder:text-foreground/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary"
+            disabled={busy}
+            aria-label={t.placeholder}
           />
-          <button
-            type="submit"
-            disabled={busy || !message.trim()}
-            className="rounded-md bg-primary px-3 py-2 text-xs font-medium text-background disabled:opacity-40"
-          >
+          <button type="submit" disabled={busy || !message.trim()}>
             {t.send}
           </button>
         </div>
-        <p className="mt-2 text-[11px] text-foreground/50">
-          {status && !status.tarka ? t.modelOff : null}
+        <p className="fl-ask-budget">
+          {status && !status.tarka ? <span>{t.modelOff}</span> : null}
           {status?.remaining != null && (
-            <>
-              {' '}
+            <span>
               {status.remaining.hour} {t.left}
-            </>
+            </span>
           )}
         </p>
       </form>

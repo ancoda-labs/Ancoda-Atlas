@@ -37,7 +37,14 @@ export function useAsk() {
 
 export function useRetranslate() {
   return useMutation({
-    mutationFn: ({ texts, lang }: { texts: string[]; lang: string }) =>
-      retranslateService(texts, lang),
+    mutationFn: ({
+      texts,
+      lang,
+      sourceLangs,
+    }: {
+      texts: string[];
+      lang: string;
+      sourceLangs?: string[];
+    }) => retranslateService(texts, lang, sourceLangs),
   });
 }

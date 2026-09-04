@@ -145,6 +145,12 @@ async def ask_retranslate(
     no_store(response)
     lang = payload.get("lang") or "en"
     use_model = payload.get("useModel") is not False
+    raw_source_langs = payload.get("sourceLangs")
+    source_langs = (
+        [s if isinstance(s, str) else "en" for s in raw_source_langs]
+        if isinstance(raw_source_langs, list)
+        else None
+    )
 
     # Same budget as asking. On quota, keep showing the composed text rather
     # than erroring — same degradation as everywhere else here.
@@ -166,7 +172,13 @@ async def ask_retranslate(
 
     try:
         provider = tarka_provider() if use_model else None
-        items = await retranslate_thread(provider, texts, lang)
+        items = await retranslate_thread(
+            provider,
+            texts,
+            lang,
+            source_langs=source_langs,
+            client_key=client_key,
+        )
         left = remaining_for(client_key)
         return {
             "kind": "ok",

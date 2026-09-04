@@ -107,12 +107,13 @@ export function useDigest(lang: Lang) {
   });
 }
 
-export function useInsights(lang: string) {
+export function useInsights(lang: string, opts?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ['flood', 'insights', lang],
     queryFn: () => fetchInsightsService(lang),
     // The brief is rewritten every ten minutes at most.
     staleTime: 10 * 60 * 1000,
+    enabled: opts?.enabled ?? true,
   });
 }
 

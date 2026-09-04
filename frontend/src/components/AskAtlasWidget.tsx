@@ -86,10 +86,10 @@ const COPY = {
     intro:
       'I answer from what the desk last collected from Nepal government portals — NDRRMA/BIPAD, the OPMCM rescue portal, DHM and ReliefWeb — plus USGS, Open-Meteo, NASA FIRMS, and reviewed climate facts on /climate. Desk death figures are for this Rasuwa–Bhotekoshi flood event. Every answer carries the time it was collected.',
     scope:
-      'I will not search for a person, will not tell anyone to stay or leave, will not predict, and will not claim climate change caused this flood.',
+      'I can search the OPMCM lost/found reports and the NDRRMA rescued register by name. I will not tell anyone to stay or leave, will not predict, and will not claim climate change caused this flood.',
     starters: [
       'How many have died in the Bhotekoshi flood?',
-      'Any earthquakes in the last 24 hours?',
+      'Is Ram Bahadur on the missing list?',
       'What is Nepal\'s share of CO₂ emissions?',
       'Which districts are worst hit?',
     ],
@@ -115,10 +115,10 @@ const COPY = {
     intro:
       'म डेस्कले नेपाल सरकारका पोर्टलबाट पछिल्लो पटक संकलन गरेको तथ्यांकबाट जवाफ दिन्छु — NDRRMA/BIPAD, OPMCM उद्धार पोर्टल, DHM र ReliefWeb, साथै USGS, Open-Meteo, NASA FIRMS र /climate का जाँचिएका जलवायु तथ्य। डेस्कका मृत्युका अंक यस रसुवा–भोटेकोशी बाढीका हुन्। हरेक जवाफसँग संकलन गरिएको समय हुन्छ।',
     scope:
-      'म कुनै व्यक्ति खोज्दिनँ, बस्ने कि जाने भन्दिनँ, भविष्यवाणी गर्दिनँ, र यो बाढी जलवायु परिवर्तनले भएको भन्दिनँ।',
+      'ओपीएमसीएम हराएका/भेटिएका र एनडीआरआरएमए उद्धार सूची नामले खोज्छु। बस्ने कि जाने भन्दिनँ, भविष्यवाणी गर्दिनँ, र यो बाढी जलवायु परिवर्तनले भएको भन्दिनँ।',
     starters: [
       'भोटेकोशी बाढीमा कति जनाको मृत्यु भयो?',
-      'पछिल्लो २४ घण्टामा भूकम्प गयो?',
+      'राम बहादुर हराएका सूचीमा छन्?',
       'नेपालको CO₂ उत्सर्जन कति अंश हो?',
       'कुन जिल्ला सबैभन्दा प्रभावित छन्?',
     ],

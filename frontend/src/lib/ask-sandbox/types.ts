@@ -118,6 +118,8 @@ export interface AskTurnResult {
    * translation of a translation.
    */
   source?: string;
+  /** Language the `source` prose was composed in (`en` or `ne`). */
+  sourceLang?: string;
   /** The language the answer is actually written in — any registry code. */
   lang: string;
   view: ViewAction;

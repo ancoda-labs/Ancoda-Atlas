@@ -113,9 +113,9 @@ def build_snapshot(
     return {
         **hazard_slice(hazards),
         "climate": climate_slice(climate),
-        # Counts only. The register holds thousands of named people and none of
-        # them belong in a prompt — the box refuses to search names, and the
-        # cheapest way to keep that true is to never hand it any.
+        # Counts only for the prompt path. Named rows for rescue_person are
+        # read from the flood store inside the template, never pasted here —
+        # sixteen thousand names in a prompt would be both a cost and a leak.
         "registerTotal": reg.get("total"),
         "registerNepali": reg.get("nepali"),
         "registerForeign": reg.get("foreign"),

@@ -69,7 +69,12 @@ export async function fetchDigestService(lang: 'en' | 'ne' = 'en'): Promise<News
 }
 
 export async function fetchInsightsService(lang: string): Promise<FloodInsightFeed> {
-  const { data } = await api.get<FloodInsightFeed>('/flood/insights', { params: { lang } });
+  // Non-wire languages wait on a model carry; 30s was cutting the request off
+  // mid-translation and leaving the Ask panel stuck on "Reading…".
+  const { data } = await api.get<FloodInsightFeed>('/flood/insights', {
+    params: { lang },
+    timeout: 90_000,
+  });
   return data;
 }
 

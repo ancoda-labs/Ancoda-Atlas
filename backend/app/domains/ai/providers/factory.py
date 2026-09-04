@@ -86,6 +86,7 @@ def create_llm_provider(
         kwargs["api_key"] = api_key
         if key == "tarka":
             kwargs["base_url"] = base_url
+            kwargs["reasoning_effort"] = reasoning_effort or "low"
         if key == "groq":
             kwargs["reasoning_effort"] = reasoning_effort
 
