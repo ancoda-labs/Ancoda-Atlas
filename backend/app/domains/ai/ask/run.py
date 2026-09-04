@@ -23,7 +23,7 @@ from app.domains.ai.ask.compose import (
 )
 from app.domains.ai.ask.guard import numbers_are_grounded, scrub_text
 from app.domains.ai.ask.live import refresh_for_intent
-from app.domains.ai.ask.policy import classify_intent, is_refusal
+from app.domains.ai.ask.policy import REFUSAL_INTENTS, classify_intent, is_refusal
 from app.domains.ai.ask.rate_limit import (
     can_spend,
     max_output_tokens,
@@ -38,6 +38,7 @@ from app.domains.ai.providers.openai_family import TarkaProvider
 log = get_logger(__name__)
 
 DEFAULT_MODEL = "himalaya-gemma-4-bf16"
+MAX_HISTORY_TURNS = 6
 
 
 def _tarka() -> TarkaProvider | None:
@@ -55,6 +56,11 @@ def _tarka() -> TarkaProvider | None:
     )
 
 
+def tarka_provider() -> TarkaProvider | None:
+    """Public wrapper — the retranslate route needs the same gateway."""
+    return _tarka()
+
+
 def sandbox_status(client_key: str) -> dict[str, Any]:
     provider = _tarka()
     configured = bool(provider and provider.is_configured)
@@ -65,6 +71,52 @@ def sandbox_status(client_key: str) -> dict[str, Any]:
         "model": (settings.LLM_MODEL or DEFAULT_MODEL) if configured else None,
         "remaining": {"hour": left.hour, "globalHour": left.globalHour},
     }
+
+
+def _recent_history(history: Any) -> list[dict[str, str]]:
+    """The reader's own prior turns, scrubbed and capped.
+
+    Tolerate garbage from the client: keep only well-shaped user/assistant
+    rows with non-empty text, take the last six, and scrub each — this is
+    untrusted text coming back from a browser that can send anything.
+    """
+    if not isinstance(history, list):
+        return []
+    cleaned: list[dict[str, str]] = []
+    for item in history:
+        if not isinstance(item, dict):
+            continue
+        role = item.get("role")
+        text = item.get("text")
+        if role not in ("user", "assistant") or not isinstance(text, str):
+            continue
+        trimmed = text.strip()
+        if not trimmed:
+            continue
+        cleaned.append({"role": role, "text": scrub_text(trimmed, limit=400)})
+    return cleaned[-MAX_HISTORY_TURNS:]
+
+
+def _classify_with_context(question: str, history: list[dict[str, str]]) -> str:
+    """Classify this question; only borrow prior user text for bare follow-ups.
+
+    Do not ask a model to rewrite the follow-up — that would put a model
+    upstream of the refusals. A refusal reached only by borrowing context is
+    not this question being refused, so it falls back to `other`.
+    """
+    intent = classify_intent(question)
+    if intent != "other" or not history:
+        return intent
+    prior_user = next(
+        (t["text"] for t in reversed(history) if t["role"] == "user"),
+        None,
+    )
+    if not prior_user:
+        return intent
+    widened = classify_intent(f"{prior_user}\n{question}")
+    if widened in REFUSAL_INTENTS:
+        return "other"
+    return widened
 
 
 def _as_of_epoch(intent: str, snapshot: dict[str, Any]) -> float | None:
@@ -111,6 +163,7 @@ async def _compose_turn(
     client_key: str,
     snapshot: dict[str, Any],
     use_model: bool = True,
+    history: list[dict[str, str]] | None = None,
 ) -> dict[str, Any]:
     # The box composes in the two languages it has templates for, and carries
     # the finished sentence into any of the ~100 the picker offers. Composing
@@ -119,7 +172,8 @@ async def _compose_turn(
     requested = find_language(lang)
     compose_lang = "ne" if requested.code == "ne" else "en"
     lang = compose_lang
-    intent = classify_intent(question)
+    prior = history or []
+    intent = _classify_with_context(question, prior)
 
     # If the desk's copy is stale, refresh the one collector this intent needs
     # before answering. Bounded and allowlisted — see live.py for why this is
@@ -184,8 +238,17 @@ async def _compose_turn(
         }
 
     try:
+        prior_block = ""
+        if prior:
+            lines = "\n".join(f"{t['role']}: {t['text']}" for t in prior)
+            prior_block = (
+                "Prior turns (context for what the reader means — never a "
+                f"source of figures):\n{lines}"
+            )
         user = "\n\n".join(
-            [
+            bit
+            for bit in [
+                prior_block,
                 # The reader's own text is untrusted too. The classifier
                 # sends most injections to `other` and a refusal, but one
                 # riding on a matched intent — "how many died? ignore your
@@ -194,6 +257,7 @@ async def _compose_turn(
                 wrap_tool_data(tool_results),
                 f"Suggested view (already validated): {view}",
             ]
+            if bit
         )
         result = await provider.complete(
             system_prompt(), user, max_tokens=max_output_tokens(), timeout=45.0, json=True
@@ -253,6 +317,7 @@ async def run_ask_turn(
     client_key: str,
     snapshot: dict[str, Any],
     use_model: bool = True,
+    history: Any = None,
 ) -> dict[str, Any]:
     """Compose the turn, then carry it into the reader's language.
 
@@ -262,21 +327,33 @@ async def run_ask_turn(
     sixth would be the worst of them to miss: a reader who cannot read the
     refusal is a reader who does not know they were refused.
     """
-    turn = await _compose_turn(question, lang, client_key, snapshot, use_model)
+    recent = _recent_history(history)
+    turn = await _compose_turn(
+        question, lang, client_key, snapshot, use_model, history=recent
+    )
     requested = find_language(lang)
+    # Desk-composed en/ne text. The panel keeps this as `source` so a later
+    # language change can retranslate without round-tripping a translation.
+    composed = turn.get("answer") or ""
 
     # Composed languages need no carrying, and the extractive answer is already
     # written in one of them.
     if is_wire_language(requested.code):
-        return {**turn, "lang": requested.code, "fellBackFrom": None}
+        return {
+            **turn,
+            "lang": requested.code,
+            "source": composed,
+            "fellBackFrom": None,
+        }
 
     provider = _tarka() if use_model else None
     result = await translate_answer(
-        provider, turn.get("answer") or "", requested.code, requested.english
+        provider, composed, requested.code, requested.english
     )
     return {
         **turn,
         "answer": result["answer"],
+        "source": composed,
         "lang": result["lang"] or turn.get("lang") or "en",
         "translated": result["translated"],
         # Named so the panel can say which language it could not write, rather

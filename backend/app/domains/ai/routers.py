@@ -6,8 +6,9 @@ from fastapi import APIRouter, Header, Response
 
 from app.core.http_cache import cache_for, no_store
 from app.core.logging import get_logger
-from app.domains.ai.ask.rate_limit import hash_client
-from app.domains.ai.ask.run import run_ask_turn, sandbox_status
+from app.domains.ai.ask.rate_limit import can_spend, hash_client, remaining_for
+from app.domains.ai.ask.retranslate import MAX_ITEMS, retranslate_thread
+from app.domains.ai.ask.run import run_ask_turn, sandbox_status, tarka_provider
 from app.domains.ai.ask.tools import build_snapshot
 from app.domains.ai.insights import CACHE_TTL_S, get_insight
 
@@ -48,6 +49,7 @@ def _snapshot() -> dict[str, Any]:
     rule that keeps a slow portal from hanging a question, and it is why the
     answers carry a sweep timestamp rather than pretending to be live.
     """
+    from app.domains.climate import service as climate_service
     from app.domains.flood import service as flood_service
     from app.domains.hazards import service as hazards_service
 
@@ -60,6 +62,8 @@ def _snapshot() -> dict[str, Any]:
         news=store.get("news") or [],
         hazards=hazards_service.get_dashboard(),
         register=store.get("rescue") or {},
+        # Reviewed climate page only — never invents shares or glacier figures.
+        climate=climate_service.payload(),
     )
 
 
@@ -107,8 +111,69 @@ async def ask(
             client_key=client_key,
             snapshot=_snapshot(),
             use_model=payload.get("useModel") is not False,
+            history=payload.get("history"),
         )
     except Exception as exc:  # noqa: BLE001
         log.warning("ask_turn_failed", error=str(exc))
+        response.status_code = 503
+        return {"error": "unavailable"}
+
+
+@router.post(
+    "/sandbox/ask/translate",
+    summary="Carry already-composed answers into another language",
+)
+async def ask_retranslate(
+    response: Response,
+    payload: dict[str, Any],
+    x_forwarded_for: str | None = Header(None),
+    x_real_ip: str | None = Header(None),
+) -> dict[str, Any]:
+    """Retranslate a thread already on screen.
+
+    This endpoint cannot be used to get unguarded prose out of the model:
+    everything it returns is a translation of something it was given, and the
+    digits have to match. Nothing is composed here.
+    """
+    raw_texts = payload.get("texts")
+    if not isinstance(raw_texts, list) or not raw_texts or len(raw_texts) > MAX_ITEMS:
+        response.status_code = 400
+        return {"error": "texts_required"}
+    texts = [t if isinstance(t, str) else "" for t in raw_texts]
+
+    client_key = hash_client(_client_ip(x_forwarded_for, x_real_ip))
+    no_store(response)
+    lang = payload.get("lang") or "en"
+    use_model = payload.get("useModel") is not False
+
+    # Same budget as asking. On quota, keep showing the composed text rather
+    # than erroring — same degradation as everywhere else here.
+    if use_model and not can_spend(client_key):
+        left = remaining_for(client_key)
+        return {
+            "kind": "quota",
+            "items": [
+                {
+                    "text": t,
+                    "lang": None,
+                    "translated": False,
+                    "fellBackFrom": None,
+                }
+                for t in texts
+            ],
+            "remaining": {"hour": left.hour, "globalHour": left.globalHour},
+        }
+
+    try:
+        provider = tarka_provider() if use_model else None
+        items = await retranslate_thread(provider, texts, lang)
+        left = remaining_for(client_key)
+        return {
+            "kind": "ok",
+            "items": items,
+            "remaining": {"hour": left.hour, "globalHour": left.globalHour},
+        }
+    except Exception as exc:  # noqa: BLE001
+        log.warning("ask_retranslate_failed", error=str(exc))
         response.status_code = 503
         return {"error": "unavailable"}
