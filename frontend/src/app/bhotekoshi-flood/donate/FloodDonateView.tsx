@@ -88,17 +88,17 @@ const T = {
   receivedKicker: { en: '2 · Received', ne: '२ · प्राप्त' },
   receivedTitle: { en: 'What has reached the Prime Minister’s fund', ne: 'प्रधानमन्त्री कोषमा आएको रकम' },
   receivedIntro: {
-    en: 'Balances the Ministry of Finance published for the Prime Minister’s Disaster Relief Fund: the 12 Bhadra nine-bank table plus 15 Bhadra receipts. This is cash already in those accounts — not a pledge, and not Atlas. Give through the accounts above.',
-    ne: 'अर्थ मन्त्रालयले प्रधानमन्त्री दैवी प्रकोप उद्धार कोषमा प्रकाशित गरेको मौज्दात: १२ भदौको नौ बैंक तालिका र १५ भदौको थप संकलन। यो ती खातामा आइसकेको नगद हो — घोषणा होइन, एट्लस होइन। माथिका खातामार्फत सहयोग गर्नुहोस्।',
+    en: 'Balances the Ministry of Finance published for the Prime Minister’s Disaster Relief Fund: the 12 Bhadra nine-bank table plus the 15 and 17 Bhadra receipts. This is cash already in those accounts — not a pledge, and not Atlas. Give through the accounts above.',
+    ne: 'अर्थ मन्त्रालयले प्रधानमन्त्री दैवी प्रकोप उद्धार कोषमा प्रकाशित गरेको मौज्दात: १२ भदौको नौ बैंक तालिका र १५ तथा १७ भदौको थप संकलन। यो ती खातामा आइसकेको नगद हो — घोषणा होइन, एट्लस होइन। माथिका खातामार्फत सहयोग गर्नुहोस्।',
   },
   receivedAsOf: { en: 'Figures as of', ne: 'तथ्यांक मिति' },
   doNotAdd: { en: 'Do not add these together', ne: 'यी संख्या नजोड्नुहोस्' },
   receivedWarn: {
-    en: 'The amount already in the fund before the flood is inside the 7.15 billion, not on top of it. The Rs 1 billion being sent to affected areas is money leaving that total, not extra cash. The Rs 6.75 crore to 15 palikas, PhonePe QR, foreign pledges, the World Bank package and in-kind cargo are not this fund.',
-    ne: 'विपद्अघिको मौज्दात ७ अर्ब १५ करोडभित्र छ, माथि होइन। प्रभावित क्षेत्रमा पठाइने एक अर्ब त्यही जम्माबाट बाहिरिने रकम हो, थप होइन। १५ पालिकालाई ६ करोड ७५ लाख, फोनपे QR, वैदेशिक घोषणा, विश्व बैंक प्याकेज र सामग्री यो कोष होइनन्।',
+    en: 'The amount already in the fund before the flood is inside the 7.30 billion, not on top of it. The Rs 1 billion being sent to affected areas is money leaving that total, not extra cash. The Rs 6.75 crore to 15 palikas, PhonePe QR, foreign pledges, the World Bank package and in-kind cargo are not this fund.',
+    ne: 'विपद्अघिको मौज्दात ७ अर्ब ३० करोडभित्र छ, माथि होइन। प्रभावित क्षेत्रमा पठाइने एक अर्ब त्यही जम्माबाट बाहिरिने रकम हो, थप होइन। १५ पालिकालाई ६ करोड ७५ लाख, फोनपे QR, वैदेशिक घोषणा, विश्व बैंक प्याकेज र सामग्री यो कोष होइनन्।',
   },
   notInRupee: { en: 'Counted separately, not in the rupee total', ne: 'छुट्टै गनिएको, नेपाली जम्मामा छैन' },
-  notInFund: { en: 'Counted separately — not added to the Rs 7.15 billion', ne: 'छुट्टै गनिएको — रु. ७ अर्ब १५ करोडमा जोडिँदैन' },
+  notInFund: { en: 'Counted separately — not added to the Rs 7.30 billion', ne: 'छुट्टै गनिएको — रु. ७ अर्ब ३० करोडमा जोडिँदैन' },
   discrepancy: {
     en: 'These figures no longer add up and have not been corrected yet. Treat the group totals as provisional.',
     ne: 'यी तथ्यांक मिल्दैनन् र अझै सच्याइएको छैन। समूहका जम्मा संख्यालाई अस्थायी मान्नुहोस्।',
@@ -110,8 +110,8 @@ const T = {
     ne: 'एनडीआरआरएमए सिटरेप #०६ को माग सूची। पठाइएको सामग्री होइन, प्रधानमन्त्री कोषको नगद पनि होइन।',
   },
   neededWarn: {
-    en: 'Do not add these quantities onto the Rs 7.15 billion. The list will be updated as NDRRMA republishes it.',
-    ne: 'यी परिमाण ७ अर्ब १५ करोडमाथि नजोड्नुहोस्। एनडीआरआरएमए नयाँ सूची निकालेपछि यो अद्यावधिक हुनेछ।',
+    en: 'Do not add these quantities onto the Rs 7.30 billion. The list will be updated as NDRRMA republishes it.',
+    ne: 'यी परिमाण ७ अर्ब ३० करोडमाथि नजोड्नुहोस्। एनडीआरआरएमए नयाँ सूची निकालेपछि यो अद्यावधिक हुनेछ।',
   },
   warehousesTitle: { en: 'Emergency warehouses', ne: 'आपत्कालीन गोदाम' },
   warehousesIntro: {

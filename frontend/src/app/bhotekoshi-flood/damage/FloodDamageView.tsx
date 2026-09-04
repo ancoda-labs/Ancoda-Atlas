@@ -11,8 +11,8 @@ import { useFloodDesk } from '@/app/bhotekoshi-flood/_components/FloodDeskProvid
 // Copernicus EMSR927 grading for Syabrubesi / Timure, and the NEA 10 Bhadra
 // notice. Two numbers on this page that look addable are not: 433 is all
 // buildings in the mapped area, 392 is residential inside that; the ~450
-// people in the AOI are not added to uncontacted 4,216, and the 133+ NEA
-// hydropower workers are not added to hydropower 900 or to 4,216. Langtang
+// people in the AOI are not added to the uncontacted total of about 5,083,
+// and neither are the 133+ NEA hydropower workers. Langtang
 // 60 is inside the 133+. Copernicus 5 bridges in the AOI is not SitRep-3's
 // 80 national bridges.
 
@@ -70,7 +70,7 @@ const T = {
   hitTag: { en: 'Hit', ne: 'प्रभावित' },
   blankRemarks: { en: 'On the list, not marked hit', ne: 'सूचीमा, प्रभावित भनिएको छैन' },
   phones: { en: 'NEA phones', ne: 'प्राधिकरण फोन' },
-  exclusive: { en: 'Counted separately, not added to uncontacted 4,216 or hydropower 900', ne: 'छुट्टै गनिएको, सम्पर्कविहीन ४,२१६ वा जलविद्युत् ९०० माथि होइन' },
+  exclusive: { en: 'Counted separately, not added to the uncontacted total of about 5,083', ne: 'छुट्टै गनिएको, सम्पर्कविहीन करिब ५,०८३ माथि होइन' },
   langtangInside: { en: 'Inside the 133+, not on top of it', ne: '१३३+ भित्र, माथि होइन' },
 };
 

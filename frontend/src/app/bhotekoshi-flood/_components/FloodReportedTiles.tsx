@@ -88,8 +88,9 @@ function reviewed(
   };
 }
 
-function n(value: number | null | undefined, suffix?: string): string {
-  return `${(value ?? 0).toLocaleString()}${suffix || ''}`;
+/** "~5,083" — the "~" is the source saying the figure is an approximation. */
+function n(value: number | null | undefined, suffix?: string, approximate?: boolean): string {
+  return `${approximate ? '~' : ''}${(value ?? 0).toLocaleString()}${suffix || ''}`;
 }
 
 function newestIso(...candidates: Array<string | null | undefined>): string | null {
@@ -234,7 +235,7 @@ export default function FloodReportedTiles({
           </Tile>
         )}
         {missing != null && (
-          <Tile value={n(missing.value)} label={t('missing')} tone={missing.tone} scraped={missing.live} lang={lang}>
+          <Tile value={n(missing.value, undefined, missing.approximate)} label={t('missing')} tone={missing.tone} scraped={missing.live} lang={lang}>
             {showRegister ? <BipadUnder value={totals?.missing} lang={lang} /> : null}
           </Tile>
         )}
