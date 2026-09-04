@@ -78,6 +78,27 @@ def hazard_slice(hazards: dict[str, Any] | None) -> dict[str, Any]:
     }
 
 
+def climate_slice(climate: dict[str, Any] | None) -> dict[str, Any]:
+    """Reviewed climate background only — headlines and the causation disclaimer.
+
+    Never invents a share or a glacier figure. The ask box restates what
+    /climate already publishes; a missing field stays missing.
+    """
+    c = climate or {}
+    section = c.get("section") or {}
+    cause = section.get("cause") or {}
+    ice = section.get("ice") or {}
+    lakes = section.get("lakes") or {}
+    return {
+        "disclaimerEn": c.get("disclaimerEn") or c.get("disclaimer_en"),
+        "disclaimerNe": c.get("disclaimerNe") or c.get("disclaimer_ne"),
+        "causeHeadlineEn": cause.get("headlineEn") or cause.get("headline_en"),
+        "iceHeadlineEn": ice.get("headlineEn") or ice.get("headline_en"),
+        "lakesHeadlineEn": lakes.get("headlineEn") or lakes.get("headline_en"),
+        "page": "/climate",
+    }
+
+
 def build_snapshot(
     content: dict[str, Any],
     sitrep: dict[str, Any] | None,
@@ -85,14 +106,16 @@ def build_snapshot(
     news: list[dict[str, Any]],
     hazards: dict[str, Any] | None = None,
     register: dict[str, Any] | None = None,
+    climate: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     sitrep = sitrep or {}
     reg = (register or {}).get("summary") or {}
     return {
         **hazard_slice(hazards),
-        # Counts only. The register holds thousands of named people and none of
-        # them belong in a prompt — the box refuses to search names, and the
-        # cheapest way to keep that true is to never hand it any.
+        "climate": climate_slice(climate),
+        # Counts only for the prompt path. Named rows for rescue_person are
+        # read from the flood store inside the template, never pasted here —
+        # sixteen thousand names in a prompt would be both a cost and a leak.
         "registerTotal": reg.get("total"),
         "registerNepali": reg.get("nepali"),
         "registerForeign": reg.get("foreign"),
@@ -171,6 +194,8 @@ TOOLS_FOR_INTENT = {
     "air_quality": ["get_air_quality"],
     "wildfire": ["get_fire"],
     "weather": ["get_weather"],
+    "climate": ["get_climate"],
+    "landslide": ["search_news"],
 }
 
 
@@ -209,6 +234,15 @@ def worst_death_districts(snap: dict[str, Any], n: int = 3) -> list[str]:
 def run_tool(name: str, args: dict[str, Any], snap: dict[str, Any]) -> Any:
     if name == "get_figures":
         return {
+            # Framing the model used to miss: this desk *is* the Bhotekoshi
+            # event, so inventing "no Bhotekoshi-only total" was a false gap.
+            "event": "Rasuwa–Bhotekoshi flood desk",
+            "event_note": (
+                "Headline death/injury/uncontacted figures are for this flood "
+                "event. There is no separate Bhotekoshi-only national total "
+                "beyond these desk headlines; use district breakdowns for "
+                "place splits."
+            ),
             "headlines": snap["headlines"],
             "breakdowns": snap["breakdowns"],
             "as_of": snap["sitrepAsOf"],
@@ -239,6 +273,8 @@ def run_tool(name: str, args: dict[str, Any], snap: dict[str, Any]) -> Any:
         return {"funds": snap["funds"]}
     if name == "get_faq":
         return {"helplines": snap["helplines"]}
+    if name == "get_climate":
+        return snap.get("climate") or {}
     # The hazard tools all answer from the 15-minute sweep, so each one hands
     # back the sweep's timestamp with the reading. A figure without the moment
     # it was taken is not a figure anyone can act on.

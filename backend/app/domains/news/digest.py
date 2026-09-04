@@ -265,21 +265,30 @@ def is_echo(candidate: dict[str, Any], draft: dict[str, Any]) -> bool:
 # so a single try discards a usable translation about half the time. Two
 # bounded attempts, behind the caller's ten-minute cache and its per-language
 # lock, cost one extra call per language per cycle at worst.
-TRANSLATE_ATTEMPTS = 2
+TRANSLATE_ATTEMPTS = 3
 
 
 async def _translate_once(
     provider: LLMProvider, draft: dict[str, Any], target: str
 ) -> dict[str, Any] | None:
     """One attempt. None means it did not produce a usable translation."""
+    # Reasoning hosts (Tarka qwen*-flash/next) spend part of the budget thinking.
+    # A full four-bullet Nepali brief at max_tokens=900 returns truncated JSON
+    # with finish_reason length — headline never parses, and the reader sits on
+    # "Reading…" until axios gives up. Cap the payload and raise the ceiling.
+    slim = {
+        "headline": draft.get("headline"),
+        "summary": draft.get("summary"),
+        "bullets": (draft.get("bullets") or [])[:2],
+    }
     user = (
         f"Target language: {target}\n\n"
         f"Translate this brief into {target}. Return only the JSON object.\n\n"
-        f"{jsonlib.dumps(draft, ensure_ascii=False)}"
+        f"{jsonlib.dumps(slim, ensure_ascii=False)}"
     )
 
     result = await provider.complete(
-        TRANSLATE_PROMPT, user, max_tokens=900, timeout=45.0, json=True
+        TRANSLATE_PROMPT, user, max_tokens=2200, timeout=75.0, json=True
     )
     parsed = extract_json(result.text) or {}
     headline = clean(parsed.get("headline"), 80)
@@ -292,12 +301,18 @@ async def _translate_once(
     )
 
     # A translation that lost or gained a point is not a translation.
-    if not (headline and summary and len(bullets) == len(draft.get("bullets") or [])):
-        log.warning("digest_translation_incomplete", model=provider.model)
+    if not (headline and summary and len(bullets) == len(slim.get("bullets") or [])):
+        log.warning(
+            "digest_translation_incomplete",
+            model=provider.model,
+            got_bullets=len(bullets),
+            need=len(slim.get("bullets") or []),
+            text_len=len(result.text or ""),
+        )
         return None
 
     candidate = {"headline": headline, "summary": summary, "bullets": bullets}
-    if is_echo(candidate, draft):
+    if is_echo(candidate, slim):
         log.warning("digest_translation_echoed", model=provider.model)
         return None
     return candidate

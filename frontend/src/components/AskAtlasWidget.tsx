@@ -23,6 +23,7 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { Check, ChevronsUpDown } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
@@ -45,8 +46,7 @@ import type { AskTurnResult } from '@/lib/ask-sandbox/types';
  *
  *  `atlas_language` belongs to the site chrome and is deliberately not touched
  *  here. This picker changes what the ask box answers in, and nothing else —
- *  not the page, and not the AI Insights panel, which holds its own separate
- *  state for the news brief.
+ *  not the page. The flood desk has its own Ask panel; this bubble hides there.
  */
 const ASK_LANG_KEY = 'atlas_ask_language';
 
@@ -84,13 +84,13 @@ const COPY = {
     noLanguage: 'No language matches.',
     fellBack: (name: string) => `Could not write ${name} — answered in English.`,
     intro:
-      'I answer from what the desk last collected from Nepal government portals — NDRRMA/BIPAD, the OPMCM rescue portal, DHM and ReliefWeb — plus USGS, Open-Meteo and NASA FIRMS. Every answer carries the time it was collected.',
+      'I answer from what the desk last collected from Nepal government portals — NDRRMA/BIPAD, the OPMCM rescue portal, DHM and ReliefWeb — plus USGS, Open-Meteo, NASA FIRMS, and reviewed climate facts on /climate. Desk death figures are for this Rasuwa–Bhotekoshi flood event. Every answer carries the time it was collected.',
     scope:
-      'I will not search for a person, will not tell anyone to stay or leave, and will not predict.',
+      'I can search the OPMCM lost/found reports and the NDRRMA rescued register by name. I will not tell anyone to stay or leave, will not predict, and will not claim climate change caused this flood.',
     starters: [
       'How many have died in the Bhotekoshi flood?',
-      'Any earthquakes in the last 24 hours?',
-      'What is the air quality in Kathmandu?',
+      'Is Ram Bahadur on the missing list?',
+      'What is Nepal\'s share of CO₂ emissions?',
       'Which districts are worst hit?',
     ],
   },
@@ -113,19 +113,30 @@ const COPY = {
     noLanguage: 'कुनै भाषा मिलेन।',
     fellBack: (name: string) => `${name} लेख्न सकिएन — नेपालीमा जवाफ दिइयो।`,
     intro:
-      'म डेस्कले नेपाल सरकारका पोर्टलबाट पछिल्लो पटक संकलन गरेको तथ्यांकबाट जवाफ दिन्छु — NDRRMA/BIPAD, OPMCM उद्धार पोर्टल, DHM र ReliefWeb, साथै USGS, Open-Meteo र NASA FIRMS। हरेक जवाफसँग संकलन गरिएको समय हुन्छ।',
+      'म डेस्कले नेपाल सरकारका पोर्टलबाट पछिल्लो पटक संकलन गरेको तथ्यांकबाट जवाफ दिन्छु — NDRRMA/BIPAD, OPMCM उद्धार पोर्टल, DHM र ReliefWeb, साथै USGS, Open-Meteo, NASA FIRMS र /climate का जाँचिएका जलवायु तथ्य। डेस्कका मृत्युका अंक यस रसुवा–भोटेकोशी बाढीका हुन्। हरेक जवाफसँग संकलन गरिएको समय हुन्छ।',
     scope:
-      'म कुनै व्यक्ति खोज्दिनँ, बस्ने कि जाने भन्दिनँ, र भविष्यवाणी गर्दिनँ।',
+      'ओपीएमसीएम हराएका/भेटिएका र एनडीआरआरएमए उद्धार सूची नामले खोज्छु। बस्ने कि जाने भन्दिनँ, भविष्यवाणी गर्दिनँ, र यो बाढी जलवायु परिवर्तनले भएको भन्दिनँ।',
     starters: [
       'भोटेकोशी बाढीमा कति जनाको मृत्यु भयो?',
-      'पछिल्लो २४ घण्टामा भूकम्प गयो?',
-      'काठमाडौंको वायु गुणस्तर कस्तो छ?',
+      'राम बहादुर हराएका सूचीमा छन्?',
+      'नेपालको CO₂ उत्सर्जन कति अंश हो?',
       'कुन जिल्ला सबैभन्दा प्रभावित छन्?',
     ],
   },
 };
 
 export default function AskAtlasWidget() {
+  const pathname = usePathname();
+  // The flood desk mounts its own Ask panel. Two boxes on one page, with
+  // separate threads and language pickers, would disagree in front of a reader.
+  if (pathname?.startsWith('/bhotekoshi-flood')) {
+    return null;
+  }
+
+  return <AskAtlasWidgetInner />;
+}
+
+function AskAtlasWidgetInner() {
   const [open, setOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
   const [message, setMessage] = useState('');
@@ -273,10 +284,8 @@ export default function AskAtlasWidget() {
             <p className="mt-0.5 text-xs text-foreground/60">{t.subtitle}</p>
             <p className="mt-1 text-[11px] leading-snug text-foreground/50">{t.experiment}</p>
 
-            {/* Its own row and its own state. The AI Insights panel has a
-                separate picker for the news brief; a reader comparing the two
-                should be able to read the brief in Nepali and ask a question
-                in Amharic without one choice moving the other. */}
+            {/* Its own row and its own state. A reader abroad wants the answer
+                in Amharic without turning the page Amharic. */}
             <div className="mt-2 flex items-center gap-2">
               <span id="ask-atlas-lang" className="shrink-0 text-[11px] text-foreground/60">
                 {t.language}
@@ -311,8 +320,8 @@ export default function AskAtlasWidget() {
                     <CommandInput placeholder={t.searchLanguage} />
                     <CommandList>
                       <CommandEmpty>{t.noLanguage}</CommandEmpty>
-                      {/* Nepal first, as on the brief's picker: this desk's own
-                          readers before everyone else. */}
+                      {/* Nepal first: this desk's own readers before everyone
+                          else. */}
                       {[
                         { label: t.groupNepal, items: NEPAL_LANGUAGES },
                         { label: t.groupWorld, items: WORLD_LANGUAGES },

@@ -56,14 +56,34 @@ def keep_last_good(previous: dict[str, Any], error: str) -> dict[str, Any]:
     }
 
 
+def _fill_year_in_metric(metric: dict[str, Any]) -> dict[str, Any]:
+    """Substitute `{year}` left in a persisted metric name/caption.
+
+    Older snapshots wrote the template through before the fill ran. Replacing
+    at read time repairs those files without waiting for the next weekly fetch,
+    and is a no-op when the string is already filled.
+    """
+    year = metric.get("year")
+    token = str(year) if isinstance(year, int) else ""
+    out = dict(metric)
+    for key, value in metric.items():
+        if isinstance(value, str) and "{year}" in value:
+            out[key] = value.replace("{year}", token)
+    return out
+
+
 def _emissions_view(emissions: dict[str, Any] | None) -> dict[str, Any]:
     metrics = emissions.get("metrics") if isinstance(emissions, dict) else None
     if not emissions or not isinstance(metrics, dict) or not metrics:
         return {**EMPTY_EMISSIONS, "lastAttemptAt": now_iso()}
+    filled = {
+        mid: _fill_year_in_metric(metric) if isinstance(metric, dict) else metric
+        for mid, metric in metrics.items()
+    }
     return {
         "year": emissions.get("year"),
         "defaultMetric": emissions.get("defaultMetric") or DEFAULT_METRIC,
-        "metrics": metrics,
+        "metrics": filled,
         "error": emissions.get("error"),
         "stale": bool(emissions.get("stale")),
         "source": emissions.get("source") or SOURCE,

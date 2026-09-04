@@ -126,7 +126,7 @@ class TestNeedsTranslation:
 
 
 class TestSandboxPolicy:
-    """The three refusals. Each is a position, not a limitation."""
+    """Hard refusals plus rescue-person lookup."""
 
     @pytest.mark.parametrize(
         "question",
@@ -134,10 +134,16 @@ class TestSandboxPolicy:
             "Is my brother on the rescued list?",
             "was my father rescued",
             "मेरो आफन्त उद्धार सूचीमा नाम छ कि",
+            "search the missing list for Ram Bahadur",
+            "lost and found",
+            "search for इन्द्रबहादुर थापा",
+            "इन्द्रबहादुर थापा",
+            "look up Indra Bahadur Thapa",
         ],
     )
-    def test_asking_after_a_person_is_refused(self, question):
+    def test_asking_after_a_person_is_lookup(self, question):
         assert policy.classify_intent(question) == "rescue_person"
+        assert policy.is_refusal("rescue_person") is False
 
     @pytest.mark.parametrize(
         "question", ["Should we leave Betrawati?", "is the bridge safe", "जानु हुन्छ?"]
@@ -155,9 +161,14 @@ class TestSandboxPolicy:
         assert policy.is_refusal(policy.classify_intent("How many died?")) is False
         assert policy.classify_intent("How many died?") == "figures"
 
-    def test_district_and_gauge_questions_classify(self):
-        assert policy.classify_intent("What about Betrawati water level?") == "gauges"
-        assert policy.classify_intent("How can I give safely?") == "funds"
+    def test_nepali_hazard_questions_are_not_name_lookups(self):
+        """A bare Devanagari rule once stole death-toll chips into register search."""
+        assert policy.classify_intent("मृत्यु संख्या कति?") == "figures"
+        assert policy.classify_intent("कति जनाको मृत्यु?") == "figures"
+        assert policy.classify_intent("सम्पर्कविहीन कति?") == "uncontacted"
+        assert policy.classify_intent("कुन जिल्ला प्रभावित?") == "worst_districts"
+        assert policy.classify_intent("कति जना उद्धार?") == "rescued"
+        assert policy.classify_intent("इन्द्रबहादुर थापा") == "rescue_person"
 
 
 class TestViewValidation:
@@ -345,6 +356,83 @@ class TestHazardIntents:
         assert classify_intent("who do I call") == "helplines"
 
     @pytest.mark.parametrize(
+        "question,expected",
+        [
+            ("how is the flood situation?", "figures"),
+            ("Bhotekoshi flood update", "figures"),
+            ("बाढी अवस्था कस्तो छ", "figures"),
+            ("is climate change causing this flood?", "climate"),
+            ("what is Nepal's share of CO2 emissions?", "climate"),
+            ("what is a GLOF?", "climate"),
+            ("any landslides?", "landslide"),
+            ("should I evacuate?", "safety_advice"),
+        ],
+    )
+    def test_flood_climate_and_safety_phrasings_reach_their_intent(self, question, expected):
+        """Bare flood/climate used to fall through to `other` and be refused."""
+        from app.domains.ai.ask.policy import classify_intent
+
+        assert classify_intent(question) == expected
+
+    def test_bhotekoshi_death_template_names_the_event_not_a_missing_subtotal(self):
+        """The starter chip asks Bhotekoshi deaths; the model used to invent a
+        missing 'Bhotekoshi-only' figure. The template must say the desk
+        headline *is* that toll."""
+        from app.domains.ai.ask.compose import template_answer
+        from app.domains.ai.ask.tools import build_snapshot
+
+        snap = build_snapshot(
+            content={},
+            sitrep={
+                "as_of": "2026-09-04T08:32:03.994Z",
+                "as_of_label_en": "4 September 2026",
+                "headline": [
+                    {
+                        "id": "deaths",
+                        "value": 1259,
+                        "suffix": "",
+                        "source": "Rasuwa flood bulletin (compilation)",
+                    }
+                ],
+                "breakdowns": [],
+                "sources": [],
+                "discrepancies": [],
+            },
+            gauges=[],
+            news=[],
+        )
+        answer = template_answer("figures", snap, "en", "How many died in Bhotekoshi?").text
+        assert "1259" in answer
+        assert "Rasuwa–Bhotekoshi" in answer
+        assert "no separate Bhotekoshi-only national total" in answer
+
+    def test_climate_template_restates_disclaimer_never_causation(self):
+        from app.domains.ai.ask.compose import template_answer
+        from app.domains.ai.ask.tools import build_snapshot
+
+        snap = build_snapshot(
+            content={},
+            sitrep={},
+            gauges=[],
+            news=[],
+            climate={
+                "disclaimerEn": (
+                    "This is background. It does not claim that this flood "
+                    "was caused by climate change."
+                ),
+                "section": {
+                    "cause": {"headlineEn": "Nepal share about 0.05% in 2024."},
+                    "ice": {"headlineEn": "HKH glaciers lost 12 percent."},
+                    "lakes": {"headlineEn": "47 potentially dangerous glacial lakes."},
+                },
+            },
+        )
+        answer = template_answer("climate", snap, "en", "did climate cause this?").text
+        assert "0.05%" in answer
+        assert "does not claim" in answer
+        assert "/climate" in answer
+
+    @pytest.mark.parametrize(
         "intent,must_contain",
         [
             ("earthquake", "USGS"),
@@ -356,7 +444,7 @@ class TestHazardIntents:
     def test_every_hazard_answer_names_its_source_and_sweep_time(self, intent, must_contain):
         from app.domains.ai.ask.compose import template_answer
 
-        answer = template_answer(intent, self._built(), "en", "q")
+        answer = template_answer(intent, self._built(), "en", "q").text
         assert must_contain in answer
         assert "2026-09-03T03:00:00Z" in answer
 
@@ -365,15 +453,35 @@ class TestHazardIntents:
         sentence has to say so — a reader cannot tell relayed from predicted."""
         from app.domains.ai.ask.compose import template_answer
 
-        answer = template_answer("weather", self._built(), "en", "will it rain")
+        answer = template_answer("weather", self._built(), "en", "will it rain").text
         assert "does not forecast" in answer
         assert "DHM" in answer
 
     def test_a_fire_detection_is_not_called_a_fire(self):
         from app.domains.ai.ask.compose import template_answer
 
-        answer = template_answer("wildfire", self._built(), "en", "q")
+        answer = template_answer("wildfire", self._built(), "en", "q").text
         assert "thermal anomaly, not a confirmed fire" in answer
+
+    def test_english_news_frame_declares_en_despite_nepali_headline(self):
+        """Borrowed Devanagari in a headline must not skip the Nepali carry."""
+        from app.domains.ai.ask.compose import template_answer
+
+        snap = {
+            **self._built(),
+            "news": [
+                {
+                    "title": "बाढीका घाइतेको उपचार जारी",
+                    "source": "Kantipur",
+                    "link": "https://example.test",
+                    "pubDate": "2026-09-04",
+                }
+            ],
+        }
+        composed = template_answer("news", snap, "ne", "latest news?")
+        assert composed.lang == "en"
+        assert "Recent flood wire" in composed.text
+        assert "बाढीका घाइतेको" in composed.text
 
     def test_an_empty_sweep_says_so_rather_than_reporting_zero(self):
         """Zero is a claim. Nothing loaded is a different statement."""
@@ -381,10 +489,10 @@ class TestHazardIntents:
         from app.domains.ai.ask.tools import build_snapshot
 
         cold = build_snapshot(content={}, sitrep={}, gauges=[], news=[], hazards={})
-        assert "No earthquakes are loaded" in template_answer("earthquake", cold, "en", "q")
+        assert "No earthquakes are loaded" in template_answer("earthquake", cold, "en", "q").text
         assert "No air quality readings are loaded" in template_answer(
             "air_quality", cold, "en", "q"
-        )
+        ).text
 
 
 class TestAskTurnShape:
@@ -404,13 +512,54 @@ class TestAskTurnShape:
             )
         )
 
+    def test_a_person_lookup_searches_registers(self, monkeypatch):
+        """Name questions answer from the desk lists; they are not refusals."""
+        from app.domains.ai.ask.run import run_ask_turn
+        from app.domains.ai.ask.tools import build_snapshot
+        import asyncio
+
+        snap = build_snapshot(content={}, sitrep={}, gauges=[], news=[], hazards={})
+        snap["personsRegister"] = {
+            "lost": [
+                {
+                    "id": "1",
+                    "type": "lost",
+                    "name": "Ram Bahadur Tamang",
+                    "age": "42",
+                    "place": "Rasuwa",
+                    "status": "open",
+                }
+            ],
+            "found": [],
+            "other": [],
+            "fetched": 1,
+            "total": 1,
+            "error": None,
+            "source": {"url": "https://rescue.opmcm.gov.np/person-reports"},
+            "fetchedAt": "2026-09-04T00:00:00Z",
+        }
+        snap["rescueRegister"] = {"persons": [], "summary": {"total": 0}}
+        turn = asyncio.run(
+            run_ask_turn(
+                question="Is Ram Bahadur on the missing list?",
+                lang="en",
+                client_key="test",
+                snapshot=snap,
+                use_model=False,
+            )
+        )
+        assert turn["kind"] == "ok"
+        assert turn["intent"] == "rescue_person"
+        assert "Ram Bahadur" in turn["answer"]
+        assert "absence" in turn["answer"].lower() or "not a death" in turn["answer"].lower()
+
     def test_a_refusal_says_it_refused(self, monkeypatch):
         """The contract has always declared `refused`; nothing ever sent it, so
         a refusal was indistinguishable from an answer to any caller that did
         not string-match the prose."""
-        turn = self._turn("is my brother on the rescue list", monkeypatch)
+        turn = self._turn("should we leave Betrawati", monkeypatch)
         assert turn["kind"] == "refused"
-        assert turn["intent"] == "rescue_person"
+        assert turn["intent"] == "safety_advice"
 
     def test_an_answer_carries_its_intent(self, monkeypatch):
         turn = self._turn("how big was the earthquake", monkeypatch)
@@ -532,10 +681,22 @@ class TestAnswerTranslation:
     _answer = "1114 deaths and 3916 uncontacted, source NDRRMA / MoHA."
 
     def test_a_figure_that_changed_fails_the_translation(self):
-        """1,114 is not a translation of 1114 on a page people act on."""
+        """Altered or dropped figures fail. Native-script and grouped forms of
+        the same figure pass after normalisation."""
         from app.domains.ai.ask.translate import numbers_survived
 
-        assert numbers_survived(self._answer, "1,114 morts et 3916 sans contact") is False
+        assert numbers_survived(self._answer, "2114 morts et 3916 sans contact") is False
+        assert numbers_survived(self._answer, "1114 morts et 3916 sans contact") is True
+        assert numbers_survived(self._answer, "1,114 morts et 3,916 sans contact") is True
+        # Bengali, Devanagari, Arabic-Indic for 1114 / 3916
+        assert numbers_survived(self._answer, "১১১৪ morts et ৩৯১৬ sans contact") is True
+        assert numbers_survived(self._answer, "१११४ morts et ३९१६ sans contact") is True
+        assert numbers_survived(self._answer, "١١١٤ morts et ٣٩١٦ sans contact") is True
+        # Wrong length still fails
+        assert numbers_survived(self._answer, "11114 morts et 3916 sans contact") is False
+        assert numbers_survived("1259 deaths", "১২৫৯ মৃত্যু") is True
+        assert numbers_survived("1259 deaths", "१२५९ मृत्यु") is True
+        assert numbers_survived("1259 deaths", "١٢٥٩ حالة وفاة") is True
 
     def test_a_figure_that_vanished_fails_it(self):
         from app.domains.ai.ask.translate import numbers_survived
@@ -581,10 +742,27 @@ class TestAnswerTranslation:
         from app.domains.ai.ask.translate import translate_answer
         from tests.test_digest import FakeProvider
 
-        bad = FakeProvider(jsonlib.dumps({"text": "1,114 morts et 3916 sans contact."}))
+        # A real wrong figure (2114), not a thousands-separator rewrite of 1114.
+        bad = FakeProvider(jsonlib.dumps({"text": "2114 morts et 3916 sans contact."}))
         out = await translate_answer(bad, self._answer, "fr", "French")
         assert out["translated"] is False
         assert out["answer"] == self._answer
+
+    async def test_thousands_separators_are_folded_back(self):
+        """Models often write 1,114 for 1114 — same claim, keep Western digits."""
+        import json as jsonlib
+
+        from app.domains.ai.ask.translate import translate_answer
+        from tests.test_digest import FakeProvider
+
+        grouped = FakeProvider(
+            jsonlib.dumps({"text": "1,114 morts et 3,916 sans contact, source NDRRMA / MoHA."})
+        )
+        out = await translate_answer(grouped, self._answer, "fr", "French")
+        assert out["translated"] is True
+        assert "1114" in out["answer"]
+        assert "3916" in out["answer"]
+        assert "1,114" not in out["answer"]
 
     async def test_a_faithful_translation_is_taken(self):
         import json as jsonlib
@@ -646,17 +824,20 @@ class TestScopeGate:
     def test_the_refusal_says_why_and_what_can_be_asked(self):
         answer = self._turn("what is 2+2?")["answer"]
         assert "not a question about natural hazards or disasters in Nepal" in answer
-        for topic in ("rescued", "river gauges", "helplines", "earthquake"):
+        for topic in ("rescued", "river gauges", "helplines", "earthquake", "climate"):
             assert topic in answer
 
     @pytest.mark.parametrize(
         "question,intent",
         [
             ("how many died in the flood", "figures"),
+            ("how is the flood situation", "figures"),
             ("any earthquakes today", "earthquake"),
             ("how many people are rescued", "rescued"),
             ("what is the air quality", "air_quality"),
             ("who do I call", "helplines"),
+            ("what is Nepal's CO2 emissions share", "climate"),
+            ("any landslides nearby", "landslide"),
         ],
     )
     def test_real_hazard_questions_still_answer(self, question, intent):
@@ -664,12 +845,63 @@ class TestScopeGate:
         assert turn["intent"] == intent
         assert turn["kind"] == "ok"
 
-    def test_the_three_original_refusals_keep_their_own_wording(self):
-        """Scope is a fourth refusal, not a replacement — each says something
-        different and each is a considered position."""
-        assert "cannot search names" in self._turn("is my brother on the list")["answer"]
+    def test_should_i_evacuate_is_still_a_safety_refusal(self):
+        turn = self._turn("should I evacuate?")
+        assert turn["kind"] == "refused"
+        assert turn["intent"] == "safety_advice"
+        assert "stay or leave" in turn["answer"]
+
+    def test_the_remaining_refusals_keep_their_own_wording(self):
+        """Each hard refusal says something different and is a considered position."""
+        brother = self._turn("is my brother on the list")
+        assert brother["kind"] == "ok"
+        assert brother["intent"] == "rescue_person"
+        assert "/bhotekoshi-flood/rescue" in brother["answer"]
         assert "stay or leave" in self._turn("should we leave Betrawati")["answer"]
         assert "cannot predict" in self._turn("will the lake burst tomorrow")["answer"]
+
+    @pytest.mark.parametrize(
+        "question,intent",
+        [
+            ("Death?", "figures"),
+            ("missing?", "uncontacted"),
+            ("total funds recieved?", "funds"),
+            ("injuries?", "figures"),
+        ],
+    )
+    def test_bare_hazard_nouns_reach_their_intent(self, question, intent):
+        """Strict patterns needed 'how many' before a death word; bare nouns
+        used to fall through to other and get the scope speech."""
+        from app.domains.ai.ask.policy import classify_intent
+
+        assert classify_intent(question) == intent
+
+    def test_raised_funds_says_the_desk_carries_no_total(self):
+        from app.domains.ai.ask.compose import template_answer
+        from app.domains.ai.ask.tools import build_snapshot
+
+        snap = build_snapshot(
+            content={
+                "funds": [
+                    {
+                        "id": "pmdrf",
+                        "name": "PM Disaster Relief Fund",
+                        "url": "https://example.test",
+                    }
+                ]
+            },
+            sitrep={},
+            gauges=[],
+            news=[],
+        )
+        answer = template_answer("funds", snap, "en", "total funds recieved?").text
+        assert "does not carry a total received" in answer
+        assert "/bhotekoshi-flood/donate" in answer
+        assert "Ministry of Finance" in answer or "Prime Minister" in answer
+        # Route-only questions keep the existing donate answer.
+        donate = template_answer("funds", snap, "en", "where can I donate").text
+        assert "Do not send money to personal QR codes" in donate
+        assert "does not carry a total received" not in donate
 
 
 class TestPromptInjectionGuards:

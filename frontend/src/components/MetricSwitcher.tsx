@@ -29,6 +29,15 @@ function pick(lang: Lang, en: string | null | undefined, ne: string | null | und
   return ((lang === 'ne' ? ne || en : en || ne) || '').trim();
 }
 
+function fillYear(text: string, year: number | null | undefined): string {
+  if (!text.includes('{year}')) return text;
+  return text.replaceAll('{year}', year != null ? String(year) : '');
+}
+
+function metricLabel(lang: Lang, metric: ClimateMetric): string {
+  return fillYear(pick(lang, metric.nameEn, metric.nameNe), metric.year);
+}
+
 function fmtValue(value: number, unit: ClimateMetric['unit']): string {
   if (unit === 'pct') {
     if (value < 0.1) return `${value.toFixed(2)}%`;
@@ -53,13 +62,15 @@ function finding(
 
 function summary(metric: ClimateMetric, rows: ClimateMetric['rows'], scale: boolean, lang: Lang): string {
   const nepal = rows.find(row => row.id === 'nepal');
-  const name = pick(lang, metric.nameEn, metric.nameNe);
+  const name = metricLabel(lang, metric);
   const nepalBit = nepal
     ? lang === 'ne'
       ? `नेपाल ${fmtValue(nepal.value, metric.unit)}`
       : `Nepal ${fmtValue(nepal.value, metric.unit)}`
     : '';
-  const scaled = scale ? pick(lang, metric.scaleCaptionEn, metric.scaleCaptionNe) : '';
+  const scaled = scale
+    ? fillYear(pick(lang, metric.scaleCaptionEn, metric.scaleCaptionNe), metric.year)
+    : '';
   return [name, scaled, nepalBit].filter(Boolean).join('. ').replace(/\.(\s*\.)+/g, '.');
 }
 
@@ -96,8 +107,10 @@ export default function MetricSwitcher({
   if (!metric || rows.length === 0) return null;
 
   const caption = [
-    pick(lang, metric.captionEn, metric.captionNe),
-    scale ? pick(lang, metric.scaleCaptionEn, metric.scaleCaptionNe) : '',
+    fillYear(pick(lang, metric.captionEn, metric.captionNe), metric.year),
+    scale
+      ? fillYear(pick(lang, metric.scaleCaptionEn, metric.scaleCaptionNe), metric.year)
+      : '',
   ]
     .filter(Boolean)
     .join(' ');
@@ -142,7 +155,7 @@ export default function MetricSwitcher({
                     checked={id === metricId}
                     onChange={() => setMetricId(id)}
                   />
-                  <span>{pick(lang, item.nameEn, item.nameNe)}</span>
+                  <span>{metricLabel(lang, item)}</span>
                 </label>
               );
             })}

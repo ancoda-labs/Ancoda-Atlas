@@ -22,6 +22,8 @@ export type AskIntent =
   | 'air_quality'
   | 'wildfire'
   | 'weather'
+  | 'climate'
+  | 'landslide'
   | 'rescue_person'
   | 'safety_advice'
   | 'prediction'
@@ -38,7 +40,8 @@ export type AskToolName =
   | 'get_seismic'
   | 'get_air_quality'
   | 'get_fire'
-  | 'get_weather';
+  | 'get_weather'
+  | 'get_climate';
 
 export interface AskToolCall {
   name: AskToolName;
@@ -109,6 +112,14 @@ export interface AskTurnResult {
   translated?: boolean;
   liveRefresh?: boolean;
   answer: string;
+  /**
+   * Desk-composed en/ne text before any carry. The flood panel keeps this as
+   * `source` so switching language later retranslates the original, not a
+   * translation of a translation.
+   */
+  source?: string;
+  /** Language the `source` prose was composed in (`en` or `ne`). */
+  sourceLang?: string;
   /** The language the answer is actually written in — any registry code. */
   lang: string;
   view: ViewAction;

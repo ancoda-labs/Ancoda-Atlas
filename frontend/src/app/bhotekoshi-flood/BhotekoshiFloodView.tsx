@@ -99,7 +99,7 @@ const FloodDistrictMap = dynamic(() => import('@/components/FloodDistrictMap'), 
   loading: () => <AtlasMapPending label="Map" />,
 });
 
-const FloodAiInsights = dynamic(() => import('@/app/bhotekoshi-flood/_components/FloodAiInsights'), {
+const FloodAskPanel = dynamic(() => import('@/app/bhotekoshi-flood/_components/FloodAskPanel'), {
   ssr: false,
 });
 
@@ -392,7 +392,7 @@ export default function BhotekoshiFloodView() {
           </div>
 
           <div className="fl-overview-aside">
-            {heavyReady ? <FloodAiInsights lang={lang} /> : null}
+            {heavyReady ? <FloodAskPanel lang={lang} /> : null}
           </div>
         </section>
 

@@ -111,12 +111,19 @@ class TestParse:
         out = _parse(FULL)
         assert out["error"] is None
         assert out["year"] == 2024
-        assert out["defaultMetric"] == "cumulative_1750"
-        metric = out["metrics"]["cumulative_1750"]
+        assert out["defaultMetric"] == "annual_latest"
+        metric = out["metrics"]["annual_latest"]
         nepal = next(row for row in metric["rows"] if row["id"] == "nepal")
-        assert nepal["value"] == 0.01
+        assert nepal["value"] == 18.8
         assert metric["year"] == 2024
+        assert metric["nameEn"] == "2024"
         assert "2024" in (metric["captionEn"] or "")
+        # Cumulative share still parses — Nepal's share of the running total.
+        cum = out["metrics"]["cumulative_1750"]
+        cum_nepal = next(row for row in cum["rows"] if row["id"] == "nepal")
+        assert cum_nepal["value"] == 0.01
+        assert "2024" in (cum["captionEn"] or "")
+
 
     def test_ignores_a_newer_world_only_year(self):
         out = _parse(_csv(NEPAL_2024, US_2024, WORLD_2024, WORLD_2025))

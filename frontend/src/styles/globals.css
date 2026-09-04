@@ -3633,6 +3633,366 @@ html[lang="ne"] .language-toggle button { font-size: 12px; }
   color: var(--ink-2);
 }
 
+.fl-ask-figure {
+  font-family: var(--mono);
+  font-weight: 700;
+  color: var(--danger);
+  letter-spacing: 0.01em;
+}
+
+.fl-ask-path {
+  font-family: var(--mono);
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.fl-ask-source {
+  font-weight: 600;
+  color: var(--accent2);
+}
+
+/* Ask Atlas — compact card that fits the overview aside without overflowing. */
+.fl-ask {
+  --ask-line: var(--rule, #d7e1df);
+  --ask-line-strong: var(--border-bright, #9cb4ae);
+  --ask-fill: var(--paper-2, var(--panel, #ffffff));
+  --ask-well: var(--paper, var(--bg, #f7f8f7));
+  --ask-accent: var(--accent, #147d68);
+  --ask-on-accent: var(--bg, #071016);
+
+  container-type: inline-size;
+  container-name: fl-ask;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 12px 12px 0;
+  border: 1.5px solid var(--ask-line-strong);
+  border-radius: 12px;
+  background: var(--ask-fill);
+  box-shadow:
+    0 1px 0 color-mix(in srgb, var(--ink) 8%, transparent),
+    0 8px 22px color-mix(in srgb, var(--ink) 6%, transparent);
+  max-height: min(36rem, calc(100dvh - 7.5rem));
+  overflow: hidden;
+}
+
+.fl-overview-aside .fl-ask {
+  width: 100%;
+}
+
+.fl-ask--docked {
+  overflow: hidden;
+  padding: 12px 12px 0;
+  max-height: min(28rem, calc(100dvh - 6rem));
+  box-shadow: 0 18px 40px color-mix(in srgb, #000 35%, transparent);
+}
+
+.fl-ask-top {
+  flex: none;
+  padding: 0 0 10px;
+  border-bottom: 1px solid var(--ask-line);
+}
+
+.fl-ask-title-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.fl-ask .fl-ask-head {
+  margin-bottom: 0;
+  flex: 1;
+  min-width: 0;
+}
+
+.fl-ask .fl-ask-head h2 {
+  font-size: clamp(20px, 2.6vw, 24px);
+}
+
+.fl-ask-close {
+  flex: none;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: 12px;
+  color: var(--ink-3);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.fl-ask-close:hover { color: var(--ink); }
+
+.fl-ask-lede {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 10px;
+  margin: 6px 0 4px;
+}
+
+.fl-ask-tagline {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--ink);
+}
+
+.fl-ask-meta {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--ink-3);
+}
+
+.fl-ask-scope {
+  margin: 0 0 8px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--ink-3);
+}
+
+.fl-ask .fl-ask-lang.fl-insights-lang {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px 10px;
+  margin: 0;
+}
+
+.fl-ask .fl-ask-lang > span {
+  margin: 0;
+}
+
+.fl-ask-lang-btn {
+  min-height: 34px !important;
+  height: 34px;
+  padding: 0 10px !important;
+  font-size: 12.5px !important;
+  border: 1.5px solid var(--ask-line-strong) !important;
+  background: var(--ask-well) !important;
+}
+
+.fl-ask-log {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 10px 0;
+  min-height: 0;
+}
+
+.fl-ask-log--inline,
+.fl-ask-log--docked {
+  max-height: none;
+}
+
+.fl-ask-brief {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--ask-line);
+  background: var(--ask-well);
+}
+
+.fl-ask-brief-label {
+  margin: 0 0 4px;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.fl-ask-brief h3 {
+  font-size: 13.5px !important;
+  line-height: 1.35 !important;
+  margin: 0 0 4px !important;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.fl-ask-brief .fl-insights-foot {
+  margin-top: 4px;
+  font-size: 11px;
+}
+
+.fl-ask-starters-label {
+  margin: 0 0 6px;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.fl-ask-starters ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.fl-ask-starters button {
+  display: inline-flex;
+  align-items: center;
+  width: auto;
+  max-width: 100%;
+  min-height: 30px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--ask-accent) 50%, var(--ask-line-strong));
+  background: color-mix(in srgb, var(--ask-accent) 10%, var(--ask-fill));
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.25;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.fl-ask-starters button:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--ask-accent) 18%, var(--ask-fill));
+  border-color: var(--ask-accent);
+}
+
+.fl-ask-starters button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+@media (prefers-reduced-motion: reduce) {
+  .fl-ask-starters button { transition: none; }
+}
+
+.fl-ask-bubble {
+  max-width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+.fl-ask-bubble--user {
+  align-self: flex-end;
+  margin-left: 1.5rem;
+  background: color-mix(in srgb, var(--ask-accent) 16%, var(--ask-fill));
+  border: 1px solid color-mix(in srgb, var(--ask-accent) 35%, transparent);
+}
+
+.fl-ask-bubble--assistant {
+  align-self: stretch;
+  background: var(--ask-well);
+  border: 1px solid var(--ask-line);
+}
+
+.fl-ask-bubble--refused {
+  border-style: dashed;
+  color: var(--ink-2);
+  background: color-mix(in srgb, var(--ink) 4%, var(--ask-fill));
+}
+
+.fl-ask-fallback,
+.fl-ask-thinking {
+  margin: 6px 0 0;
+  font-size: 11.5px;
+  color: var(--ink-3);
+}
+
+.fl-ask-composer {
+  flex: none;
+  margin: 0 -12px 0;
+  padding: 10px 12px 12px;
+  border-top: 1px solid var(--ask-line);
+  background: var(--ask-well);
+  border-radius: 0 0 11px 11px;
+}
+
+.fl-ask--docked .fl-ask-composer {
+  margin: 0 -12px 0;
+  padding: 10px 12px 12px;
+}
+
+.fl-ask-composer-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.fl-ask-composer input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 40px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1.5px solid var(--ask-line-strong);
+  background: var(--ask-fill);
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.fl-ask-composer input::placeholder {
+  color: var(--ink-3);
+  opacity: 1;
+}
+
+.fl-ask-composer input:focus {
+  outline: none;
+  border-color: var(--ask-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ask-accent) 22%, transparent);
+}
+
+.fl-ask-composer button[type='submit'] {
+  box-sizing: border-box;
+  flex: none;
+  min-width: 3.75rem;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--ask-accent);
+  color: var(--ask-on-accent);
+  font-size: 14px;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.fl-ask-composer button[type='submit']:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
+.fl-ask-composer button[type='submit']:disabled {
+  background: color-mix(in srgb, var(--ask-accent) 35%, var(--ask-line));
+  color: var(--ask-on-accent);
+  opacity: 1;
+  cursor: not-allowed;
+}
+
+.fl-ask-budget {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  margin: 6px 0 0;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.03em;
+  color: var(--ink-3);
+}
+
 .fl-lang-via {
   font-family: var(--mono);
   font-size: 9.5px;
