@@ -28,6 +28,9 @@ INTENTS = (
     # page now, so a reader on the homepage asking about an earthquake used to
     # fall through to "other" and be answered with flood figures.
     "earthquake", "air_quality", "wildfire", "weather",
+    # Climate background (/climate) and landslide wire — in platform scope,
+    # but they used to fall through to `other` and get the catch-all refusal.
+    "climate", "landslide",
     "rescue_person", "safety_advice", "prediction", "faq", "other",
 )
 
@@ -52,7 +55,7 @@ RESCUE_PERSON = re.compile(
     re.I,
 )
 SAFETY = re.compile(
-    r"\b(should we|shall we|do we)\b.{0,24}\b(leave|stay|evacuate|go back|return)\b"
+    r"\b(should|shall|do)\s+(i|we)\b.{0,24}\b(leave|stay|evacuate|go back|return)\b"
     r"|\bis (it|betrawati|rasuwa|the (bridge|road|village)) safe\b"
     r"|\bwalk onto the bridge\b|छोड्ने|जानु हुन्छ|सुरक्षित छ",
     re.I,
@@ -93,6 +96,27 @@ FIGURES = re.compile(
     r"\bhow many\b[\w\s]{0,24}?\b(died|dead|deaths|killed|injured|casualt\w*)\b"
     r"|\bdeath toll\b|\bhow many (casualties|fatalities)\b"
     r"|कति मृत्यु|कति जनाको मृत्यु",
+    re.I,
+)
+# Bare flood / this-event questions with no death word. Without this, "how is
+# the flood situation" and "Bhotekoshi flood update" fell through to `other`
+# and were refused as off-topic — even though the starter chip asks that
+# phrasing for deaths, and the desk *is* this flood.
+FLOOD = re.compile(
+    r"\b(bhotekoshi|bhote[\s-]?koshi|rasuwa\s+flood|this\s+flood)\b"
+    r"|\bflood\s+(desk|situation|status|update|toll|response)\b"
+    r"|\b(situation|status|update)\s+(of\s+)?(the\s+)?flood\b"
+    r"|बाढी|भोटेकोशी",
+    re.I,
+)
+CLIMATE = re.compile(
+    r"\b(climate\s+change|global\s+warming|emissions?|co[\s₂2]|carbon\s+dioxide"
+    r"|greenhouse|glacial\s+lake|glaciers?|\bglof\b)\b"
+    r"|जलवायु|उत्सर्जन|हिमनदी|हिमनदीय\s*ताल",
+    re.I,
+)
+LANDSLIDE = re.compile(
+    r"\b(landslides?|mudslides?|debris\s+flows?)\b|पहिरो",
     re.I,
 )
 # Every alternative carries its own plural. A trailing \b after a bare
@@ -144,6 +168,81 @@ DISTRICT = re.compile(
     re.I,
 )
 
+# Bare hazard nouns that the strict patterns miss ("Death?", "missing?",
+# "funds"). Runs only after every strict match and after the three refusals,
+# so a well-formed question keeps its better intent and "evacuate?" stays a
+# refusal rather than becoming a death-toll answer. Broadest last.
+LOOSE: tuple[tuple[str, re.Pattern[str]], ...] = (
+    (
+        "figures",
+        re.compile(
+            r"\b(deaths?|died|dead|killed|fatalit\w*|casualt\w*|injured|injuries|"
+            r"toll|victims?)\b|मृत्यु|मृतक|घाइते",
+            re.I,
+        ),
+    ),
+    (
+        "uncontacted",
+        re.compile(
+            r"\b(missing|unaccounted|disappeared)\b|बेपत्ता|सम्पर्कविहीन",
+            re.I,
+        ),
+    ),
+    (
+        "rescued",
+        re.compile(
+            r"\b(rescue|rescued|evacuees?|airlifted|survivors?)\b|उद्धार",
+            re.I,
+        ),
+    ),
+    (
+        "nationality",
+        re.compile(
+            r"\b(foreign(ers?|ationals?)?|tourists?|nepali(s| citizens)?|"
+            r"nationalit(y|ies))\b|विदेशी|पर्यटक|नेपाली",
+            re.I,
+        ),
+    ),
+    (
+        "funds",
+        re.compile(
+            r"\b(donat\w*|money|funds?|relief|aid)\b|सहयोग|राहत|कोष",
+            re.I,
+        ),
+    ),
+    (
+        "helplines",
+        re.compile(
+            r"\b(helpline|phone|call|1234)\b|फोन|हेल्पलाइन",
+            re.I,
+        ),
+    ),
+    (
+        "gauges",
+        re.compile(
+            r"\b(gauge|water\s+level|river\s+(level|height)|betrawati|phalakhu)\b"
+            r"|बेत्रावती|नदी\s*सतह",
+            re.I,
+        ),
+    ),
+    (
+        "worst_districts",
+        re.compile(
+            r"\b(districts?|areas?|worst|affected|damage|displaced)\b"
+            r"|जिल्ला|प्रभावित",
+            re.I,
+        ),
+    ),
+    (
+        "news",
+        re.compile(
+            r"\b(floods?|flooding|glof|bhotekoshi|landslides?|situation|latest|"
+            r"what\s+happened)\b|बाढी|पहिरो|भोटेकोशी",
+            re.I,
+        ),
+    ),
+)
+
 
 def classify_intent(question: str) -> str:
     """Order matters: the three refusals are tested first, always."""
@@ -179,6 +278,12 @@ def classify_intent(question: str) -> str:
         return "nationality"
     if FIGURES.search(q):
         return "figures"
+    # Climate before bare flood: "is climate change causing this flood?" must
+    # not become a death-toll answer just because it contains "this flood".
+    if CLIMATE.search(q):
+        return "climate"
+    if FLOOD.search(q):
+        return "figures"
     # Hazard intents sit below the flood desk's own, because this is a flood
     # response desk first: "how many died" means the flood unless the question
     # says otherwise. They sit above `district`, so "earthquake in Rasuwa"
@@ -191,8 +296,15 @@ def classify_intent(question: str) -> str:
         return "wildfire"
     if WEATHER.search(q):
         return "weather"
+    if LANDSLIDE.search(q):
+        return "landslide"
     if DISTRICT.search(q):
         return "district"
+    # Loose bare-noun matches. After every strict pattern and the refusals;
+    # within LOOSE, broadest last so "Death?" is figures before news.
+    for intent, pattern in LOOSE:
+        if pattern.search(q):
+            return intent
     return "other"
 
 

@@ -19,6 +19,14 @@ MONITORING_NOTE = (
     "Nepal Police / NDRRMA."
 )
 
+# "total funds received?" is a funds question about what came in, not where to
+# send more. Include the common misspelling — people type it.
+RAISED = re.compile(
+    r"\b(total|how much|amount|raised|collected|received|recieved|pledged|"
+    r"so far)\b|कति रकम|कुल|संकलन|प्राप्त",
+    re.I,
+)
+
 
 def _headline(snap: dict[str, Any], key: str) -> dict[str, Any] | None:
     return next((h for h in snap["headlines"] if h.get("id") == key), None)
@@ -45,9 +53,14 @@ def deaths_line(snap: dict[str, Any]) -> str:
         except ValueError:
             pass
 
+    # Name the event. The starter chip asks "Bhotekoshi flood" deaths; without
+    # this framing the model invents "no Bhotekoshi-only total" even though the
+    # desk headline *is* that event's toll.
     return (
-        f"{h.get('value')}{h.get('suffix') or ''} deaths, source {h.get('source')}, "
-        f"as of {as_of}.{age_note} {MONITORING_NOTE}"
+        f"Rasuwa–Bhotekoshi flood desk: {h.get('value')}{h.get('suffix') or ''} deaths, "
+        f"source {h.get('source')}, as of {as_of}.{age_note} "
+        "That headline is the desk's figure for this flood event — there is no "
+        f"separate Bhotekoshi-only national total beyond it. {MONITORING_NOTE}"
     )
 
 
@@ -181,11 +194,27 @@ def template_answer(intent: str, snap: dict[str, Any], lang: str, question: str)
 
     if intent == "funds":
         names = "; ".join(f["name"] for f in snap["funds"][:4] if f.get("name"))
-        return (
-            f"पैसा व्यक्तिगत QR मा नपठाउनुहोस्। जाँचिएका बाटो: /bhotekoshi-flood/donate — {names}"
-            if lang == "ne"
-            else f"Do not send money to personal QR codes. Reviewed routes: "
+        routes = (
             f"/bhotekoshi-flood/donate — {names}"
+            if names
+            else "/bhotekoshi-flood/donate"
+        )
+        if RAISED.search(question or ""):
+            return (
+                "यो डेस्कमा प्राप्त रकमको जम्मा छैन — हामीले संकलनको कुल राख्दैनौं। "
+                f"जाँचिएका सहयोग बाटो: {routes}। "
+                "कुल प्राप्त रकमका लागि अर्थ मन्त्रालय वा प्रधानमन्त्री दैवी प्रकोप "
+                "राहत कोष हेर्नुहोस्।"
+                if lang == "ne"
+                else "This desk does not carry a total received — we do not track "
+                f"how much has been raised. Reviewed routes: {routes}. "
+                "For totals received, see the Ministry of Finance or the "
+                "Prime Minister's Disaster Relief Fund."
+            )
+        return (
+            f"पैसा व्यक्तिगत QR मा नपठाउनुहोस्। जाँचिएका बाटो: {routes}"
+            if lang == "ne"
+            else f"Do not send money to personal QR codes. Reviewed routes: {routes}"
         )
 
     if intent == "worst_districts":
@@ -340,6 +369,52 @@ def template_answer(intent: str, snap: dict[str, Any], lang: str, question: str)
     if intent == "figures":
         return deaths_line(snap)
 
+    if intent == "climate":
+        c = snap.get("climate") or {}
+        climate_bits: list[str] = []
+        if c.get("causeHeadlineEn"):
+            climate_bits.append(str(c["causeHeadlineEn"]).rstrip("."))
+        if c.get("iceHeadlineEn"):
+            climate_bits.append(str(c["iceHeadlineEn"]).rstrip("."))
+        if c.get("lakesHeadlineEn"):
+            climate_bits.append(str(c["lakesHeadlineEn"]).rstrip("."))
+        disclaimer = c.get("disclaimerEn") or (
+            "This is background on emissions and mountain hazards. It does not "
+            "claim that this flood was caused by climate change."
+        )
+        body = (
+            ". ".join(climate_bits) + "."
+            if climate_bits
+            else "Reviewed climate figures are not loaded."
+        )
+        return (
+            f"{body} {disclaimer} See /climate. {MONITORING_NOTE}"
+            if lang != "ne"
+            else (
+                f"{body} {c.get('disclaimerNe') or disclaimer} /climate हेर्नुहोस्। "
+                f"{MONITORING_NOTE}"
+            )
+        )
+
+    if intent == "landslide":
+        hits = [
+            n
+            for n in snap.get("news") or []
+            if re.search(r"landslide|mudslide|पहिरो", f"{n.get('title') or ''}", re.I)
+        ]
+        if hits:
+            lines = "\n".join(f"• {n['title']} ({n['source']})" for n in hits[:4])
+            return (
+                f"The desk has no separate national landslide counter. Recent "
+                f"wire mentioning landslides:\n{lines}\nConfirm against BIPAD / "
+                f"NDRRMA. {MONITORING_NOTE}"
+            )
+        return (
+            "The desk has no separate national landslide counter, and no recent "
+            f"flood-wire headline on this desk names one. Confirm against BIPAD / "
+            f"NDRRMA. {MONITORING_NOTE}"
+        )
+
     # Out of scope. This used to return the death toll — a question the
     # classifier did not understand, answered with the single most
     # consequential number on the desk, as if it had been asked for. Then it
@@ -353,18 +428,19 @@ def template_answer(intent: str, snap: dict[str, Any], lang: str, question: str)
             "यो प्रश्न नेपालका प्राकृतिक प्रकोप वा विपद्‌सँग सम्बन्धित छैन, त्यसैले "
             "यसको जवाफ दिइँदैन। यो बाकसले डेस्कका तथ्यांक मात्र भन्छ: मृत्यु र घाइते, "
             "सम्पर्कविहीन, उद्धार संख्या, नेपाली र विदेशी विभाजन, सबैभन्दा प्रभावित "
-            "जिल्ला, नदी ग्याज, जाँचिएका सहयोग बाटो, हेल्पलाइन, र भूकम्प, वायु "
-            "गुणस्तर, डढेलो तथा मौसमका रिडिङ।"
+            "जिल्ला, नदी ग्याज, जाँचिएका सहयोग बाटो, हेल्पलाइन, जलवायु पृष्ठभूमि, र "
+            "भूकम्प, वायु गुणस्तर, डढेलो तथा मौसमका रिडिङ।"
         )
     return (
         "That is not a question about natural hazards or disasters in Nepal, "
         "so this box will not answer it. It answers from the desk's own "
         "figures: deaths and injuries, people not yet contacted, how many were "
         "rescued, the Nepali and foreign split, worst-hit districts, river "
-        "gauges, reviewed donation routes, helplines, and the dashboard's "
-        "earthquake, air quality, wildfire and weather readings. It will not "
-        "search for a person, will not say whether to stay or leave, and will "
-        f"not predict. {MONITORING_NOTE}"
+        "gauges, reviewed donation routes, helplines, climate background on "
+        "/climate, and the dashboard's earthquake, air quality, wildfire and "
+        "weather readings. It will not search for a person, will not say "
+        "whether to stay or leave, and will not predict. "
+        f"{MONITORING_NOTE}"
     )
 
 
@@ -414,9 +490,21 @@ def wrap_tool_data(payload: Any) -> str:
 def system_prompt() -> str:
     return " ".join(
         [
-            "You are Ask Atlas sandbox, reading the Rasuwa–Bhotekoshi flood desk.",
-            "You may only restate TOOL_DATA. If a figure is missing, say you do not "
-            "have it and point at the desk page.",
+            "You are Ask Atlas sandbox, reading the Rasuwa–Bhotekoshi flood desk "
+            "and Nepal hazard dashboard.",
+            "You may only restate TOOL_DATA. Prefer as_of_label (or human as_of) over "
+            "raw ISO timestamps when both are present.",
+            "Desk death, injury and uncontacted headlines ARE the toll for this "
+            "Rasuwa–Bhotekoshi flood event. Questions about Bhotekoshi or Rasuwa "
+            "flood deaths mean those headlines — do not invent a missing "
+            "'Bhotekoshi-only' subtotal. District splits live in breakdowns when present.",
+            "If a figure is truly absent from TOOL_DATA, say you do not have it and "
+            "point at /bhotekoshi-flood or /climate. Never invent numbers.",
+            "Climate answers restate reviewed facts and emissions shares only. Never "
+            "claim this flood was caused by climate change or by any country's emissions.",
+            "You are in a conversation. Earlier turns are context for what the reader "
+            "means and never a source of figures — do not restate an earlier answer's "
+            "numbers unless they appear in this turn's TOOL_DATA.",
             "Never search or invent names of people. Never advise evacuation. Never predict.",
             "Every number must carry its source and as_of from the tool data.",
             'Reply JSON only: {"answer":"...","view":null}. view if used must be one of '

@@ -345,6 +345,83 @@ class TestHazardIntents:
         assert classify_intent("who do I call") == "helplines"
 
     @pytest.mark.parametrize(
+        "question,expected",
+        [
+            ("how is the flood situation?", "figures"),
+            ("Bhotekoshi flood update", "figures"),
+            ("बाढी अवस्था कस्तो छ", "figures"),
+            ("is climate change causing this flood?", "climate"),
+            ("what is Nepal's share of CO2 emissions?", "climate"),
+            ("what is a GLOF?", "climate"),
+            ("any landslides?", "landslide"),
+            ("should I evacuate?", "safety_advice"),
+        ],
+    )
+    def test_flood_climate_and_safety_phrasings_reach_their_intent(self, question, expected):
+        """Bare flood/climate used to fall through to `other` and be refused."""
+        from app.domains.ai.ask.policy import classify_intent
+
+        assert classify_intent(question) == expected
+
+    def test_bhotekoshi_death_template_names_the_event_not_a_missing_subtotal(self):
+        """The starter chip asks Bhotekoshi deaths; the model used to invent a
+        missing 'Bhotekoshi-only' figure. The template must say the desk
+        headline *is* that toll."""
+        from app.domains.ai.ask.compose import template_answer
+        from app.domains.ai.ask.tools import build_snapshot
+
+        snap = build_snapshot(
+            content={},
+            sitrep={
+                "as_of": "2026-09-04T08:32:03.994Z",
+                "as_of_label_en": "4 September 2026",
+                "headline": [
+                    {
+                        "id": "deaths",
+                        "value": 1259,
+                        "suffix": "",
+                        "source": "Rasuwa flood bulletin (compilation)",
+                    }
+                ],
+                "breakdowns": [],
+                "sources": [],
+                "discrepancies": [],
+            },
+            gauges=[],
+            news=[],
+        )
+        answer = template_answer("figures", snap, "en", "How many died in Bhotekoshi?")
+        assert "1259" in answer
+        assert "Rasuwa–Bhotekoshi" in answer
+        assert "no separate Bhotekoshi-only national total" in answer
+
+    def test_climate_template_restates_disclaimer_never_causation(self):
+        from app.domains.ai.ask.compose import template_answer
+        from app.domains.ai.ask.tools import build_snapshot
+
+        snap = build_snapshot(
+            content={},
+            sitrep={},
+            gauges=[],
+            news=[],
+            climate={
+                "disclaimerEn": (
+                    "This is background. It does not claim that this flood "
+                    "was caused by climate change."
+                ),
+                "section": {
+                    "cause": {"headlineEn": "Nepal share about 0.05% in 2024."},
+                    "ice": {"headlineEn": "HKH glaciers lost 12 percent."},
+                    "lakes": {"headlineEn": "47 potentially dangerous glacial lakes."},
+                },
+            },
+        )
+        answer = template_answer("climate", snap, "en", "did climate cause this?")
+        assert "0.05%" in answer
+        assert "does not claim" in answer
+        assert "/climate" in answer
+
+    @pytest.mark.parametrize(
         "intent,must_contain",
         [
             ("earthquake", "USGS"),
@@ -646,17 +723,20 @@ class TestScopeGate:
     def test_the_refusal_says_why_and_what_can_be_asked(self):
         answer = self._turn("what is 2+2?")["answer"]
         assert "not a question about natural hazards or disasters in Nepal" in answer
-        for topic in ("rescued", "river gauges", "helplines", "earthquake"):
+        for topic in ("rescued", "river gauges", "helplines", "earthquake", "climate"):
             assert topic in answer
 
     @pytest.mark.parametrize(
         "question,intent",
         [
             ("how many died in the flood", "figures"),
+            ("how is the flood situation", "figures"),
             ("any earthquakes today", "earthquake"),
             ("how many people are rescued", "rescued"),
             ("what is the air quality", "air_quality"),
             ("who do I call", "helplines"),
+            ("what is Nepal's CO2 emissions share", "climate"),
+            ("any landslides nearby", "landslide"),
         ],
     )
     def test_real_hazard_questions_still_answer(self, question, intent):
@@ -664,12 +744,61 @@ class TestScopeGate:
         assert turn["intent"] == intent
         assert turn["kind"] == "ok"
 
+    def test_should_i_evacuate_is_still_a_safety_refusal(self):
+        turn = self._turn("should I evacuate?")
+        assert turn["kind"] == "refused"
+        assert turn["intent"] == "safety_advice"
+        assert "stay or leave" in turn["answer"]
+
     def test_the_three_original_refusals_keep_their_own_wording(self):
         """Scope is a fourth refusal, not a replacement — each says something
         different and each is a considered position."""
         assert "cannot search names" in self._turn("is my brother on the list")["answer"]
         assert "stay or leave" in self._turn("should we leave Betrawati")["answer"]
         assert "cannot predict" in self._turn("will the lake burst tomorrow")["answer"]
+
+    @pytest.mark.parametrize(
+        "question,intent",
+        [
+            ("Death?", "figures"),
+            ("missing?", "uncontacted"),
+            ("total funds recieved?", "funds"),
+            ("injuries?", "figures"),
+        ],
+    )
+    def test_bare_hazard_nouns_reach_their_intent(self, question, intent):
+        """Strict patterns needed 'how many' before a death word; bare nouns
+        used to fall through to other and get the scope speech."""
+        from app.domains.ai.ask.policy import classify_intent
+
+        assert classify_intent(question) == intent
+
+    def test_raised_funds_says_the_desk_carries_no_total(self):
+        from app.domains.ai.ask.compose import template_answer
+        from app.domains.ai.ask.tools import build_snapshot
+
+        snap = build_snapshot(
+            content={
+                "funds": [
+                    {
+                        "id": "pmdrf",
+                        "name": "PM Disaster Relief Fund",
+                        "url": "https://example.test",
+                    }
+                ]
+            },
+            sitrep={},
+            gauges=[],
+            news=[],
+        )
+        answer = template_answer("funds", snap, "en", "total funds recieved?")
+        assert "does not carry a total received" in answer
+        assert "/bhotekoshi-flood/donate" in answer
+        assert "Ministry of Finance" in answer or "Prime Minister" in answer
+        # Route-only questions keep the existing donate answer.
+        donate = template_answer("funds", snap, "en", "where can I donate")
+        assert "Do not send money to personal QR codes" in donate
+        assert "does not carry a total received" not in donate
 
 
 class TestPromptInjectionGuards:
