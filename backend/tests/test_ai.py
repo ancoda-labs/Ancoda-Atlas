@@ -876,7 +876,60 @@ class TestScopeGate:
 
         assert classify_intent(question) == intent
 
-    def test_raised_funds_says_the_desk_carries_no_total(self):
+    def test_raised_funds_restates_reviewed_pm_fund_cash(self):
+        from app.domains.ai.ask.compose import template_answer
+        from app.domains.ai.ask.tools import build_snapshot
+
+        snap = build_snapshot(
+            content={
+                "funds": [
+                    {
+                        "id": "pmdrf",
+                        "name_en": "PM Disaster Relief Fund",
+                        "url": "https://example.test",
+                    }
+                ],
+                "reliefReceived": {
+                    "as_of": "2026-09-02T00:00:00+05:45",
+                    "as_of_label_en": "17 Bhadra (Ministry of Finance / PM Disaster Relief Fund)",
+                    "headline": [
+                        {
+                            "id": "pm-fund",
+                            "value": 7305744162,
+                            "label_en": "In the PM Disaster Relief Fund",
+                            "source": "MoF / PMDRF",
+                            "unit_en": "NPR",
+                        },
+                        {
+                            "id": "since-flood",
+                            "value": 5133234403,
+                            "label_en": "Collected after the flood",
+                            "unit_en": "NPR",
+                        },
+                        {
+                            "id": "already-held",
+                            "value": 2172509759,
+                            "label_en": "Already in the fund before the flood",
+                            "unit_en": "NPR",
+                        },
+                    ],
+                },
+            },
+            sitrep={},
+            gauges=[],
+            news=[],
+        )
+        answer = template_answer("funds", snap, "en", "total funds recieved?").text
+        assert "7,305,744,162" in answer
+        assert "does not carry a total received" not in answer
+        assert "PhonePe" in answer or "NVIDIA" in answer
+        assert "/bhotekoshi-flood/donate" in answer
+        # Route-only questions keep the existing donate answer.
+        donate = template_answer("funds", snap, "en", "where can I donate").text
+        assert "Do not send money to personal QR codes" in donate
+        assert "7,305,744,162" not in donate
+
+    def test_raised_funds_without_relief_table_says_not_loaded(self):
         from app.domains.ai.ask.compose import template_answer
         from app.domains.ai.ask.tools import build_snapshot
 
@@ -895,13 +948,8 @@ class TestScopeGate:
             news=[],
         )
         answer = template_answer("funds", snap, "en", "total funds recieved?").text
-        assert "does not carry a total received" in answer
+        assert "no MoF" in answer or "not loaded" in answer.lower()
         assert "/bhotekoshi-flood/donate" in answer
-        assert "Ministry of Finance" in answer or "Prime Minister" in answer
-        # Route-only questions keep the existing donate answer.
-        donate = template_answer("funds", snap, "en", "where can I donate").text
-        assert "Do not send money to personal QR codes" in donate
-        assert "does not carry a total received" not in donate
 
 
 class TestPromptInjectionGuards:

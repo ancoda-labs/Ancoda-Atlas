@@ -35,6 +35,30 @@ def sanitize_headline(title: str) -> str:
     return IMPERATIVE.sub("[removed]", title or "")[:240]
 
 
+def _relief_received_slice(received: dict[str, Any] | None) -> dict[str, Any] | None:
+    """Headlines + as-of only — enough for raised-funds answers, not the bank rows."""
+    if not received:
+        return None
+    return {
+        "as_of": received.get("as_of"),
+        "as_of_label_en": received.get("as_of_label_en"),
+        "as_of_label_ne": received.get("as_of_label_ne"),
+        "headline": [
+            {
+                "id": h.get("id"),
+                "value": h.get("value"),
+                "label_en": h.get("label_en"),
+                "label_ne": h.get("label_ne"),
+                "source": h.get("source"),
+                "unit_en": h.get("unit_en"),
+                "unit_ne": h.get("unit_ne"),
+            }
+            for h in (received.get("headline") or [])
+            if h.get("id")
+        ],
+    }
+
+
 def hazard_slice(hazards: dict[str, Any] | None) -> dict[str, Any]:
     """The dashboard's hazards, trimmed to what an answer can cite.
 
@@ -174,6 +198,9 @@ def build_snapshot(
             {"name": f.get("name_en") or f.get("name"), "tier": f.get("tier")}
             for f in (content.get("funds") or [])
         ],
+        # Reviewed MoF / PMDRF cash table — raised/received answers restate these
+        # headlines only. Never invent a grand total across pledges and QR.
+        "reliefReceived": _relief_received_slice(content.get("reliefReceived")),
         "pathPoints": (content.get("floodPath") or {}).get("points") or [],
     }
 
@@ -270,7 +297,10 @@ def run_tool(name: str, args: dict[str, Any], snap: dict[str, Any]) -> Any:
     if name == "search_news":
         return {"news": snap["news"]}
     if name == "get_relief_funds":
-        return {"funds": snap["funds"]}
+        return {
+            "funds": snap["funds"],
+            "reliefReceived": snap.get("reliefReceived"),
+        }
     if name == "get_faq":
         return {"helplines": snap["helplines"]}
     if name == "get_climate":

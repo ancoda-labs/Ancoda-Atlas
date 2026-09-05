@@ -1,6 +1,6 @@
 {
   "id": "damage",
-  "_comment": "Copernicus EMS Rapid Mapping EMSR927 AOI01 Syapru Besi / Timure grading, and the Nepal Electricity Authority 10 Bhadra notice. The bulletin at nirajbhusal.github.io is someone else's compilation; Copernicus and NEA are the sources. Two rules: (1) 433 is all buildings, 392 is residential inside that — never add them; (2) the ~450 people in the AOI are not added to the uncontacted total of about 5,083, and the 133+ NEA hydropower workers are not added to it either — the 18 Bhadra 19:00 board stopped publishing the hydropower row, which stood at 900 on 17 Bhadra. Langtang 60 is inside the 133+, not on top of it. lib/damage-merge.ts overlays a live scrape of the bulletin's EMSR927 table only when the building arithmetic still closes. Maps are the bulletin's reprinted EMSR927 product images; photograph lat/lon are flood-path place pins from the caption, not GPS.",
+  "_comment": "Copernicus EMS Rapid Mapping EMSR927 AOI01 Syapru Besi / Timure grading, and the Nepal Electricity Authority 10 Bhadra notice. The bulletin at nirajbhusal.github.io is someone else's compilation; Copernicus and NEA are the sources. Two rules: (1) 433 is all buildings, 392 is residential inside that — never add them; (2) the ~450 people in the AOI are not added to the uncontacted total of about 5,053, and the 133+ NEA hydropower workers are not added to it either — the 19 Bhadra 18:30 board stopped publishing the hydropower row, which stood at 900 on 17 Bhadra. Langtang 60 is inside the 133+, not on top of it. lib/damage-merge.ts overlays a live scrape of the bulletin's EMSR927 table only when the building arithmetic still closes. Maps are the bulletin's reprinted EMSR927 product images; photograph lat/lon are flood-path place pins from the caption, not GPS.",
   "as_of": "2026-08-27T05:05:00Z",
   "as_of_label_en": "27 Aug 2026, 05:05 UTC (Copernicus EMSR927 AOI01 v1) · NEA notice 10 Bhadra",
   "as_of_label_ne": "२७ अगस्ट २०२६, ०५:०५ UTC (कोपर्निकस EMSR927 AOI01 v1) · प्राधिकरण सूचना १० भदौ",
@@ -16,7 +16,7 @@
     "title_ne": "स्याफ्रुबेँसी र त्रिशूली करिडोर",
     "lead_en": "EMSR927 AOI01 · 27 Aug 2026, 05:05 UTC · ITHACA / SERTIT · GLIDE FF-2026-000162-NPL · Charter 1052 · v1",
     "lead_ne": "EMSR927 AOI01 · २७ अगस्ट २०२६, ०५:०५ UTC · ITHACA / SERTIT · GLIDE FF-2026-000162-NPL · Charter 1052 · v1",
-    "note_en": "Satellite visual interpretation, not a police or NDRRMA sitrep. Not added to deaths, injured, uncontacted (about 5,083) or rescued. Do not add the ~450 people in this map onto the uncontacted figure. Possibly damaged is a proximity proxy, not a confirmed count.",
+    "note_en": "Satellite visual interpretation, not a police or NDRRMA sitrep. Not added to deaths, injured, uncontacted (about 5,053) or rescued. Do not add the ~450 people in this map onto the uncontacted figure. Possibly damaged is a proximity proxy, not a confirmed count.",
     "note_ne": "उपग्रह दृश्य व्याख्या, प्रहरी वा एनडीआरआरएमए सिटरेप होइन। मृत्यु, घाइते, सम्पर्कविहीन (करिब ५,०८३) वा उद्धारमाथि जोडिँदैन। यो नक्साका करिब ४५० लाई सम्पर्कविहीनमा नजोड्नुहोस्। सम्भावित क्षति निकटताको प्रॉक्सी हो, पुष्टि होइन।",
     "portal_url": "https://mapping.emergency.copernicus.eu/activations/EMSR927/",
     "maps": [
@@ -157,7 +157,7 @@
       "suffix": "+",
       "label_en": "Hydropower staff uncontacted",
       "label_ne": "सम्पर्कविहीन जलविद्युत् कर्मचारी",
-      "detail_en": "NEA via Ratopati. Not added to the uncontacted total of about 5,083; the board no longer publishes a hydropower row.",
+      "detail_en": "NEA via Ratopati. Not added to the uncontacted total of about 5,053; the board no longer publishes a hydropower row.",
       "detail_ne": "प्राधिकरण, रातोपाटीमार्फत। सम्पर्कविहीन करिब ५,०८३ माथि जोडिँदैन; बोर्डले अब जलविद्युत् पङ्क्ति प्रकाशित गर्दैन।"
     },
     "langtang_staff": {

@@ -92,7 +92,7 @@ const COPY = {
     starters: [
       'What’s the death toll?',
       'How many still uncontacted?',
-      'Worst-hit districts?',
+      'How much in the PM fund?',
       'How many were rescued?',
     ],
   },
@@ -128,7 +128,7 @@ const COPY = {
     starters: [
       'मृत्यु संख्या कति?',
       'सम्पर्कविहीन कति?',
-      'कुन जिल्ला प्रभावित?',
+      'कोषमा कति रकम?',
       'कति जना उद्धार?',
     ],
   },
