@@ -122,8 +122,13 @@ export default function ClimateContext({
   const otherFacts = data.facts.filter(fact => fact.id !== LAKE_FACT);
   const readLabel = emissions.stale ? T.stale[lang] : T.read[lang];
   const climateHref = lang === 'ne' ? '/ne/climate' : '/climate';
-  const verdicts = data.statements;
+  const verdicts = (data.statements || []).filter(item => {
+    const title = statementCopy(lang, item.title, item.titleNe);
+    const body = statementCopy(lang, item.bodyEn, item.bodyNe);
+    return Boolean(title || body);
+  });
   const desk = variant === 'desk';
+  const split = desk && verdicts.length > 0;
 
   return (
     <section
@@ -135,7 +140,7 @@ export default function ClimateContext({
         <h2 id="atlas-climate-title">{T.title[lang]}</h2>
       </div>
 
-      <div className={desk ? 'atlas-climate-split' : undefined}>
+      <div className={split ? 'atlas-climate-split' : undefined}>
         <div className={desk ? 'atlas-climate-figures' : undefined}>
           {hasMetrics ? (
             <MetricSwitcher
@@ -153,31 +158,33 @@ export default function ClimateContext({
             </span>
             {source?.url ? <SourceLink href={source.url} label={source.label} /> : null}
           </p>
-
-          {lake ? <GlacialLakeProfile lang={lang} fact={lake} compact={desk} /> : null}
-
-          {otherFacts.length > 0 ? (
-            <ul className="atlas-climate-facts">
-              {otherFacts.map(fact => (
-                <FactLine key={fact.id} fact={fact} lang={lang} />
-              ))}
-            </ul>
-          ) : null}
         </div>
 
         {verdicts.length > 0 ? (
-          <aside className={desk ? 'atlas-climate-verdicts' : 'atlas-climate-block'} aria-label={T.government[lang]}>
-            {!desk ? (
-              <>
-                <h3>{T.government[lang]}</h3>
-              </>
-            ) : null}
+          <aside
+            className={desk ? 'atlas-climate-verdicts' : 'atlas-climate-block'}
+            aria-label={T.government[lang]}
+          >
+            {!desk ? <h3>{T.government[lang]}</h3> : null}
             <ul className="atlas-climate-statements">
               {verdicts.map(item => (
                 <VerdictCard key={item.id} item={item} lang={lang} />
               ))}
             </ul>
           </aside>
+        ) : null}
+
+        {(lake || otherFacts.length > 0) ? (
+          <div className={split ? 'atlas-climate-below' : desk ? 'atlas-climate-figures' : undefined}>
+            {lake ? <GlacialLakeProfile lang={lang} fact={lake} compact={desk} /> : null}
+            {otherFacts.length > 0 ? (
+              <ul className="atlas-climate-facts">
+                {otherFacts.map(fact => (
+                  <FactLine key={fact.id} fact={fact} lang={lang} />
+                ))}
+              </ul>
+            ) : null}
+          </div>
         ) : null}
       </div>
 
