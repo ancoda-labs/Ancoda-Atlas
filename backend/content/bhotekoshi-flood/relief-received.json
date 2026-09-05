@@ -5,24 +5,87 @@
   "as_of_label_en": "17 Bhadra (Ministry of Finance / PM Disaster Relief Fund)",
   "as_of_label_ne": "१७ भदौ (अर्थ मन्त्रालय / प्रधानमन्त्री दैवी प्रकोप उद्धार कोष)",
   "sources": [
-    { "label": "MoF / PMDRF via Rasuwa flood bulletin (17 Bhadra: 7,305,744,162.91 = 6,553,362,011 + 600,220,106 + 152,162,045.91)", "url": "https://nirajbhusal.github.io/rasuwa-flood-bulletin/donate.html#aid" },
-    { "label": "Jensen Huang (NVIDIA) USD 10m to the PM Disaster Relief Fund (Nepal News, 4 September)", "url": "https://english.nepalnews.com/s/diplomacy/nvidia-ceo-jensen-huang-donates-rs-1-5-billion-for-bhote-koshi-flood-relief/" },
-    { "label": "Jensen Huang (NVIDIA) USD 10m to the PM Disaster Relief Fund (myRepublica, 4 September)", "url": "https://myrepublica.nagariknetwork.com/news/nvidia-ceo-jensen-huang-donates-10-million-to-nepal-flood-victims-81-13.html" },
-    { "label": "MoF / PMDRF via Rasuwa flood bulletin (15 Bhadra: 7,153,582,117 = 12 Bhadra nine-bank 6,553,362,011 + 600,220,106)", "url": "https://nirajbhusal.github.io/rasuwa-flood-bulletin/donate.html#aid" },
-    { "label": "Prime Minister's Office appeal (PDF)", "url": "https://opmcm.gov.np/content/586/heartfelt-appeal/" },
-    { "label": "UAE $10m pledge (Rising Nepal / RSS, 30 Aug)", "url": "https://risingnepaldaily.com/news/85819" },
-    { "label": "UAE $10m pledge (Khaleej Times)", "url": "https://www.khaleejtimes.com/uae/uae-10-million-aid-nepal-floods-landslide-victims" },
-    { "label": "OPMCM on nepal.gov.np (16 Bhadra: Rs 1 billion from the PM fund to be sent to affected areas)", "url": "https://nepal.gov.np/updates/4936218f-255b-42a3-bba8-a22d1340ebdc" },
-    { "label": "MoHA on nepal.gov.np (16 Bhadra: Rs 6.75 crore more to 15 local governments)", "url": "https://nepal.gov.np/updates/e3d3d6c3-f39e-44b3-bd97-2a3715fa5f5f" },
-    { "label": "Government of Nepal updates portal", "url": "https://nepal.gov.np/updates" }
+    {
+      "label": "NDRRMA via Prasashan (19 Bhadra: Rs 13.5 crore allocated to 15 heavily affected palikas — not added onto MoHA 6.75 crore or the MoF bank table)",
+      "url": "https://prasashan.com/2026/09/04/799074/"
+    },
+    {
+      "label": "PM Shah to Parliament via Arthasansar (Wednesday: Rs 7,008,857,217 across PMDRF + PM Relief Fund; USD 6,141,702; after Rs 1bn release NPR balance 6,008,857,217)",
+      "url": "https://arthasansar.com/news/82465"
+    },
+    {
+      "label": "MoF / PMDRF via Rasuwa flood bulletin (17 Bhadra: 7,305,744,162.91 = 6,553,362,011 + 600,220,106 + 152,162,045.91)",
+      "url": "https://nirajbhusal.github.io/rasuwa-flood-bulletin/donate.html#aid"
+    },
+    {
+      "label": "Jensen Huang (NVIDIA) USD 10m to the PM Disaster Relief Fund (Nepal News, 4 September)",
+      "url": "https://english.nepalnews.com/s/diplomacy/nvidia-ceo-jensen-huang-donates-rs-1-5-billion-for-bhote-koshi-flood-relief/"
+    },
+    {
+      "label": "Jensen Huang (NVIDIA) USD 10m to the PM Disaster Relief Fund (myRepublica, 4 September)",
+      "url": "https://myrepublica.nagariknetwork.com/news/nvidia-ceo-jensen-huang-donates-10-million-to-nepal-flood-victims-81-13.html"
+    },
+    {
+      "label": "MoF / PMDRF via Rasuwa flood bulletin (15 Bhadra: 7,153,582,117 = 12 Bhadra nine-bank 6,553,362,011 + 600,220,106)",
+      "url": "https://nirajbhusal.github.io/rasuwa-flood-bulletin/donate.html#aid"
+    },
+    {
+      "label": "Prime Minister's Office appeal (PDF)",
+      "url": "https://opmcm.gov.np/content/586/heartfelt-appeal/"
+    },
+    {
+      "label": "UAE $10m pledge (Rising Nepal / RSS, 30 Aug)",
+      "url": "https://risingnepaldaily.com/news/85819"
+    },
+    {
+      "label": "UAE $10m pledge (Khaleej Times)",
+      "url": "https://www.khaleejtimes.com/uae/uae-10-million-aid-nepal-floods-landslide-victims"
+    },
+    {
+      "label": "OPMCM on nepal.gov.np (16 Bhadra: Rs 1 billion from the PM fund to be sent to affected areas)",
+      "url": "https://nepal.gov.np/updates/4936218f-255b-42a3-bba8-a22d1340ebdc"
+    },
+    {
+      "label": "MoHA on nepal.gov.np (16 Bhadra: Rs 6.75 crore more to 15 local governments)",
+      "url": "https://nepal.gov.np/updates/e3d3d6c3-f39e-44b3-bd97-2a3715fa5f5f"
+    },
+    {
+      "label": "Government of Nepal updates portal",
+      "url": "https://nepal.gov.np/updates"
+    }
   ],
-
   "headline": [
-    { "id": "pm-fund", "value": 7305744162, "tone": "positive", "label_en": "In the PM Disaster Relief Fund", "label_ne": "प्रधानमन्त्री दैवी प्रकोप उद्धार कोषमा", "source": "MoF / PMDRF", "unit_en": "NPR", "unit_ne": "रु." },
-    { "id": "since-flood", "value": 5133234403, "tone": "positive", "label_en": "Collected after the flood", "label_ne": "विपद्पछि संकलित", "source": "MoF / PMDRF", "unit_en": "NPR", "unit_ne": "रु." },
-    { "id": "already-held", "value": 2172509759, "tone": "warning", "label_en": "Already in the fund before the flood", "label_ne": "विपद्अघि मौज्दात", "source": "MoF / PMDRF", "unit_en": "NPR", "unit_ne": "रु." }
+    {
+      "id": "pm-fund",
+      "value": 7305744162,
+      "tone": "positive",
+      "label_en": "In the PM Disaster Relief Fund",
+      "label_ne": "प्रधानमन्त्री दैवी प्रकोप उद्धार कोषमा",
+      "source": "MoF / PMDRF",
+      "unit_en": "NPR",
+      "unit_ne": "रु."
+    },
+    {
+      "id": "since-flood",
+      "value": 5133234403,
+      "tone": "positive",
+      "label_en": "Collected after the flood",
+      "label_ne": "विपद्पछि संकलित",
+      "source": "MoF / PMDRF",
+      "unit_en": "NPR",
+      "unit_ne": "रु."
+    },
+    {
+      "id": "already-held",
+      "value": 2172509759,
+      "tone": "warning",
+      "label_en": "Already in the fund before the flood",
+      "label_ne": "विपद्अघि मौज्दात",
+      "source": "MoF / PMDRF",
+      "unit_en": "NPR",
+      "unit_ne": "रु."
+    }
   ],
-
   "breakdowns": [
     {
       "id": "pm-fund",
@@ -35,20 +98,93 @@
       "do_not_merge_en": "The 2.17 billion already in the fund is inside the 7.30 billion, not on top of it. USD 3.19 million is not part of the Nepali-rupee total. Jensen Huang's USD 10 million is a contribution to this fund but is not yet inside the 7.30 billion cash figure. PhonePe QR Rs 1.97 billion, foreign pledges, World Bank Rs 25 billion and the IFRC appeal are not this fund.",
       "do_not_merge_ne": "विपद्अघिको २ अर्ब १७ करोड ७ अर्ब ३० करोडभित्र छ, माथि होइन। डलर ३१.९ लाख नेपाली जम्मामा होइन। जेन्सेन ह्वाङको १ करोड डलर यही कोषमा गएको योगदान हो तर ७ अर्ब ३० करोडको नगद अंकभित्र अझै छैन। फोनपे QR रु. १ अर्ब ९६ करोड, वैदेशिक घोषणा, विश्व बैंक २५ अर्ब र आईएफआरसी अपिल यो कोष होइनन्।",
       "items": [
-        { "label_en": "Rastriya Banijya Bank", "label_ne": "राष्ट्रिय वाणिज्य बैंक", "value": 3279902335, "unit_en": "NPR", "unit_ne": "रु." },
-        { "label_en": "Everest Bank", "label_ne": "एभरेष्ट बैंक", "value": 1952718185, "unit_en": "NPR", "unit_ne": "रु." },
-        { "label_en": "Standard Chartered", "label_ne": "स्ट्यान्डर्ड चार्टर्ड", "value": 306288750, "unit_en": "NPR", "unit_ne": "रु." },
-        { "label_en": "Laxmi Sunrise", "label_ne": "लक्ष्मी सनराइज", "value": 300858751, "unit_en": "NPR", "unit_ne": "रु." },
-        { "label_en": "Himalayan Bank", "label_ne": "हिमालयन बैंक", "value": 231714953, "unit_en": "NPR", "unit_ne": "रु." },
-        { "label_en": "Nabil Bank", "label_ne": "नबिल बैंक", "value": 164047708, "unit_en": "NPR", "unit_ne": "रु." },
-        { "label_en": "Global IME", "label_ne": "ग्लोबल आइएमई", "value": 130180000, "unit_en": "NPR", "unit_ne": "रु." },
-        { "label_en": "Agricultural Development Bank", "label_ne": "कृषि विकास बैंक", "value": 95262715, "unit_en": "NPR", "unit_ne": "रु." },
-        { "label_en": "Nepal Bank", "label_ne": "नेपाल बैंक", "value": 92388614, "unit_en": "NPR", "unit_ne": "रु." },
-        { "label_en": "15 Bhadra additional receipts", "label_ne": "१५ भदौ थप संकलन", "value": 600220106, "unit_en": "NPR", "unit_ne": "रु." },
-        { "label_en": "17 Bhadra cheque handover (28 individuals and institutions)", "label_ne": "१७ भदौ चेक हस्तान्तरण (२८ व्यक्ति/संस्था)", "value": 152162045, "unit_en": "NPR", "unit_ne": "रु." }
+        {
+          "label_en": "Rastriya Banijya Bank",
+          "label_ne": "राष्ट्रिय वाणिज्य बैंक",
+          "value": 3279902335,
+          "unit_en": "NPR",
+          "unit_ne": "रु."
+        },
+        {
+          "label_en": "Everest Bank",
+          "label_ne": "एभरेष्ट बैंक",
+          "value": 1952718185,
+          "unit_en": "NPR",
+          "unit_ne": "रु."
+        },
+        {
+          "label_en": "Standard Chartered",
+          "label_ne": "स्ट्यान्डर्ड चार्टर्ड",
+          "value": 306288750,
+          "unit_en": "NPR",
+          "unit_ne": "रु."
+        },
+        {
+          "label_en": "Laxmi Sunrise",
+          "label_ne": "लक्ष्मी सनराइज",
+          "value": 300858751,
+          "unit_en": "NPR",
+          "unit_ne": "रु."
+        },
+        {
+          "label_en": "Himalayan Bank",
+          "label_ne": "हिमालयन बैंक",
+          "value": 231714953,
+          "unit_en": "NPR",
+          "unit_ne": "रु."
+        },
+        {
+          "label_en": "Nabil Bank",
+          "label_ne": "नबिल बैंक",
+          "value": 164047708,
+          "unit_en": "NPR",
+          "unit_ne": "रु."
+        },
+        {
+          "label_en": "Global IME",
+          "label_ne": "ग्लोबल आइएमई",
+          "value": 130180000,
+          "unit_en": "NPR",
+          "unit_ne": "रु."
+        },
+        {
+          "label_en": "Agricultural Development Bank",
+          "label_ne": "कृषि विकास बैंक",
+          "value": 95262715,
+          "unit_en": "NPR",
+          "unit_ne": "रु."
+        },
+        {
+          "label_en": "Nepal Bank",
+          "label_ne": "नेपाल बैंक",
+          "value": 92388614,
+          "unit_en": "NPR",
+          "unit_ne": "रु."
+        },
+        {
+          "label_en": "15 Bhadra additional receipts",
+          "label_ne": "१५ भदौ थप संकलन",
+          "value": 600220106,
+          "unit_en": "NPR",
+          "unit_ne": "रु."
+        },
+        {
+          "label_en": "17 Bhadra cheque handover (28 individuals and institutions)",
+          "label_ne": "१७ भदौ चेक हस्तान्तरण (२८ व्यक्ति/संस्था)",
+          "value": 152162045,
+          "unit_en": "NPR",
+          "unit_ne": "रु."
+        }
       ],
       "aside": [
-        { "label_en": "USD account (~Rs 48.6 crore at NRB 152.57, 28 Aug)", "label_ne": "डलर खाता (~रु. ४८.६ करोड, एनआरबी १५२.५७, २८ अगस्ट)", "value": 3190000, "unit_en": "USD", "unit_ne": "USD", "exclusive": true }
+        {
+          "label_en": "USD account (~Rs 48.6 crore at NRB 152.57, 28 Aug)",
+          "label_ne": "डलर खाता (~रु. ४८.६ करोड, एनआरबी १५२.५७, २८ अगस्ट)",
+          "value": 3190000,
+          "unit_en": "USD",
+          "unit_ne": "USD",
+          "exclusive": true
+        }
       ]
     },
     {
@@ -62,24 +198,158 @@
       "do_not_merge_en": "Not added to the Rs 7.30 billion. World Bank Rs 25 billion and the IFRC CHF 25 million appeal are separate lines, not inside this $39.59 million. ADB $5m and UAE $10m are pledges, not cash received. UAE's 83-tonne flight is inside the $10m package, not on top of it. Jensen Huang's $10m (about Rs 1.51 billion) is a contribution to the Prime Minister's fund that the published rupee balance does not yet carry — count it once, here.",
       "do_not_merge_ne": "रु. ७ अर्ब ३० करोडमा जोडिँदैन। विश्व बैंक २५ अर्ब र आईएफआरसी CHF २५ मिलियन अपिल यो $३९.५९ मिलियनभित्र होइनन्। एडीबी $५ मिलियन र युएई $१० मिलियन घोषणा हुन्, आएको नगद होइनन्। युएईको ८३ टन उडान $१० मिलियनभित्र छ, माथि होइन। जेन्सेन ह्वाङको $१० मिलियन (करिब रु. १.५१ अर्ब) प्रधानमन्त्री कोषमा गएको योगदान हो जुन प्रकाशित रुपैयाँ मौज्दातले अझै समेटेको छैन — एक पटक, यहीँ गन्नुहोस्।",
       "items": [
-        { "label_en": "United Kingdom (FCDO)", "label_ne": "युनाइटेड किंगडम (एफसीडीओ)", "value": 6790000, "unit_en": "USD", "unit_ne": "USD" },
-        { "label_en": "United States", "label_ne": "संयुक्त राज्य अमेरिका", "value": 3600000, "unit_en": "USD", "unit_ne": "USD" },
-        { "label_en": "UN OCHA (CERF)", "label_ne": "संयुक्त राष्ट्र ओसीएचए (सीईआरएफ)", "value": 3200000, "unit_en": "USD", "unit_ne": "USD" },
-        { "label_en": "Asian Development Bank (pledge)", "label_ne": "एसियाली विकास बैंक (एडीबी)", "value": 5000000, "unit_en": "USD", "unit_ne": "USD" },
-        { "label_en": "United Arab Emirates (UAE Aid)", "label_ne": "संयुक्त अरब एमिरेट्स (युएई एड)", "value": 10000000, "unit_en": "USD", "unit_ne": "USD" },
-        { "label_en": "South Korea", "label_ne": "दक्षिण कोरिया", "value": 1000000, "unit_en": "USD", "unit_ne": "USD" },
-        { "label_en": "Jensen Huang (NVIDIA), to the PM fund", "label_ne": "जेन्सेन ह्वाङ (एनभिडिया), प्रधानमन्त्री कोषमा", "value": 10000000, "unit_en": "USD", "unit_ne": "USD" }
+        {
+          "label_en": "United Kingdom (FCDO)",
+          "label_ne": "युनाइटेड किंगडम (एफसीडीओ)",
+          "value": 6790000,
+          "unit_en": "USD",
+          "unit_ne": "USD"
+        },
+        {
+          "label_en": "United States",
+          "label_ne": "संयुक्त राज्य अमेरिका",
+          "value": 3600000,
+          "unit_en": "USD",
+          "unit_ne": "USD"
+        },
+        {
+          "label_en": "UN OCHA (CERF)",
+          "label_ne": "संयुक्त राष्ट्र ओसीएचए (सीईआरएफ)",
+          "value": 3200000,
+          "unit_en": "USD",
+          "unit_ne": "USD"
+        },
+        {
+          "label_en": "Asian Development Bank (pledge)",
+          "label_ne": "एसियाली विकास बैंक (एडीबी)",
+          "value": 5000000,
+          "unit_en": "USD",
+          "unit_ne": "USD"
+        },
+        {
+          "label_en": "United Arab Emirates (UAE Aid)",
+          "label_ne": "संयुक्त अरब एमिरेट्स (युएई एड)",
+          "value": 10000000,
+          "unit_en": "USD",
+          "unit_ne": "USD"
+        },
+        {
+          "label_en": "South Korea",
+          "label_ne": "दक्षिण कोरिया",
+          "value": 1000000,
+          "unit_en": "USD",
+          "unit_ne": "USD"
+        },
+        {
+          "label_en": "Jensen Huang (NVIDIA), to the PM fund",
+          "label_ne": "जेन्सेन ह्वाङ (एनभिडिया), प्रधानमन्त्री कोषमा",
+          "value": 10000000,
+          "unit_en": "USD",
+          "unit_ne": "USD"
+        }
       ]
     }
   ],
-
   "exclusive": [
-    { "id": "phonepe-qr", "label_en": "PhonePe QR (26–31 Aug)", "label_ne": "फोनपे QR (२६–३१ अगस्ट)", "value": 1965554361, "unit_en": "NPR", "unit_ne": "रु.", "detail_en": "803,259 transactions. Not added to the Rs 7.30 billion.", "detail_ne": "८,०३,२५९ कारोबार। रु. ७ अर्ब ३० करोडमा जोडिँदैन।" },
-    { "id": "world-bank", "label_en": "World Bank emergency package (pledge)", "label_ne": "विश्व बैंक आपत्कालीन प्याकेज", "value": 25000000000, "unit_en": "NPR", "unit_ne": "रु.", "detail_en": "Rs 25 billion. Not cash in the Prime Minister's fund.", "detail_ne": "रु. २५ अर्ब। प्रधानमन्त्री कोषमा आएको नगद होइन।" },
-    { "id": "ifrc-appeal", "label_en": "IFRC emergency appeal", "label_ne": "आईएफआरसी आपत्कालीन अपिल", "value": 25000000, "unit_en": "CHF", "unit_ne": "CHF", "detail_en": "Appeal, not a government account.", "detail_ne": "अपिल, सरकारी खाता होइन।" },
-    { "id": "ifrc-dref", "label_en": "IFRC DREF to Nepal Red Cross", "label_ne": "आईएफआरसी डीआरईएफ · नेपाल रेडक्रस", "value": 1200000, "unit_en": "USD", "unit_ne": "USD", "detail_en": "Emergency fund for the Red Cross. Not the Prime Minister's accounts.", "detail_ne": "नेपाल रेडक्रसलाई आपत्कालीन कोष। सरकारको खातामा आएको होइन।" },
-    { "id": "india-inkind", "label_en": "India, two HADR flights", "label_ne": "भारत, दुई उडान", "value": 47.5, "unit_en": "tonnes", "unit_ne": "टन", "detail_en": "10 tonnes then 37.5 tonnes. In-kind, not cash. Transfer at Tribhuvan not confirmed.", "detail_ne": "१० टन त्यसपछि ३७.५ टन। सामग्री, नगद होइन। त्रिभुवन हस्तान्तरण पुष्टि छैन।" },
-    { "id": "pm-fund-send-1bn", "label_en": "PM fund: Rs 1 billion to be sent to affected areas", "label_ne": "प्रधानमन्त्री कोष: प्रभावित क्षेत्रमा एक अर्ब पठाइने", "value": 1000000000, "unit_en": "NPR", "unit_ne": "रु.", "detail_en": "OPMCM, 16 Bhadra — the fund operating committee decided to send Rs 1 billion immediately. That is money leaving the fund, not extra cash on top of the Rs 7.30 billion already in the banks.", "detail_ne": "प्रधानमन्त्री कार्यालय, १६ भदौ — कोष सञ्चालन समितिले एक अर्ब तत्काल पठाउने निर्णय गरेको। यो कोषबाट बाहिरिने रकम हो, बैंकमा रहेको ७ अर्ब ३० करोडमाथि थप होइन।" },
-    { "id": "palika-675m", "label_en": "Rs 6.75 crore to 15 local governments", "label_ne": "१५ स्थानीय तहलाई ६ करोड ७५ लाख", "value": 67500000, "unit_en": "NPR", "unit_ne": "रु.", "detail_en": "MoHA monsoon command, 16 Bhadra — Rasuwa, Nuwakot, Dhading, Gorkha and Tanahun palikas. Matches the 11 Bhadra DRRM executive-committee allocation; count once. Not the PM fund cash total. 75+100+30+20 + 150+75+25+50 + 30+20+20+20 + 20 + 20+20 = 675 lakh.", "detail_ne": "गृह, मनसुन कमाण्ड, १६ भदौ — रसुवा, नुवाकोट, धादिङ, गोरखा र तनहुँका पालिका। ११ भदौको विपद् कार्यकारी समितिको विनियोजनसँग मेल; एक पटक मात्र गन्नुहोस्। प्रधानमन्त्री कोषको मौज्दात होइन। ७५+१००+३०+२० + १५०+७५+२५+५० + ३०+२०+२०+२० + २० + २०+२० = ६७५ लाख।" }
+    {
+      "id": "opmcm-combined-speech",
+      "label_en": "PM Shah speech: both PM funds combined (NPR, before Rs 1bn release)",
+      "label_ne": "प्रधानमन्त्री भाषण: दुवै प्रधानमन्त्री कोषको संयुक्त NPR (१ अर्ब निकासाअघि)",
+      "value": 7008857217,
+      "unit_en": "NPR",
+      "unit_ne": "रु.",
+      "detail_en": "Arthasansar citing PM Shah to Parliament: Rs 7,008,857,217 across the PM Disaster Relief Fund and the PM Relief Fund together — not a replacement for the MoF nine-bank table of Rs 7.30 billion, and not added onto it. After the Rs 1 billion release the speech cites an NPR balance of 6,008,857,217 (dollar accounts separate). USD 6,141,702 also cited in the same speech — a different dollar label from the MoF USD ~3.19 million aside on the bank panel.",
+      "detail_ne": "अर्थसंसार, प्रधानमन्त्री शाह प्रतिनिधिसभामा: प्रधानमन्त्री दैवी प्रकोप उद्धार कोष र प्रधानमन्त्री राहत कोषमा संयुक्त रु. ७,००८,८५७,२१७ — MoF नौ-बैंक तालिकाको रु. ७.३० अर्बको सट्टा होइन, त्यसमाथि जोडिँदैन। १ अर्ब निकासापछि भाषणले NPR मौज्दात ६,००८,८५७,२१७ भनेको (डलर खाता छुट्टै)। सोही भाषणमा USD ६,१४१,७०२ — बैंक प्यानलको ~३.१९ मिलियन डलर लेबलभन्दा फरक।"
+    },
+    {
+      "id": "opmcm-usd-speech",
+      "label_en": "PM Shah speech: USD in the fund accounts",
+      "label_ne": "प्रधानमन्त्री भाषण: कोष खातामा USD",
+      "value": 6141702,
+      "unit_en": "USD",
+      "unit_ne": "USD",
+      "detail_en": "Same Wednesday speech. Not added to NPR totals. Do not replace the MoF USD ~3.19 million bank aside with this figure — different collections.",
+      "detail_ne": "सोही बुधबारको भाषण। NPR जम्मामा जोडिँदैन। MoF ~३.१९ मिलियन डलर लेबललाई यसले प्रतिस्थापन गर्दैन — फरक संकलन।"
+    },
+    {
+      "id": "phonepe-qr",
+      "label_en": "PhonePe QR (26–31 Aug)",
+      "label_ne": "फोनपे QR (२६–३१ अगस्ट)",
+      "value": 1965554361,
+      "unit_en": "NPR",
+      "unit_ne": "रु.",
+      "detail_en": "803,259 transactions. Not added to the Rs 7.30 billion.",
+      "detail_ne": "८,०३,२५९ कारोबार। रु. ७ अर्ब ३० करोडमा जोडिँदैन।"
+    },
+    {
+      "id": "world-bank",
+      "label_en": "World Bank emergency package (pledge)",
+      "label_ne": "विश्व बैंक आपत्कालीन प्याकेज",
+      "value": 25000000000,
+      "unit_en": "NPR",
+      "unit_ne": "रु.",
+      "detail_en": "Rs 25 billion. Not cash in the Prime Minister's fund.",
+      "detail_ne": "रु. २५ अर्ब। प्रधानमन्त्री कोषमा आएको नगद होइन।"
+    },
+    {
+      "id": "ifrc-appeal",
+      "label_en": "IFRC emergency appeal",
+      "label_ne": "आईएफआरसी आपत्कालीन अपिल",
+      "value": 25000000,
+      "unit_en": "CHF",
+      "unit_ne": "CHF",
+      "detail_en": "Appeal, not a government account.",
+      "detail_ne": "अपिल, सरकारी खाता होइन।"
+    },
+    {
+      "id": "ifrc-dref",
+      "label_en": "IFRC DREF to Nepal Red Cross",
+      "label_ne": "आईएफआरसी डीआरईएफ · नेपाल रेडक्रस",
+      "value": 1200000,
+      "unit_en": "USD",
+      "unit_ne": "USD",
+      "detail_en": "Emergency fund for the Red Cross. Not the Prime Minister's accounts.",
+      "detail_ne": "नेपाल रेडक्रसलाई आपत्कालीन कोष। सरकारको खातामा आएको होइन।"
+    },
+    {
+      "id": "india-inkind",
+      "label_en": "India, two HADR flights",
+      "label_ne": "भारत, दुई उडान",
+      "value": 47.5,
+      "unit_en": "tonnes",
+      "unit_ne": "टन",
+      "detail_en": "10 tonnes then 37.5 tonnes. In-kind, not cash. Transfer at Tribhuvan not confirmed.",
+      "detail_ne": "१० टन त्यसपछि ३७.५ टन। सामग्री, नगद होइन। त्रिभुवन हस्तान्तरण पुष्टि छैन।"
+    },
+    {
+      "id": "pm-fund-send-1bn",
+      "label_en": "PM fund: Rs 1 billion to be sent to affected areas",
+      "label_ne": "प्रधानमन्त्री कोष: प्रभावित क्षेत्रमा एक अर्ब पठाइने",
+      "value": 1000000000,
+      "unit_en": "NPR",
+      "unit_ne": "रु.",
+      "detail_en": "OPMCM, 16 Bhadra — the fund operating committee decided to send Rs 1 billion immediately. That is money leaving the fund, not extra cash on top of the Rs 7.30 billion already in the banks.",
+      "detail_ne": "प्रधानमन्त्री कार्यालय, १६ भदौ — कोष सञ्चालन समितिले एक अर्ब तत्काल पठाउने निर्णय गरेको। यो कोषबाट बाहिरिने रकम हो, बैंकमा रहेको ७ अर्ब ३० करोडमाथि थप होइन।"
+    },
+    {
+      "id": "palika-675m",
+      "label_en": "Rs 6.75 crore to 15 local governments",
+      "label_ne": "१५ स्थानीय तहलाई ६ करोड ७५ लाख",
+      "value": 67500000,
+      "unit_en": "NPR",
+      "unit_ne": "रु.",
+      "detail_en": "MoHA monsoon command, 16 Bhadra — Rasuwa, Nuwakot, Dhading, Gorkha and Tanahun palikas. Matches the 11 Bhadra DRRM executive-committee allocation; count once. Not the PM fund cash total. 75+100+30+20 + 150+75+25+50 + 30+20+20+20 + 20 + 20+20 = 675 lakh.",
+      "detail_ne": "गृह, मनसुन कमाण्ड, १६ भदौ — रसुवा, नुवाकोट, धादिङ, गोरखा र तनहुँका पालिका। ११ भदौको विपद् कार्यकारी समितिको विनियोजनसँग मेल; एक पटक मात्र गन्नुहोस्। प्रधानमन्त्री कोषको मौज्दात होइन। ७५+१००+३०+२० + १५०+७५+२५+५० + ३०+२०+२०+२० + २० + २०+२० = ६७५ लाख।"
+    },
+    {
+      "id": "palika-1350m",
+      "label_en": "Rs 13.5 crore allocated to 15 palikas (NDRRMA 19 Bhadra)",
+      "label_ne": "१५ पालिकालाई १३ करोड ५० लाख (एनडीआरआरएमए १९ भदौ)",
+      "value": 135000000,
+      "unit_en": "NPR",
+      "unit_ne": "रु.",
+      "detail_en": "Prasashan citing NDRRMA 19 Bhadra. Do not add onto the MoHA 16 Bhadra Rs 6.75 crore line or the MoF bank cash total — may extend or restate earlier transfers; count once until a closing table shows both.",
+      "detail_ne": "प्रशासन, एनडीआरआरएमए १९ भदौ। गृह १६ भदौको ६.७५ करोड वा MoF बैंक नगदमाथि नजोड्नुहोस् — अघिल्लो स्थानान्तरणको विस्तार/पुनर्कथन हुन सक्छ; दुवै जोडिने तालिका नआएसम्म एक पटक।"
+    }
   ]
 }

@@ -88,7 +88,7 @@ function reviewed(
   };
 }
 
-/** "~5,083" — the "~" is the source saying the figure is an approximation. */
+/** "~5,053" — the "~" is the source saying the figure is an approximation. */
 function n(value: number | null | undefined, suffix?: string, approximate?: boolean): string {
   return `${approximate ? '~' : ''}${(value ?? 0).toLocaleString()}${suffix || ''}`;
 }

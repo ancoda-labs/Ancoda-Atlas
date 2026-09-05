@@ -93,7 +93,15 @@ GAUGES = re.compile(
     r"|\bphalakhu\b|नदी सतह",
     re.I,
 )
-FUNDS = re.compile(r"\bdonat|\bgive (money|safely)\b|\bqr\b|\brelief fund\b|सहयोग|कोष", re.I)
+FUNDS = re.compile(
+    r"\bdonat|\bgive (money|safely)\b|\bqr\b|\brelief fund\b"
+    r"|\b(funds?|money|aid|pledges?)\b.{0,24}\b(raised|received|recieved|collected|"
+    r"so far|total|how much|amount)\b"
+    r"|\b(raised|received|recieved|collected|how much|amount|total)\b.{0,24}"
+    r"\b(funds?|money|aid|relief|pledges?|pmdrf|pm fund|nvidia)\b"
+    r"|सहयोग|कोष|संकलन|प्राप्त.?रकम",
+    re.I,
+)
 NEWS = re.compile(
     r"\b(news|headline|press|what are (they|outlets) saying)\b|समाचार", re.I
 )

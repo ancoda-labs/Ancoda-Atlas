@@ -50,9 +50,80 @@ def _monitor(lang: str) -> str:
 # send more. Include the common misspelling — people type it.
 RAISED = re.compile(
     r"\b(total|how much|amount|raised|collected|received|recieved|pledged|"
-    r"so far)\b|कति रकम|कुल|संकलन|प्राप्त",
+    r"so far)\b"
+    r"|कति रकम|कुल|संकलन|प्राप्त|कति.*कोष|कोषमा",
     re.I,
 )
+
+
+def _fmt_npr(n: int | float) -> str:
+    """Whole-rupee NPR with Western grouping (7,305,744,162)."""
+    return f"{int(n):,}"
+
+
+def _raised_funds_answer(snap: dict[str, Any], lang: str, routes: str) -> ComposedAnswer:
+    """Restate reviewed relief-received headlines — never invent a grand total."""
+    received = snap.get("reliefReceived") or {}
+    headlines = received.get("headline") or []
+    pm = next((h for h in headlines if h.get("id") == "pm-fund"), None)
+    since = next((h for h in headlines if h.get("id") == "since-flood"), None)
+    held = next((h for h in headlines if h.get("id") == "already-held"), None)
+    as_of = (
+        (received.get("as_of_label_ne") if lang == "ne" else None)
+        or received.get("as_of_label_en")
+        or received.get("as_of")
+        or ("अज्ञात मिति" if lang == "ne" else "undated")
+    )
+    if not pm or pm.get("value") is None:
+        if lang == "ne":
+            return _frame(
+                "यो डेस्कमा प्राप्त रकमको MoF तालिका लोड छैन। "
+                f"जाँचिएका सहयोग बाटो: {routes}। "
+                "कुल प्राप्त रकमका लागि अर्थ मन्त्रालय वा प्रधानमन्त्री दैवी प्रकोप "
+                "राहत कोष हेर्नुहोस्।",
+                "ne",
+            )
+        return _en(
+            "This desk has no MoF / PM Disaster Relief Fund cash table loaded. "
+            f"Reviewed routes: {routes}. "
+            "For totals received, see the Ministry of Finance or the "
+            "Prime Minister's Disaster Relief Fund."
+        )
+
+    pm_n = _fmt_npr(pm["value"])
+    since_bit = ""
+    if since and since.get("value") is not None and held and held.get("value") is not None:
+        since_bit = (
+            f" विपद्पछि संकलित रु. {_fmt_npr(since['value'])} + विपद्अघि मौज्दात "
+            f"रु. {_fmt_npr(held['value'])}।"
+            if lang == "ne"
+            else (
+                f" That is Rs {_fmt_npr(since['value'])} collected after the flood "
+                f"plus Rs {_fmt_npr(held['value'])} already held."
+            )
+        )
+    caveats = (
+        " फोनपे QR, वैदेशिक घोषणा, विश्व बैंक वा NVIDIA को डलर योगदान यो नगद "
+        "अंकमाथि जोडिँदैनन् — /bhotekoshi-flood/donate मा छुट्टै लेबल छन्।"
+        if lang == "ne"
+        else (
+            " PhonePe QR, foreign pledges, the World Bank package and NVIDIA's "
+            "dollar contribution are not added onto this cash figure — they sit "
+            "as separate labels on /bhotekoshi-flood/donate."
+        )
+    )
+    if lang == "ne":
+        return _frame(
+            f"डेस्कको समीक्षित MoF / प्रधानमन्त्री दैवी प्रकोप उद्धार कोषको नगद: "
+            f"रु. {pm_n} ({as_of})।{since_bit}{caveats} "
+            f"दानका जाँचिएका बाटो: {routes}।",
+            "ne",
+        )
+    return _en(
+        f"Reviewed MoF / PM Disaster Relief Fund cash on this desk: "
+        f"Rs {pm_n} ({as_of}).{since_bit}{caveats} "
+        f"Reviewed donate routes: {routes}."
+    )
 
 
 def _headline(snap: dict[str, Any], key: str) -> dict[str, Any] | None:
@@ -272,20 +343,7 @@ def template_answer(
             else "/bhotekoshi-flood/donate"
         )
         if RAISED.search(question or ""):
-            if lang == "ne":
-                return _frame(
-                    "यो डेस्कमा प्राप्त रकमको जम्मा छैन — हामीले संकलनको कुल राख्दैनौं। "
-                    f"जाँचिएका सहयोग बाटो: {routes}। "
-                    "कुल प्राप्त रकमका लागि अर्थ मन्त्रालय वा प्रधानमन्त्री दैवी प्रकोप "
-                    "राहत कोष हेर्नुहोस्।",
-                    "ne",
-                )
-            return _en(
-                "This desk does not carry a total received — we do not track "
-                f"how much has been raised. Reviewed routes: {routes}. "
-                "For totals received, see the Ministry of Finance or the "
-                "Prime Minister's Disaster Relief Fund."
-            )
+            return _raised_funds_answer(snap, lang, routes)
         if lang == "ne":
             return _frame(
                 f"पैसा व्यक्तिगत QR मा नपठाउनुहोस्। जाँचिएका बाटो: {routes}",
