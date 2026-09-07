@@ -4919,8 +4919,13 @@ body.low-perf .flood-cta-dot { animation: none; }
 }
 .atlas-climate-verdicts {
   min-width: 0;
-  position: sticky;
-  top: 72px;
+}
+/* Lakes + ICIMOD facts span full width under the emissions | PM pair, so the
+   tall figures column no longer leaves an empty black half beside them. */
+.atlas-climate-below {
+  grid-column: 1 / -1;
+  min-width: 0;
+  max-width: 100%;
 }
 .atlas-climate-statements {
   margin: 0;
@@ -5038,8 +5043,8 @@ body.low-perf .flood-cta-dot { animation: none; }
     grid-template-columns: 1fr;
     gap: 22px;
   }
-  .atlas-climate-verdicts {
-    position: static;
+  .atlas-climate-below {
+    grid-column: auto;
   }
 }
 .atlas-climate-dash {
