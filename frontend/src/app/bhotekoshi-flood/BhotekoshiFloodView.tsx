@@ -80,7 +80,7 @@ const T = {
   donate: { en: 'Give safely', ne: 'सुरक्षित सहयोग' },
   donateSub: { en: 'Government funds and recognised organisations', ne: 'सरकारी कोष र मान्यताप्राप्त संस्था' },
   rescue: { en: 'Find someone', ne: 'कोही खोज्नुहोस्' },
-  rescueSub: { en: 'Search rescued names, and missing-person reports', ne: 'उद्धार नामावली र हराएका व्यक्तिका रिपोर्ट खोज्नुहोस्' },
+  rescueSub: { en: 'Search rescued names, and family missing reports on the portal', ne: 'उद्धार नामावली र पोर्टलका परिवारका हराएको रिपोर्ट खोज्नुहोस्' },
   situation: { en: 'Incident register', ne: 'घटना अभिलेख' },
   situationSub: { en: 'River levels, alerts and logged incidents', ne: 'नदीको सतह, चेतावनी र दर्ता घटना' },
   damage: { en: 'Damage assessment', ne: 'क्षति मूल्यांकन' },

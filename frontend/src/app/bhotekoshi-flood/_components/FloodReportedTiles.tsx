@@ -27,7 +27,7 @@ const T = {
   withFigures: { en: 'With damage figures', ne: 'क्षति तथ्यांक भएका' },
   awaiting: { en: 'Still awaiting figures', ne: 'तथ्यांक कुर्दै' },
   deaths: { en: 'Deaths recorded', ne: 'मृत्यु दर्ता' },
-  missing: { en: 'Uncontacted recorded', ne: 'सम्पर्कविहीन दर्ता' },
+  missing: { en: 'Uncontacted (official toll)', ne: 'सम्पर्कविहीन (आधिकारिक)' },
   injured: { en: 'Injured recorded', ne: 'घाइते दर्ता' },
   heli: { en: 'Rescued by air', ne: 'हवाई उद्धार' },
   deployed: { en: 'Personnel deployed', ne: 'परिचालित जनशक्ति' },
@@ -88,7 +88,7 @@ function reviewed(
   };
 }
 
-/** "~5,053" — the "~" is the source saying the figure is an approximation. */
+/** "~5,326" — the "~" is the source saying the figure is an approximation. */
 function n(value: number | null | undefined, suffix?: string, approximate?: boolean): string {
   return `${approximate ? '~' : ''}${(value ?? 0).toLocaleString()}${suffix || ''}`;
 }

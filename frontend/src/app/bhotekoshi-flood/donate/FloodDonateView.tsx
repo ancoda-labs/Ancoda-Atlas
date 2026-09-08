@@ -11,6 +11,7 @@ import type {
   ReliefNeedItem,
   SitrepBreakdown,
   SitrepValue,
+  SourceRef,
 } from '@/types';
 import { ageFrom } from '@/lib/relative-time';
 import { useDonations } from '@/hooks/useFlood';
@@ -88,17 +89,28 @@ const T = {
   receivedKicker: { en: '2 · Received', ne: '२ · प्राप्त' },
   receivedTitle: { en: 'What has reached the Prime Minister’s fund', ne: 'प्रधानमन्त्री कोषमा आएको रकम' },
   receivedIntro: {
-    en: 'Balances the Ministry of Finance published for the Prime Minister’s Disaster Relief Fund: the 12 Bhadra nine-bank table plus the 15 and 17 Bhadra receipts. This is cash already in those accounts — not a pledge, and not Atlas. Give through the accounts above.',
-    ne: 'अर्थ मन्त्रालयले प्रधानमन्त्री दैवी प्रकोप उद्धार कोषमा प्रकाशित गरेको मौज्दात: १२ भदौको नौ बैंक तालिका र १५ तथा १७ भदौको थप संकलन। यो ती खातामा आइसकेको नगद हो — घोषणा होइन, एट्लस होइन। माथिका खातामार्फत सहयोग गर्नुहोस्।',
+    en: 'Balances OPMCM published for the Prime Minister’s Disaster Relief Fund: the 22 Bhadra 17:00 nine-bank stock. This is cash already in those accounts — not a pledge, and not Atlas. Give through the accounts above.',
+    ne: 'प्रधानमन्त्री कार्यालयले प्रधानमन्त्री दैवी प्रकोप उद्धार कोषमा प्रकाशित गरेको मौज्दात: २२ भदौ १७:०० को नौ बैंक तालिका। यो ती खातामा आइसकेको नगद हो — घोषणा होइन, एट्लस होइन। माथिका खातामार्फत सहयोग गर्नुहोस्।',
   },
   receivedAsOf: { en: 'Figures as of', ne: 'तथ्यांक मिति' },
+  sourcesN: { en: 'sources', ne: 'स्रोत' },
+  srcBank: { en: 'Bank stock and combined totals', ne: 'बैंक मौज्दात र संयुक्त जम्मा' },
+  srcDisbursed: { en: 'Disbursements and local allocations', ne: 'निकासा र स्थानीय विनियोजन' },
+  srcPledge: { en: 'Pledges and major gifts', ne: 'घोषणा र ठूला सहयोग' },
+  srcOfficial: { en: 'Official pages', ne: 'आधिकारिक पृष्ठ' },
+  srcOther: { en: 'Other sources', ne: 'अन्य स्रोत' },
   doNotAdd: { en: 'Do not add these together', ne: 'यी संख्या नजोड्नुहोस्' },
   receivedWarn: {
-    en: 'The amount already in the fund before the flood is inside the 7.30 billion, not on top of it. The Rs 1 billion being sent to affected areas is money leaving that total, not extra cash. The Rs 6.75 crore to 15 palikas, PhonePe QR, foreign pledges, the World Bank package and in-kind cargo are not this fund.',
-    ne: 'विपद्अघिको मौज्दात ७ अर्ब ३० करोडभित्र छ, माथि होइन। प्रभावित क्षेत्रमा पठाइने एक अर्ब त्यही जम्माबाट बाहिरिने रकम हो, थप होइन। १५ पालिकालाई ६ करोड ७५ लाख, फोनपे QR, वैदेशिक घोषणा, विश्व बैंक प्याकेज र सामग्री यो कोष होइनन्।',
+    en: 'The amount already in the fund before the flood is inside the 8.46 billion, not on top of it. The Rs 1 billion already sent to affected areas is money that left that stock. The Rs 6.75 crore to 15 palikas, name-transfer lists, NCHL, PhonePe QR, foreign pledges, the World Bank package and in-kind cargo are not this bank stock.',
+    ne: 'विपद्अघिको मौज्दात ८ अर्ब ४६ करोडभित्र छ, माथि होइन। प्रभावित क्षेत्रमा पठाइसकिएको एक अर्ब त्यही मौज्दातबाट बाहिरिएको रकम हो। १५ पालिकालाई ६ करोड ७५ लाख, नाम-हस्तान्तरण, NCHL, फोनपे QR, वैदेशिक घोषणा, विश्व बैंक प्याकेज र सामग्री यो बैंक मौज्दात होइनन्।',
   },
   notInRupee: { en: 'Counted separately, not in the rupee total', ne: 'छुट्टै गनिएको, नेपाली जम्मामा छैन' },
-  notInFund: { en: 'Counted separately — not added to the Rs 7.30 billion', ne: 'छुट्टै गनिएको — रु. ७ अर्ब ३० करोडमा जोडिँदैन' },
+  notInFund: { en: 'Also published — do not add to the Rs 8.46 billion', ne: 'अन्य प्रकाशित — रु. ८ अर्ब ४६ करोडमा नजोड्नुहोस्' },
+  notInFundIntro: {
+    en: 'Grouped so they stay readable. Open a row only if you need the source note. None of these replace the nine-bank stock above.',
+    ne: 'पढ्न सजिलो हुने गरी समूहमा। स्रोत नोट चाहियो भने मात्र खोल्नुहोस्। माथिको नौ-बैंक मौज्दातको सट्टा होइनन्।',
+  },
+  exclMore: { en: 'Source note', ne: 'स्रोत नोट' },
   discrepancy: {
     en: 'These figures no longer add up and have not been corrected yet. Treat the group totals as provisional.',
     ne: 'यी तथ्यांक मिल्दैनन् र अझै सच्याइएको छैन। समूहका जम्मा संख्यालाई अस्थायी मान्नुहोस्।',
@@ -110,8 +122,8 @@ const T = {
     ne: 'एनडीआरआरएमए सिटरेप #०६ को माग सूची। पठाइएको सामग्री होइन, प्रधानमन्त्री कोषको नगद पनि होइन।',
   },
   neededWarn: {
-    en: 'Do not add these quantities onto the Rs 7.30 billion. The list will be updated as NDRRMA republishes it.',
-    ne: 'यी परिमाण ७ अर्ब ३० करोडमाथि नजोड्नुहोस्। एनडीआरआरएमए नयाँ सूची निकालेपछि यो अद्यावधिक हुनेछ।',
+    en: 'Do not add these quantities onto the Rs 8.46 billion. The list will be updated as NDRRMA republishes it.',
+    ne: 'यी परिमाण ८ अर्ब ४६ करोडमाथि नजोड्नुहोस्। एनडीआरआरएमए नयाँ सूची निकालेपछि यो अद्यावधिक हुनेछ।',
   },
   warehousesTitle: { en: 'Emergency warehouses', ne: 'आपत्कालीन गोदाम' },
   warehousesIntro: {
@@ -126,6 +138,182 @@ const T = {
   otherWays: { en: 'Other ways to give', ne: 'सहयोगका अन्य माध्यम' },
   notListed: { en: 'Not listed', ne: 'नखुलेको' },
 };
+
+/** Parallel figures grouped so the donate page does not dump every exclusive
+ *  line as one flat wall. Order is the reading order; unknown ids fall into
+ *  a leftover bucket at the end so a new content row still appears. */
+const EXCLUSIVE_GROUPS: Array<{
+  id: string;
+  title: { en: string; ne: string };
+  blurb: { en: string; ne: string };
+  ids: string[];
+}> = [
+  {
+    id: 'channels',
+    title: { en: 'Other collection channels', ne: 'अन्य संकलन माध्यम' },
+    blurb: {
+      en: 'Overlapping routes — not a second pile on top of the nine-bank stock.',
+      ne: 'ओभरल्यापिङ माध्यम — नौ-बैंक मौज्दातमाथि दोस्रो थुप्रो होइन।',
+    },
+    ids: ['phonepe-qr', 'nchl', 'name-transfer'],
+  },
+  {
+    id: 'sent',
+    title: { en: 'Already leaving the fund', ne: 'कोषबाट बाहिरिइसकेको' },
+    blurb: {
+      en: 'Disbursements and local allocations. Count once; not extra cash received.',
+      ne: 'निकासा र स्थानीय विनियोजन। एक पटक मात्र; थप आएको नगद होइन।',
+    },
+    ids: ['pm-fund-send-1bn', 'palika-675m', 'palika-1350m'],
+  },
+  {
+    id: 'outside',
+    title: { en: 'Pledges and in-kind', ne: 'घोषणा र सामग्री' },
+    blurb: {
+      en: 'Outside the Prime Minister’s bank accounts.',
+      ne: 'प्रधानमन्त्रीका बैंक खाताबाहिर।',
+    },
+    ids: ['world-bank', 'ifrc-appeal', 'ifrc-dref', 'india-inkind'],
+  },
+  {
+    id: 'earlier',
+    title: { en: 'Earlier OPMCM totals', ne: 'अघिल्ला प्रधानमन्त्री कार्यालयका जम्मा' },
+    blurb: {
+      en: 'Older or combined figures. The 22 Bhadra nine-bank stock above is the cash floor.',
+      ne: 'पुराना वा संयुक्त अंक। माथिको २२ भदौ नौ-बैंक मौज्दात नगद तल्ला हो।',
+    },
+    ids: ['opmcm-20-bhadra-combined', 'opmcm-combined-speech', 'opmcm-usd-speech'],
+  },
+];
+
+const SOURCE_GROUP_ORDER = ['bank', 'disbursed', 'pledge', 'official', 'other'] as const;
+
+const SOURCE_GROUP_TITLE: Record<(typeof SOURCE_GROUP_ORDER)[number], keyof typeof T> = {
+  bank: 'srcBank',
+  disbursed: 'srcDisbursed',
+  pledge: 'srcPledge',
+  official: 'srcOfficial',
+  other: 'srcOther',
+};
+
+/** As-of line plus a collapsible, grouped source list — not a ·-joined paragraph. */
+function FiguresSources({
+  asOf,
+  sources,
+  lang,
+}: {
+  asOf: string;
+  sources?: SourceRef[] | null;
+  lang: Lang;
+}) {
+  const list = sources || [];
+  const buckets = new Map<string, SourceRef[]>();
+  for (const src of list) {
+    const key = SOURCE_GROUP_ORDER.includes(src.group as (typeof SOURCE_GROUP_ORDER)[number])
+      ? (src.group as string)
+      : 'other';
+    const rows = buckets.get(key) || [];
+    rows.push(src);
+    buckets.set(key, rows);
+  }
+  const groups = SOURCE_GROUP_ORDER.filter(id => (buckets.get(id) || []).length > 0).map(id => ({
+    id,
+    title: T[SOURCE_GROUP_TITLE[id]][lang],
+    rows: buckets.get(id) || [],
+  }));
+
+  return (
+    <div className="fl-fig-sources">
+      <p className="fl-note">
+        {T.receivedAsOf[lang]} {asOf || '—'}
+      </p>
+      {list.length > 0 && (
+        <details className="fl-prov-sources">
+          <summary>
+            {list.length} {T.sourcesN[lang]}
+          </summary>
+          {groups.map(group => (
+            <div key={group.id} className="fl-src-group">
+              {groups.length > 1 && <h5 className="fl-src-group-title">{group.title}</h5>}
+              <ul>
+                {group.rows.map((src, i) => (
+                  <li key={`${src.url}-${i}`}>
+                    <a href={src.url} target="_blank" rel="noopener noreferrer">
+                      {src.label} &#8599;
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </details>
+      )}
+    </div>
+  );
+}
+
+function ExclusiveGroups({
+  items,
+  lang,
+}: {
+  items: SitrepValue[];
+  lang: Lang;
+}) {
+  const byId = new Map(items.filter(i => i.id).map(i => [i.id as string, i]));
+  const seen = new Set<string>();
+  const groups = EXCLUSIVE_GROUPS.map(g => {
+    const rows = g.ids.map(id => byId.get(id)).filter((row): row is SitrepValue => Boolean(row));
+    rows.forEach(r => r.id && seen.add(r.id));
+    return { ...g, rows };
+  }).filter(g => g.rows.length > 0);
+
+  const leftover = items.filter(i => !i.id || !seen.has(i.id));
+  if (leftover.length > 0) {
+    groups.push({
+      id: 'other',
+      title: { en: 'Other parallel figures', ne: 'अन्य समानान्तर अंक' },
+      blurb: {
+        en: 'Also published beside the bank stock — not added to it.',
+        ne: 'बैंक मौज्दातसँगै प्रकाशित — त्यसमा जोडिँदैन।',
+      },
+      ids: [],
+      rows: leftover,
+    });
+  }
+
+  return (
+    <div className="fl-excl">
+      <h4 className="fl-minor">{T.notInFund[lang]}</h4>
+      <p className="fl-note fl-excl-intro">{T.notInFundIntro[lang]}</p>
+      {groups.map(group => (
+        <div key={group.id} className="fl-excl-group">
+          <h5 className="fl-excl-title">{group.title[lang]}</h5>
+          <p className="fl-excl-blurb">{group.blurb[lang]}</p>
+          <div className="fl-listcards fl-excl-cards">
+            {group.rows.map(item => {
+              const unit = lang === 'ne' ? item.unit_ne || item.unit_en : item.unit_en;
+              const detail = lang === 'ne' ? item.detail_ne || item.detail_en : item.detail_en;
+              return (
+                <div key={item.id || item.label_en}>
+                  <dd>
+                    <Figure value={item.value} unit={unit} />
+                  </dd>
+                  <dt>{itemLabel(item, lang)}</dt>
+                  {detail && (
+                    <details className="fl-excl-note">
+                      <summary>{T.exclMore[lang]}</summary>
+                      <p>{detail}</p>
+                    </details>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 /** "kathmandupost.com" — a source link the reader can recognise at a glance. */
 function hostOf(url: string | undefined): string {
@@ -543,35 +731,15 @@ export default function FloodDonateView() {
               </div>
             )}
             {received.exclusive && received.exclusive.length > 0 && (
-              <>
-                <h4 className="fl-minor">{t('notInFund')}</h4>
-                <div className="fl-listcards">
-                  {received.exclusive.map(item => {
-                    const unit = lang === 'ne' ? item.unit_ne || item.unit_en : item.unit_en;
-                    const detail = lang === 'ne' ? item.detail_ne || item.detail_en : item.detail_en;
-                    return (
-                      <div key={item.id || item.label_en}>
-                        <dd>
-                          <Figure value={item.value} unit={unit} />
-                        </dd>
-                        <dt>{itemLabel(item, lang)}</dt>
-                        {detail && <small>{detail}</small>}
-                      </div>
-                    );
-                  })}
-                </div>
-              </>
+              <ExclusiveGroups items={received.exclusive} lang={lang} />
             )}
-            <p className="fl-note">
-              {t('receivedAsOf')}{' '}
-              {(lang === 'ne' ? received.as_of_label_ne || received.as_of_label_en : received.as_of_label_en) || '—'}
-              {(received.sources || []).map((src, i) => (
-                <a key={i} href={src.url} target="_blank" rel="noopener noreferrer">
-                  {' · '}
-                  {src.label} &#8599;
-                </a>
-              ))}
-            </p>
+            <FiguresSources
+              asOf={
+                (lang === 'ne' ? received.as_of_label_ne || received.as_of_label_en : received.as_of_label_en) || '—'
+              }
+              sources={received.sources}
+              lang={lang}
+            />
           </>
         )}
       </section>
@@ -625,16 +793,11 @@ export default function FloodDonateView() {
               <FloodWarehouses warehouses={needed.warehouses || []} lang={lang} />
               <p className="fl-note">{L(needed, 'warehouse_note')}</p>
             </div>
-            <p className="fl-note">
-              {t('receivedAsOf')}{' '}
-              {(lang === 'ne' ? needed.as_of_label_ne || needed.as_of_label_en : needed.as_of_label_en) || '—'}
-              {(needed.sources || []).map((src, i) => (
-                <a key={i} href={src.url} target="_blank" rel="noopener noreferrer">
-                  {' · '}
-                  {src.label} &#8599;
-                </a>
-              ))}
-            </p>
+            <FiguresSources
+              asOf={(lang === 'ne' ? needed.as_of_label_ne || needed.as_of_label_en : needed.as_of_label_en) || '—'}
+              sources={needed.sources}
+              lang={lang}
+            />
           </>
         )}
       </section>
