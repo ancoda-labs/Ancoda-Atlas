@@ -401,6 +401,8 @@ export interface FloodOrg extends Bilingual<'description'> {
 export interface SourceRef {
   label: string;
   url: string;
+  /** Optional bucket for long source lists (e.g. donate figures). */
+  group?: string;
 }
 
 export interface FloodContent {

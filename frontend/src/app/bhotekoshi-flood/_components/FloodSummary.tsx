@@ -88,12 +88,12 @@ const T = {
   whatHappened: { en: 'What happened', ne: 'के भयो' },
   portalTitle: { en: 'What the public is reporting', ne: 'जनताले गरेका रिपोर्ट' },
   portalIntro: {
-    en: 'Filed by the public on the OPMCM rescue portal. These count reports, not people — one person is often reported by several relatives, and a family who finds someone rarely comes back to close the report. Read them as demand on the response, and do not add them to the figures above.',
-    ne: 'प्रधानमन्त्री कार्यालयको उद्धार पोर्टलमा जनताले दर्ता गरेका विवरण। यी रिपोर्टको संख्या हो, व्यक्तिको होइन — एउटै व्यक्तिको लागि धेरै आफन्तले रिपोर्ट गर्न सक्छन्, र भेटिएपछि रिपोर्ट बन्द गर्न फर्किने कम हुन्छन्। यसलाई सहयोगको मागको सूचकका रूपमा हेर्नुहोस्, माथिको तथ्यांकमा नजोड्नुहोस्।',
+    en: 'Filed by the public on the OPMCM rescue portal. These count reports, not people — one person is often reported by several relatives, and a family who finds someone rarely comes back to close the report. They are not the NDRRMA uncontacted (सम्पर्कविहीन) toll above. Read them as demand on the response, and do not add them together.',
+    ne: 'प्रधानमन्त्री कार्यालयको उद्धार पोर्टलमा जनताले दर्ता गरेका विवरण। यी रिपोर्टको संख्या हो, व्यक्तिको होइन — एउटै व्यक्तिको लागि धेरै आफन्तले रिपोर्ट गर्न सक्छन्। माथिको एनडीआरआरएमए सम्पर्कविहीन जम्मा होइनन्। सहयोगको मागको सूचकका रूपमा हेर्नुहोस्, जोड्नुहोस् नहोस्।',
   },
   portalIntroShort: {
-    en: 'Public filings on the OPMCM portal — reports, not people. Do not add to the official toll.',
-    ne: 'प्रधानमन्त्री कार्यालय पोर्टलका जनताका रिपोर्ट — व्यक्ति होइन। आधिकारिक क्षतिमा नजोड्नुहोस्।',
+    en: 'Public portal filings — reports, not the official uncontacted toll. Do not add them together.',
+    ne: 'पोर्टलका सार्वजनिक रिपोर्ट — आधिकारिक सम्पर्कविहीन होइन। जोड्नुहोस् नहोस्।',
   },
   portalRead: { en: 'Portal read', ne: 'पोर्टल पढिएको' },
   liveRead: { en: 'Read', ne: 'पढिएको' },
@@ -356,21 +356,21 @@ function portalBreakdowns(portal: RescuePortalStats): SitrepBreakdown[] {
       id: 'portal-missing',
       total: persons.lost,
       tone: 'critical',
-      title_en: 'Lost people reported',
-      title_ne: 'हराएका मानिस रिपोर्ट',
+      title_en: 'Family missing reports (portal)',
+      title_ne: 'परिवारका हराएको रिपोर्ट (पोर्टल)',
       caption_en:
-        'Missing-person reports filed by families. The groups below overlap — a missing child is also an open report.',
+        'Filings on the Prime Minister’s rescue portal — not the NDRRMA uncontacted toll. These count reports, not people; groups overlap (a missing child is also an open report). Do not add them to the official uncontacted figure.',
       caption_ne:
-        'परिवारले दर्ता गरेका हराएका व्यक्तिका रिपोर्ट। तलका समूह एकआपसमा मिल्छन् — हराएको बालबालिका खुला रिपोर्ट पनि हो।',
+        'प्रधानमन्त्री कार्यालयको उद्धार पोर्टलमा परिवारले दर्ता गरेका रिपोर्ट — एनडीआरआरएमएको सम्पर्कविहीन जम्मा होइन। यी रिपोर्टको संख्या हुन्, व्यक्तिको होइन; समूह ओभरल्याप हुन्छन्। आधिकारिक सम्पर्कविहीनमा नजोड्नुहोस्।',
       no_total_check: true,
       items: [
-        ...row(persons.lostOpen, 'Still missing', 'अझै हराइरहेका', {
+        ...row(persons.lostOpen, 'Still-open reports', 'अझै खुला रिपोर्ट', {
           en: 'Reports nobody has closed. A family who finds their relative rarely comes back to say so, so this falls more slowly than the truth.',
           ne: 'बन्द नगरिएका रिपोर्ट। आफन्त भेटिएपछि रिपोर्ट बन्द गर्न फर्किने कम हुन्छन्, त्यसैले यो वास्तविकता भन्दा ढिलो घट्छ।',
         }),
-        ...row(persons.childrenMissing, 'Children missing (under 18)', 'हराएका बालबालिका (१८ मुनि)'),
-        ...row(persons.elderlyMissing, 'Elderly missing (60+)', 'हराएका ज्येष्ठ नागरिक (६०+)'),
-        ...row(persons.last24h, 'Reported in the last 24 hours', 'पछिल्लो २४ घण्टामा रिपोर्ट', {
+        ...row(persons.childrenMissing, 'Reports for children (under 18)', 'बालबालिकाका रिपोर्ट (१८ मुनि)'),
+        ...row(persons.elderlyMissing, 'Reports for elderly (60+)', 'ज्येष्ठ नागरिकका रिपोर्ट (६०+)'),
+        ...row(persons.last24h, 'Filed in the last 24 hours', 'पछिल्लो २४ घण्टामा दर्ता', {
           en: 'Every person report filed in the past day — missing and found together.',
           ne: 'पछिल्लो एक दिनमा दर्ता भएका सबै व्यक्ति रिपोर्ट — हराएका र भेटिएका दुवै।',
         }),

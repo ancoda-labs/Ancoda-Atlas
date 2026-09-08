@@ -70,7 +70,7 @@ const T = {
   foreign: { en: 'Foreign nationals', ne: 'विदेशी नागरिक' },
   foreignBadge: { en: 'Foreign', ne: 'विदेशी' },
   total: { en: 'Rescued by NDRRMA', ne: 'एनडीआरआरएमए उद्धार' },
-  missingTile: { en: 'Missing-person reports', ne: 'हराएका व्यक्तिका रिपोर्ट' },
+  missingTile: { en: 'Family missing reports (portal)', ne: 'परिवारका हराएको रिपोर्ट (पोर्टल)' },
   foundTile: { en: 'Reported found', ne: 'भेटिएको जनाइएको' },
   reports: { en: 'reports', ne: 'रिपोर्ट' },
   people: { en: 'people', ne: 'जना' },
@@ -93,11 +93,11 @@ const T = {
     ne: 'स्थान वा विवरणमा मिल्यो — नाम राम्ररी हेर्नुहोस्।',
   },
   rescuedGroup: { en: 'Rescued — NDRRMA register', ne: 'उद्धार — एनडीआरआरएमए सूची' },
-  missingGroup: { en: 'Still missing — family reports', ne: 'अझै हराइरहेका — परिवारका रिपोर्ट' },
+  missingGroup: { en: 'Family missing reports (portal)', ne: 'परिवारका हराएको रिपोर्ट (पोर्टल)' },
   foundGroup: { en: 'Reported found — family reports', ne: 'भेटिएको जनाइएको — परिवारका रिपोर्ट' },
   missingGroupNote: {
-    en: 'These are reports, not a count of people. One person may appear more than once. Do not add them to the official uncontacted figure.',
-    ne: 'यी रिपोर्ट हुन्, व्यक्तिको संख्या होइन। एउटै व्यक्ति एकभन्दा बढी पटक पर्न सक्छन्। आधिकारिक सम्पर्कविहीन संख्यामा नजोड्नुहोस्।',
+    en: 'Prime Minister’s Office portal filings — not the NDRRMA uncontacted toll. These are reports, not a count of people. One person may appear more than once. Do not add them to the official uncontacted figure.',
+    ne: 'प्रधानमन्त्री कार्यालय पोर्टलका रिपोर्ट — एनडीआरआरएमएको सम्पर्कविहीन होइन। यी रिपोर्ट हुन्, व्यक्तिको संख्या होइन। एउटै व्यक्ति एकभन्दा बढी पटक पर्न सक्छन्। आधिकारिक सम्पर्कविहीनमा नजोड्नुहोस्।',
   },
   noResults: {
     en: 'Nobody on either list matches that. That does not mean they were not rescued or are not missing — only that these two portals have not published that spelling. Try another spelling, a place name, or file a missing-person report.',

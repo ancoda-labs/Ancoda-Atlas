@@ -17,15 +17,15 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 // shown is the text the filer typed.
 
 const T = {
-  kicker: { en: 'Missing people', ne: 'हराएका व्यक्ति' },
-  title: { en: 'Search missing-person reports', ne: 'हराएका व्यक्तिका रिपोर्ट खोज्नुहोस्' },
+  kicker: { en: 'Portal filings', ne: 'पोर्टल दर्ता' },
+  title: { en: 'Search family missing reports', ne: 'परिवारका हराएको रिपोर्ट खोज्नुहोस्' },
   intro: {
-    en: 'Families filed these reports of people still missing — on the Prime Minister’s rescue portal, or through a District Administration Office. Search by name. This is not the NDRRMA rescued register above.',
-    ne: 'परिवारले अझै हराएका व्यक्तिका लागि प्रधानमन्त्री कार्यालयको उद्धार पोर्टल वा जिल्ला प्रशासन कार्यालयमार्फत दर्ता गरेका रिपोर्ट। नाम लेखेर खोज्नुहोस्। माथिको एनडीआरआरएमए उद्धार सूची होइन।',
+    en: 'Families filed these reports on the Prime Minister’s rescue portal (or through a District Administration Office). Search by name. This is not the NDRRMA uncontacted toll, and not the rescued register above.',
+    ne: 'परिवारले प्रधानमन्त्री कार्यालयको उद्धार पोर्टल (वा जिल्ला प्रशासन) मा दर्ता गरेका रिपोर्ट। नाम लेखेर खोज्नुहोस्। यो एनडीआरआरएमएको सम्पर्कविहीन जम्मा होइन, माथिको उद्धार सूची पनि होइन।',
   },
   caveat: {
-    en: 'These count reports, not people. One person is often listed more than once, and a family who finds someone rarely comes back to close the report. Do not add this number to the official uncontacted figure.',
-    ne: 'यी रिपोर्टको संख्या हुन्, व्यक्तिको होइन। एउटै व्यक्तिका लागि धेरै रिपोर्ट हुन सक्छन्, र भेटिएपछि रिपोर्ट बन्द गर्न फर्किने कम हुन्छन्। आधिकारिक सम्पर्कविहीन संख्यामा नजोड्नुहोस्।',
+    en: 'These count reports, not people — and they are not the official uncontacted (सम्पर्कविहीन) toll. One person is often listed more than once, and a family who finds someone rarely comes back to close the report. Do not add this number to NDRRMA’s uncontacted figure.',
+    ne: 'यी रिपोर्टको संख्या हुन्, व्यक्तिको होइन — र आधिकारिक सम्पर्कविहीन जम्मा होइनन्। एउटै व्यक्तिका लागि धेरै रिपोर्ट हुन सक्छन्। एनडीआरआरएमएको सम्पर्कविहीन संख्यामा नजोड्नुहोस्।',
   },
   lost: { en: 'Still missing', ne: 'अझै हराइरहेका' },
   found: { en: 'Reported found', ne: 'भेटिएको जनाइएको' },
@@ -143,7 +143,7 @@ export default function FloodOpmcmRegister({
     <section className="fl-sec" id="missing" aria-labelledby="fl-missing-title">
       <div className="fl-sec-head">
         <span>{t('kicker')}</span>
-        <h2 id="fl-missing-title">{hideSearch ? (lang === 'ne' ? 'हराएका व्यक्तिका रिपोर्ट' : 'Missing-person reports') : t('title')}</h2>
+        <h2 id="fl-missing-title">{hideSearch ? (lang === 'ne' ? 'परिवारका हराएको रिपोर्ट (पोर्टल)' : 'Family missing reports (portal)') : t('title')}</h2>
         {register && <em className={which === 'lost' ? 'warn' : undefined}>{countLabel}</em>}
       </div>
       <p className="fl-note">{t('intro')}</p>

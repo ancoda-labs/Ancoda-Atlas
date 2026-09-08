@@ -1987,12 +1987,64 @@ body.low-perf .logo-ring::before, body.low-perf .logo-ring::after, body.low-perf
   grid-template-columns: 1fr 1fr;
   margin-top: 22px;
 }
-.fl-received .fl-listcards {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+.fl-received .fl-excl {
+  margin-top: 28px;
+}
+.fl-received .fl-excl-intro {
+  margin: 6px 0 0;
+  max-width: 68ch;
+}
+.fl-received .fl-excl-group {
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: 1px solid var(--rule);
+}
+.fl-received .fl-excl-group:first-of-type {
+  border-top: 0;
+  padding-top: 0;
+}
+.fl-received .fl-excl-title {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.fl-received .fl-excl-blurb {
+  margin: 4px 0 0;
+  max-width: 62ch;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ink-3);
+}
+.fl-received .fl-excl-cards {
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  margin-top: 12px;
 }
 .fl-received .fl-listcards dd {
   font-size: clamp(18px, 2vw, 24px);
   font-variant-numeric: tabular-nums;
+}
+.fl-received .fl-excl-note {
+  margin-top: 8px;
+}
+.fl-received .fl-excl-note summary {
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--blue);
+  list-style: none;
+}
+.fl-received .fl-excl-note summary::-webkit-details-marker { display: none; }
+.fl-received .fl-excl-note p {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ink-3);
+  text-transform: none;
+  letter-spacing: 0;
 }
 .fl-received .fl-listcards small {
   display: block;
@@ -6864,6 +6916,24 @@ body.dark-theme .fl {
   text-decoration: none;
 }
 .fl-prov-sources a:hover { color: var(--blue); }
+.fl-fig-sources {
+  margin-top: 18px;
+}
+.fl-fig-sources > .fl-note {
+  margin-bottom: 6px;
+}
+.fl-src-group + .fl-src-group {
+  margin-top: 14px;
+}
+.fl-src-group-title {
+  margin: 0 0 6px;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
 .fl-prov-note {
   margin: 10px 0 0;
   font-size: 13px;
