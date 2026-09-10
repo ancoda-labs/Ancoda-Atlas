@@ -42,7 +42,17 @@
     },
     {
       "group": "disbursed",
-      "label": "MoHA on nepal.gov.np (16 Bhadra) — Rs 6.75 crore to 15 local governments",
+      "label": "NDRRMA — Rs 13.5 crore from the PM fund to 15 local levels (55 wards); second Rs 6.75 crore tranche being released",
+      "url": "https://ndrrma.gov.np/"
+    },
+    {
+      "group": "disbursed",
+      "label": "Kathmandu Post (30 August) — first Rs 6.75 crore to 15 local units in five districts",
+      "url": "https://kathmandupost.com/national/2026/08/30/government-releases-rs675-million-to-15-local-units-hit-by-bhotekoshi-flood"
+    },
+    {
+      "group": "disbursed",
+      "label": "MoHA on nepal.gov.np (16 Bhadra) — Rs 6.75 crore to 15 local governments (first tranche)",
       "url": "https://nepal.gov.np/updates/e3d3d6c3-f39e-44b3-bd97-2a3715fa5f5f"
     },
     {
@@ -313,24 +323,14 @@
       "detail_ne": "प्रधानमन्त्री कार्यालय, १६ भदौ — एक अर्ब निकासा। २३ भदौको अर्थ मौज्दात रु. ८.७७ अर्ब त्यो निकासापछिको हो।"
     },
     {
-      "id": "palika-675m",
-      "label_en": "Rs 6.75 crore to 15 local governments",
-      "label_ne": "१५ स्थानीय तहलाई ६ करोड ७५ लाख",
-      "value": 67500000,
-      "unit_en": "NPR",
-      "unit_ne": "रु.",
-      "detail_en": "MoHA, 16 Bhadra — Rasuwa, Nuwakot, Dhading, Gorkha, Tanahun. Count once with the 13.5 crore line until a closing table shows both.",
-      "detail_ne": "गृह, १६ भदौ — रसुवा, नुवाकोट, धादिङ, गोरखा, तनहुँ। १३.५ करोड पङ्क्तिसँग एक पटक मात्र।"
-    },
-    {
-      "id": "palika-1350m",
-      "label_en": "Rs 13.5 crore to 15 palikas",
-      "label_ne": "१५ पालिकालाई १३ करोड ५० लाख",
+      "id": "palika-135m",
+      "label_en": "Rs 13.5 crore released to 15 local levels",
+      "label_ne": "१५ स्थानीय तहलाई १३ करोड ५० लाख निकासा",
       "value": 135000000,
       "unit_en": "NPR",
       "unit_ne": "रु.",
-      "detail_en": "NDRRMA 19 Bhadra. May extend the MoHA 6.75 crore line — count once until both close in one table.",
-      "detail_ne": "एनडीआरआरएमए १९ भदौ। गृहको ६.७५ करोडको विस्तार हुन सक्छ — एक पटक मात्र।"
+      "detail_en": "NDRRMA — from the Prime Minister's Disaster Relief Fund to 15 local levels in Rasuwa, Nuwakot, Dhading, Gorkha and Tanahun, covering 55 wards. Two tranches of Rs 6.75 crore: the first went out on 28 August, the second is being released now. The earlier MoHA 6.75 crore line is the first tranche inside this 13.5 crore — count once.",
+      "detail_ne": "एनडीआरआरएमए — प्रधानमन्त्री दैवी प्रकोप उद्धार कोषबाट रसुवा, नुवाकोट, धादिङ, गोरखा र तनहुँका १५ स्थानीय तहका ५५ वडालाई। ६ करोड ७५ लाखका दुई किस्ता: पहिलो २८ अगस्टमा निकासा भयो, दोस्रो अहिले निकासा हुँदैछ। गृहको अघिल्लो ६.७५ करोड पहिलो किस्ता हो, यही १३.५ करोडभित्र — एक पटक मात्र गन्नुहोस्।"
     },
     {
       "id": "name-transfer",

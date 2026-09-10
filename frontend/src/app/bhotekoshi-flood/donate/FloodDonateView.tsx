@@ -101,8 +101,8 @@ const T = {
   srcOther: { en: 'Other sources', ne: 'अन्य स्रोत' },
   doNotAdd: { en: 'Do not add these together', ne: 'यी संख्या नजोड्नुहोस्' },
   receivedWarn: {
-    en: 'The amount already in the fund before the flood is inside the 8.77 billion, not on top of it. The Rs 1 billion already sent to affected areas is money that left that stock. The Rs 6.75 crore to 15 palikas, name-transfer lists, NCHL, PhonePe QR, foreign pledges, the World Bank package and in-kind cargo are not this bank stock.',
-    ne: 'विपद्अघिको मौज्दात ८ अर्ब ७६ करोडभित्र छ, माथि होइन। प्रभावित क्षेत्रमा पठाइसकिएको एक अर्ब त्यही मौज्दातबाट बाहिरिएको रकम हो। १५ पालिकालाई ६ करोड ७५ लाख, नाम-हस्तान्तरण, NCHL, फोनपे QR, वैदेशिक घोषणा, विश्व बैंक प्याकेज र सामग्री यो बैंक मौज्दात होइनन्।',
+    en: 'The amount already in the fund before the flood is inside the 8.77 billion, not on top of it. The Rs 1 billion already sent to affected areas is money that left that stock. The Rs 13.5 crore released to 15 local levels, name-transfer lists, NCHL, PhonePe QR, foreign pledges, the World Bank package and in-kind cargo are not this bank stock.',
+    ne: 'विपद्अघिको मौज्दात ८ अर्ब ७६ करोडभित्र छ, माथि होइन। प्रभावित क्षेत्रमा पठाइसकिएको एक अर्ब त्यही मौज्दातबाट बाहिरिएको रकम हो। १५ स्थानीय तहलाई निकासा गरिएको १३ करोड ५० लाख, नाम-हस्तान्तरण, NCHL, फोनपे QR, वैदेशिक घोषणा, विश्व बैंक प्याकेज र सामग्री यो बैंक मौज्दात होइनन्।',
   },
   notInRupee: { en: 'Counted separately, not in the rupee total', ne: 'छुट्टै गनिएको, नेपाली जम्मामा छैन' },
   notInFund: { en: 'Also published — do not add to the Rs 8.77 billion', ne: 'अन्य प्रकाशित — रु. ८ अर्ब ७६ करोडमा नजोड्नुहोस्' },
@@ -164,7 +164,7 @@ const EXCLUSIVE_GROUPS: Array<{
       en: 'Disbursements and local allocations. Count once; not extra cash received.',
       ne: 'निकासा र स्थानीय विनियोजन। एक पटक मात्र; थप आएको नगद होइन।',
     },
-    ids: ['pm-fund-send-1bn', 'palika-675m', 'palika-1350m'],
+    ids: ['pm-fund-send-1bn', 'palika-135m'],
   },
   {
     id: 'outside',
