@@ -1,12 +1,16 @@
 {
   "id": "sitrep",
-  "_comment": "Reviewed floor for the Rasuwa-Bhotekoshi flood. Deaths currently NDRRMA / MoHA, 23 Bhadra 18:00 (363+223+222+197+170+75+70+38 = 1358). Uncontacted about 5,326 — the board heads it that way; its three published parts (Rasuwa 2,860 + DAO Nuwakot 1,981 + foreign 587 = 5,428) sit 102 above the head because handed-over remains (102) are a cut label, not a fourth part. Injured 329 hospitalised: NDRRMA heads the group with 7,037 by adding army field treatment 3,421 and armed-police 3,287; Atlas keeps those as labels, as it has since 292 — treatments delivered are not flood injuries. Deployed 21,146 / NDRRMA rescued graphic 13,583. The ten-minute cycle reads nirajbhusal.github.io/rasuwa-flood-bulletin and merge_sitrep replaces a group only when its parts add up; a failed scrape leaves these numbers standing. Deaths never go down — Nepal Police (1,366 dead / 4,077 missing on 24 Bhadra morning; bulletin also carries police 1,372 / 4,079) is a separate running count, and a lagging compilation must not put 1,357 back over NDRRMA 1358. The overview also shows live government figures beside this grid (BIPAD corridor incidents, NDRRMA rescued-persons totals, OPMCM portal counters); those come straight from the portals and are never merged into these numbers. Two rules govern edits. (1) Never sum across groups that the source keeps apart - the `exclusive` flags and `do_not_merge` notes exist because several of these counts overlap, and adding them would invent casualties. (2) Every breakdown must sum to its own stated total; app/domains/flood/merge.py re-adds them at load and the page shows a warning if either stops reconciling. Do not add Tibet or India's dead onto Nepal's 1358. Uncontacted (NDRRMA toll) is not the OPMCM family missing-person report count — those are separate filings and must never be added together.",
-  "as_of": "2026-09-08T18:00:00+05:45",
-  "as_of_label_en": "23 Bhadra, 18:00 (NDRRMA / MoHA graphic)",
-  "as_of_label_ne": "२३ भदौ, १८:०० (एनडीआरआरएमए / गृह ग्राफिक)",
+  "_comment": "Reviewed floor for the Rasuwa-Bhotekoshi flood. Deaths currently NDRRMA / MoHA, 26 Bhadra 11:00 (364+228+222+199+185+77+70+38+2 Kathmandu in treatment = 1385). Uncontacted about 5,130 — the board heads it that way; published parts (Rasuwa local 1,393 + Rasuwa other 1,286 + Nuwakot local 651 + Nuwakot other 1,136 + foreign 587) are exclusive labels and must not be added into a false closing sum; handed-over remains (104) are a cut label. Injured 337 hospitalised across 19 hospitals: NDRRMA also publishes army field treatment 3,559 and armed-police 3,759 (board add-in 7655); Atlas keeps those as labels, as it has since 292 — treatments delivered are not flood injuries. Deployed 21,022 / NDRRMA rescued graphic 13,676. The ten-minute cycle reads nirajbhusal.github.io/rasuwa-flood-bulletin and merge_sitrep replaces a group only when its parts add up; a failed scrape leaves these numbers standing. Deaths never go down — Nepal Police (1,367 dead / 4,077 missing on the bulletin's police panel) is a separate running count, and a lagging compilation must not put 1,358 back over NDRRMA 1385. The overview also shows live government figures beside this grid (BIPAD corridor incidents, NDRRMA rescued-persons totals, OPMCM portal counters); those come straight from the portals and are never merged into these numbers. Two rules govern edits. (1) Never sum across groups that the source keeps apart - the `exclusive` flags and `do_not_merge` notes exist because several of these counts overlap, and adding them would invent casualties. (2) Every breakdown must sum to its own stated total; app/domains/flood/merge.py re-adds them at load and the page shows a warning if either stops reconciling. Do not add Tibet or India's dead onto Nepal's 1385. Uncontacted (NDRRMA toll) is not the OPMCM family missing-person report count — those are separate filings and must never be added together.",
+  "as_of": "2026-09-11T11:00:00+05:45",
+  "as_of_label_en": "26 Bhadra, 11:00 (NDRRMA / MoHA graphic)",
+  "as_of_label_ne": "२६ भदौ, ११:०० (एनडीआरआरएमए / गृह ग्राफिक)",
   "sources": [
     {
-      "label": "NDRRMA via Rasuwa flood bulletin (23 Bhadra 18:00 board, district split that closes 1358 / ~5,326 uncontacted / 13,583 rescued / 21,146 deployed)",
+      "label": "NDRRMA via Rasuwa flood bulletin (26 Bhadra 11:00 board, district split that closes 1385 / ~5,130 uncontacted / 13,676 rescued / 21,022 deployed)",
+      "url": "https://nirajbhusal.github.io/rasuwa-flood-bulletin/"
+    },
+    {
+      "label": "Nepal Police via Rasuwa flood bulletin (police panel 1,367 dead / 4,077 missing — not the NDRRMA floor)",
       "url": "https://nirajbhusal.github.io/rasuwa-flood-bulletin/"
     },
     {
@@ -149,7 +153,7 @@
   "headline": [
     {
       "id": "deaths",
-      "value": 1358,
+      "value": 1385,
       "tone": "critical",
       "label_en": "Deaths",
       "label_ne": "मृत्यु",
@@ -157,7 +161,7 @@
     },
     {
       "id": "injured",
-      "value": 329,
+      "value": 337,
       "tone": "warning",
       "label_en": "Injured",
       "label_ne": "घाइते",
@@ -165,7 +169,7 @@
     },
     {
       "id": "uncontacted",
-      "value": 5326,
+      "value": 5130,
       "approximate": true,
       "tone": "critical",
       "label_en": "Uncontacted",
@@ -182,7 +186,7 @@
     },
     {
       "id": "deployed",
-      "value": 21146,
+      "value": 21022,
       "tone": "positive",
       "label_en": "Personnel deployed",
       "label_ne": "परिचालित जनशक्ति",
@@ -192,22 +196,22 @@
   "breakdowns": [
     {
       "id": "deaths",
-      "total": 1358,
+      "total": 1385,
       "title_en": "Deaths",
       "title_ne": "मृत्यु",
       "tone": "critical",
-      "caption_en": "NDRRMA / MoHA, 23 Bhadra 18:00, by district, including recovered remains. Earlier 23 Bhadra 13:00 was 1,357 (Rasuwa 169). Do not add Tibet or India's dead (Nepal Police 1,366 / 4,077 missing on 24 Bhadra morning is a separate running count).",
-      "caption_ne": "एनडीआरआरएमए / गृह, २३ भदौ १८:००, जिल्लाअनुसार, विभिन्न मानव अङ्ग सहित। अघिल्लो २३ भदौ १३:०० मा १,३५७ (रसुवा १६९)। तिब्बत वा भारतका शव नजोड्नुहोस् (प्रहरी, २४ भदौ बिहान १,३६६ / हराएका ४,०७७, छुट्टै गणना हो)।",
+      "caption_en": "NDRRMA / MoHA, 26 Bhadra 11:00, by district, including recovered remains. Eight districts sum to 1,383; Kathmandu 2 died in treatment (unidentified remains included) closes 1,385. Earlier 23 Bhadra 18:00 was 1,358. Do not add Tibet or India's dead (Nepal Police 1,367 / 4,077 missing on the bulletin police panel is a separate running count).",
+      "caption_ne": "एनडीआरआरएमए / गृह, २६ भदौ ११:००, जिल्लाअनुसार, विभिन्न मानव अङ्ग सहित। आठ जिल्लाको योग १,३८३; काठमाडौंमा उपचारका क्रममा २ (पहिचान नखुलेका अवशेष सहित) जोड्दा १,३८५। अघिल्लो २३ भदौ १८:०० मा १,३५८। तिब्बत वा भारतका शव नजोड्नुहोस् (प्रहरी प्यानल १,३६७ / हराएका ४,०७७ छुट्टै गणना हो)।",
       "items": [
         {
           "label_en": "Chitwan",
           "label_ne": "चितवन",
-          "value": 363
+          "value": 364
         },
         {
           "label_en": "Nawalparasi East",
           "label_ne": "नवलपरासी पूर्व",
-          "value": 223
+          "value": 228
         },
         {
           "label_en": "Nawalparasi West",
@@ -217,17 +221,17 @@
         {
           "label_en": "Nuwakot",
           "label_ne": "नुवाकोट",
-          "value": 197
+          "value": 199
         },
         {
           "label_en": "Rasuwa",
           "label_ne": "रसुवा",
-          "value": 170
+          "value": 185
         },
         {
           "label_en": "Gorkha",
           "label_ne": "गोरखा",
-          "value": 75
+          "value": 77
         },
         {
           "label_en": "Dhading",
@@ -238,89 +242,106 @@
           "label_en": "Tanahun",
           "label_ne": "तनहुँ",
           "value": 38
+        },
+        {
+          "label_en": "Kathmandu (died in treatment)",
+          "label_ne": "काठमाडौं (उपचारका क्रममा)",
+          "value": 2
         }
       ],
       "aside": [
         {
           "label_en": "Identified remains handed over",
           "label_ne": "पहिचान गरी हस्तान्तरण",
-          "value": 102,
+          "value": 104,
           "exclusive": true
         }
       ]
     },
     {
       "id": "injured",
-      "total": 329,
+      "total": 337,
       "title_en": "Injured",
       "title_ne": "घाइते",
       "tone": "warning",
-      "caption_en": "NDRRMA / MoHA, 23 Bhadra 18:00 — 329 hospitalised. The board heads this group with 7,037 by adding army field treatment 3,421 and armed-police 3,287 to the hospital figure; Atlas keeps those as labels, as it has since the total was 292, because a treatment delivered in the field is not a flood injury. Discharged 252 sits outside this total. Earlier 23 Bhadra 13:00 was 327.",
-      "caption_ne": "एनडीआरआरएमए / गृह, २३ भदौ १८:०० — अस्पतालमा ३२९। बोर्डले सेना क्षेत्रीय उपचार ३,४२१ र सशस्त्र ३,२८७ जोडेर ७,०३७ शीर्षक बनाएको छ; एट्लसले तिनलाई लेबलमै राख्छ। डिस्चार्ज २५२ जम्माबाहिर छ। अघिल्लो २३ भदौ १३:०० मा ३२७।",
-      "do_not_merge_en": "Deaths in care are already inside the 1,358 deaths — do not add 329 onto 1,358. Police injured-and-rescued 9,254 is a label for another collection — it is not added to the 329.",
-      "do_not_merge_ne": "उपचारका क्रममा मरेका जना १,३५८ मृत्युभित्र छन् — ३२९ लाई १,३५८ माथि नजोड्नुहोस्। प्रहरी घाइते तथा उद्धार ९,२५४ अर्को संकलनको लेबल हो — ३२९ मा जोडिँदैन।",
+      "caption_en": "NDRRMA / MoHA, 26 Bhadra 11:00 — 337 hospitalised across 19 hospitals. The board also publishes army field treatment 3,559 and armed-police 3,759 (add-in 7,655); Atlas keeps those as labels, as it has since the total was 292, because a treatment delivered in the field is not a flood injury. Discharged 261 sits outside this total. Earlier 23 Bhadra 18:00 was 329.",
+      "caption_ne": "एनडीआरआरएमए / गृह, २६ भदौ ११:०० — १९ अस्पतालमा 337। बोर्डले सेना क्षेत्रीय उपचार 3,559 र सशस्त्र 3,759 पनि प्रकाशन गर्छ (जोड्दा 7,655); एट्लसले तिनलाई लेबलमै राख्छ। डिस्चार्ज 261 जम्माबाहिर छ। अघिल्लो २३ भदौ १८:०० मा ३२९।",
+      "do_not_merge_en": "Deaths in care are already inside the 1,385 deaths — do not add 337 onto 1,385. Army and armed-police medical treatments are not hospital flood injuries.",
+      "do_not_merge_ne": "उपचारका क्रममा मरेका जना 1,385 मृत्युभित्र छन् — 337 लाई 1,385 माथि नजोड्नुहोस्। सेना र सशस्त्र चिकित्सा उपचार अस्पतालका बाढी घाइते होइनन्।",
       "items": [
         {
-          "label_en": "Hospitalised",
-          "label_ne": "अस्पतालमा भर्ना",
-          "value": 329
+          "label_en": "Hospitalised (19 hospitals)",
+          "label_ne": "अस्पतालमा भर्ना (१९)",
+          "value": 337
         }
       ],
       "aside": [
         {
           "label_en": "Discharged",
           "label_ne": "डिस्चार्ज",
-          "value": 252,
+          "value": 261,
           "exclusive": true
         },
         {
           "label_en": "Army medical treatment",
           "label_ne": "सेना चिकित्सा उपचार",
-          "value": 3421,
+          "value": 3559,
           "exclusive": true
         },
         {
           "label_en": "Armed Police medical treatment",
           "label_ne": "सशस्त्र चिकित्सा उपचार",
-          "value": 3287,
+          "value": 3759,
           "exclusive": true
         },
         {
-          "label_en": "NDRRMA board total, army and armed police added in",
-          "label_ne": "एनडीआरआरएमए बोर्ड जम्मा, सेना र सशस्त्र जोडेर",
-          "value": 7037,
+          "label_en": "NDRRMA board add-in (hospital + army + armed police)",
+          "label_ne": "एनडीआरआरएमए बोर्ड जोड (अस्पताल + सेना + सशस्त्र)",
+          "value": 7655,
           "exclusive": true
         }
       ]
     },
     {
       "id": "uncontacted",
-      "total": 5326,
+      "total": 5130,
       "title_en": "Uncontacted",
       "title_ne": "सम्पर्कविहीन",
       "tone": "critical",
-      "caption_en": "NDRRMA / MoHA, 23 Bhadra 18:00 — about 5,326. This is the official uncontacted toll (सम्पर्कविहीन), not the family missing-person reports on the Prime Minister’s rescue portal. Its three published parts (Rasuwa 2,860, DAO Nuwakot 1,981, foreign nationals 587) sum to 5,428; the board heads about 5,326 because identified remains handed over (102) are a cut label, not a fourth part. Nepal Police 4,077 missing on 24 Bhadra morning is a separate running count.",
-      "caption_ne": "एनडीआरआरएमए / गृह, २३ भदौ १८:०० — करिब ५,३२६। यो आधिकारिक सम्पर्कविहीन हो, प्रधानमन्त्री कार्यालयको उद्धार पोर्टलमा परिवारले दर्ता गरेका हराएका व्यक्तिका रिपोर्ट होइन। तीन प्रकाशित अंश (रसुवा २,८६०, डीएओ नुवाकोट १,९८१, विदेशी ५८७) को योग ५,४२८ हुन्छ; बोर्डले करिब ५,३२६ भनेको छ किनभने पहिचान गरी हस्तान्तरण १०२ कट्टी लेबल हो। प्रहरीको हराएको ४,०७७ (२४ भदौ बिहान) छुट्टै गणना हो।",
-      "do_not_merge_en": "OPMCM portal missing-person reports, Hello Sarkar, Madhesh Police and the tourist list are separate collections — filings, not this toll. Do not add the Rasuwa, DAO Nuwakot and foreign labels on top of 5,326 — they are the same people, counted approximately.",
-      "do_not_merge_ne": "ओपीएमसीएम पोर्टलका हराएका व्यक्तिका रिपोर्ट, हेलो सरकार, मधेश प्रहरी र पर्यटक सूची छुट्टै संकलन हुन् — रिपोर्ट, यो आधिकारिक जम्मा होइनन्। रसुवा, डीएओ नुवाकोट र विदेशी लेबल ५,३२६ माथि नजोड्नुहोस् — ती उनै मानिस हुन्, अनुमानित रूपमा गनिएका।",
+      "caption_en": "NDRRMA / MoHA, 26 Bhadra 11:00 — about 5,130. This is the official uncontacted toll (सम्पर्कविहीन), not the family missing-person reports on the Prime Minister’s rescue portal. Published parts (Rasuwa local / other, Nuwakot local / other, foreign) are exclusive labels — do not add them into a false closing sum. Identified remains handed over (104) are a cut label. Holding-district figures and Nepal Police 4,077 missing are separate collections.",
+      "caption_ne": "एनडीआरआरएमए / गृह, २६ भदौ ११:०० — करिब 5,130। यो आधिकारिक सम्पर्कविहीन हो, प्रधानमन्त्री कार्यालयको उद्धार पोर्टलमा परिवारले दर्ता गरेका हराएका व्यक्तिका रिपोर्ट होइन। प्रकाशित अंश (रसुवा स्थानीय/अन्य, नुवाकोट स्थानीय/अन्य, विदेशी) exclusive लेबल हुन् — जोडेर झूटो जम्मा नबनाउनुहोस्। पहिचान गरी हस्तान्तरण 104 कट्टी लेबल हो। होल्डिङ जिल्ला र प्रहरीको हराएको ४,०७७ छुट्टै संकलन हुन्।",
+      "do_not_merge_en": "OPMCM portal missing-person reports, Hello Sarkar, Madhesh Police, the tourist list and holding-district labels are separate collections — filings or other tallies, not this toll. Do not add the Rasuwa, Nuwakot and foreign labels on top of about 5,130.",
+      "do_not_merge_ne": "ओपीएमसीएम पोर्टलका हराएका व्यक्तिका रिपोर्ट, हेलो सरकार, मधेश प्रहरी, पर्यटक सूची र होल्डिङ लेबल छुट्टै संकलन हुन्। रसुवा, नुवाकोट र विदेशी लेबल करिब 5,130 माथि नजोड्नुहोस्।",
       "items": [
         {
           "label_en": "Reported uncontacted",
           "label_ne": "जनाइएको सम्पर्कविहीन",
-          "value": 5326
+          "value": 5130
         }
       ],
       "aside": [
         {
-          "label_en": "Rasuwa (district + other-district citizens, security and staff inside)",
-          "label_ne": "रसुवा (जिल्ला + अन्य जिल्लाका नागरिक, सुरक्षा/कर्मचारी सहित)",
-          "value": 2860,
+          "label_en": "Rasuwa — local citizens",
+          "label_ne": "रसुवा · स्थानीय",
+          "value": 1393,
           "exclusive": true
         },
         {
-          "label_en": "DAO Nuwakot",
-          "label_ne": "डीएओ नुवाकोट",
-          "value": 1981,
+          "label_en": "Rasuwa — other-district citizens",
+          "label_ne": "रसुवा · अन्य जिल्ला",
+          "value": 1286,
+          "exclusive": true
+        },
+        {
+          "label_en": "Nuwakot — local citizens",
+          "label_ne": "नुवाकोट · स्थानीय",
+          "value": 651,
+          "exclusive": true
+        },
+        {
+          "label_en": "Nuwakot — other districts (excl. Rasuwa)",
+          "label_ne": "नुवाकोट · अन्य (रसुवाबाहेक)",
+          "value": 1136,
           "exclusive": true
         },
         {
@@ -330,39 +351,39 @@
           "exclusive": true
         },
         {
-          "label_en": "Those three parts added up",
-          "label_ne": "ती तीन अंशको योग",
-          "value": 5428,
+          "label_en": "Holding districts (NDRRMA label)",
+          "label_ne": "होल्डिङ जिल्ला (एनडीआरआरएमए लेबल)",
+          "value": 3685,
           "exclusive": true
         },
         {
-          "label_en": "Identified remains handed over (cut label — explains 5,428 → about 5,326)",
-          "label_ne": "पहिचान गरी हस्तान्तरण (कट्टी लेबल — ५,४२८ बाट करिब ५,३२६)",
-          "value": 102,
+          "label_en": "Identified remains handed over (cut label)",
+          "label_ne": "पहिचान गरी हस्तान्तरण (कट्टी लेबल)",
+          "value": 104,
           "exclusive": true
         }
       ]
     },
     {
       "id": "deployed",
-      "total": 21146,
+      "total": 21022,
       "title_en": "Personnel deployed",
       "title_ne": "परिचालित जनशक्ति",
       "tone": "positive",
-      "caption_en": "Security forces, NDRRMA / MoHA 23 Bhadra 18:00. Medical staff, surgical teams and aircraft are counted separately. Army fell from 9,287 to 9,031; police and armed police match the morning board.",
-      "caption_ne": "सुरक्षा निकाय, एनडीआरआरएमए / गृह २३ भदौ १८:००। स्वास्थ्यकर्मी, सर्जिकल टोली र हवाईजहाज छुट्टै गनिन्छन्। सेना ९,२८७ बाट ९,०३१; प्रहरी र सशस्त्र बिहान कै।",
-      "do_not_merge_en": "The 200+ medical staff and 6 surgical teams are not inside the 21,146 security total, and the 14 helicopters are aircraft, not people. Army helicopter sorties (1,157) are flights, not a second headcount.",
-      "do_not_merge_ne": "२००+ स्वास्थ्यकर्मी र ६ सर्जिकल टोली २१,१४६ को सुरक्षा जम्मामा समावेश छैनन्, र १४ हेलिकप्टर हवाईजहाज हुन्, मानिस होइनन्। सेनाका १,१५७ हेलि उडान उडान हुन्, दोस्रो जनसंख्या होइन।",
+      "caption_en": "Security forces, NDRRMA / MoHA 26 Bhadra 11:00. Medical staff, surgical teams and aircraft are counted separately. Army 8,844 + police 7,975 + armed police 4,203 = 21,022.",
+      "caption_ne": "सुरक्षा निकाय, एनडीआरआरएमए / गृह २६ भदौ ११:००। स्वास्थ्यकर्मी, सर्जिकल टोली र हवाईजहाज छुट्टै। सेना 8,844 + प्रहरी 7,975 + सशस्त्र 4,203 = 21,022।",
+      "do_not_merge_en": "The 200+ medical staff and 6 surgical teams are not inside the 21,022 security total, and the 14 helicopters are aircraft, not people.",
+      "do_not_merge_ne": "२००+ स्वास्थ्यकर्मी र ६ सर्जिकल टोली 21,022 को सुरक्षा जम्मामा समावेश छैनन्, र १४ हेलिकप्टर हवाईजहाज हुन्, मानिस होइनन्।",
       "items": [
         {
           "label_en": "Army",
           "label_ne": "नेपाली सेना",
-          "value": 9031
+          "value": 8844
         },
         {
           "label_en": "Police",
           "label_ne": "नेपाल प्रहरी",
-          "value": 7912
+          "value": 7975
         },
         {
           "label_en": "Armed Police",
@@ -398,10 +419,10 @@
       "title_en": "Rescued by air",
       "title_ne": "हवाई उद्धार",
       "tone": "positive",
-      "caption_en": "SitRep-6 helicopter rescue (people). NDRRMA's 13,583 rescued (air and ground, 23 Bhadra 18:00) is a separate graphic without an army/police/armed-police split on this board, not added here. Army sorties 1,157, armed-police sorties 210 and private-sector Kathmandu flights 129 are flights, not a second people total.",
-      "caption_ne": "सिटरेप-६ हेलि उद्धार (मानिस)। एनडीआरआरएमएको १३,५८३ उद्धार (हवाई र स्थल, २३ भदौ १८:००) यो बोर्डमा सेना/प्रहरी/सशस्त्र विभाजनबिनाको छुट्टै ग्राफिक हो, यहाँ जोडिँदैन।",
-      "do_not_merge_en": "14 is the number of helicopters flying, not people rescued. SitRep 1,976, NDRRMA 13,583, sortie counts, private-sector Kathmandu flights 129, and named heli lists are not additive.",
-      "do_not_merge_ne": "१४ भनेको उडानरत हेलिकप्टरको संख्या हो, उद्धार भएका मानिस होइन। सिटरेप १,९७६, एनडीआरआरएमए १३,५८३, उडान संख्या, निजी क्षेत्र काठमाडौं उडान १२९ र हेलि नामावली जोडिँदैनन्।",
+      "caption_en": "SitRep-6 helicopter rescue (people). NDRRMA's 13,676 rescued (air and ground, 26 Bhadra 11:00) is a separate graphic without an army/police/armed-police split on this board, not added here. Army sorties 1,157, armed-police sorties 210 and private-sector Kathmandu flights 129 are flights, not a second people total.",
+      "caption_ne": "सिटरेप-६ हेलि उद्धार (मानिस)। एनडीआरआरएमएको १३,६७६ उद्धार (हवाई र स्थल, २६ भदौ ११:००) यो बोर्डमा सेना/प्रहरी/सशस्त्र विभाजनबिनाको छुट्टै ग्राफिक हो, यहाँ जोडिँदैन।",
+      "do_not_merge_en": "14 is the number of helicopters flying, not people rescued. SitRep 1,976, NDRRMA 13,676, sortie counts, private-sector Kathmandu flights 129, and named heli lists are not additive.",
+      "do_not_merge_ne": "१४ भनेको उडानरत हेलिकप्टरको संख्या हो, उद्धार भएका मानिस होइन। सिटरेप १,९७६, एनडीआरआरएमए १३,६७६, उडान संख्या, निजी क्षेत्र काठमाडौं उडान १२९ र हेलि नामावली जोडिँदैनन्।",
       "items": [
         {
           "label_en": "Citizens rescued",
@@ -432,10 +453,10 @@
       "title_en": "Police: injured and rescued",
       "title_ne": "प्रहरी: घाइते र उद्धार",
       "tone": "positive",
-      "caption_en": "Police, 24 Bhadra board via bulletin. A label, not a substitute for the official injured figure of 329.",
-      "caption_ne": "प्रहरी, २४ भदौ बोर्ड (बुलेटिन)। लेबल मात्र, आधिकारिक घाइते ३२९ को सट्टा होइन।",
-      "do_not_merge_en": "Gender split (men 6,380 + women 2,824 + unspecified 50 = 9,254). Not added to the 329 hospital figure.",
-      "do_not_merge_ne": "लिङ्ग विभाजन (पुरुष ६,३८० + महिला २,८२४ + नखुलेको ५० = ९,२५४)। अस्पतालको ३२९ मा जोडिँदैन।",
+      "caption_en": "Police, 24 Bhadra board via bulletin. A label, not a substitute for the official injured figure of 337.",
+      "caption_ne": "प्रहरी, २४ भदौ बोर्ड (बुलेटिन)। लेबल मात्र, आधिकारिक घाइते ३३७ को सट्टा होइन।",
+      "do_not_merge_en": "Gender split (men 6,380 + women 2,824 + unspecified 50 = 9,254). Not added to the 337 hospital figure.",
+      "do_not_merge_ne": "लिङ्ग विभाजन (पुरुष ६,३८० + महिला २,८२४ + नखुलेको ५० = ९,२५४)। अस्पतालको ३३७ मा जोडिँदैन।",
       "items": [
         {
           "label_en": "Men",
@@ -523,8 +544,8 @@
       "title_en": "Security personnel uncontacted",
       "title_ne": "सम्पर्कविहीन सुरक्षाकर्मी",
       "tone": "critical",
-      "caption_en": "Inside the Rasuwa uncontacted part on the 23 Bhadra 13:00 board (army 45 + police 25 + armed police 12). Already counted inside the official uncontacted total, not on top of it.",
-      "caption_ne": "२३ भदौ १३:०० को रसुवा सम्पर्कविहीन अंशभित्र (सेना ४५ + प्रहरी २५ + सशस्त्र १२)। आधिकारिक सम्पर्कविहीन जम्मामा पहिल्यै समावेश, माथि होइन।",
+      "caption_en": "Inside the Rasuwa uncontacted part on the 26 Bhadra 11:00 board (army 45 + police 25 + armed police 12). Already counted inside the official uncontacted total, not on top of it.",
+      "caption_ne": "२६ भदौ ११:०० को रसुवा सम्पर्कविहीन अंशभित्र (सेना ४५ + प्रहरी २५ + सशस्त्र १२)। आधिकारिक सम्पर्कविहीन जम्मामा पहिल्यै समावेश, माथि होइन।",
       "items": [
         {
           "label_en": "Army",
