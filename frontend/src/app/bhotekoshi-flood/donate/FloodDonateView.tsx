@@ -101,11 +101,11 @@ const T = {
   srcOther: { en: 'Other sources', ne: 'अन्य स्रोत' },
   doNotAdd: { en: 'Do not add these together', ne: 'यी संख्या नजोड्नुहोस्' },
   receivedWarn: {
-    en: 'The amount already in the fund before the flood is inside the 8.77 billion, not on top of it. The Rs 1 billion already sent to affected areas is money that left that stock. The Rs 13.5 crore released to 15 local levels, name-transfer lists, NCHL, PhonePe QR, foreign pledges, the World Bank package and in-kind cargo are not this bank stock.',
-    ne: 'विपद्अघिको मौज्दात ८ अर्ब ७६ करोडभित्र छ, माथि होइन। प्रभावित क्षेत्रमा पठाइसकिएको एक अर्ब त्यही मौज्दातबाट बाहिरिएको रकम हो। १५ स्थानीय तहलाई निकासा गरिएको १३ करोड ५० लाख, नाम-हस्तान्तरण, NCHL, फोनपे QR, वैदेशिक घोषणा, विश्व बैंक प्याकेज र सामग्री यो बैंक मौज्दात होइनन्।',
+    en: 'The amount already in the fund before the flood is inside the 9.14 billion, not on top of it. The Rs 1 billion already sent to affected areas is money that left that stock. The Rs 13.5 crore released to 15 local levels, name-transfer lists, NCHL, PhonePe QR, foreign pledges, the World Bank package and in-kind cargo are not this bank stock.',
+    ne: 'विपद्अघिको मौज्दात ९ अर्ब १४ करोडभित्र छ, माथि होइन। प्रभावित क्षेत्रमा पठाइसकिएको एक अर्ब त्यही मौज्दातबाट बाहिरिएको रकम हो। १५ स्थानीय तहलाई निकासा गरिएको १३ करोड ५० लाख, नाम-हस्तान्तरण, NCHL, फोनपे QR, वैदेशिक घोषणा, विश्व बैंक प्याकेज र सामग्री यो बैंक मौज्दात होइनन्।',
   },
   notInRupee: { en: 'Counted separately, not in the rupee total', ne: 'छुट्टै गनिएको, नेपाली जम्मामा छैन' },
-  notInFund: { en: 'Also published — do not add to the Rs 8.77 billion', ne: 'अन्य प्रकाशित — रु. ८ अर्ब ७६ करोडमा नजोड्नुहोस्' },
+  notInFund: { en: 'Also published — do not add to the Rs 9.14 billion', ne: 'अन्य प्रकाशित — रु. ९ अर्ब १४ करोडमा नजोड्नुहोस्' },
   notInFundIntro: {
     en: 'Grouped so they stay readable. Open a row only if you need the source note. None of these replace the nine-bank stock above.',
     ne: 'पढ्न सजिलो हुने गरी समूहमा। स्रोत नोट चाहियो भने मात्र खोल्नुहोस्। माथिको नौ-बैंक मौज्दातको सट्टा होइनन्।',
@@ -122,8 +122,8 @@ const T = {
     ne: 'एनडीआरआरएमए सिटरेप #०६ को माग सूची। पठाइएको सामग्री होइन, प्रधानमन्त्री कोषको नगद पनि होइन।',
   },
   neededWarn: {
-    en: 'Do not add these quantities onto the Rs 8.77 billion. The list will be updated as NDRRMA republishes it.',
-    ne: 'यी परिमाण ८ अर्ब ७६ करोडमाथि नजोड्नुहोस्। एनडीआरआरएमए नयाँ सूची निकालेपछि यो अद्यावधिक हुनेछ।',
+    en: 'Do not add these quantities onto the Rs 9.14 billion. The list will be updated as NDRRMA republishes it.',
+    ne: 'यी परिमाण ९ अर्ब १४ करोडमाथि नजोड्नुहोस्। एनडीआरआरएमए नयाँ सूची निकालेपछि यो अद्यावधिक हुनेछ।',
   },
   warehousesTitle: { en: 'Emergency warehouses', ne: 'आपत्कालीन गोदाम' },
   warehousesIntro: {

@@ -1,24 +1,29 @@
 {
   "id": "relief-received",
-  "_comment": "Cash in the Prime Minister's Disaster Relief Fund. MoF / PMDRF, 23 Bhadra 17:00 — nine-bank NPR stock Rs 8,766,900,000 (published to the lakh). Post-flood collections Rs 7,684,400,000 plus pre-flood Rs 2,082,400,000 equal Rs 9,766,800,000 before the Rs 1,000,000,000 already released (9,766,800,000 − 1,000,000,000 = 8,766,800,000; the stock closes at 8,766,900,000 with a Rs 100,000 round-to-lakh difference). No new nine-bank row table was published with this update — the panel carries the MoF stock total. USD 21,108,471 (~Rs 3.18 billion at 150.88); total-available label Rs 11,951,700,000. Two rules: (1) the pre-disaster balance is already inside the 8.77 billion — never add it again; (2) name-transfer, NCHL, PhonePe, foreign pledges, in-kind and IFRC are not this bank stock. app/domains/flood/content.py re-adds breakdown rows at load.",
-  "as_of": "2026-09-08T17:00:00+05:45",
-  "as_of_label_en": "23 Bhadra 17:00 (Ministry of Finance / PM Disaster Relief Fund)",
-  "as_of_label_ne": "२३ भदौ १७:०० (अर्थ मन्त्रालय / प्रधानमन्त्री दैवी प्रकोप उद्धार कोष)",
+  "_comment": "Cash in the Prime Minister's Disaster Relief Fund. OPMCM / PMDRF, 25 Bhadra 09:00 — nine-bank NPR stock Rs 9,143,998,503. Pre-flood column last published exactly as Rs 2,082,422,405 (24 Bhadra deposit table); net post-flood that closes with this stock is Rs 7,061,576,098. No fresh bank-by-bank table with the 25 Bhadra update — the panel carries the OPMCM stock total; 24 Bhadra nine-bank rows (Rs 8,788,258,304) sit as a superseded aside. USD 21,637,691; total-available label Rs 12,433,310,041 (NPR + USD equivalent). Two rules: (1) the pre-disaster balance is already inside the 9.14 billion — never add it again; (2) name-transfer, NCHL, PhonePe, foreign pledges, in-kind and IFRC are not this bank stock. app/domains/flood/content.py re-adds breakdown rows at load.",
+  "as_of": "2026-09-10T09:00:00+05:45",
+  "as_of_label_en": "25 Bhadra 09:00 (OPMCM / PM Disaster Relief Fund)",
+  "as_of_label_ne": "२५ भदौ ०९:०० (प्रधानमन्त्री तथा मन्त्रिपरिषद्को कार्यालय / प्रधानमन्त्री दैवी प्रकोप उद्धार कोष)",
   "sources": [
     {
       "group": "bank",
-      "label": "MoF via BeemaPost (23 Bhadra 17:00) — NPR Rs 8.77bn + USD 21.1m ≈ Rs 11.95bn available",
+      "label": "OPMCM via Nepal Press (25 Bhadra 09:00) — NPR Rs 9.14bn + USD 21.64m ≈ Rs 12.43bn available",
+      "url": "https://www.nepalpress.com/2026/09/10/762164/12-43-billion-rupees-in-the-prime-ministers-disaster-relief-fund/"
+    },
+    {
+      "group": "bank",
+      "label": "OPMCM PMDRF daily deposit (24 Bhadra 09:00) — prior nine-bank NPR Rs 8.79bn",
+      "url": "https://nirajbhusal.github.io/rasuwa-flood-bulletin/donate.html#aid"
+    },
+    {
+      "group": "bank",
+      "label": "MoF via BeemaPost (23 Bhadra 17:00) — prior MoF Rs 8.77bn (superseded) + USD 21.1m ≈ Rs 11.95bn available",
       "url": "https://www.beemapost.com/2026/09/229443/"
     },
     {
       "group": "bank",
-      "label": "MoF via Singhadarbar (23 Bhadra 17:00) — same Rs 8.77bn / Rs 11.95bn available labels",
+      "label": "MoF via Singhadarbar (23 Bhadra 17:00) — prior MoF Rs 8.77bn (superseded)",
       "url": "https://singhadarbar.com/pradhanmantri-daibi-prakop-rahat-kosh-11-arba-95-crore/"
-    },
-    {
-      "group": "bank",
-      "label": "OPMCM PMDRF daily deposit (22 Bhadra 17:00) — prior nine-bank NPR Rs 8.46bn",
-      "url": "https://nirajbhusal.github.io/rasuwa-flood-bulletin/donate.html#aid"
     },
     {
       "group": "bank",
@@ -94,31 +99,31 @@
   "headline": [
     {
       "id": "pm-fund",
-      "value": 8766900000,
+      "value": 9143998503,
       "tone": "positive",
       "label_en": "In the PM Disaster Relief Fund",
       "label_ne": "प्रधानमन्त्री दैवी प्रकोप उद्धार कोषमा",
-      "source": "MoF / PMDRF",
+      "source": "OPMCM / PMDRF",
       "unit_en": "NPR",
       "unit_ne": "रु."
     },
     {
       "id": "since-flood",
-      "value": 6684500000,
+      "value": 7061576098,
       "tone": "positive",
       "label_en": "Collected after the flood (net of Rs 1bn release)",
       "label_ne": "विपद्पछि संकलित (१ अर्ब निकासा घटाएर)",
-      "source": "MoF / PMDRF",
+      "source": "OPMCM / PMDRF",
       "unit_en": "NPR",
       "unit_ne": "रु."
     },
     {
       "id": "already-held",
-      "value": 2082400000,
+      "value": 2082422405,
       "tone": "warning",
       "label_en": "Already in the fund before the flood",
       "label_ne": "विपद्अघि मौज्दात",
-      "source": "MoF / PMDRF",
+      "source": "OPMCM / PMDRF",
       "unit_en": "NPR",
       "unit_ne": "रु."
     }
@@ -126,52 +131,68 @@
   "breakdowns": [
     {
       "id": "pm-fund",
-      "total": 8766900000,
-      "title_en": "MoF stock (23 Bhadra 17:00)",
-      "title_ne": "अर्थ मन्त्रालय मौज्दात (२३ भदौ १७:००)",
+      "total": 9143998503,
+      "title_en": "OPMCM stock (25 Bhadra 09:00)",
+      "title_ne": "प्रधानमन्त्री कार्यालय मौज्दात (२५ भदौ ०९:००)",
       "tone": "positive",
-      "caption_en": "Nine-bank NPR stock Rs 8.77 billion (MoF, published to the lakh). Published post-flood collections Rs 7,684,400,000 plus pre-flood Rs 2,082,400,000 before the Rs 1 billion release; the net post-flood figure that closes with this stock is Rs 6,684,500,000. No fresh bank-by-bank table was published with this update. USD is a separate label; total-available label Rs 11.95 billion.",
-      "caption_ne": "नौ-बैंक NPR मौज्दात रु. ८ अर्ब ७६ करोड ६९ लाख (अर्थ, लाखसम्म)। विपद्पछि सकल रु. 7,684,400,000 + मौज्दात रु. 2,082,400,000, १ अर्ब निकासापछि नेट रु. 6,684,500,000। यो अपडेटसँग नयाँ बैंकतालिका आएको छैन। डलर छुट्टै; कुल उपलब्ध लेबल रु. ११ अर्ब ९५ करोड १७ लाख।",
-      "do_not_merge_en": "The Rs 2.08 billion already in the fund is inside the 8.77 billion, not on top of it. USD 21.11 million is not part of the Nepali-rupee total; the 'total available' label Rs 11,951,700,000 is NPR stock plus USD equivalent — not a second cash pile. Name-transfer, NCHL, PhonePe, foreign pledges, World Bank and IFRC are not this bank stock.",
-      "do_not_merge_ne": "विपद्अघिको मौज्दात ८.७७ अर्बभित्र छ, माथि होइन। डलर नेपाली जम्मामा होइन। नाम-हस्तान्तरण, NCHL, फोनपे, वैदेशिक घोषणा, विश्व बैंक र आईएफआरसी यो बैंक मौज्दात होइनन्।",
+      "caption_en": "Nine-bank NPR stock Rs 9.14 billion (OPMCM, 25 Bhadra 09:00). Pre-flood Rs 2,082,422,405 from the last exact deposit column; net post-flood that closes with this stock Rs 7,061,576,098. No fresh bank-by-bank table with this update. USD is a separate label; total-available label Rs 12.43 billion.",
+      "caption_ne": "नौ-बैंक NPR मौज्दात रु. ९ अर्ब १४ करोड ३९ लाख ९८ हजार ५०३ (प्रधानमन्त्री कार्यालय, २५ भदौ ०९:००)। विपद्अघि रु. 2,082,422,405 (अन्तिम सटीक स्तम्भ); नेट विपद्पछि रु. 7,061,576,098। यो अपडेटसँग नयाँ बैंकतालिका आएको छैन। डलर छुट्टै; कुल उपलब्ध लेबल रु. १२ अर्ब ४३ करोड।",
+      "do_not_merge_en": "The Rs 2.08 billion already in the fund is inside the 9.14 billion, not on top of it. USD 21.64 million is not part of the Nepali-rupee total; the 'total available' label Rs 12,433,310,041 is NPR stock plus USD equivalent — not a second cash pile. Name-transfer, NCHL, PhonePe, foreign pledges, World Bank and IFRC are not this bank stock.",
+      "do_not_merge_ne": "विपद्अघिको मौज्दात ९.१४ अर्बभित्र छ, माथि होइन। डलर नेपाली जम्मामा होइन। नाम-हस्तान्तरण, NCHL, फोनपे, वैदेशिक घोषणा, विश्व बैंक र आईएफआरसी यो बैंक मौज्दात होइनन्।",
       "items": [
         {
           "label_en": "Nine-bank NPR stock",
           "label_ne": "नौ-बैंक नेपाली मौज्दात",
-          "value": 8766900000,
+          "value": 9143998503,
           "unit_en": "NPR",
           "unit_ne": "रु."
         }
       ],
       "aside": [
         {
-          "label_en": "USD accounts (~Rs 3.18 billion at 150.88)",
-          "label_ne": "डलर खाता (~रु. 3.18 अर्ब, दर १५०.८८)",
-          "value": 21108471,
+          "label_en": "USD accounts (~Rs 3.29 billion implied by total-available)",
+          "label_ne": "डलर खाता (~रु. 3.29 अर्ब, कुल उपलब्धबाट)",
+          "value": 21637691,
           "unit_en": "USD",
           "unit_ne": "USD",
           "exclusive": true
         },
         {
-          "label_en": "Published post-flood collections (gross, before Rs 1bn release)",
-          "label_ne": "प्रकाशित विपद्पछि संकलन (सकल, १ अर्ब निकासाअघि)",
-          "value": 7684400000,
-          "unit_en": "NPR",
-          "unit_ne": "रु.",
-          "exclusive": true
-        },
-        {
           "label_en": "Total available label (NPR stock + USD equivalent)",
           "label_ne": "कुल उपलब्ध लेबल (NPR मौज्दात + डलर समकक्ष)",
-          "value": 11951700000,
+          "value": 12433310041,
           "unit_en": "NPR",
           "unit_ne": "रु.",
           "exclusive": true
         },
         {
-          "label_en": "Prior nine-bank rows (22 Bhadra 17:00, superseded)",
-          "label_ne": "अघिल्लो नौ-बैंक पङ्क्ति (२२ भदौ १७:००, प्रतिस्थापित)",
-          "value": 8460662427,
+          "label_en": "Added on 25 Bhadra (NPR)",
+          "label_ne": "२५ भदौ थप (NPR)",
+          "value": 172569675,
+          "unit_en": "NPR",
+          "unit_ne": "रु.",
+          "exclusive": true
+        },
+        {
+          "label_en": "Added on 25 Bhadra (USD)",
+          "label_ne": "२५ भदौ थप (USD)",
+          "value": 274062,
+          "unit_en": "USD",
+          "unit_ne": "USD",
+          "exclusive": true
+        },
+        {
+          "label_en": "Prior nine-bank rows (24 Bhadra 09:00, superseded)",
+          "label_ne": "अघिल्लो नौ-बैंक पङ्क्ति (२४ भदौ ०९:००, प्रतिस्थापित)",
+          "value": 8788258304,
+          "unit_en": "NPR",
+          "unit_ne": "रु.",
+          "exclusive": true
+        },
+        {
+          "label_en": "Prior post-flood collections gross (24 Bhadra, before Rs 1bn)",
+          "label_ne": "अघिल्लो विपद्पछि सकल (२४ भदौ, १ अर्बअघि)",
+          "value": 7705835899,
           "unit_en": "NPR",
           "unit_ne": "रु.",
           "exclusive": true
@@ -186,8 +207,8 @@
       "tone": "warning",
       "caption_en": "UK $6.79m + US $3.6m + OCHA $3.2m + South Korea $1m + ADB $5m + UAE $10m + Jensen Huang $10m. These are pledges and contributions announced outside the published rupee balance, not cash counted in the Prime Minister's fund table.",
       "caption_ne": "बेलायत $६.७९ मि. + अमेरिका $३.६ मि. + ओसीएचए $३.२ मि. + दक्षिण कोरिया $१ मि. + एडीबी $५ मि. + युएई $१० मि. + जेन्सेन ह्वाङ $१० मि.। यी प्रकाशित रुपैयाँ मौज्दातबाहिरका घोषणा/योगदान हुन्, कोषको तालिकामा गनिएको नगद होइनन्।",
-      "do_not_merge_en": "Not added to the Rs 8.77 billion. World Bank Rs 25 billion and the IFRC CHF 25 million appeal are separate lines, not inside this $39.59 million. ADB $5m and UAE $10m are pledges, not cash received. UAE's 83-tonne flight is inside the $10m package, not on top of it. Jensen Huang's $10m (about Rs 1.51 billion) is a contribution to the Prime Minister's fund that the published rupee balance does not yet carry — count it once, here.",
-      "do_not_merge_ne": "रु. ८ अर्ब ७६ करोडमा जोडिँदैन। विश्व बैंक २५ अर्ब र आईएफआरसी CHF २५ मिलियन अपिल यो $३९.५९ मिलियनभित्र होइनन्। एडीबी $५ मिलियन र युएई $१० मिलियन घोषणा हुन्, आएको नगद होइनन्। युएईको ८३ टन उडान $१० मिलियनभित्र छ, माथि होइन। जेन्सेन ह्वाङको $१० मिलियन (करिब रु. १.५१ अर्ब) प्रधानमन्त्री कोषमा गएको योगदान हो जुन प्रकाशित रुपैयाँ मौज्दातले अझै समेटेको छैन — एक पटक, यहीँ गन्नुहोस्।",
+      "do_not_merge_en": "Not added to the Rs 9.14 billion. World Bank Rs 25 billion and the IFRC CHF 25 million appeal are separate lines, not inside this $39.59 million. ADB $5m and UAE $10m are pledges, not cash received. UAE's 83-tonne flight is inside the $10m package, not on top of it. Jensen Huang's $10m (about Rs 1.51 billion) is a contribution to the Prime Minister's fund that the published rupee balance does not yet carry — count it once, here.",
+      "do_not_merge_ne": "रु. ९ अर्ब १४ करोडमा जोडिँदैन। विश्व बैंक २५ अर्ब र आईएफआरसी CHF २५ मिलियन अपिल यो $३९.५९ मिलियनभित्र होइनन्। एडीबी $५ मिलियन र युएई $१० मिलियन घोषणा हुन्, आएको नगद होइनन्। युएईको ८३ टन उडान $१० मिलियनभित्र छ, माथि होइन। जेन्सेन ह्वाङको $१० मिलियन (करिब रु. १.५१ अर्ब) प्रधानमन्त्री कोषमा गएको योगदान हो जुन प्रकाशित रुपैयाँ मौज्दातले अझै समेटेको छैन — एक पटक, यहीँ गन्नुहोस्।",
       "items": [
         {
           "label_en": "United Kingdom (FCDO)",
@@ -266,11 +287,11 @@
       "id": "phonepe-qr",
       "label_en": "PhonePe QR",
       "label_ne": "फोनपे QR",
-      "value": 2345613954,
+      "value": 2469450592,
       "unit_en": "NPR",
       "unit_ne": "रु.",
-      "detail_en": "896,354 transactions to date.",
-      "detail_ne": "हालसम्म ८,९६,३५४ कारोबार।"
+      "detail_en": "9,19,164 transactions to date (bulletin donate panel).",
+      "detail_ne": "हालसम्म ९,१९,१६४ कारोबार (बुलेटिन दान प्यानल)।"
     },
     {
       "id": "world-bank",
@@ -319,8 +340,8 @@
       "value": 1000000000,
       "unit_en": "NPR",
       "unit_ne": "रु.",
-      "detail_en": "OPMCM, 16 Bhadra — Rs 1 billion released. The 23 Bhadra MoF bank stock of Rs 8.77 billion is after that release.",
-      "detail_ne": "प्रधानमन्त्री कार्यालय, १६ भदौ — एक अर्ब निकासा। २३ भदौको अर्थ मौज्दात रु. ८.७७ अर्ब त्यो निकासापछिको हो।"
+      "detail_en": "OPMCM, 16 Bhadra — Rs 1 billion released. The 25 Bhadra OPMCM bank stock of Rs 9.14 billion is after that release.",
+      "detail_ne": "प्रधानमन्त्री कार्यालय, १६ भदौ — एक अर्ब निकासा। २५ भदौको मौज्दात रु. ९.१४ अर्ब त्यो निकासापछिको हो।"
     },
     {
       "id": "palika-135m",
@@ -336,21 +357,21 @@
       "id": "name-transfer",
       "label_en": "Name-transfer donor list",
       "label_ne": "नाम-हस्तान्तरण दाता सूची",
-      "value": 1929372838,
+      "value": 2152622309,
       "unit_en": "NPR",
       "unit_ne": "रु.",
-      "detail_en": "331 donors, Bhadra 11–19. Paisa dropped from the published figure.",
-      "detail_ne": "३३१ दाता, भदौ ११–१९। प्रकाशित अंकबाट पैसा झिकिएको।"
+      "detail_en": "390 donors, Bhadra 11–24. Paisa dropped from the published figure.",
+      "detail_ne": "३९० दाता, भदौ ११–२४। प्रकाशित अंकबाट पैसा झिकिएको।"
     },
     {
       "id": "nchl",
       "label_en": "NCHL into the PM fund",
       "label_ne": "NCHL मार्फत प्रधानमन्त्री कोष",
-      "value": 4263565174,
+      "value": 5100441053,
       "unit_en": "NPR",
       "unit_ne": "रु.",
-      "detail_en": "246,614 transactions (5 September 14:00). Overlapping channel with the bank stock.",
-      "detail_ne": "२,४६,६१४ कारोबार (५ सेप्टेम्बर १४:००)। बैंक मौज्दातसँग ओभरल्यापिङ च्यानल।"
+      "detail_en": "2,59,459 transactions (11 September 00:00). Overlapping channel with the bank stock.",
+      "detail_ne": "२,५९,४५९ कारोबार (११ सेप्टेम्बर ००:००)। बैंक मौज्दातसँग ओभरल्यापिङ च्यानल।"
     },
     {
       "id": "opmcm-20-bhadra-combined",
@@ -359,8 +380,8 @@
       "value": 11055626971,
       "unit_en": "NPR",
       "unit_ne": "रु.",
-      "detail_en": "Rs 11.06 billion combined on 20 Bhadra. Superseded as the NPR bank floor by the 23 Bhadra MoF stock of Rs 8.77 billion — not added onto it.",
-      "detail_ne": "संयुक्त रु. ११.०६ अर्ब (NPR बैंक + USD)। २२ भदौ मौज्दातले NPR तल्ला प्रतिस्थापन।"
+      "detail_en": "Rs 11.06 billion combined on 20 Bhadra. Superseded as the NPR bank floor by the 25 Bhadra OPMCM stock of Rs 9.14 billion — not added onto it.",
+      "detail_ne": "संयुक्त रु. ११.०६ अर्ब (NPR बैंक + USD)। २५ भदौ मौज्दातले NPR तल्ला प्रतिस्थापन — माथि जोडिँदैन।"
     }
   ]
 }
