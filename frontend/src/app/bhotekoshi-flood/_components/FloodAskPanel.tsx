@@ -35,8 +35,9 @@ import {
 } from '@/lib/nepal-languages';
 import { useInsights } from '@/hooks/useFlood';
 import { useAsk, useRetranslate, useSandboxStatus } from '@/hooks/useAsk';
-import type { AskTurnResult } from '@/lib/ask-sandbox/types';
+import type { AskTurnResult, ViewAction } from '@/lib/ask-sandbox/types';
 import type { AskHistoryTurn } from '@/services/sandbox-services';
+import { FundingGapChart } from '@/components/FundingGapCard';
 
 type SiteLang = 'en' | 'ne';
 
@@ -51,6 +52,8 @@ interface Turn {
   refused?: boolean;
   fellBackFrom?: string | null;
   seeded?: boolean;
+  /** Closed Ask side-channel — chart or map focus. */
+  view?: ViewAction;
 }
 
 interface Status {
@@ -93,6 +96,7 @@ const COPY = {
       'What’s the death toll?',
       'How many still uncontacted?',
       'How much in the PM fund?',
+      'Fund vs RDNA recovery need?',
       'How many were rescued?',
     ],
   },
@@ -129,6 +133,7 @@ const COPY = {
       'मृत्यु संख्या कति?',
       'सम्पर्कविहीन कति?',
       'कोषमा कति रकम?',
+      'कोष vs RDNA पुनर्प्राप्ति?',
       'कति जना उद्धार?',
     ],
   },
@@ -387,6 +392,7 @@ export default function FloodAskPanel({ lang }: Props) {
             byLang,
             refused: result.kind === 'refused',
             fellBackFrom: result.fellBackFrom ?? null,
+            view: result.view ?? null,
           },
         ]);
         if (docked && !dockOpen) setUnread(true);
@@ -575,6 +581,21 @@ export default function FloodAskPanel({ lang }: Props) {
                 ? turn.source
                 : highlightAnswer(displayText(turn, answerLang))}
             </p>
+            {turn.role === 'assistant' &&
+            turn.view &&
+            'chart' in turn.view &&
+            turn.view.chart === 'funding_gap' &&
+            turn.view.bars?.length ? (
+              <FundingGapChart
+                gap={{
+                  bars: turn.view.bars,
+                  caveat_en: turn.view.caveat_en ?? undefined,
+                  caveat_ne: turn.view.caveat_ne ?? undefined,
+                }}
+                lang={answerLang === 'ne' ? 'ne' : 'en'}
+                compact
+              />
+            ) : null}
             {turn.role === 'assistant' && turn.fellBackFrom ? (
               <p className="fl-ask-fallback">
                 {status && !status.tarka

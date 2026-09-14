@@ -1997,6 +1997,105 @@ body.low-perf .logo-ring::before, body.low-perf .logo-ring::after, body.low-perf
 .fl-eco-legend-label { color: var(--ink); font-family: var(--mono); font-size: 12px; }
 .fl-eco-meta { margin-top: 16px; }
 
+.fl-funding-gap-card {
+  margin-top: 28px;
+  padding: 18px 16px 16px;
+  border: 1px solid var(--rule);
+  background: var(--paper);
+}
+.fl-funding-gap-ask {
+  margin: 12px 0 0;
+  font-size: 12.5px;
+  color: var(--ink-3);
+}
+.fl-funding-gap-chart {
+  margin: 14px 0 0;
+}
+.fl-funding-gap-chart--compact {
+  margin-top: 10px;
+}
+.fl-funding-gap-bars {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  align-items: end;
+  min-height: 160px;
+}
+.fl-funding-gap-chart--compact .fl-funding-gap-bars {
+  min-height: 120px;
+  gap: 8px;
+}
+.fl-funding-gap-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  text-align: center;
+}
+.fl-funding-gap-track {
+  display: flex;
+  align-items: flex-end;
+  width: 100%;
+  height: 120px;
+  padding: 0 10px;
+  box-sizing: border-box;
+}
+.fl-funding-gap-chart--compact .fl-funding-gap-track {
+  height: 88px;
+  padding: 0 6px;
+}
+.fl-funding-gap-bar {
+  width: 100%;
+  border-radius: 4px 4px 0 0;
+  min-height: 4px;
+}
+.fl-funding-gap-bar--received {
+  background: color-mix(in srgb, var(--green, #2f7d4a) 80%, #fff);
+}
+.fl-funding-gap-bar--recovery {
+  background: color-mix(in srgb, var(--amber, #a86a11) 85%, #fff);
+}
+.fl-funding-gap-bar--gap {
+  background: color-mix(in srgb, var(--crit, #b42318) 80%, #fff);
+}
+.fl-funding-gap-col strong {
+  font-family: var(--serif);
+  font-size: clamp(15px, 1.6vw, 18px);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+  color: var(--ink-strong, var(--ink));
+}
+.fl-funding-gap-col span {
+  font-size: 11.5px;
+  line-height: 1.35;
+  color: var(--ink-2);
+}
+.fl-funding-gap-chart figcaption {
+  margin-top: 10px;
+}
+.fl-funding-gap-chart figcaption em {
+  display: block;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-style: normal;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.fl-funding-gap-chart figcaption p {
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--ink-2);
+}
+.fl-ask-bubble .fl-funding-gap-chart {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--ask-line, var(--rule));
+}
+
 /* RDNA damage desk — headline KPIs and corridor stats share a tile grid but
    must not inherit Copernicus EMS headline sizing (42px figures, 9px labels). */
 #rdna .fl-ems-meta {

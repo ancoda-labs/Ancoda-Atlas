@@ -1,9 +1,21 @@
-/** Closed map side-channel. Unknown actions are dropped, not forwarded. */
+/** Closed map / chart side-channel. Unknown actions are dropped, not forwarded. */
 export type ViewAction =
   | { focus: 'district'; id: string }
   | { focus: 'gauge'; id: string }
   | { focus: 'corridor' }
   | { highlight: 'districts'; ids: string[]; metric: 'deaths' | 'uncontacted' }
+  | {
+      chart: 'funding_gap';
+      unit: 'npr_cr';
+      bars: Array<{
+        id: 'received' | 'recovery' | 'gap' | string;
+        label_en: string;
+        label_ne: string;
+        value_cr: number;
+      }>;
+      caveat_en?: string | null;
+      caveat_ne?: string | null;
+    }
   | null;
 
 export type AskIntent =
@@ -13,6 +25,7 @@ export type AskIntent =
   | 'gauges'
   | 'district'
   | 'funds'
+  | 'funding_gap'
   | 'news'
   | 'helplines'
   // The dashboard's hazards, not only the flood desk's. The widget sits on
@@ -36,6 +49,7 @@ export type AskToolName =
   | 'get_district'
   | 'search_news'
   | 'get_relief_funds'
+  | 'get_funding_gap'
   | 'get_faq'
   | 'get_seismic'
   | 'get_air_quality'

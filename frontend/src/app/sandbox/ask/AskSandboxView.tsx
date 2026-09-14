@@ -10,6 +10,7 @@ import type { AskTurnResult, ViewAction } from '@/lib/ask-sandbox/types';
 import type { FloodInsight, FloodInsightFeed } from '@/types';
 import { useAsk, useSandboxStatus } from '@/hooks/useAsk';
 import { useInsights } from '@/hooks/useFlood';
+import { FundingGapChart } from '@/components/FundingGapCard';
 
 interface Chip {
   id: string;
@@ -73,7 +74,7 @@ export default function AskSandboxView() {
       setThread(prev => [...prev, { role: 'assistant', text: data.answer, result: data }]);
       if (data.view) {
         setView(data.view);
-        setMapOpen(true);
+        if (!('chart' in data.view)) setMapOpen(true);
       }
       if (data.remaining) {
         setStatus(s => (s ? { ...s, remaining: data.remaining } : s));
@@ -162,6 +163,21 @@ export default function AskSandboxView() {
                   </p>
                 )}
                 <p style={{ whiteSpace: 'pre-wrap' }}>{t.text}</p>
+                {t.role === 'assistant' &&
+                t.result?.view &&
+                'chart' in t.result.view &&
+                t.result.view.chart === 'funding_gap' &&
+                t.result.view.bars?.length ? (
+                  <FundingGapChart
+                    gap={{
+                      bars: t.result.view.bars,
+                      caveat_en: t.result.view.caveat_en ?? undefined,
+                      caveat_ne: t.result.view.caveat_ne ?? undefined,
+                    }}
+                    lang={lang}
+                    compact
+                  />
+                ) : null}
               </article>
             ))}
             {busy && (

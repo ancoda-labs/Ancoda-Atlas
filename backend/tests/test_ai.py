@@ -597,6 +597,7 @@ class TestLiveRefresh:
 
         assert "earthquake" not in INTENT_TOPIC
         assert "funds" not in INTENT_TOPIC
+        assert "funding_gap" not in INTENT_TOPIC
         assert INTENT_TOPIC["rescued"] == "register"
 
     def test_a_warm_snapshot_is_not_refreshed(self):
@@ -928,6 +929,51 @@ class TestScopeGate:
         donate = template_answer("funds", snap, "en", "where can I donate").text
         assert "Do not send money to personal QR codes" in donate
         assert "7,305,744,162" not in donate
+
+    def test_funding_gap_classifies_and_charts(self):
+        from app.domains.ai.ask.compose import template_answer, view_for_intent
+        from app.domains.ai.ask.policy import classify_intent
+        from app.domains.ai.ask.tools import build_snapshot
+        from app.domains.ai.ask.view import validate_view
+
+        assert classify_intent("Fund vs RDNA recovery need?") == "funding_gap"
+        assert classify_intent("what is the funding gap vs damage cost") == "funding_gap"
+        assert classify_intent("total funds recieved?") == "funds"
+
+        snap = build_snapshot(
+            content={
+                "funds": [{"name_en": "PM Disaster Relief Fund"}],
+                "reliefReceived": {
+                    "as_of_label_en": "28 Bhadra",
+                    "headline": [
+                        {"id": "pm-fund", "value": 9_995_024_994, "unit_en": "NPR"}
+                    ],
+                },
+                "damage": {
+                    "rdna": {
+                        "headline": [
+                            {"id": "effects", "value_cr": 40828.91},
+                            {"id": "recovery", "value_cr": 72331.52},
+                        ]
+                    }
+                },
+            },
+            sitrep={},
+            gauges=[],
+            news=[],
+        )
+        answer = template_answer(
+            "funding_gap", snap, "en", "Fund vs RDNA recovery need?"
+        ).text
+        assert "999.50" in answer
+        assert "72,331.52" in answer
+        assert "71,332.02" in answer
+        assert "not an official" in answer.lower() or "Atlas arithmetic" in answer
+        view = view_for_intent("funding_gap", snap, "Fund vs RDNA recovery need?")
+        assert view is not None
+        assert validate_view(view) is not None
+        assert view["chart"] == "funding_gap"
+        assert view["bars"][2]["value_cr"] == 71332.02
 
     def test_raised_funds_without_relief_table_says_not_loaded(self):
         from app.domains.ai.ask.compose import template_answer

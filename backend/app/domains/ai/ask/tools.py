@@ -59,6 +59,45 @@ def _relief_received_slice(received: dict[str, Any] | None) -> dict[str, Any] | 
     }
 
 
+def _damage_rdna_slice(damage: dict[str, Any] | None) -> dict[str, Any] | None:
+    """RDNA crore headlines only — enough for the funding-gap chart, not the full table."""
+    if not damage:
+        return None
+    rdna = damage.get("rdna") or {}
+    headline = [
+        {
+            "id": h.get("id"),
+            "value_cr": h.get("value_cr"),
+            "label_en": h.get("label_en"),
+            "label_ne": h.get("label_ne"),
+        }
+        for h in (rdna.get("headline") or [])
+        if h.get("id") and h.get("value_cr") is not None
+    ]
+    total = next((r for r in (rdna.get("rows") or []) if r.get("id") == "total"), None)
+    rows = []
+    if total:
+        rows.append(
+            {
+                "id": "total",
+                "effects_cr": total.get("effects_cr"),
+                "recovery_cr": total.get("recovery_cr"),
+            }
+        )
+    if not headline and not rows:
+        return None
+    return {
+        "as_of_label_en": damage.get("as_of_label_en") or rdna.get("as_of_label_en"),
+        "as_of_label_ne": damage.get("as_of_label_ne") or rdna.get("as_of_label_ne"),
+        "rdna": {
+            "as_of_label_en": rdna.get("as_of_label_en"),
+            "as_of_label_ne": rdna.get("as_of_label_ne"),
+            "headline": headline,
+            "rows": rows,
+        },
+    }
+
+
 def hazard_slice(hazards: dict[str, Any] | None) -> dict[str, Any]:
     """The dashboard's hazards, trimmed to what an answer can cite.
 
@@ -201,6 +240,8 @@ def build_snapshot(
         # Reviewed MoF / PMDRF cash table — raised/received answers restate these
         # headlines only. Never invent a grand total across pledges and QR.
         "reliefReceived": _relief_received_slice(content.get("reliefReceived")),
+        # RDNA crore headlines for the funding-gap chart — not casualty KPIs.
+        "damage": _damage_rdna_slice(content.get("damage")),
         "pathPoints": (content.get("floodPath") or {}).get("points") or [],
     }
 
@@ -212,6 +253,7 @@ TOOLS_FOR_INTENT = {
     "gauges": ["get_gauges"],
     "district": ["get_district", "get_figures"],
     "funds": ["get_relief_funds"],
+    "funding_gap": ["get_relief_funds", "get_funding_gap"],
     "news": ["search_news"],
     "helplines": ["get_faq"],
     "faq": ["get_faq"],
@@ -301,6 +343,10 @@ def run_tool(name: str, args: dict[str, Any], snap: dict[str, Any]) -> Any:
             "funds": snap["funds"],
             "reliefReceived": snap.get("reliefReceived"),
         }
+    if name == "get_funding_gap":
+        from app.domains.flood.funding_gap import funding_gap_from_snap
+
+        return {"fundingGap": funding_gap_from_snap(snap)}
     if name == "get_faq":
         return {"helplines": snap["helplines"]}
     if name == "get_climate":

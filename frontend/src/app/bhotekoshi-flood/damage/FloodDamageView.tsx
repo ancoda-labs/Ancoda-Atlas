@@ -29,6 +29,8 @@ import type {
 import { useJumpSection } from '@/hooks/use-jump-section';
 import { useFloodDesk } from '@/app/bhotekoshi-flood/_components/FloodDeskProvider';
 import EcosystemExposure from '@/app/bhotekoshi-flood/damage/EcosystemExposure';
+import FundingGapCard from '@/components/FundingGapCard';
+import { computeFundingGap } from '@/lib/funding-gap';
 
 // RDNA preliminary (NPC–NDRRMA), Copernicus EMSR927 AOI03 grading, and NEA 10
 // Bhadra notice. RDNA crore figures are not merged into NDRRMA casualty KPIs
@@ -401,6 +403,14 @@ export default function FloodDamageView() {
 
   const damage = desk.damage;
   const rdna = damage?.rdna;
+  const fundingGap = React.useMemo(
+    () =>
+      computeFundingGap({
+        reliefReceived: desk.reliefReceived,
+        damage,
+      }),
+    [desk.reliefReceived, damage],
+  );
   const copernicus = damage?.copernicus;
   const power = damage?.power;
   const rows = copernicus?.rows || [];
@@ -479,6 +489,8 @@ export default function FloodDamageView() {
                 ))}
               </div>
             )}
+
+            {fundingGap ? <FundingGapCard gap={fundingGap} lang={lang} showAskHint /> : null}
 
             {(rdna.corridor || []).length > 0 && (
               <div className="fl-rdna-corridor-wrap">
