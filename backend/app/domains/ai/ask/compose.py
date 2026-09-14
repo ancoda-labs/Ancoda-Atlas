@@ -126,6 +126,73 @@ def _raised_funds_answer(snap: dict[str, Any], lang: str, routes: str) -> Compos
     )
 
 
+def _fmt_cr(n: float) -> str:
+    """NPR crore with two decimals and Western grouping."""
+    return f"{n:,.2f}"
+
+
+def _funding_gap_answer(snap: dict[str, Any], lang: str) -> ComposedAnswer:
+    """Restate PMDRF available cash vs RDNA recovery need — never invent an official shortfall."""
+    from app.domains.flood.funding_gap import funding_gap_from_snap
+
+    gap = funding_gap_from_snap(snap)
+    if not gap:
+        if lang == "ne":
+            return _frame(
+                "डेस्कमा PM कोष नगद वा RDNA पुनर्प्राप्ति अंक लोड छैन। "
+                "/bhotekoshi-flood/donate र /bhotekoshi-flood/damage हेर्नुहोस्।",
+                "ne",
+            )
+        return _en(
+            "This desk has no PM fund cash or RDNA recovery figure loaded. "
+            "See /bhotekoshi-flood/donate and /bhotekoshi-flood/damage."
+        )
+
+    received = _fmt_cr(gap["received_cr"])
+    recovery = _fmt_cr(gap["recovery_cr"])
+    diff = _fmt_cr(gap["gap_cr"])
+    received_as = (
+        (gap.get("received_as_of_ne") if lang == "ne" else None)
+        or gap.get("received_as_of")
+        or ("अज्ञात मिति" if lang == "ne" else "undated")
+    )
+    rdna_as = (
+        (gap.get("rdna_as_of_ne") if lang == "ne" else None)
+        or gap.get("rdna_as_of")
+        or ("अज्ञात मिति" if lang == "ne" else "undated")
+    )
+    caveat = gap["caveat_ne"] if lang == "ne" else gap["caveat_en"]
+    stock_bit = ""
+    stock_cr = gap.get("npr_stock_cr")
+    if gap.get("includes_usd_accounts") and stock_cr is not None:
+        stock_bit = (
+            f" त्यसमा नेपाली बैंक मौज्दात रु. {_fmt_cr(stock_cr)} करोड र "
+            f"USD खाताको समकक्ष समावेश छ।"
+            if lang == "ne"
+            else (
+                f" That includes NPR bank stock Rs {_fmt_cr(stock_cr)} crore plus "
+                f"USD accounts at the published rate."
+            )
+        )
+    if lang == "ne":
+        return _frame(
+            f"प्रधानमन्त्री दैवी प्रकोप उद्धार कोषको उपलब्ध नगद रु. {received} करोड "
+            f"({received_as})।{stock_bit} NPC–NDRRMA प्रारम्भिक RDNA पुनर्प्राप्ति आवश्यकता "
+            f"रु. {recovery} करोड ({rdna_as})। अन्तर रु. {diff} करोड "
+            f"(पुनर्प्राप्ति − उपलब्ध नगद)। {caveat} "
+            f"विवरण: /bhotekoshi-flood/damage र /bhotekoshi-flood/donate।",
+            "ne",
+        )
+    return _en(
+        f"PM Disaster Relief Fund available cash is Rs {received} crore ({received_as})."
+        f"{stock_bit} "
+        f"NPC–NDRRMA preliminary RDNA recovery need is Rs {recovery} crore "
+        f"({rdna_as}). Difference Rs {diff} crore (recovery − available cash). "
+        f"{caveat} "
+        f"Detail: /bhotekoshi-flood/damage and /bhotekoshi-flood/donate."
+    )
+
+
 def _headline(snap: dict[str, Any], key: str) -> dict[str, Any] | None:
     return next((h for h in snap["headlines"] if h.get("id") == key), None)
 
@@ -210,6 +277,7 @@ def refusal_answer(intent: str, lang: str, snap: dict[str, Any]) -> ComposedAnsw
 
 def view_for_intent(intent: str, snap: dict[str, Any], question: str) -> dict[str, Any] | None:
     from app.domains.ai.ask.tools import place_from_question
+    from app.domains.flood.funding_gap import funding_gap_chart_view
 
     if intent == "worst_districts":
         ids = worst_death_districts(snap, 3)
@@ -221,6 +289,8 @@ def view_for_intent(intent: str, snap: dict[str, Any], question: str) -> dict[st
         return {"focus": "district", "id": place} if place else None
     if intent == "gauges":
         return {"focus": "corridor"}
+    if intent == "funding_gap":
+        return funding_gap_chart_view(snap)
     return None
 
 
@@ -350,6 +420,9 @@ def template_answer(
                 "ne",
             )
         return _en(f"Do not send money to personal QR codes. Reviewed routes: {routes}")
+
+    if intent == "funding_gap":
+        return _funding_gap_answer(snap, lang)
 
     if intent == "worst_districts":
         deaths = next((b for b in snap["breakdowns"] if b["id"] == "deaths"), None)
@@ -619,7 +692,7 @@ def template_answer(
         "so this box will not answer it. It answers from the desk's own "
         "figures: deaths and injuries, people not yet contacted, how many were "
         "rescued, the Nepali and foreign split, worst-hit districts, river "
-        "gauges, reviewed donation routes, helplines, climate background on "
+        "gauges, reviewed donation routes, the PM-fund vs RDNA recovery chart, helplines, climate background on "
         "/climate, the dashboard's earthquake, air quality, wildfire and "
         "weather readings, and name search on the OPMCM lost/found reports "
         "plus the NDRRMA rescued register at /bhotekoshi-flood/rescue. It will "

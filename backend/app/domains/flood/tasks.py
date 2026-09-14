@@ -404,6 +404,10 @@ async def run_flood_refresh() -> dict[str, Any]:
 
     desk_store.persist(store)
 
+    from app.eco.tasks import refresh_flood_footprint_and_exposure
+
+    refresh_flood_footprint_and_exposure()
+
     # Both of these run beside the cycle rather than inside it: a slow model or
     # a slow wire must never hold up the figures.
     from app.domains.news.digest_store import schedule_catchup

@@ -24,7 +24,7 @@ import re
 
 INTENTS = (
     "figures", "worst_districts", "uncontacted", "gauges", "district",
-    "funds", "news", "helplines", "rescued", "nationality",
+    "funds", "funding_gap", "news", "helplines", "rescued", "nationality",
     # The dashboard's hazards, not just the flood desk's. The box sits on every
     # page now, so a reader on the homepage asking about an earthquake used to
     # fall through to "other" and be answered with flood figures.
@@ -100,6 +100,19 @@ FUNDS = re.compile(
     r"|\b(raised|received|recieved|collected|how much|amount|total)\b.{0,24}"
     r"\b(funds?|money|aid|relief|pledges?|pmdrf|pm fund|nvidia)\b"
     r"|सहयोग|कोष|संकलन|प्राप्त.?रकम",
+    re.I,
+)
+# PM cash vs RDNA recovery need — before generic funds so "fund vs damage"
+# does not answer with donate routes alone.
+FUNDING_GAP = re.compile(
+    r"\b(gap|shortfall|deficit|difference|vs\.?|versus|compared|against)\b.{0,48}"
+    r"\b(fund|money|aid|relief|cost|damage|recovery|rdna|need|received|collected)\b"
+    r"|\b(fund|money|aid|relief|received|collected|pmdrf|pm fund)\b.{0,48}"
+    r"\b(gap|shortfall|deficit|vs\.?|versus|against|compared|cost|damage|recovery|rdna|need)\b"
+    r"|\b(cost|damage|recovery|rdna|need).{0,40}\b(fund|received|money|aid|relief)\b"
+    r"|\bhow much (more|still) (needed|required|to (cover|recover))\b"
+    r"|अभाव|नपुग|अन्तर|पुनर्प्राप्ति.{0,24}कोष|कोष.{0,24}पुनर्प्राप्ति"
+    r"|क्षति.{0,24}(कोष|रकम)|कोष.{0,24}क्षति",
     re.I,
 )
 NEWS = re.compile(
@@ -228,6 +241,16 @@ LOOSE: tuple[tuple[str, re.Pattern[str]], ...] = (
         ),
     ),
     (
+        "funding_gap",
+        re.compile(
+            r"\b(gap|shortfall|deficit)\b"
+            r"|\b(fund|money|aid).{0,24}\b(damage|recovery|rdna|cost)\b"
+            r"|\b(damage|recovery|rdna|cost).{0,24}\b(fund|money|aid)\b"
+            r"|अभाव|नपुग|कोष.{0,16}क्षति|क्षति.{0,16}कोष",
+            re.I,
+        ),
+    ),
+    (
         "funds",
         re.compile(
             r"\b(donat\w*|money|funds?|relief|aid)\b|सहयोग|राहत|कोष",
@@ -286,6 +309,8 @@ def classify_intent(question: str) -> str:
         return "worst_districts"
     if UNCONTACTED.search(q):
         return "uncontacted"
+    if FUNDING_GAP.search(q):
+        return "funding_gap"
     if FUNDS.search(q):
         return "funds"
     if GAUGES.search(q) and not FIGURES.search(q):

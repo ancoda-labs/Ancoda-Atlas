@@ -49,6 +49,9 @@ def display_name_for_id(district_id: str) -> str:
     return DISPLAY.get(district_id, district_id)
 
 
+_CHART_BAR_IDS = frozenset({"received", "recovery", "gap"})
+
+
 def validate_view(value: Any) -> dict[str, Any] | None:
     """Anything not in the closed set becomes None. Unknown actions are dropped,
     never forwarded."""
@@ -82,5 +85,36 @@ def validate_view(value: Any) -> dict[str, Any] | None:
             if district_ids
             else None
         )
+
+    # Funding-gap chart — bars must already be desk-derived; unknown ids drop.
+    if value.get("chart") == "funding_gap":
+        bars_in = value.get("bars")
+        if not isinstance(bars_in, list) or value.get("unit") != "npr_cr":
+            return None
+        bars: list[dict[str, Any]] = []
+        for bar in bars_in[:3]:
+            if not isinstance(bar, dict):
+                continue
+            bar_id = bar.get("id")
+            value_cr = bar.get("value_cr")
+            if bar_id not in _CHART_BAR_IDS or not isinstance(value_cr, (int, float)):
+                continue
+            bars.append(
+                {
+                    "id": bar_id,
+                    "label_en": str(bar.get("label_en") or bar_id)[:80],
+                    "label_ne": str(bar.get("label_ne") or bar.get("label_en") or bar_id)[:80],
+                    "value_cr": float(value_cr),
+                }
+            )
+        if len(bars) < 2:
+            return None
+        return {
+            "chart": "funding_gap",
+            "unit": "npr_cr",
+            "bars": bars,
+            "caveat_en": str(value.get("caveat_en") or "")[:400] or None,
+            "caveat_ne": str(value.get("caveat_ne") or "")[:400] or None,
+        }
 
     return None
