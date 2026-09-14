@@ -8,6 +8,7 @@ the frontend's service layer maps one to one onto what it replaced.
 from fastapi import APIRouter
 
 from app.domains.ai.routers import router as ai_router
+from app.eco.routers import router as eco_router
 from app.domains.climate.routers import router as climate_router
 from app.domains.flood.routers import router as flood_router
 from app.domains.hazards.routers import router as hazards_router
@@ -21,3 +22,4 @@ api_router.include_router(climate_router)
 api_router.include_router(media_router)
 api_router.include_router(photos_router)
 api_router.include_router(ai_router)
+api_router.include_router(eco_router)

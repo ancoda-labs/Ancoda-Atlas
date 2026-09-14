@@ -1,6 +1,18 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import {
+  Building2,
+  GraduationCap,
+  HeartPulse,
+  Home,
+  Landmark,
+  Milestone,
+  Route,
+  Users,
+  Zap,
+  type LucideIcon,
+} from 'lucide-react';
 import FloodShell from '@/components/FloodShell';
 import { useFloodLang } from '@/hooks/use-flood-lang';
 import type { Lang } from '@/hooks/use-flood-lang';
@@ -16,6 +28,7 @@ import type {
 } from '@/types';
 import { useJumpSection } from '@/hooks/use-jump-section';
 import { useFloodDesk } from '@/app/bhotekoshi-flood/_components/FloodDeskProvider';
+import EcosystemExposure from '@/app/bhotekoshi-flood/damage/EcosystemExposure';
 
 // RDNA preliminary (NPC–NDRRMA), Copernicus EMSR927 AOI03 grading, and NEA 10
 // Bhadra notice. RDNA crore figures are not merged into NDRRMA casualty KPIs
@@ -37,8 +50,13 @@ const T = {
   jumpEmsSub: { en: 'Copernicus EMSR927 AOI03', ne: 'कोपर्निकस EMSR927 AOI03' },
   jumpPower: { en: 'Hydropower plants', ne: 'जलविद्युत् आयोजना' },
   jumpPowerSub: { en: 'NEA notice 10 Bhadra', ne: 'प्राधिकरण सूचना १० भदौ' },
+  jumpEco: { en: 'Ecosystem exposure', ne: 'पारिस्थितिक प्रभाव' },
+  jumpEcoSub: { en: 'Protected areas · land cover', ne: 'संरक्षित क्षेत्र · भू-आवरण' },
   rdnaKicker: { en: '1 · RDNA', ne: '१ · RDNA' },
   rdnaCorridor: { en: 'Corridor assessment', ne: 'करिडोर मूल्यांकन' },
+  corridorTotals: { en: 'Affected totals', ne: 'प्रभावित जम्मा' },
+  corridorFacilities: { en: 'Buildings & facilities', ne: 'भवन र सुविधा' },
+  corridorTransport: { en: 'Transport & energy', ne: 'यातायात र ऊर्जा' },
   rdnaTable: { en: 'Summary table', ne: 'सारांश तालिका' },
   rdnaExclusive: {
     en: 'Counted separately — not merged into NDRRMA casualty KPIs, uncontacted, or relief cash channels.',
@@ -98,6 +116,30 @@ const T = {
   langtangInside: { en: 'Inside the 133+, not on top of it', ne: '१३३+ भित्र, माथि होइन' },
 };
 
+const CORRIDOR_GROUPS: Array<{ id: string; labelKey: keyof typeof T; ids: string[]; hero?: boolean }> = [
+  { id: 'totals', labelKey: 'corridorTotals', ids: ['buildings', 'households', 'population'], hero: true },
+  {
+    id: 'facilities',
+    labelKey: 'corridorFacilities',
+    ids: ['rdna_qs_private', 'rdna_qs_public', 'rdna_qs_schools', 'rdna_qs_health', 'rdna_qs_culture'],
+  },
+  { id: 'transport', labelKey: 'corridorTransport', ids: ['rdna_qs_energy', 'rdna_qs_roads', 'rdna_qs_bridges'] },
+];
+
+const CORRIDOR_ICONS: Record<string, LucideIcon> = {
+  buildings: Building2,
+  households: Home,
+  population: Users,
+  rdna_qs_private: Home,
+  rdna_qs_public: Landmark,
+  rdna_qs_schools: GraduationCap,
+  rdna_qs_health: HeartPulse,
+  rdna_qs_culture: Landmark,
+  rdna_qs_energy: Zap,
+  rdna_qs_roads: Route,
+  rdna_qs_bridges: Milestone,
+};
+
 const GROUP_LABEL: Record<string, { en: string; ne: string }> = {
   hazard: { en: 'Hazard', ne: 'खतरा' },
   people: { en: 'People', ne: 'जनसंख्या' },
@@ -133,29 +175,79 @@ function RdnaTile({ item, lang }: { item: RdnaHeadline; lang: Lang }) {
   return (
     <div className={item.id === 'effects' || item.id === 'recovery' ? 't-critical' : 't-warning'}>
       <dd>
-        {formatCr(item.value_cr)}
-        <em>{T.crore[lang]}</em>
-        {item.usd_m != null && <small>USD {formatCr(item.usd_m)} m</small>}
+        <span className="fl-rdna-cr">{formatCr(item.value_cr)}</span>
+        <span className="fl-rdna-unit">{T.crore[lang]}</span>
+        {item.usd_m != null && (
+          <span className="fl-rdna-usd">
+            USD {formatCr(item.usd_m)} m
+          </span>
+        )}
       </dd>
       <dt>{L(item, 'label', lang)}</dt>
     </div>
   );
 }
 
-function CorridorTile({ item, lang }: { item: RdnaCorridorStat; lang: Lang }) {
+function corridorParts(
+  item: RdnaCorridorStat,
+  lang: Lang
+): { label: string; value: string; detail?: string; prose?: boolean } {
   const text = L(item, 'text', lang);
   if (text) {
-    return (
-      <div className="fl-fig-aside">
-        <dd>{text}</dd>
-      </div>
-    );
+    const split = text.indexOf(':');
+    if (split >= 0) {
+      return {
+        label: text.slice(0, split).trim(),
+        value: text.slice(split + 1).trim(),
+        prose: text.length > 52,
+      };
+    }
+    return { label: text, value: '' };
   }
+  return {
+    label: L(item, 'label', lang),
+    value: formatNum(item.value ?? 0, item.approximate, item.suffix),
+    detail: L(item, 'detail', lang) || undefined,
+  };
+}
+
+function CorridorTile({ item, lang, hero }: { item: RdnaCorridorStat; lang: Lang; hero?: boolean }) {
+  const Icon = CORRIDOR_ICONS[item.id] || Building2;
+  const { label, value, detail, prose } = corridorParts(item, lang);
   return (
-    <div>
-      <dd>{formatNum(item.value ?? 0, item.approximate, item.suffix)}</dd>
-      <dt>{L(item, 'label', lang)}</dt>
-      {L(item, 'detail', lang) && <small>{L(item, 'detail', lang)}</small>}
+    <div className={`fl-rdna-corridor-card${hero ? ' fl-rdna-corridor-card-hero' : ''}${prose ? ' fl-rdna-corridor-card-prose' : ''}`}>
+      <span className="fl-rdna-corridor-icon" aria-hidden="true">
+        <Icon size={hero ? 20 : 17} strokeWidth={1.75} />
+      </span>
+      <dl className="fl-rdna-corridor-body">
+        <dt>{label}</dt>
+        {value ? <dd>{value}</dd> : null}
+        {detail ? <small>{detail}</small> : null}
+      </dl>
+    </div>
+  );
+}
+
+function CorridorGroup({
+  title,
+  items,
+  lang,
+  hero,
+}: {
+  title: string;
+  items: RdnaCorridorStat[];
+  lang: Lang;
+  hero?: boolean;
+}) {
+  if (!items.length) return null;
+  return (
+    <div className="fl-rdna-corridor-block">
+      <h3 className="fl-rdna-corridor-title">{title}</h3>
+      <div className={hero ? 'fl-rdna-corridor-hero' : 'fl-rdna-corridor-grid'}>
+        {items.map(item => (
+          <CorridorTile key={item.id} item={item} lang={lang} hero={hero} />
+        ))}
+      </div>
     </div>
   );
 }
@@ -317,7 +409,7 @@ export default function FloodDamageView() {
   const photos = copernicus?.photos || NO_IMAGES;
   const plants = power?.plants || [];
   const asOf = lang === 'ne' ? damage?.as_of_label_ne || damage?.as_of_label_en : damage?.as_of_label_en;
-  const onJump = useJumpSection(['rdna', 'copernicus', 'power']);
+  const onJump = useJumpSection(['rdna', 'copernicus', 'power', 'ecosystem']);
   const gallery = React.useMemo(() => [...maps, ...photos], [maps, photos]);
   const openIndex = openId ? gallery.findIndex(item => item.id === openId) : -1;
   const openItem = openIndex >= 0 ? gallery[openIndex] : null;
@@ -338,7 +430,7 @@ export default function FloodDamageView() {
 
   return (
     <FloodShell lang={lang} setLang={setLang} kicker={t('kicker')} title={t('title')} standfirst={t('standfirst')}>
-      <nav className="fl-jump fl-jump-3" aria-label={t('jumpLabel')}>
+      <nav className="fl-jump fl-jump-4" aria-label={t('jumpLabel')}>
         <p className="fl-jump-kicker">{t('jumpHint')}</p>
         <a href="#rdna" className={onJump === 'rdna' ? 'on' : undefined}>
           <b>1</b>
@@ -360,6 +452,11 @@ export default function FloodDamageView() {
           )}
           <span>{t('jumpPowerSub')}</span>
         </a>
+        <a href="#ecosystem" className={onJump === 'ecosystem' ? 'on' : undefined}>
+          <b>4</b>
+          <strong>{t('jumpEco')}</strong>
+          <span>{t('jumpEcoSub')}</span>
+        </a>
       </nav>
 
       <section id="rdna" className="fl-sec fl-damage">
@@ -376,7 +473,7 @@ export default function FloodDamageView() {
             {L(rdna, 'note', lang) && <p className="fl-ems-caveat">{L(rdna, 'note', lang)}</p>}
 
             {(rdna.headline || []).length > 0 && (
-              <div className="fl-tiles fl-ems-headlines">
+              <div className="fl-tiles fl-rdna-kpis">
                 {(rdna.headline || []).map(item => (
                   <RdnaTile key={item.id} item={item} lang={lang} />
                 ))}
@@ -384,16 +481,26 @@ export default function FloodDamageView() {
             )}
 
             {(rdna.corridor || []).length > 0 && (
-              <>
-                <div className="fl-sec-head fl-ems-subhead">
+              <div className="fl-rdna-corridor-wrap">
+                <div className="fl-sec-head fl-ems-subhead fl-rdna-subhead">
                   <span>{t('rdnaCorridor')}</span>
                 </div>
-                <div className="fl-tiles">
-                  {(rdna.corridor || []).map(item => (
-                    <CorridorTile key={item.id} item={item} lang={lang} />
-                  ))}
-                </div>
-              </>
+                {CORRIDOR_GROUPS.map(group => {
+                  const byId = new Map((rdna.corridor || []).map(item => [item.id, item]));
+                  const items = group.ids
+                    .map(id => byId.get(id))
+                    .filter((item): item is RdnaCorridorStat => Boolean(item));
+                  return (
+                    <CorridorGroup
+                      key={group.id}
+                      title={T[group.labelKey][lang]}
+                      items={items}
+                      lang={lang}
+                      hero={group.hero}
+                    />
+                  );
+                })}
+              </div>
             )}
 
             {(rdna.rows || []).length > 0 && (
@@ -644,6 +751,8 @@ export default function FloodDamageView() {
           </>
         )}
       </section>
+
+      <EcosystemExposure lang={lang} />
 
       {openItem && openItem.imageProxy && (
         <div

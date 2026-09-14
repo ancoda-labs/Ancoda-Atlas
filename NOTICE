@@ -80,6 +80,18 @@ photographs on those facts (ICIMOD press assets) are streamed through
 Atlas's signed media proxy; the raw URLs never leave the API.
 
 
+Ecosystem reference layers (when bundled)
+    backend/data/eco/protected_areas.geojson
+    backend/data/eco/ramsar_sites.geojson
+    backend/data/eco/landcover_nepal.tif
+
+    Not shipped until obtained from authoritative distributors. See
+    backend/data/eco/README.md and backend/data/eco/ATTRIBUTION.md for
+    required sources, CRS, schema, and licence. landcover_nepal.tif is
+    expected from the Nepal Land Cover Monitoring System (NLCMS), FRTC/ICIMOD,
+    under Creative Commons Attribution 4.0 International (CC BY 4.0).
+
+
 ================================================================================
 MIT LICENSE — openknowledgenp/localboundaries
 ================================================================================

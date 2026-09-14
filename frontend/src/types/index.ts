@@ -1822,3 +1822,33 @@ export interface ClimateContextPayload {
   disclaimerNe: string | null;
   generatedAt: string;
 }
+
+/** Overlap with one protected area inside an event footprint. */
+export interface ProtectedAreaExposure {
+  name: string;
+  designation: string;
+  overlapKm2: number;
+  pctOfPa: number;
+}
+
+/** Land-cover class area inside an event footprint. */
+export interface LandcoverExposure {
+  className: string;
+  areaKm2: number;
+}
+
+/** Overlap with one Ramsar site inside an event footprint. */
+export interface RamsarExposure {
+  name: string;
+  overlapKm2: number;
+}
+
+/** Cached ecosystem exposure for one event (worker-computed, read-only). */
+export interface EcosystemExposure {
+  footprintSource: 'polygon' | 'buffer_estimate';
+  protectedAreas: ProtectedAreaExposure[];
+  landcoverBreakdown: LandcoverExposure[];
+  ramsarSites: RamsarExposure[];
+  layerVintages: Record<string, number>;
+  computedAt: string;
+}

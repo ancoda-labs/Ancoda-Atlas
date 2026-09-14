@@ -40,6 +40,12 @@ dependencies = [
     "structlog==26.1.0",
     "orjson==3.12.0",
     "python-dateutil==2.9.0.post0",
+
+    # Ecosystem exposure — local GeoJSON/raster only, worker-side.
+    "geopandas==1.1.2",
+    "shapely==2.1.2",
+    "pyproj==3.7.2",
+    "rasterio==1.4.4",
 ]
 
 [project.optional-dependencies]

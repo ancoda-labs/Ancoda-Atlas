@@ -21,6 +21,7 @@ celery_app = Celery(
         "app.domains.hazards.tasks",
         "app.domains.flood.tasks",
         "app.domains.climate.tasks",
+        "app.eco.tasks",
     ],
 )
 
