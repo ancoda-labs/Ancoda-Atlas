@@ -8,7 +8,8 @@ table, bilingual dictionary, and the grading maps in the bulletin's img folder.
 What this deliberately does NOT read: the page's "Damage (preliminary)" news
 log, which carries stale early death counts that would fight the Police sitrep,
 and the NEA plant table on the same page, which is a dated government notice
-that stays in reviewed JSON. This scrape is Copernicus only.
+that stays in reviewed JSON. RDNA figures are kept separate from the NDRRMA
+casualty KPIs and from relief cash — they overlay only the damage desk.
 
 Numerals arrive in Devanagari. "~450" keeps its tilde (approximate), "5/5"
 takes the first number, and a dash is a missing cell rather than a zero — the
@@ -47,6 +48,7 @@ ROW_FOR: dict[str, dict[str, str]] = {
     "ems_r_slide": {"id": "landslide", "group": "hazard"},
     "ems_r_pop": {"id": "population", "group": "people"},
     "ems_r_res": {"id": "residential", "group": "buildings"},
+    "ems_r_corr": {"id": "commercial", "group": "buildings"},
     "ems_r_inst": {"id": "institutional", "group": "buildings"},
     "ems_r_school": {"id": "school", "group": "buildings"},
     "ems_r_otherb": {"id": "other-nonres", "group": "buildings"},
@@ -58,12 +60,57 @@ ROW_FOR: dict[str, dict[str, str]] = {
     "ems_r_br": {"id": "bridges", "group": "transport"},
     "ems_r_heli": {"id": "helipad", "group": "transport"},
     "ems_r_pp": {"id": "power-plant", "group": "facilities"},
+    "ems_r_dams": {"id": "dams", "group": "facilities"},
+    "ems_r_aq": {"id": "aquaculture", "group": "facilities"},
+    "ems_r_heavy": {"id": "heavy-industry", "group": "facilities"},
+    "ems_r_civil": {"id": "civil-works", "group": "facilities"},
     "ems_r_wet": {"id": "wetland", "group": "landcover"},
     "ems_r_otherlu": {"id": "other-landuse", "group": "landcover"},
     "ems_r_agri": {"id": "agriculture", "group": "landcover"},
     "ems_r_shrub": {"id": "shrub", "group": "landcover"},
     "ems_r_forest": {"id": "forest", "group": "landcover"},
     "ems_r_alllc": {"id": "all-landcover", "group": "landcover"},
+}
+
+RDNA_ROW_FOR: dict[str, dict[str, str]] = {
+    "rdna_sec_social_n": {"id": "social", "kind": "sector"},
+    "rdna_sec_prod_n": {"id": "productive", "kind": "sector"},
+    "rdna_sec_infra_n": {"id": "infrastructure", "kind": "sector"},
+    "rdna_sec_cross_n": {"id": "cross-cutting", "kind": "sector"},
+    "rdna_sub_priv": {"id": "private-buildings", "kind": "sub", "parent": "social"},
+    "rdna_sub_pub": {"id": "public-buildings", "kind": "sub", "parent": "social"},
+    "rdna_sub_edu": {"id": "education", "kind": "sub", "parent": "social"},
+    "rdna_sub_health": {"id": "health", "kind": "sub", "parent": "social"},
+    "rdna_sub_cult": {"id": "cultural", "kind": "sub", "parent": "social"},
+    "rdna_sub_agri": {"id": "agriculture", "kind": "sub", "parent": "productive"},
+    "rdna_sub_fish": {"id": "fisheries", "kind": "sub", "parent": "productive"},
+    "rdna_sub_live": {"id": "livestock", "kind": "sub", "parent": "productive"},
+    "rdna_sub_bank": {"id": "banking", "kind": "sub", "parent": "productive"},
+    "rdna_sub_livelihood": {"id": "livelihood", "kind": "sub", "parent": "productive"},
+    "rdna_sub_hydro": {"id": "hydropower", "kind": "sub", "parent": "infrastructure"},
+    "rdna_sub_hhren": {"id": "household-renewables", "kind": "sub", "parent": "infrastructure"},
+    "rdna_sub_roads": {"id": "roads", "kind": "sub", "parent": "infrastructure"},
+    "rdna_sub_bridges": {"id": "bridges", "kind": "sub", "parent": "infrastructure"},
+    "rdna_sub_telecom": {"id": "telecom", "kind": "sub", "parent": "infrastructure"},
+    "rdna_sub_wash": {"id": "wash", "kind": "sub", "parent": "infrastructure"},
+    "rdna_sub_irr": {"id": "irrigation", "kind": "sub", "parent": "infrastructure"},
+    "rdna_sub_debris": {"id": "debris", "kind": "sub", "parent": "cross-cutting"},
+    "rdna_sub_drr": {"id": "drr", "kind": "sub", "parent": "cross-cutting"},
+    "rdna_sub_incl": {"id": "inclusive-recovery", "kind": "sub", "parent": "cross-cutting"},
+    "rdna_total": {"id": "total", "kind": "total"},
+}
+
+RDNA_KPI_FOR: dict[str, str] = {
+    "rdna_kpi_effects": "effects",
+    "rdna_kpi_recovery": "recovery",
+    "rdna_kpi_damage": "damage",
+    "rdna_kpi_loss": "losses",
+}
+
+RDNA_HH_FOR: dict[str, str] = {
+    "rdna_hh_bldg": "buildings",
+    "rdna_hh_hh": "households",
+    "rdna_hh_pop": "population",
 }
 
 KPI_FOR: dict[str, dict[str, str]] = {
@@ -215,13 +262,38 @@ def _label_for(dict_: dict[str, Any], key: str, fallback_ne: str | None) -> dict
     return {"label_en": en or ne, "label_ne": ne or en}
 
 
-def plants_table_html(html: str) -> str | None:
-    """The Copernicus class table.
+def _ems927_chunk(html: str) -> str | None:
+    marker = html.find('id="ems927"')
+    if marker == -1:
+        marker = html.find("id='ems927'")
+    return None if marker == -1 else html[marker:]
 
-    The first `table.plants` on the page, before the NEA plant list that reuses
-    the same class under #power.
+
+def _primary_aoi_kpi_html(html: str) -> str:
+    """KPI strip for AOI03 — the first Copernicus block inside #ems927."""
+    chunk = _ems927_chunk(html)
+    if not chunk:
+        return html
+    table = chunk.find('<table class="plants">')
+    return chunk[:table] if table != -1 else chunk
+
+
+def plants_table_html(html: str) -> str | None:
+    """The primary Copernicus class table.
+
+    The bulletin now lists three AOIs under #ems927; Atlas follows the first
+    table (AOI03 Vidur · GRA_MONIT01). The RDNA summary reuses `plants` in its
+    class list but not as the sole class; the NEA list under #power is excluded.
     """
-    power = html.find("id=\"power\"")
+    chunk = _ems927_chunk(html)
+    if chunk:
+        start = chunk.find('<table class="plants">')
+        if start != -1:
+            end = chunk.find("</table>", start)
+            if end != -1:
+                return chunk[start : end + len("</table>")]
+
+    power = html.find('id="power"')
     if power == -1:
         power = html.find("id='power'")
     chunk = html if power == -1 else html[:power]
@@ -297,7 +369,7 @@ def parse_copernicus_kpis(
 ) -> list[dict[str, Any]]:
     dict_ = dict_ or {"ne": {}, "en": {}}
     headline = []
-    for match in _KPI.finditer(html):
+    for match in _KPI.finditer(_primary_aoi_kpi_html(html)):
         spec = KPI_FOR.get(match.group(1))
         if not spec:
             continue
@@ -499,12 +571,202 @@ async def _list_copernicus_files() -> list[str]:
     ]
 
 
+_RDNA_ROW_KEY = re.compile(r'data-i18n="(rdna_(?:sec|sub|total)[^"]+)"')
+_RDNA_KPI = re.compile(
+    r'<div class="rdna-kpi[^"]*"[^>]*>([\s\S]*?)</div>',
+    re.I,
+)
+_RDNA_KPI_KEY = re.compile(r'data-i18n="(rdna_kpi_[^"]+)"')
+_RDNA_KPI_NUM = re.compile(r'<strong class="num">([^<]*)</strong>')
+_RDNA_KPI_USD = re.compile(r'class="cash-sub"[^>]*>([^<]*)')
+_RDNA_HH_TILE = re.compile(
+    r'<div class="rdna-hh-tile">([\s\S]*?)</div>',
+    re.I,
+)
+_RDNA_HH_KEY = re.compile(r'data-i18n="(rdna_hh_[^"]+)"')
+_RDNA_QS = re.compile(r'<ul class="rdna-qs">([\s\S]*?)</ul>', re.I)
+
+
+def _rdna_crore(raw: Any) -> float | None:
+    parsed = parse_damage_figure(raw)
+    if not parsed:
+        return None
+    return float(parsed["value"])
+
+
+def _rdna_usd_m(raw: Any) -> float | None:
+    text = ascii_digits(str(raw or ""))
+    match = re.search(r"(\d+(?:\.\d+)?)", text.replace(",", ""))
+    return float(match.group(1)) if match else None
+
+
+def rdna_table_html(html: str) -> str | None:
+    marker = html.find('id="rdna"')
+    if marker == -1:
+        marker = html.find("id='rdna'")
+    if marker == -1:
+        return None
+    chunk = html[marker:]
+    start = chunk.find('<table class="plants rdna-tbl">')
+    if start == -1:
+        start = chunk.find('<table class="rdna-tbl">')
+    if start == -1:
+        return None
+    end = chunk.find("</table>", start)
+    return None if end == -1 else chunk[start : end + len("</table>")]
+
+
+def parse_rdna_table(
+    html: str, dict_: dict[str, Any] | None = None
+) -> list[dict[str, Any]]:
+    """NPC–NDRRMA preliminary RDNA summary — damage, losses, recovery in crore."""
+    dict_ = dict_ or {"ne": {}, "en": {}}
+    table = rdna_table_html(html)
+    if not table:
+        return []
+
+    rows: list[dict[str, Any]] = []
+    for tr in _TR.finditer(table):
+        body = tr.group(1)
+        key_match = _RDNA_ROW_KEY.search(body)
+        if not key_match:
+            continue
+        spec = RDNA_ROW_FOR.get(key_match.group(1))
+        if not spec:
+            continue
+        cells = _TD.findall(body)
+        if not cells:
+            th_cells = re.findall(r"<th\b[^>]*>([\s\S]*?)</th>", body)
+            if len(th_cells) < 9:
+                continue
+            cells = th_cells[1:]
+        elif len(cells) >= 9:
+            cells = cells[1:]
+
+        if len(cells) < 8:
+            continue
+
+        damage = _rdna_crore(strip_tags(cells[0]))
+        losses = _rdna_crore(strip_tags(cells[1]))
+        effects = _rdna_crore(strip_tags(cells[2]))
+        effects_usd = _rdna_usd_m(strip_tags(cells[3]))
+        short_cr = _rdna_crore(strip_tags(cells[4]))
+        long_cr = _rdna_crore(strip_tags(cells[5]))
+        recovery = _rdna_crore(strip_tags(cells[6]))
+        recovery_usd = _rdna_usd_m(strip_tags(cells[7]))
+
+        row: dict[str, Any] = {
+            "id": spec["id"],
+            "kind": spec["kind"],
+            **_label_for(dict_, key_match.group(1), None),
+            "damage_cr": damage,
+            "losses_cr": losses,
+            "effects_cr": effects,
+            "effects_usd_m": effects_usd,
+            "short_cr": short_cr,
+            "long_cr": long_cr,
+            "recovery_cr": recovery,
+            "recovery_usd_m": recovery_usd,
+        }
+        if spec.get("parent"):
+            row["parent"] = spec["parent"]
+        rows.append(row)
+    return rows
+
+
+def parse_rdna_kpis(
+    html: str, dict_: dict[str, Any] | None = None
+) -> list[dict[str, Any]]:
+    dict_ = dict_ or {"ne": {}, "en": {}}
+    marker = html.find('id="rdna"')
+    if marker == -1:
+        return []
+    chunk = html[marker:html.find('id="ems927"', marker)]
+    headline: list[dict[str, Any]] = []
+    for block in _RDNA_KPI.finditer(chunk):
+        body = block.group(1)
+        key_match = _RDNA_KPI_KEY.search(body)
+        num_match = _RDNA_KPI_NUM.search(body)
+        if not key_match or not num_match:
+            continue
+        kpi_id = RDNA_KPI_FOR.get(key_match.group(1))
+        if not kpi_id:
+            continue
+        parsed = parse_damage_figure(num_match.group(1))
+        if not parsed:
+            continue
+        usd_match = _RDNA_KPI_USD.search(body)
+        labels = _label_for(dict_, key_match.group(1), None)
+        item: dict[str, Any] = {
+            "id": kpi_id,
+            "value_cr": parsed["value"],
+            "label_en": labels["label_en"],
+            "label_ne": labels["label_ne"],
+        }
+        if usd_match:
+            item["usd_m"] = _rdna_usd_m(usd_match.group(1))
+        headline.append(item)
+    return headline
+
+
+def parse_rdna_corridor(
+    html: str, dict_: dict[str, Any] | None = None
+) -> list[dict[str, Any]]:
+    """Household corridor totals and the quick-stats list under the RDNA board."""
+    dict_ = dict_ or {"ne": {}, "en": {}}
+    marker = html.find('id="rdna"')
+    if marker == -1:
+        return []
+    chunk = html[marker:html.find('id="ems927"', marker)]
+    stats: list[dict[str, Any]] = []
+
+    for tile in _RDNA_HH_TILE.finditer(chunk):
+        body = tile.group(1)
+        key_match = _RDNA_HH_KEY.search(body)
+        num_match = _RDNA_KPI_NUM.search(body)
+        if not key_match or not num_match:
+            continue
+        stat_id = RDNA_HH_FOR.get(key_match.group(1))
+        if not stat_id:
+            continue
+        parsed = parse_damage_figure(num_match.group(1))
+        if not parsed:
+            continue
+        labels = _label_for(dict_, key_match.group(1), None)
+        item: dict[str, Any] = {
+            "id": stat_id,
+            "value": parsed["value"],
+            "label_en": labels["label_en"],
+            "label_ne": labels["label_ne"],
+        }
+        if parsed.get("approximate"):
+            item["approximate"] = True
+        stats.append(item)
+
+    qs_match = _RDNA_QS.search(chunk)
+    if qs_match:
+        for li in re.finditer(r"<li\b[^>]*>([\s\S]*?)</li>", qs_match.group(1)):
+            body = li.group(1)
+            key_match = re.search(r'data-i18n="(rdna_qs_[^"]+)"', body)
+            text = strip_tags(body)
+            if not text:
+                continue
+            item: dict[str, Any] = {"id": key_match.group(1) if key_match else text[:24], "text_en": text, "text_ne": text}
+            if key_match:
+                labels = _label_for(dict_, key_match.group(1), text)
+                item["text_en"] = labels["label_en"] or text
+                item["text_ne"] = labels["label_ne"] or text
+            stats.append(item)
+    return stats
+
+
 def _empty(error: str, fetched_at: str) -> dict[str, Any]:
     return {
         "rows": [],
         "headline": [],
         "maps": [],
         "photos": [],
+        "rdna": {"headline": [], "rows": [], "corridor": []},
         "asOfLabelEn": None,
         "asOfLabelNe": None,
         "error": error,
@@ -514,8 +776,8 @@ def _empty(error: str, fetched_at: str) -> dict[str, Any]:
 
 
 async def get_bulletin_damage() -> dict[str, Any]:
-    """The EMSR927 AOI01 table as the bulletin currently states it, plus the
-    grading maps and the Syabrubesi / Timure photographs it hosts."""
+    """Copernicus EMSR927 (primary AOI), RDNA preliminary summary, grading maps,
+    and Syabrubesi / Timure photographs as the bulletin currently states them."""
     fetched_at = now_iso()
     try:
         stamp = int(time.time() * 1000)
@@ -549,8 +811,11 @@ async def get_bulletin_damage() -> dict[str, Any]:
         dict_ = parse_i18n(i18n)
         rows = parse_copernicus_table(html, dict_)
         headline = parse_copernicus_kpis(html, dict_)
-        if not rows:
-            raise RuntimeError("no Copernicus table found — the bulletin markup has moved")
+        rdna_rows = parse_rdna_table(html, dict_)
+        rdna_headline = parse_rdna_kpis(html, dict_)
+        rdna_corridor = parse_rdna_corridor(html, dict_)
+        if not rows and not rdna_rows:
+            raise RuntimeError("no damage tables found — the bulletin markup has moved")
 
         photos_page = photos_html if isinstance(photos_html, str) else ""
         maps = collect_copernicus_maps(
@@ -568,6 +833,11 @@ async def get_bulletin_damage() -> dict[str, Any]:
             "headline": headline,
             "maps": maps,
             "photos": parse_aoi_photos(photos_page),
+            "rdna": {
+                "headline": rdna_headline,
+                "rows": rdna_rows,
+                "corridor": rdna_corridor,
+            },
             "asOfLabelEn": dateline("en"),
             "asOfLabelNe": dateline("ne"),
             "error": None,

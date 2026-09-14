@@ -1272,6 +1272,33 @@ export interface SitrepDiscrepancy {
  * `affected` is the published total for the class, not a re-sum. 433 is all
  * buildings; 392 is residential inside that — they are never added.
  */
+export interface RdnaSummaryRow extends Bilingual<'label'> {
+  id: string;
+  kind: 'sector' | 'sub' | 'total';
+  parent?: string;
+  damage_cr?: number | null;
+  losses_cr?: number | null;
+  effects_cr?: number | null;
+  effects_usd_m?: number | null;
+  short_cr?: number | null;
+  long_cr?: number | null;
+  recovery_cr?: number | null;
+  recovery_usd_m?: number | null;
+}
+
+export interface RdnaHeadline extends Bilingual<'label'> {
+  id: 'effects' | 'recovery' | 'damage' | 'losses';
+  value_cr: number;
+  usd_m?: number | null;
+}
+
+export interface RdnaCorridorStat extends Bilingual<'label'>, Bilingual<'detail'>, Bilingual<'text'> {
+  id: string;
+  value?: number | null;
+  suffix?: string;
+  approximate?: boolean;
+}
+
 export interface DamageGradeRow extends Bilingual<'label'>, Bilingual<'unit'> {
   id: string;
   group: 'hazard' | 'people' | 'buildings' | 'transport' | 'facilities' | 'landcover';
@@ -1312,16 +1339,27 @@ export interface DamageImage extends Bilingual<'caption'> {
 }
 
 /**
- * Copernicus EMSR927 Syapru Besi grading and the NEA 10 Bhadra notice.
+ * Copernicus EMSR927 grading, NPC–NDRRMA RDNA preliminary, and NEA notice.
  *
- * The bulletin compilation is scraped for the Copernicus table; the NEA
- * plants stay reviewed — that notice does not move every cycle.
+ * Copernicus and RDNA tables are scraped from the bulletin compilation; NEA
+ * plants stay reviewed. RDNA is not merged into casualty KPIs or relief cash.
  */
 export interface FloodDamageContent {
   as_of?: string;
   as_of_label_en?: string;
   as_of_label_ne?: string;
   sources?: SourceRef[];
+  rdna?: {
+    title_en?: string;
+    title_ne?: string;
+    lead_en?: string;
+    lead_ne?: string;
+    note_en?: string;
+    note_ne?: string;
+    headline?: RdnaHeadline[];
+    rows?: RdnaSummaryRow[];
+    corridor?: RdnaCorridorStat[];
+  };
   copernicus?: {
     title_en?: string;
     title_ne?: string;
@@ -1366,6 +1404,11 @@ export interface BulletinDamage {
   headline: SitrepHeadline[];
   maps?: DamageImage[];
   photos?: DamageImage[];
+  rdna?: {
+    headline: RdnaHeadline[];
+    rows: RdnaSummaryRow[];
+    corridor: RdnaCorridorStat[];
+  };
   asOfLabelEn: string | null;
   asOfLabelNe: string | null;
   error: string | null;

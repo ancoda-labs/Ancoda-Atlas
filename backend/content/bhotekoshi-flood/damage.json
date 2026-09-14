@@ -1,23 +1,38 @@
 {
   "id": "damage",
-  "_comment": "Copernicus EMS Rapid Mapping EMSR927 AOI01 Syapru Besi / Timure grading, and the Nepal Electricity Authority 10 Bhadra notice. The bulletin at nirajbhusal.github.io is someone else's compilation; Copernicus and NEA are the sources. Two rules: (1) 433 is all buildings, 392 is residential inside that — never add them; (2) the ~450 people in the AOI are not added to the uncontacted total of about 5,326, and the 133+ NEA hydropower workers are not added to it either — the 19 Bhadra 18:30 board stopped publishing the hydropower row, which stood at 900 on 17 Bhadra. Langtang 60 is inside the 133+, not on top of it. lib/damage-merge.ts overlays a live scrape of the bulletin's EMSR927 table only when the building arithmetic still closes. Maps are the bulletin's reprinted EMSR927 product images; photograph lat/lon are flood-path place pins from the caption, not GPS.",
-  "as_of": "2026-08-27T05:05:00Z",
-  "as_of_label_en": "27 Aug 2026, 05:05 UTC (Copernicus EMSR927 AOI01 v1) · NEA notice 10 Bhadra",
-  "as_of_label_ne": "२७ अगस्ट २०२६, ०५:०५ UTC (कोपर्निकस EMSR927 AOI01 v1) · प्राधिकरण सूचना १० भदौ",
+  "_comment": "Copernicus EMSR927 AOI03 Vidur (GRA_MONIT01, primary), NPC–NDRRMA RDNA preliminary, and NEA 10 Bhadra notice. RDNA figures stay on the damage desk only — not merged into NDRRMA casualty KPIs or relief cash. Copernicus 3,058 is all buildings, 3,001 residential inside that — never add them. lib/damage-merge.ts overlays live scrapes when arithmetic closes.",
+  "as_of": "2026-09-14T08:00:00Z",
+  "as_of_label_en": "14 Sep 2026 (RDNA 28 Bhadra · Copernicus EMSR927 AOI03 · NEA 10 Bhadra)",
+  "as_of_label_ne": "१४ सेप्टेम्बर २०२६ (RDNA २८ भदौ · कोपर्निकस EMSR927 AOI03 · प्राधिकरण १० भदौ)",
   "sources": [
-    { "label": "Copernicus EMS Rapid Mapping EMSR927", "url": "https://mapping.emergency.copernicus.eu/activations/EMSR927/" },
-    { "label": "Rasuwa flood bulletin (compilation)", "url": "https://nirajbhusal.github.io/rasuwa-flood-bulletin/damage.html" },
-    { "label": "Nepal Electricity Authority", "url": "https://www.nea.org.np" },
-    { "label": "NEA via Ratopati (133+ uncontacted)", "url": "https://www.ratopati.com/story/587664/more-than-133-hydropower-employees-and-workers-left-without-contact-in-rasuwa-flood" }
+    {
+      "label": "Copernicus EMS Rapid Mapping EMSR927",
+      "url": "https://mapping.emergency.copernicus.eu/activations/EMSR927/"
+    },
+    {
+      "label": "NPC–NDRRMA preliminary RDNA",
+      "url": "https://nirajbhusal.github.io/rasuwa-flood-bulletin/damage.html#rdna"
+    },
+    {
+      "label": "Rasuwa flood bulletin (compilation)",
+      "url": "https://nirajbhusal.github.io/rasuwa-flood-bulletin/damage.html"
+    },
+    {
+      "label": "Nepal Electricity Authority",
+      "url": "https://www.nea.org.np"
+    },
+    {
+      "label": "NEA via Ratopati (133+ uncontacted)",
+      "url": "https://www.ratopati.com/story/587664/more-than-133-hydropower-employees-and-workers-left-without-contact-in-rasuwa-flood"
+    }
   ],
-
   "copernicus": {
-    "title_en": "Syabrubesi and the Trishuli corridor",
-    "title_ne": "स्याफ्रुबेँसी र त्रिशूली करिडोर",
-    "lead_en": "EMSR927 AOI01 · 27 Aug 2026, 05:05 UTC · ITHACA / SERTIT · GLIDE FF-2026-000162-NPL · Charter 1052 · v1",
-    "lead_ne": "EMSR927 AOI01 · २७ अगस्ट २०२६, ०५:०५ UTC · ITHACA / SERTIT · GLIDE FF-2026-000162-NPL · Charter 1052 · v1",
-    "note_en": "Satellite visual interpretation, not a police or NDRRMA sitrep. Not added to deaths, injured, uncontacted (about 5,326) or rescued. Do not add the ~450 people in this map onto the uncontacted figure. Possibly damaged is a proximity proxy, not a confirmed count.",
-    "note_ne": "उपग्रह दृश्य व्याख्या, प्रहरी वा एनडीआरआरएमए सिटरेप होइन। मृत्यु, घाइते, सम्पर्कविहीन (करिब ५,०८३) वा उद्धारमाथि जोडिँदैन। यो नक्साका करिब ४५० लाई सम्पर्कविहीनमा नजोड्नुहोस्। सम्भावित क्षति निकटताको प्रॉक्सी हो, पुष्टि होइन।",
+    "title_en": "Vidur and the Trishuli corridor",
+    "title_ne": "विदुर र त्रिशूली करिडोर",
+    "lead_en": "EMSR927 AOI03 · GRA_MONIT01 · Monitoring 1 · 31 Aug 2026 · ITHACA / SERTIT · GLIDE FF-2026-000162-NPL",
+    "lead_ne": "EMSR927 AOI03 · GRA_MONIT01 · Monitoring 1 · ३१ अगस्ट २०२६ · ITHACA / SERTIT · GLIDE FF-2026-000162-NPL",
+    "note_en": "Satellite visual interpretation, not a police or NDRRMA sitrep. Not added to deaths, injured, uncontacted or rescued. ~5,000 people in this map are not added to the uncontacted total. Possibly damaged is a proximity proxy, not a confirmed count.",
+    "note_ne": "उपग्रह दृश्य व्याख्या, प्रहरी वा एनडीआरआरएमए सिटरेप होइन। मृत्यु, घाइते, सम्पर्कविहीन वा उद्धारमा जोडिँदैन। यो नक्साका करिब ५,००० लाई सम्पर्कविहीनमा नजोड्नुहोस्। सम्भावित क्षति निकटताको प्रॉक्सी हो।",
     "portal_url": "https://mapping.emergency.copernicus.eu/activations/EMSR927/",
     "maps": [
       {
@@ -92,39 +107,320 @@
       }
     ],
     "headline": [
-      { "id": "landslide", "value": 111.1, "tone": "critical", "label_en": "Landslide / flood area", "label_ne": "पहिरो / बाढी क्षेत्र", "source": "EMSR927", "unit_en": "ha", "unit_ne": "हे" },
-      { "id": "population", "value": 450, "tone": "warning", "label_en": "People in the mapped area", "label_ne": "नक्सा क्षेत्रका व्यक्ति", "source": "EMSR927", "approximate": true },
-      { "id": "buildings", "value": 433, "tone": "critical", "label_en": "Buildings affected", "label_ne": "प्रभावित भवन", "source": "EMSR927" },
-      { "id": "residential", "value": 392, "tone": "critical", "label_en": "Residential, inside the 433", "label_ne": "आवासीय, ४३३ भित्र", "source": "EMSR927" },
-      { "id": "road", "value": 7.6, "tone": "warning", "label_en": "Road affected", "label_ne": "प्रभावित सडक", "source": "EMSR927", "unit_en": "km", "unit_ne": "कि.मी." },
-      { "id": "bridges", "value": 5, "tone": "critical", "label_en": "Bridges destroyed, of 5 in the AOI", "label_ne": "ध्वस्त पुल, AOI का ५ मध्ये", "source": "EMSR927" },
-      { "id": "power", "value": 0.8, "tone": "critical", "label_en": "Power plant constructions", "label_ne": "विद्युत आयोजना संरचना", "source": "EMSR927", "unit_en": "ha", "unit_ne": "हे" },
-      { "id": "helipad", "value": 0.01, "tone": "warning", "label_en": "Helipad destroyed", "label_ne": "ध्वस्त हेलिप्याड", "source": "EMSR927", "unit_en": "ha", "unit_ne": "हे" }
+      {
+        "id": "landslide",
+        "value": 701.5,
+        "tone": "critical",
+        "label_en": "Landslide / flood area",
+        "label_ne": "पहिरो / बाढी क्षेत्र",
+        "source": "EMSR927",
+        "unit_en": "ha",
+        "unit_ne": "हे"
+      },
+      {
+        "id": "population",
+        "value": 5000,
+        "tone": "warning",
+        "label_en": "People in the mapped area",
+        "label_ne": "नक्सा क्षेत्रका व्यक्ति",
+        "source": "EMSR927",
+        "approximate": true
+      },
+      {
+        "id": "buildings",
+        "value": 3058,
+        "tone": "critical",
+        "label_en": "Buildings affected",
+        "label_ne": "प्रभावित भवन",
+        "source": "EMSR927"
+      },
+      {
+        "id": "residential",
+        "value": 3001,
+        "tone": "critical",
+        "label_en": "Residential, inside the 3,058",
+        "label_ne": "आवासीय, ३,०५८ भित्र",
+        "source": "EMSR927"
+      },
+      {
+        "id": "road",
+        "value": 49.8,
+        "tone": "warning",
+        "label_en": "Road affected",
+        "label_ne": "प्रभावित सडक",
+        "source": "EMSR927",
+        "unit_en": "km",
+        "unit_ne": "कि.मी."
+      },
+      {
+        "id": "bridges",
+        "value": 26,
+        "tone": "critical",
+        "label_en": "Bridges destroyed, of 26 in the AOI",
+        "label_ne": "ध्वस्त पुल, AOI का २६ मध्ये",
+        "source": "EMSR927"
+      },
+      {
+        "id": "power",
+        "value": 27,
+        "tone": "critical",
+        "label_en": "Power plant area",
+        "label_ne": "विद्युत आयोजना क्षेत्र",
+        "source": "EMSR927",
+        "unit_en": "ha",
+        "unit_ne": "हे"
+      },
+      {
+        "id": "helipad",
+        "value": 2,
+        "tone": "warning",
+        "label_en": "Helipad destroyed",
+        "label_ne": "ध्वस्त हेलिप्याड",
+        "source": "EMSR927",
+        "unit_en": "ha",
+        "unit_ne": "हे"
+      }
     ],
     "rows": [
-      { "id": "landslide", "group": "hazard", "label_en": "Landslide", "label_ne": "पहिरो", "destroyed": 111.1, "affected": 111.1, "unit_en": "ha", "unit_ne": "हे" },
-      { "id": "population", "group": "people", "label_en": "Population", "label_ne": "जनसंख्या", "affected": 450, "aoi": 750, "share": "60%", "approximate": true },
-      { "id": "residential", "group": "buildings", "label_en": "Residential buildings", "label_ne": "आवासीय भवन", "destroyed": 283, "damaged": 31, "possible": 78, "affected": 392, "aoi": 517, "share": "75.8%" },
-      { "id": "institutional", "group": "buildings", "label_en": "Institutional", "label_ne": "संस्थागत", "destroyed": 1, "damaged": 0, "possible": 0, "affected": 1, "aoi": 1, "share": "100%" },
-      { "id": "school", "group": "buildings", "label_en": "School / university", "label_ne": "विद्यालय/विश्वविद्यालय", "destroyed": 0, "damaged": 1, "possible": 0, "affected": 1, "aoi": 1, "share": "100%" },
-      { "id": "other-nonres", "group": "buildings", "label_en": "Other non-residential", "label_ne": "अन्य गैर-आवासीय", "destroyed": 37, "damaged": 0, "possible": 0, "affected": 37, "aoi": 38, "share": "97.4%" },
-      { "id": "religious", "group": "buildings", "label_en": "Religious", "label_ne": "धार्मिक", "destroyed": 2, "damaged": 0, "possible": 0, "affected": 2, "aoi": 2, "share": "100%" },
-      { "id": "all-buildings", "group": "buildings", "label_en": "All buildings (sum)", "label_ne": "सबै भवन (योग)", "destroyed": 323, "damaged": 32, "possible": 78, "affected": 433, "aoi": 559, "share": "77.5%" },
-      { "id": "primary-road", "group": "transport", "label_en": "Primary road", "label_ne": "प्राथमिक सडक", "destroyed": 4.7, "damaged": 0, "possible": 0.7, "affected": 5.4, "aoi": 5.4, "share": "100%", "unit_en": "km", "unit_ne": "कि.मी." },
-      { "id": "local-road", "group": "transport", "label_en": "Local road", "label_ne": "स्थानीय सडक", "destroyed": 0.4, "damaged": 0, "possible": 0.6, "affected": 1.1, "aoi": 3.3, "share": "33.3%", "unit_en": "km", "unit_ne": "कि.मी." },
-      { "id": "cart-track", "group": "transport", "label_en": "Cart track", "label_ne": "गाडा बाटो", "destroyed": 1.0, "damaged": 0, "possible": 0.1, "affected": 1.1, "aoi": 2.8, "share": "39.3%", "unit_en": "km", "unit_ne": "कि.मी." },
-      { "id": "bridges", "group": "transport", "label_en": "Bridges and elevated highways", "label_ne": "पुल तथा एलिभेटेड राजमार्ग", "destroyed": 5, "damaged": 0, "possible": 0, "affected": 5, "aoi": 5, "share": "100%" },
-      { "id": "helipad", "group": "transport", "label_en": "Helipad", "label_ne": "हेलिप्याड", "destroyed": 0.01, "damaged": 0, "possible": 0, "affected": 0.01, "aoi": 0.01, "share": "100%", "unit_en": "ha", "unit_ne": "हे" },
-      { "id": "power-plant", "group": "facilities", "label_en": "Power plant constructions", "label_ne": "विद्युत आयोजना संरचना", "destroyed": 0.8, "damaged": 0, "possible": 0, "affected": 0.8, "aoi": 0.8, "share": "100%", "unit_en": "ha", "unit_ne": "हे" },
-      { "id": "wetland", "group": "landcover", "label_en": "Inland wetlands", "label_ne": "आन्तरिक सिमसार", "affected": 12.1, "aoi": 14.6, "share": "82.9%", "unit_en": "ha", "unit_ne": "हे" },
-      { "id": "other-landuse", "group": "landcover", "label_en": "Other land use", "label_ne": "अन्य भू-उपयोग", "affected": 3.4, "aoi": 4.3, "share": "79.1%", "unit_en": "ha", "unit_ne": "हे" },
-      { "id": "agriculture", "group": "landcover", "label_en": "Mixed agriculture", "label_ne": "मिश्रित कृषि", "affected": 2.1, "aoi": 5.1, "share": "41.2%", "unit_en": "ha", "unit_ne": "हे" },
-      { "id": "shrub", "group": "landcover", "label_en": "Shrub", "label_ne": "झाडी", "affected": 31.8, "aoi": 93.1, "share": "34.2%", "unit_en": "ha", "unit_ne": "हे" },
-      { "id": "forest", "group": "landcover", "label_en": "Forests", "label_ne": "वन", "affected": 61.6, "aoi": 228.8, "share": "26.9%", "unit_en": "ha", "unit_ne": "हे" },
-      { "id": "all-landcover", "group": "landcover", "label_en": "All land cover (sum)", "label_ne": "सबै भू-आवरण (योग)", "affected": 111.0, "aoi": 345.9, "share": "32.1%", "unit_en": "ha", "unit_ne": "हे" }
+      {
+        "id": "landslide",
+        "group": "hazard",
+        "label_en": "Landslide",
+        "label_ne": "पहिरो",
+        "destroyed": 701.5,
+        "affected": 701.5,
+        "unit_en": "ha",
+        "unit_ne": "हे"
+      },
+      {
+        "id": "population",
+        "group": "people",
+        "label_en": "Population",
+        "label_ne": "जनसंख्या",
+        "affected": 5000,
+        "aoi": 25000,
+        "share": "20%",
+        "approximate": true
+      },
+      {
+        "id": "residential",
+        "group": "buildings",
+        "label_en": "Residential buildings",
+        "label_ne": "आवासीय भवन",
+        "destroyed": 2447,
+        "damaged": 245,
+        "possible": 309,
+        "affected": 3001,
+        "aoi": 11429,
+        "share": "26.3%"
+      },
+      {
+        "id": "commercial",
+        "group": "buildings",
+        "label_en": "Commercial / corridor buildings",
+        "label_ne": "व्यावसायिक / करिडोर भवन",
+        "destroyed": 5,
+        "damaged": 0,
+        "possible": 24,
+        "affected": 29,
+        "aoi": 29,
+        "share": "100%"
+      },
+      {
+        "id": "other-nonres",
+        "group": "buildings",
+        "label_en": "Other non-residential",
+        "label_ne": "अन्य गैर-आवासीय",
+        "destroyed": 27,
+        "damaged": 1,
+        "possible": 0,
+        "affected": 28,
+        "aoi": 28,
+        "share": "100%"
+      },
+      {
+        "id": "all-buildings",
+        "group": "buildings",
+        "label_en": "All buildings (sum)",
+        "label_ne": "सबै भवन (योग)",
+        "destroyed": 2479,
+        "damaged": 246,
+        "possible": 333,
+        "affected": 3058,
+        "aoi": 11486,
+        "share": "26.6%"
+      },
+      {
+        "id": "cart-track",
+        "group": "transport",
+        "label_en": "Cart track",
+        "label_ne": "गाडा बाटो",
+        "affected": 37.1,
+        "aoi": 96.3,
+        "share": "38.5%",
+        "unit_en": "km",
+        "unit_ne": "कि.मी."
+      },
+      {
+        "id": "local-road",
+        "group": "transport",
+        "label_en": "Local road",
+        "label_ne": "स्थानीय सडक",
+        "affected": 6.1,
+        "aoi": 19.6,
+        "share": "31.1%",
+        "unit_en": "km",
+        "unit_ne": "कि.मी."
+      },
+      {
+        "id": "primary-road",
+        "group": "transport",
+        "label_en": "Primary road",
+        "label_ne": "प्राथमिक सडक",
+        "affected": 6.6,
+        "aoi": 16.1,
+        "share": "41.0%",
+        "unit_en": "km",
+        "unit_ne": "कि.मी."
+      },
+      {
+        "id": "bridges",
+        "group": "transport",
+        "label_en": "Bridges",
+        "label_ne": "पुल",
+        "destroyed": 24,
+        "damaged": 0,
+        "possible": 2,
+        "affected": 26,
+        "aoi": 26,
+        "share": "100%"
+      },
+      {
+        "id": "helipad",
+        "group": "transport",
+        "label_en": "Helipad",
+        "label_ne": "हेलिप्याड",
+        "destroyed": 2,
+        "damaged": 0,
+        "possible": 0,
+        "affected": 2,
+        "aoi": 2,
+        "share": "100%",
+        "unit_en": "ha",
+        "unit_ne": "हे"
+      },
+      {
+        "id": "power-plant",
+        "group": "facilities",
+        "label_en": "Power plant constructions",
+        "label_ne": "विद्युत आयोजना",
+        "affected": 27,
+        "aoi": 31.9,
+        "share": "84.6%",
+        "unit_en": "ha",
+        "unit_ne": "हे"
+      },
+      {
+        "id": "dams",
+        "group": "facilities",
+        "label_en": "Dams",
+        "label_ne": "बाँध",
+        "affected": 0.3,
+        "aoi": 0.3,
+        "share": "100%",
+        "unit_en": "ha",
+        "unit_ne": "हे"
+      },
+      {
+        "id": "aquaculture",
+        "group": "facilities",
+        "label_en": "Aquaculture",
+        "label_ne": "मत्स्य पालन",
+        "affected": 0.2,
+        "aoi": 0.2,
+        "share": "100%",
+        "unit_en": "ha",
+        "unit_ne": "हे"
+      },
+      {
+        "id": "heavy-industry",
+        "group": "facilities",
+        "label_en": "Heavy industry",
+        "label_ne": "ठूलो उद्योग",
+        "affected": 0.5,
+        "aoi": 0.5,
+        "share": "100%",
+        "unit_en": "ha",
+        "unit_ne": "हे"
+      },
+      {
+        "id": "civil-works",
+        "group": "facilities",
+        "label_en": "Civil works",
+        "label_ne": "सिभिल कार्य",
+        "affected": 5.9,
+        "aoi": 5.9,
+        "share": "100%",
+        "unit_en": "ha",
+        "unit_ne": "हे"
+      },
+      {
+        "id": "forest",
+        "group": "landcover",
+        "label_en": "Forests",
+        "label_ne": "वन",
+        "affected": 244.4,
+        "aoi": 729,
+        "share": "33.5%",
+        "unit_en": "ha",
+        "unit_ne": "हे"
+      },
+      {
+        "id": "agriculture",
+        "group": "landcover",
+        "label_en": "Agriculture",
+        "label_ne": "कृषि",
+        "affected": 313,
+        "aoi": 1132.5,
+        "share": "27.6%",
+        "unit_en": "ha",
+        "unit_ne": "हे"
+      },
+      {
+        "id": "wetland",
+        "group": "landcover",
+        "label_en": "Wetlands",
+        "label_ne": "सिमसार",
+        "affected": 72.1,
+        "aoi": 84.7,
+        "share": "85.1%",
+        "unit_en": "ha",
+        "unit_ne": "हे"
+      },
+      {
+        "id": "shrub",
+        "group": "landcover",
+        "label_en": "Shrub",
+        "label_ne": "झाडी",
+        "affected": 45.3,
+        "aoi": 65.7,
+        "share": "68.9%",
+        "unit_en": "ha",
+        "unit_ne": "हे"
+      },
+      {
+        "id": "other-landuse",
+        "group": "landcover",
+        "label_en": "Other land use",
+        "label_ne": "अन्य भू-उपयोग",
+        "affected": 26.7,
+        "aoi": 100.2,
+        "share": "26.6%",
+        "unit_en": "ha",
+        "unit_ne": "हे"
+      }
     ]
   },
-
   "power": {
     "title_en": "Power · NEA urgent notice",
     "title_ne": "विद्युत् · प्राधिकरण जरुरी सूचना",
@@ -136,20 +432,109 @@
     "affected_mw": 276,
     "foot_en": "Directly affected 276 MW. Trishuli 3B hub 220 kV substation also damaged. Blank-remarks plants are on the list, not marked hit.",
     "foot_ne": "प्रत्यक्ष प्रभावित २७६ मेगावाट। त्रिशूली ३बी हब २२० केभी सबस्टेशन पनि क्षति। खाली कैफियत भएका आयोजना सूचीमा छन्, प्रभावित भनेर चिन्हित छैनन्।",
-    "phones": ["014153007", "014153012"],
+    "phones": [
+      "014153007",
+      "014153012"
+    ],
     "plants": [
-      { "id": "rasuwagadhi", "name_en": "Rasuwagadhi", "name_ne": "रसुवागढी", "mw": 111, "hit": true, "remarks_en": "Directly affected · NEA subsidiary", "remarks_ne": "प्रत्यक्ष प्रभावित · प्राधिकरण सहायक" },
-      { "id": "salasungi", "name_en": "Salasungi (Sanjen)", "name_ne": "सालासुङगी (सञ्जेन)", "mw": 78, "hit": false },
-      { "id": "upper-sanjen", "name_en": "Upper Sanjen", "name_ne": "अपर सञ्जेन", "mw": 14.8, "hit": false },
-      { "id": "sanjen", "name_en": "Sanjen", "name_ne": "सञ्जेन", "mw": 42.5, "hit": false },
-      { "id": "chilime", "name_en": "Chilime", "name_ne": "चिलिमे", "mw": 22, "hit": true, "remarks_en": "Directly affected · NEA subsidiary", "remarks_ne": "प्रत्यक्ष प्रभावित · प्राधिकरण सहायक" },
-      { "id": "langtang", "name_en": "Langtang", "name_ne": "लाङटाङ", "mw": 20, "hit": true, "remarks_en": "Directly affected · IPP", "remarks_ne": "प्रत्यक्ष प्रभावित · आईपीपी" },
-      { "id": "trishuli-3a", "name_en": "Trishuli 3A", "name_ne": "त्रिशूली ३ए", "mw": 60, "hit": true, "remarks_en": "Directly affected · NEA", "remarks_ne": "प्रत्यक्ष प्रभावित · प्राधिकरण" },
-      { "id": "upper-mailung", "name_en": "Upper Mailung", "name_ne": "अपर मैलुङ", "mw": 14.8, "hit": false },
-      { "id": "mailung", "name_en": "Mailung", "name_ne": "मैलुङ", "mw": 5, "hit": false },
-      { "id": "trishuli", "name_en": "Trishuli", "name_ne": "त्रिशूली", "mw": 24, "hit": true, "remarks_en": "Directly affected · NEA", "remarks_ne": "प्रत्यक्ष प्रभावित · प्राधिकरण" },
-      { "id": "devighat", "name_en": "Devighat", "name_ne": "देवीघाट", "mw": 14, "hit": true, "remarks_en": "Directly affected · NEA", "remarks_ne": "प्रत्यक्ष प्रभावित · प्राधिकरण" },
-      { "id": "nea-solar", "name_en": "NEA Solar", "name_ne": "प्राधिकरण सोलार", "mw": 25, "hit": true, "remarks_en": "Directly affected · NEA", "remarks_ne": "प्रत्यक्ष प्रभावित · प्राधिकरण" }
+      {
+        "id": "rasuwagadhi",
+        "name_en": "Rasuwagadhi",
+        "name_ne": "रसुवागढी",
+        "mw": 111,
+        "hit": true,
+        "remarks_en": "Directly affected · NEA subsidiary",
+        "remarks_ne": "प्रत्यक्ष प्रभावित · प्राधिकरण सहायक"
+      },
+      {
+        "id": "salasungi",
+        "name_en": "Salasungi (Sanjen)",
+        "name_ne": "सालासुङगी (सञ्जेन)",
+        "mw": 78,
+        "hit": false
+      },
+      {
+        "id": "upper-sanjen",
+        "name_en": "Upper Sanjen",
+        "name_ne": "अपर सञ्जेन",
+        "mw": 14.8,
+        "hit": false
+      },
+      {
+        "id": "sanjen",
+        "name_en": "Sanjen",
+        "name_ne": "सञ्जेन",
+        "mw": 42.5,
+        "hit": false
+      },
+      {
+        "id": "chilime",
+        "name_en": "Chilime",
+        "name_ne": "चिलिमे",
+        "mw": 22,
+        "hit": true,
+        "remarks_en": "Directly affected · NEA subsidiary",
+        "remarks_ne": "प्रत्यक्ष प्रभावित · प्राधिकरण सहायक"
+      },
+      {
+        "id": "langtang",
+        "name_en": "Langtang",
+        "name_ne": "लाङटाङ",
+        "mw": 20,
+        "hit": true,
+        "remarks_en": "Directly affected · IPP",
+        "remarks_ne": "प्रत्यक्ष प्रभावित · आईपीपी"
+      },
+      {
+        "id": "trishuli-3a",
+        "name_en": "Trishuli 3A",
+        "name_ne": "त्रिशूली ३ए",
+        "mw": 60,
+        "hit": true,
+        "remarks_en": "Directly affected · NEA",
+        "remarks_ne": "प्रत्यक्ष प्रभावित · प्राधिकरण"
+      },
+      {
+        "id": "upper-mailung",
+        "name_en": "Upper Mailung",
+        "name_ne": "अपर मैलुङ",
+        "mw": 14.8,
+        "hit": false
+      },
+      {
+        "id": "mailung",
+        "name_en": "Mailung",
+        "name_ne": "मैलुङ",
+        "mw": 5,
+        "hit": false
+      },
+      {
+        "id": "trishuli",
+        "name_en": "Trishuli",
+        "name_ne": "त्रिशूली",
+        "mw": 24,
+        "hit": true,
+        "remarks_en": "Directly affected · NEA",
+        "remarks_ne": "प्रत्यक्ष प्रभावित · प्राधिकरण"
+      },
+      {
+        "id": "devighat",
+        "name_en": "Devighat",
+        "name_ne": "देवीघाट",
+        "mw": 14,
+        "hit": true,
+        "remarks_en": "Directly affected · NEA",
+        "remarks_ne": "प्रत्यक्ष प्रभावित · प्राधिकरण"
+      },
+      {
+        "id": "nea-solar",
+        "name_en": "NEA Solar",
+        "name_ne": "प्राधिकरण सोलार",
+        "mw": 25,
+        "hit": true,
+        "remarks_en": "Directly affected · NEA",
+        "remarks_ne": "प्रत्यक्ष प्रभावित · प्राधिकरण"
+      }
     ],
     "uncontacted": {
       "id": "nea-staff",
@@ -168,5 +553,448 @@
       "detail_en": "Inside the 133+, not on top of it. Unchanged.",
       "detail_ne": "१३३+ भित्र, माथि होइन। यथावत्।"
     }
+  },
+  "rdna": {
+    "title_en": "RDNA preliminary · corridor assessment",
+    "title_ne": "RDNA प्रारम्भिक · करिडोर मूल्यांकन",
+    "lead_en": "NPC–NDRRMA preliminary RDNA board, 28 Bhadra 2082. Chitwan, Dhading, Gorkha, Nuwakot, Rasuwa.",
+    "lead_ne": "NPC–NDRRMA प्रारम्भिक RDNA बोर्ड, २८ भदौ २०८२। चितवन, धादिङ, गोरखा, नुवाकोट, रसुवा।",
+    "note_en": "Disaster impact and recovery need in NPR crore (and USD millions where printed). Not merged into NDRRMA casualty KPIs, uncontacted, or relief cash channels.",
+    "note_ne": "विपद् प्रभाव र पुनर्प्राप्ति आवश्यकता NPR करोडमा (USD मिलियन जहाँ छापिएको)। NDRRMA casualty KPI, सम्पर्कविहीन वा राहत नगद च्यानलमा मिसाइएको छैन।",
+    "headline": [
+      {
+        "id": "effects",
+        "value_cr": 40828.91,
+        "usd_m": 2695.33,
+        "label_en": "Total disaster impact",
+        "label_ne": "कुल विपद् प्रभाव"
+      },
+      {
+        "id": "recovery",
+        "value_cr": 72331.52,
+        "usd_m": 4774.99,
+        "label_en": "Recovery need",
+        "label_ne": "पुनर्प्राप्ति आवश्यकता"
+      },
+      {
+        "id": "damage",
+        "value_cr": 27448.32,
+        "label_en": "Damage",
+        "label_ne": "क्षति"
+      },
+      {
+        "id": "losses",
+        "value_cr": 13380.58,
+        "label_en": "Losses",
+        "label_ne": "नोक्सानी"
+      }
+    ],
+    "corridor": [
+      {
+        "id": "buildings",
+        "value": 7570,
+        "label_en": "Buildings affected",
+        "label_ne": "प्रभावित भवन"
+      },
+      {
+        "id": "households",
+        "value": 8317,
+        "label_en": "Households affected",
+        "label_ne": "प्रभावित घरधुरी"
+      },
+      {
+        "id": "population",
+        "value": 32963,
+        "label_en": "Population affected",
+        "label_ne": "प्रभावित जनसंख्या",
+        "detail_en": "Male 16,769 · Female 16,192",
+        "detail_ne": "पुरुष १६,७६९ · महिला १६,१९२"
+      },
+      {
+        "id": "rdna_qs_private",
+        "text_en": "Private houses: 7,570 damaged",
+        "text_ne": "निजी घर: ७,५७० क्षति"
+      },
+      {
+        "id": "rdna_qs_public",
+        "text_en": "Public buildings: 48 (35 full · 13 partial)",
+        "text_ne": "सार्वजनिक भवन: ४८ (३५ पूर्ण · १३ आंशिक)"
+      },
+      {
+        "id": "rdna_qs_schools",
+        "text_en": "Schools: 18 (11 full · 7 partial)",
+        "text_ne": "विद्यालय: १८ (११ पूर्ण · ७ आंशिक)"
+      },
+      {
+        "id": "rdna_qs_health",
+        "text_en": "Health: 7 facilities (4 destroyed · 3 partial)",
+        "text_ne": "स्वास्थ्य: ७ सुविधा (४ ध्वस्त · ३ आंशिक)"
+      },
+      {
+        "id": "rdna_qs_culture",
+        "text_en": "Cultural heritage: ~30 sites",
+        "text_ne": "सांस्कृतिक सम्पदा: ~३० स्थल",
+        "approximate": true
+      },
+      {
+        "id": "rdna_qs_energy",
+        "text_en": "Energy: hydropower 13 · 759.025 MW · solar 5 · 24.36 MW",
+        "text_ne": "ऊर्जा: जलविद्युत् १३ · ७५९.०२५ MW · सौर्य ५ · २४.३६ MW"
+      },
+      {
+        "id": "rdna_qs_roads",
+        "text_en": "Roads: 69 km damaged",
+        "text_ne": "सडक: ६९ किमि क्षति"
+      },
+      {
+        "id": "rdna_qs_bridges",
+        "text_en": "Bridges: motorable 37 (33 washed) · suspension 68",
+        "text_ne": "पुल: मोटरेबल ३७ (३३ बगेको) · झोलुङ्गे ६८"
+      }
+    ],
+    "rows": [
+      {
+        "id": "social",
+        "kind": "sector",
+        "label_en": "Social sectors",
+        "label_ne": "सामाजिक क्षेत्र",
+        "damage_cr": 6785.1,
+        "losses_cr": 2.0,
+        "effects_cr": 6787.1,
+        "effects_usd_m": 448.05,
+        "short_cr": 82.8,
+        "long_cr": 10272.19,
+        "recovery_cr": 10354.99,
+        "recovery_usd_m": 683.59
+      },
+      {
+        "id": "private-buildings",
+        "kind": "sub",
+        "label_en": "1.1 Private buildings",
+        "label_ne": "१.१ निजी भवन",
+        "damage_cr": 6388.48,
+        "effects_cr": 6388.48,
+        "effects_usd_m": 421.74,
+        "short_cr": 48,
+        "long_cr": 9534.72,
+        "recovery_cr": 9582.72,
+        "recovery_usd_m": 632.61,
+        "parent": "social"
+      },
+      {
+        "id": "public-buildings",
+        "kind": "sub",
+        "label_en": "1.2 Public buildings",
+        "label_ne": "१.२ सार्वजनिक भवन",
+        "damage_cr": 264.59,
+        "effects_cr": 264.59,
+        "effects_usd_m": 17.47,
+        "short_cr": 11.8,
+        "long_cr": 411.55,
+        "recovery_cr": 423.35,
+        "recovery_usd_m": 27.95,
+        "parent": "social"
+      },
+      {
+        "id": "education",
+        "kind": "sub",
+        "label_en": "1.3 Education",
+        "label_ne": "१.३ शिक्षा",
+        "damage_cr": 93.73,
+        "effects_cr": 93.73,
+        "effects_usd_m": 6.19,
+        "short_cr": 10.5,
+        "long_cr": 223.82,
+        "recovery_cr": 234.32,
+        "recovery_usd_m": 15.47,
+        "parent": "social"
+      },
+      {
+        "id": "health",
+        "kind": "sub",
+        "label_en": "1.4 Health",
+        "label_ne": "१.४ स्वास्थ्य",
+        "damage_cr": 23.66,
+        "effects_cr": 23.66,
+        "effects_usd_m": 1.56,
+        "short_cr": 12.5,
+        "long_cr": 65.5,
+        "recovery_cr": 78,
+        "recovery_usd_m": 5.15,
+        "parent": "social"
+      },
+      {
+        "id": "cultural",
+        "kind": "sub",
+        "label_en": "1.5 Cultural heritage",
+        "label_ne": "१.५ सांस्कृतिक सम्पदा",
+        "damage_cr": 14.64,
+        "losses_cr": 2.0,
+        "effects_cr": 16.64,
+        "effects_usd_m": 1.1,
+        "long_cr": 36.6,
+        "recovery_cr": 36.6,
+        "recovery_usd_m": 2.42,
+        "parent": "social"
+      },
+      {
+        "id": "productive",
+        "kind": "sector",
+        "label_en": "Productive sectors",
+        "label_ne": "उत्पादनशील क्षेत्र",
+        "damage_cr": 3428.53,
+        "losses_cr": 11608.89,
+        "effects_cr": 15037.42,
+        "effects_usd_m": 992.7,
+        "short_cr": 50.4,
+        "long_cr": 5027.09,
+        "recovery_cr": 5077.49,
+        "recovery_usd_m": 335.19
+      },
+      {
+        "id": "agriculture",
+        "kind": "sub",
+        "label_en": "2.1 Agriculture",
+        "label_ne": "२.१ कृषि",
+        "damage_cr": 109.3,
+        "effects_cr": 109.3,
+        "effects_usd_m": 7.22,
+        "short_cr": 35,
+        "long_cr": 107.1,
+        "recovery_cr": 142.1,
+        "recovery_usd_m": 9.38,
+        "parent": "productive"
+      },
+      {
+        "id": "fisheries",
+        "kind": "sub",
+        "label_en": "2.2 Fisheries",
+        "label_ne": "२.२ मत्स्य",
+        "damage_cr": 71.59,
+        "effects_cr": 71.59,
+        "effects_usd_m": 4.73,
+        "short_cr": 0.4,
+        "long_cr": 106.99,
+        "recovery_cr": 107.39,
+        "recovery_usd_m": 7.09,
+        "parent": "productive"
+      },
+      {
+        "id": "livestock",
+        "kind": "sub",
+        "label_en": "2.3 Livestock",
+        "label_ne": "२.३ पशुपन्छी",
+        "damage_cr": 144.81,
+        "effects_cr": 144.81,
+        "effects_usd_m": 9.56,
+        "short_cr": 15,
+        "long_cr": 158.77,
+        "recovery_cr": 173.77,
+        "recovery_usd_m": 11.47,
+        "parent": "productive"
+      },
+      {
+        "id": "banking",
+        "kind": "sub",
+        "label_en": "2.4 Banking",
+        "label_ne": "२.४ बैंकिङ",
+        "damage_cr": 72.4,
+        "losses_cr": 19.59,
+        "effects_cr": 91.99,
+        "effects_usd_m": 6.07,
+        "long_cr": 108.6,
+        "recovery_cr": 108.6,
+        "recovery_usd_m": 7.17,
+        "parent": "productive"
+      },
+      {
+        "id": "livelihood",
+        "kind": "sub",
+        "label_en": "2.5 Economic activity / livelihood",
+        "label_ne": "२.५ आर्थिक गतिविधि",
+        "damage_cr": 3030.43,
+        "losses_cr": 11589.3,
+        "effects_cr": 14619.73,
+        "effects_usd_m": 965.13,
+        "long_cr": 4545.65,
+        "recovery_cr": 4545.65,
+        "recovery_usd_m": 300.08,
+        "parent": "productive"
+      },
+      {
+        "id": "infrastructure",
+        "kind": "sector",
+        "label_en": "Infrastructure sectors",
+        "label_ne": "पूर्वाधार क्षेत्र",
+        "damage_cr": 17234.69,
+        "losses_cr": 1769.69,
+        "effects_cr": 19004.39,
+        "effects_usd_m": 1254.58,
+        "short_cr": 674.3,
+        "long_cr": 46682.89,
+        "recovery_cr": 47357.19,
+        "recovery_usd_m": 3126.3
+      },
+      {
+        "id": "hydropower",
+        "kind": "sub",
+        "label_en": "3.1 Energy (hydropower)",
+        "label_ne": "३.१ ऊर्जा (जलविद्युत)",
+        "damage_cr": 13469.76,
+        "losses_cr": 1634.69,
+        "effects_cr": 15104.45,
+        "effects_usd_m": 997.13,
+        "short_cr": 105,
+        "long_cr": 38957.3,
+        "recovery_cr": 39062.3,
+        "recovery_usd_m": 2578.71,
+        "parent": "infrastructure"
+      },
+      {
+        "id": "household-renewables",
+        "kind": "sub",
+        "label_en": "3.2 Household renewables",
+        "label_ne": "३.२ घरायसी नवीकरणीय",
+        "damage_cr": 56.84,
+        "effects_cr": 56.84,
+        "effects_usd_m": 3.75,
+        "short_cr": 10,
+        "long_cr": 154.82,
+        "recovery_cr": 164.82,
+        "recovery_usd_m": 10.88,
+        "parent": "infrastructure"
+      },
+      {
+        "id": "roads",
+        "kind": "sub",
+        "label_en": "3.3 Roads",
+        "label_ne": "३.३ सडक",
+        "damage_cr": 2207.25,
+        "losses_cr": 135.0,
+        "effects_cr": 2342.25,
+        "effects_usd_m": 154.62,
+        "short_cr": 319,
+        "long_cr": 5199.13,
+        "recovery_cr": 5518.13,
+        "recovery_usd_m": 364.28,
+        "parent": "infrastructure"
+      },
+      {
+        "id": "bridges",
+        "kind": "sub",
+        "label_en": "3.4 Bridges",
+        "label_ne": "३.४ पुल",
+        "damage_cr": 1135.11,
+        "effects_cr": 1135.11,
+        "effects_usd_m": 74.93,
+        "short_cr": 155,
+        "long_cr": 1661.17,
+        "recovery_cr": 1816.17,
+        "recovery_usd_m": 119.9,
+        "parent": "infrastructure"
+      },
+      {
+        "id": "telecom",
+        "kind": "sub",
+        "label_en": "3.5 Telecom",
+        "label_ne": "३.५ दूरसञ्चार",
+        "damage_cr": 62.87,
+        "effects_cr": 62.87,
+        "effects_usd_m": 4.15,
+        "short_cr": 34,
+        "long_cr": 60.3,
+        "recovery_cr": 94.3,
+        "recovery_usd_m": 6.23,
+        "parent": "infrastructure"
+      },
+      {
+        "id": "wash",
+        "kind": "sub",
+        "label_en": "3.6 WASH",
+        "label_ne": "३.६ WASH",
+        "damage_cr": 138.11,
+        "effects_cr": 138.11,
+        "effects_usd_m": 9.12,
+        "short_cr": 51.3,
+        "long_cr": 155.86,
+        "recovery_cr": 207.16,
+        "recovery_usd_m": 13.68,
+        "parent": "infrastructure"
+      },
+      {
+        "id": "irrigation",
+        "kind": "sub",
+        "label_en": "3.7 Irrigation / river training",
+        "label_ne": "३.७ सिँचाइ / नदी",
+        "damage_cr": 164.77,
+        "effects_cr": 164.77,
+        "effects_usd_m": 10.88,
+        "long_cr": 494.3,
+        "recovery_cr": 494.3,
+        "recovery_usd_m": 32.63,
+        "parent": "infrastructure"
+      },
+      {
+        "id": "cross-cutting",
+        "kind": "sector",
+        "label_en": "Cross-cutting",
+        "label_ne": "क्रस-कटिङ",
+        "damage_cr": 0,
+        "losses_cr": 0,
+        "effects_cr": 0,
+        "effects_usd_m": 0,
+        "short_cr": 66.0,
+        "long_cr": 5121.34,
+        "recovery_cr": 5187.34,
+        "recovery_usd_m": 342.44
+      },
+      {
+        "id": "debris",
+        "kind": "sub",
+        "label_en": "4.1 Debris",
+        "label_ne": "४.१ मलबा",
+        "damage_cr": 0,
+        "short_cr": 16,
+        "long_cr": 35.54,
+        "recovery_cr": 51.54,
+        "recovery_usd_m": 3.4,
+        "parent": "cross-cutting"
+      },
+      {
+        "id": "drr",
+        "kind": "sub",
+        "label_en": "4.2 DRR",
+        "label_ne": "४.२ विपद् जोखिम",
+        "short_cr": 35,
+        "long_cr": 9440.31,
+        "recovery_cr": 9475.31,
+        "recovery_usd_m": 625.52,
+        "parent": "cross-cutting"
+      },
+      {
+        "id": "inclusive-recovery",
+        "kind": "sub",
+        "label_en": "4.3 Inclusive recovery",
+        "label_ne": "४.३ समावेशी पुनर्लाभ",
+        "short_cr": 15,
+        "recovery_cr": 15,
+        "recovery_usd_m": 0.99,
+        "parent": "cross-cutting"
+      },
+      {
+        "id": "total",
+        "kind": "total",
+        "label_en": "Total",
+        "label_ne": "जम्मा",
+        "damage_cr": 27448.32,
+        "losses_cr": 13380.58,
+        "effects_cr": 40828.91,
+        "effects_usd_m": 2695.33,
+        "short_cr": 873.5,
+        "long_cr": 71458.02,
+        "recovery_cr": 72331.52,
+        "recovery_usd_m": 4774.99
+      }
+    ]
   }
 }

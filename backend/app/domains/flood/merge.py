@@ -149,9 +149,6 @@ def merge_sitrep(
 
 # ─── Damage ──────────────────────────────────────────────────────────────────
 
-BUILDING_PARTS = ["residential", "institutional", "school", "other-nonres", "religious"]
-
-
 def _parts_of(row: dict[str, Any] | None) -> float | None:
     if not row or row.get("affected") is None:
         return None
@@ -181,8 +178,36 @@ def buildings_close(rows: list[dict[str, Any]] | None) -> bool:
         return False
     if _parts_of(res) != res["affected"]:
         return False
-    class_sum = sum((by_id.get(i) or {}).get("affected") or 0 for i in BUILDING_PARTS)
+    class_sum = sum(
+        r.get("affected") or 0
+        for r in rows
+        if r.get("group") == "buildings" and r.get("id") != "all-buildings"
+    )
     return class_sum == all_b["affected"]
+
+
+def _close(a: float | None, b: float | None, tol: float = 0.02) -> bool:
+    if a is None or b is None:
+        return False
+    return abs(a - b) <= tol
+
+
+def rdna_totals_close(rows: list[dict[str, Any]] | None) -> bool:
+    """Whether the RDNA summary total row still balances as the bulletin prints it."""
+    if not rows:
+        return False
+    total = next((r for r in rows if r.get("id") == "total"), None)
+    if not total:
+        return False
+    damage = total.get("damage_cr")
+    losses = total.get("losses_cr")
+    effects = total.get("effects_cr")
+    short_cr = total.get("short_cr")
+    long_cr = total.get("long_cr")
+    recovery = total.get("recovery_cr")
+    if not _close((damage or 0) + (losses or 0), effects):
+        return False
+    return _close((short_cr or 0) + (long_cr or 0), recovery)
 
 
 def _overlay_row(reviewed: dict[str, Any], live: dict[str, Any]) -> dict[str, Any]:
@@ -268,5 +293,15 @@ def merge_damage(
         if live.get("photos"):
             copernicus["photos"] = live["photos"]
         next_["copernicus"] = copernicus
+
+    live_rdna = live.get("rdna") or {}
+    if live_rdna.get("rows") and rdna_totals_close(live_rdna["rows"]):
+        rdna = dict(next_.get("rdna") or {})
+        rdna["rows"] = live_rdna["rows"]
+        if live_rdna.get("headline"):
+            rdna["headline"] = live_rdna["headline"]
+        if live_rdna.get("corridor"):
+            rdna["corridor"] = live_rdna["corridor"]
+        next_["rdna"] = rdna
 
     return next_

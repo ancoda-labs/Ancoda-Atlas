@@ -1956,6 +1956,10 @@ body.low-perf .logo-ring::before, body.low-perf .logo-ring::after, body.low-perf
 .fl-jump-fit { grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); }
 .fl-jump + .fl-sec { padding-top: 20px; }
 .fl-jump-2 { grid-template-columns: 1fr 1fr; }
+.fl-jump-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.fl-rdna { font-size: 12px; }
+.fl-rdna th,
+.fl-rdna td { white-space: nowrap; }
 .fl-sec[id] { scroll-margin-top: 156px; }
 
 /* Cash already in the Prime Minister's fund, and the in-kind demand list.

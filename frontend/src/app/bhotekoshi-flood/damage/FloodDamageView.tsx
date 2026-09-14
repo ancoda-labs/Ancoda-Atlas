@@ -4,32 +4,56 @@ import React, { useEffect, useState } from 'react';
 import FloodShell from '@/components/FloodShell';
 import { useFloodLang } from '@/hooks/use-flood-lang';
 import type { Lang } from '@/hooks/use-flood-lang';
-import type { DamageGradeRow, DamageImage, NeaPlant, SitrepHeadline, SitrepValue } from '@/types';
+import type {
+  DamageGradeRow,
+  DamageImage,
+  NeaPlant,
+  RdnaCorridorStat,
+  RdnaHeadline,
+  RdnaSummaryRow,
+  SitrepHeadline,
+  SitrepValue,
+} from '@/types';
 import { useJumpSection } from '@/hooks/use-jump-section';
 import { useFloodDesk } from '@/app/bhotekoshi-flood/_components/FloodDeskProvider';
 
-// Copernicus EMSR927 grading for Syabrubesi / Timure, and the NEA 10 Bhadra
-// notice. Two numbers on this page that look addable are not: 433 is all
-// buildings in the mapped area, 392 is residential inside that; the ~450
-// people in the AOI are not added to the uncontacted total of about 5,326,
-// and neither are the 133+ NEA hydropower workers. Langtang
-// 60 is inside the 133+. Copernicus 5 bridges in the AOI is not SitRep-3's
-// 80 national bridges.
+// RDNA preliminary (NPC–NDRRMA), Copernicus EMSR927 AOI03 grading, and NEA 10
+// Bhadra notice. RDNA crore figures are not merged into NDRRMA casualty KPIs
+// or relief cash. Copernicus 3,058 is all buildings, 3,001 residential inside
+// that — never add them. ~5,000 people in the AOI are not added to uncontacted.
 
 const T = {
   kicker: { en: 'Damage', ne: 'क्षति' },
   title: { en: 'Damage assessment', ne: 'क्षति मूल्यांकन' },
   standfirst: {
-    en: 'Satellite grading of Syabrubesi and the Trishuli corridor, and the hydropower plants the electricity authority listed. Not a warning, and not the national sitrep.',
-    ne: 'स्याफ्रुबेँसी र त्रिशूली करिडोरको उपग्रह ग्रेडिङ, र विद्युत् प्राधिकरणले सूचीकृत गरेका आयोजना। चेतावनी होइन, राष्ट्रिय सिटरेप पनि होइन।',
+    en: 'RDNA preliminary assessment, satellite grading of the Trishuli corridor, and the hydropower plants the electricity authority listed. Not a warning, and not the national sitrep.',
+    ne: 'RDNA प्रारम्भिक मूल्यांकन, त्रिशूली करिडोरको उपग्रह ग्रेडिङ, र विद्युत् प्राधिकरणले सूचीकृत गरेका आयोजना। चेतावनी होइन, राष्ट्रिय सिटरेप पनि होइन।',
   },
   jumpLabel: { en: 'On this page', ne: 'यस पृष्ठमा' },
   jumpHint: { en: 'Tap a box to jump', ne: 'जान बाकस थिच्नुहोस्' },
-  jumpEms: { en: 'Syabrubesi grading', ne: 'स्याफ्रुबेँसी ग्रेडिङ' },
-  jumpEmsSub: { en: 'Copernicus EMSR927', ne: 'कोपर्निकस EMSR927' },
+  jumpRdna: { en: 'RDNA summary', ne: 'RDNA सारांश' },
+  jumpRdnaSub: { en: 'Damage · losses · recovery', ne: 'क्षति · नोक्सानी · पुनर्प्राप्ति' },
+  jumpEms: { en: 'Vidur grading', ne: 'विदुर ग्रेडिङ' },
+  jumpEmsSub: { en: 'Copernicus EMSR927 AOI03', ne: 'कोपर्निकस EMSR927 AOI03' },
   jumpPower: { en: 'Hydropower plants', ne: 'जलविद्युत् आयोजना' },
   jumpPowerSub: { en: 'NEA notice 10 Bhadra', ne: 'प्राधिकरण सूचना १० भदौ' },
-  emsKicker: { en: '1 · Copernicus', ne: '१ · कोपर्निकस' },
+  rdnaKicker: { en: '1 · RDNA', ne: '१ · RDNA' },
+  rdnaCorridor: { en: 'Corridor assessment', ne: 'करिडोर मूल्यांकन' },
+  rdnaTable: { en: 'Summary table', ne: 'सारांश तालिका' },
+  rdnaExclusive: {
+    en: 'Counted separately — not merged into NDRRMA casualty KPIs, uncontacted, or relief cash channels.',
+    ne: 'छुट्टै गनिएको — NDRRMA casualty KPI, सम्पर्कविहीन वा राहत नगद च्यानलमा मिसाइएको छैन।',
+  },
+  colDamage: { en: 'Damage', ne: 'क्षति' },
+  colLosses: { en: 'Losses', ne: 'नोक्सानी' },
+  colEffects: { en: 'Effects', ne: 'प्रभाव' },
+  colEffectsUsd: { en: 'Effects USD m', ne: 'प्रभाव USD m' },
+  colShort: { en: 'Short (0–6 mo)', ne: 'छोटो (०–६ महिना)' },
+  colLong: { en: 'Long', ne: 'दीर्घ' },
+  colRecovery: { en: 'Recovery', ne: 'पुनर्प्राप्ति' },
+  colRecoveryUsd: { en: 'Recovery USD m', ne: 'पुनर्प्राप्ति USD m' },
+  crore: { en: 'NPR crore', ne: 'NPR करोड' },
+  emsKicker: { en: '2 · Copernicus', ne: '२ · कोपर्निकस' },
   source: { en: 'Source', ne: 'स्रोत' },
   asOf: { en: 'Figures as of', ne: 'तथ्यांक मिति' },
   portal: { en: 'Copernicus portal', ne: 'कोपर्निकस पोर्टल' },
@@ -43,8 +67,8 @@ const T = {
   colAoi: { en: 'In the AOI', ne: 'AOI जम्मा' },
   colShare: { en: 'Share', ne: 'हिस्सा' },
   tableNote: {
-    en: 'Possible damage is a proximity proxy, not a confirmed count. Affected is the sum of the damage classes. 433 is all buildings; 392 is residential inside that — do not add them.',
-    ne: 'सम्भावित क्षति निकटताको प्रॉक्सी हो, पुष्टि होइन। प्रभावित क्षति वर्गको योग हो। ४३३ सबै भवन; ३९२ त्यसभित्रको आवासीय — जोड्नु होइन।',
+    en: 'Possible damage is a proximity proxy, not a confirmed count. Affected is the sum of the damage classes. 3,058 is all buildings; 3,001 is residential inside that — do not add them.',
+    ne: 'सम्भावित क्षति निकटताको प्रॉक्सी हो, पुष्टि होइन। प्रभावित क्षति वर्गको योग हो। ३,०५८ सबै भवन; ३,००१ त्यसभित्रको आवासीय — जोड्नु होइन।',
   },
   mapsKicker: { en: 'Maps', ne: 'नक्सा' },
   mapsTitle: { en: 'EMSR927 grading maps', ne: 'EMSR927 ग्रेडिङ नक्सा' },
@@ -61,7 +85,7 @@ const T = {
   prev: { en: 'Previous', ne: 'अघिल्लो' },
   next: { en: 'Next', ne: 'पछिल्लो' },
   openMap: { en: 'Open map', ne: 'नक्सा खोल्नुहोस्' },
-  powerKicker: { en: '2 · Power', ne: '२ · विद्युत्' },
+  powerKicker: { en: '3 · Power', ne: '३ · विद्युत्' },
   listed: { en: 'On the list', ne: 'सूचीमा' },
   hitMw: { en: 'Marked directly affected', ne: 'प्रत्यक्ष प्रभावित भनिएको' },
   mw: { en: 'MW', ne: 'मेगावाट' },
@@ -98,6 +122,42 @@ function formatNum(value: number, approximate?: boolean, suffix?: string): strin
 function cell(value: number | null | undefined, unit?: string, approximate?: boolean): string {
   if (value == null) return '—';
   return `${formatNum(value, approximate)}${unit ? ` ${unit}` : ''}`;
+}
+
+function formatCr(value: number | null | undefined): string {
+  if (value == null) return '—';
+  return value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function RdnaTile({ item, lang }: { item: RdnaHeadline; lang: Lang }) {
+  return (
+    <div className={item.id === 'effects' || item.id === 'recovery' ? 't-critical' : 't-warning'}>
+      <dd>
+        {formatCr(item.value_cr)}
+        <em>{T.crore[lang]}</em>
+        {item.usd_m != null && <small>USD {formatCr(item.usd_m)} m</small>}
+      </dd>
+      <dt>{L(item, 'label', lang)}</dt>
+    </div>
+  );
+}
+
+function CorridorTile({ item, lang }: { item: RdnaCorridorStat; lang: Lang }) {
+  const text = L(item, 'text', lang);
+  if (text) {
+    return (
+      <div className="fl-fig-aside">
+        <dd>{text}</dd>
+      </div>
+    );
+  }
+  return (
+    <div>
+      <dd>{formatNum(item.value ?? 0, item.approximate, item.suffix)}</dd>
+      <dt>{L(item, 'label', lang)}</dt>
+      {L(item, 'detail', lang) && <small>{L(item, 'detail', lang)}</small>}
+    </div>
+  );
 }
 
 function telHref(phone: string): string {
@@ -248,6 +308,7 @@ export default function FloodDamageView() {
   const t = (key: keyof typeof T) => T[key][lang];
 
   const damage = desk.damage;
+  const rdna = damage?.rdna;
   const copernicus = damage?.copernicus;
   const power = damage?.power;
   const rows = copernicus?.rows || [];
@@ -256,7 +317,7 @@ export default function FloodDamageView() {
   const photos = copernicus?.photos || NO_IMAGES;
   const plants = power?.plants || [];
   const asOf = lang === 'ne' ? damage?.as_of_label_ne || damage?.as_of_label_en : damage?.as_of_label_en;
-  const onJump = useJumpSection(['copernicus', 'power']);
+  const onJump = useJumpSection(['rdna', 'copernicus', 'power']);
   const gallery = React.useMemo(() => [...maps, ...photos], [maps, photos]);
   const openIndex = openId ? gallery.findIndex(item => item.id === openId) : -1;
   const openItem = openIndex >= 0 ? gallery[openIndex] : null;
@@ -277,15 +338,20 @@ export default function FloodDamageView() {
 
   return (
     <FloodShell lang={lang} setLang={setLang} kicker={t('kicker')} title={t('title')} standfirst={t('standfirst')}>
-      <nav className="fl-jump fl-jump-2" aria-label={t('jumpLabel')}>
+      <nav className="fl-jump fl-jump-3" aria-label={t('jumpLabel')}>
         <p className="fl-jump-kicker">{t('jumpHint')}</p>
-        <a href="#copernicus" className={onJump === 'copernicus' ? 'on' : undefined}>
+        <a href="#rdna" className={onJump === 'rdna' ? 'on' : undefined}>
           <b>1</b>
+          <strong>{t('jumpRdna')}</strong>
+          <span>{t('jumpRdnaSub')}</span>
+        </a>
+        <a href="#copernicus" className={onJump === 'copernicus' ? 'on' : undefined}>
+          <b>2</b>
           <strong>{t('jumpEms')}</strong>
           <span>{t('jumpEmsSub')}</span>
         </a>
         <a href="#power" className={onJump === 'power' ? 'on' : undefined}>
-          <b>2</b>
+          <b>3</b>
           <strong>{t('jumpPower')}</strong>
           {power?.affected_mw != null && (
             <em>
@@ -295,6 +361,88 @@ export default function FloodDamageView() {
           <span>{t('jumpPowerSub')}</span>
         </a>
       </nav>
+
+      <section id="rdna" className="fl-sec fl-damage">
+        <div className="fl-sec-head">
+          <span>{t('rdnaKicker')}</span>
+          <h2>{L(rdna, 'title', lang) || t('jumpRdna')}</h2>
+        </div>
+
+        {!rdna ? (
+          <p className="fl-empty">{t('empty')}</p>
+        ) : (
+          <>
+            {L(rdna, 'lead', lang) && <p className="fl-ems-meta">{L(rdna, 'lead', lang)}</p>}
+            {L(rdna, 'note', lang) && <p className="fl-ems-caveat">{L(rdna, 'note', lang)}</p>}
+
+            {(rdna.headline || []).length > 0 && (
+              <div className="fl-tiles fl-ems-headlines">
+                {(rdna.headline || []).map(item => (
+                  <RdnaTile key={item.id} item={item} lang={lang} />
+                ))}
+              </div>
+            )}
+
+            {(rdna.corridor || []).length > 0 && (
+              <>
+                <div className="fl-sec-head fl-ems-subhead">
+                  <span>{t('rdnaCorridor')}</span>
+                </div>
+                <div className="fl-tiles">
+                  {(rdna.corridor || []).map(item => (
+                    <CorridorTile key={item.id} item={item} lang={lang} />
+                  ))}
+                </div>
+              </>
+            )}
+
+            {(rdna.rows || []).length > 0 && (
+              <div className="fl-grade-wrap">
+                <div className="fl-sec-head fl-ems-subhead">
+                  <span>{t('rdnaTable')}</span>
+                </div>
+                <table className="fl-grade fl-rdna">
+                  <thead>
+                    <tr>
+                      <th>{t('colClass')}</th>
+                      <th>{t('colDamage')}</th>
+                      <th>{t('colLosses')}</th>
+                      <th>{t('colEffects')}</th>
+                      <th>{t('colEffectsUsd')}</th>
+                      <th>{t('colShort')}</th>
+                      <th>{t('colLong')}</th>
+                      <th>{t('colRecovery')}</th>
+                      <th>{t('colRecoveryUsd')}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(rdna.rows || []).map((row: RdnaSummaryRow) => (
+                      <tr
+                        key={row.id}
+                        className={
+                          row.kind === 'total' ? 'hit' : row.kind === 'sector' ? 'fl-grade-group' : undefined
+                        }
+                      >
+                        <th scope="row">{L(row, 'label', lang)}</th>
+                        <td>{formatCr(row.damage_cr)}</td>
+                        <td>{formatCr(row.losses_cr)}</td>
+                        <td>{formatCr(row.effects_cr)}</td>
+                        <td>{formatCr(row.effects_usd_m)}</td>
+                        <td>{formatCr(row.short_cr)}</td>
+                        <td>{formatCr(row.long_cr)}</td>
+                        <td>{formatCr(row.recovery_cr)}</td>
+                        <td>{formatCr(row.recovery_usd_m)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            <p className="fl-note">{t('rdnaExclusive')}</p>
+          </>
+        )}
+      </section>
 
       <section id="copernicus" className="fl-sec fl-damage">
         <div className="fl-sec-head">
