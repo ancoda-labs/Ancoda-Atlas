@@ -9,7 +9,7 @@ import {
 } from '@/lib/funding-gap';
 
 const T = {
-  title: { en: 'Received vs recovery need', ne: 'प्राप्त र पुनर्प्राप्ति आवश्यकता' },
+  title: { en: 'Available vs recovery need', ne: 'उपलब्ध र पुनर्प्राप्ति आवश्यकता' },
   unit: { en: 'NPR crore', ne: 'NPR करोड' },
   ask: {
     en: 'Ask Atlas for this chart: “fund vs RDNA recovery?”',

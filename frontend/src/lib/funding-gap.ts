@@ -1,12 +1,12 @@
-/** PM fund cash vs RDNA recovery need — mirrors backend/app/domains/flood/funding_gap.py */
+/** PM fund available vs RDNA recovery need — mirrors backend/app/domains/flood/funding_gap.py */
 
 export const NPR_PER_CRORE = 10_000_000;
 
 export const FUNDING_GAP_CAVEAT = {
   en:
-    'Atlas arithmetic — not an official MoF or NPC shortfall. PM Disaster Relief Fund bank stock versus NPC–NDRRMA preliminary RDNA recovery need. Scopes differ; PhonePe, foreign pledges and in-kind are not in the cash bar.',
+    'Atlas arithmetic — not an official MoF or NPC shortfall. PM Disaster Relief Fund available cash (NPR bank stock + USD accounts at the published rate) versus NPC–NDRRMA preliminary RDNA recovery need. Foreign pledges outside the fund table, PhonePe, World Bank and IFRC are not in the cash bar.',
   ne:
-    'एट्लसको अंकगणित — आधिकारिक MoF वा NPC अभाव होइन। प्रधानमन्त्री दैवी प्रकोप उद्धार कोषको बैंक मौज्दात विरुद्ध NPC–NDRRMA प्रारम्भिक RDNA पुनर्प्राप्ति आवश्यकता। क्षेत्र फरक; फोनपे, वैदेशिक घोषणा र जिन्सी यो नगद बारमा छैनन्।',
+    'एट्लसको अंकगणित — आधिकारिक MoF वा NPC अभाव होइन। प्रधानमन्त्री दैवी प्रकोप उद्धार कोषको उपलब्ध नगद (NPR बैंक मौज्दात + प्रकाशित दरमा USD खाता) विरुद्ध NPC–NDRRMA प्रारम्भिक RDNA पुनर्प्राप्ति आवश्यकता। कोष तालिकाबाहिरका वैदेशिक घोषणा, फोनपे, विश्व बैंक र आईएफआरसी यो नगद बारमा छैनन्।',
 } as const;
 
 export interface FundingGapBar {
@@ -19,6 +19,8 @@ export interface FundingGapBar {
 export interface FundingGap {
   unit: 'npr_cr';
   received_cr: number;
+  npr_stock_cr: number | null;
+  includes_usd_accounts: boolean;
   recovery_cr: number;
   effects_cr: number | null;
   gap_cr: number;
@@ -31,18 +33,48 @@ export interface FundingGap {
   caveat_ne: string;
 }
 
+type ReliefSlice = {
+  as_of?: string;
+  as_of_label_en?: string;
+  as_of_label_ne?: string;
+  total_available_npr?: number | null;
+  headline?: Array<{ id?: string; value?: number | null }>;
+  breakdowns?: Array<{
+    id?: string;
+    aside?: Array<{
+      label_en?: string;
+      value?: number | null;
+      unit_en?: string;
+    }>;
+  }>;
+};
+
 export function nprToCrore(npr: number | null | undefined): number | null {
   if (npr == null) return null;
   return Math.round((npr / NPR_PER_CRORE) * 100) / 100;
 }
 
+function pmFundNprStock(received?: ReliefSlice | null): number | null {
+  const pm = (received?.headline || []).find(h => h.id === 'pm-fund');
+  return pm?.value != null ? Number(pm.value) : null;
+}
+
+function pmFundTotalAvailableNpr(received?: ReliefSlice | null): number | null {
+  if (received?.total_available_npr != null) return Number(received.total_available_npr);
+  for (const group of received?.breakdowns || []) {
+    if (group.id !== 'pm-fund') continue;
+    for (const row of group.aside || []) {
+      const label = (row.label_en || '').toLowerCase();
+      if (!label.includes('total available')) continue;
+      if (row.value == null) continue;
+      return Number(row.value);
+    }
+  }
+  return null;
+}
+
 export function computeFundingGap(input: {
-  reliefReceived?: {
-    as_of?: string;
-    as_of_label_en?: string;
-    as_of_label_ne?: string;
-    headline?: Array<{ id?: string; value?: number | null }>;
-  } | null;
+  reliefReceived?: ReliefSlice | null;
   damage?: {
     as_of_label_en?: string;
     as_of_label_ne?: string;
@@ -60,8 +92,9 @@ export function computeFundingGap(input: {
 }): FundingGap | null {
   const received = input.reliefReceived;
   const rdna = input.damage?.rdna;
-  const pm = (received?.headline || []).find(h => h.id === 'pm-fund');
-  const receivedCr = nprToCrore(pm?.value ?? null);
+  const stockNpr = pmFundNprStock(received);
+  const availableNpr = pmFundTotalAvailableNpr(received) ?? stockNpr;
+  const receivedCr = nprToCrore(availableNpr);
 
   const recoveryHeadline = (rdna?.headline || []).find(h => h.id === 'recovery');
   const effectsHeadline = (rdna?.headline || []).find(h => h.id === 'effects');
@@ -82,9 +115,15 @@ export function computeFundingGap(input: {
   if (receivedCr == null || recoveryCr == null) return null;
 
   const gapCr = Math.round((recoveryCr - receivedCr) * 100) / 100;
+  const stockCr = nprToCrore(stockNpr);
+  const includesUsd =
+    stockNpr != null && availableNpr != null && Math.abs(availableNpr - stockNpr) > 1;
+
   return {
     unit: 'npr_cr',
     received_cr: receivedCr,
+    npr_stock_cr: stockCr,
+    includes_usd_accounts: includesUsd,
     recovery_cr: recoveryCr,
     effects_cr: effectsCr,
     gap_cr: gapCr,
@@ -98,8 +137,8 @@ export function computeFundingGap(input: {
     bars: [
       {
         id: 'received',
-        label_en: 'PM fund cash',
-        label_ne: 'प्रधानमन्त्री कोष नगद',
+        label_en: 'PM fund available',
+        label_ne: 'प्रधानमन्त्री कोष उपलब्ध',
         value_cr: receivedCr,
       },
       {

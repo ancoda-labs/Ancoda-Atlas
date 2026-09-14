@@ -975,6 +975,55 @@ class TestScopeGate:
         assert view["chart"] == "funding_gap"
         assert view["bars"][2]["value_cr"] == 71332.02
 
+    def test_funding_gap_uses_total_available_with_usd(self):
+        from app.domains.ai.ask.compose import template_answer, view_for_intent
+        from app.domains.ai.ask.tools import build_snapshot
+
+        snap = build_snapshot(
+            content={
+                "funds": [{"name_en": "PM Disaster Relief Fund"}],
+                "reliefReceived": {
+                    "as_of_label_en": "28 Bhadra",
+                    "headline": [
+                        {"id": "pm-fund", "value": 9_995_024_994, "unit_en": "NPR"}
+                    ],
+                    "breakdowns": [
+                        {
+                            "id": "pm-fund",
+                            "aside": [
+                                {
+                                    "label_en": "Total available label (NPR stock + USD equivalent)",
+                                    "value": 13_572_017_563,
+                                    "unit_en": "NPR",
+                                }
+                            ],
+                        }
+                    ],
+                },
+                "damage": {
+                    "rdna": {
+                        "headline": [
+                            {"id": "recovery", "value_cr": 72331.52},
+                        ]
+                    }
+                },
+            },
+            sitrep={},
+            gauges=[],
+            news=[],
+        )
+        assert snap["reliefReceived"]["total_available_npr"] == 13_572_017_563
+        answer = template_answer(
+            "funding_gap", snap, "en", "Fund vs RDNA recovery need?"
+        ).text
+        assert "1,357.20" in answer
+        assert "999.50" in answer  # NPR stock called out inside available
+        assert "70,974.32" in answer
+        view = view_for_intent("funding_gap", snap, "Fund vs RDNA recovery need?")
+        assert view is not None
+        assert view["bars"][0]["value_cr"] == 1357.2
+        assert view["bars"][2]["value_cr"] == 70974.32
+
     def test_raised_funds_without_relief_table_says_not_loaded(self):
         from app.domains.ai.ask.compose import template_answer
         from app.domains.ai.ask.tools import build_snapshot

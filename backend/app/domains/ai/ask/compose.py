@@ -132,7 +132,7 @@ def _fmt_cr(n: float) -> str:
 
 
 def _funding_gap_answer(snap: dict[str, Any], lang: str) -> ComposedAnswer:
-    """Restate PMDRF cash vs RDNA recovery need — never invent an official shortfall."""
+    """Restate PMDRF available cash vs RDNA recovery need — never invent an official shortfall."""
     from app.domains.flood.funding_gap import funding_gap_from_snap
 
     gap = funding_gap_from_snap(snap)
@@ -162,19 +162,32 @@ def _funding_gap_answer(snap: dict[str, Any], lang: str) -> ComposedAnswer:
         or ("अज्ञात मिति" if lang == "ne" else "undated")
     )
     caveat = gap["caveat_ne"] if lang == "ne" else gap["caveat_en"]
+    stock_bit = ""
+    stock_cr = gap.get("npr_stock_cr")
+    if gap.get("includes_usd_accounts") and stock_cr is not None:
+        stock_bit = (
+            f" त्यसमा नेपाली बैंक मौज्दात रु. {_fmt_cr(stock_cr)} करोड र "
+            f"USD खाताको समकक्ष समावेश छ।"
+            if lang == "ne"
+            else (
+                f" That includes NPR bank stock Rs {_fmt_cr(stock_cr)} crore plus "
+                f"USD accounts at the published rate."
+            )
+        )
     if lang == "ne":
         return _frame(
-            f"प्रधानमन्त्री दैवी प्रकोप उद्धार कोषको नगद रु. {received} करोड "
-            f"({received_as})। NPC–NDRRMA प्रारम्भिक RDNA पुनर्प्राप्ति आवश्यकता "
+            f"प्रधानमन्त्री दैवी प्रकोप उद्धार कोषको उपलब्ध नगद रु. {received} करोड "
+            f"({received_as})।{stock_bit} NPC–NDRRMA प्रारम्भिक RDNA पुनर्प्राप्ति आवश्यकता "
             f"रु. {recovery} करोड ({rdna_as})। अन्तर रु. {diff} करोड "
-            f"(पुनर्प्राप्ति − कोष नगद)। {caveat} "
+            f"(पुनर्प्राप्ति − उपलब्ध नगद)। {caveat} "
             f"विवरण: /bhotekoshi-flood/damage र /bhotekoshi-flood/donate।",
             "ne",
         )
     return _en(
-        f"PM Disaster Relief Fund cash is Rs {received} crore ({received_as}). "
+        f"PM Disaster Relief Fund available cash is Rs {received} crore ({received_as})."
+        f"{stock_bit} "
         f"NPC–NDRRMA preliminary RDNA recovery need is Rs {recovery} crore "
-        f"({rdna_as}). Difference Rs {diff} crore (recovery − fund cash). "
+        f"({rdna_as}). Difference Rs {diff} crore (recovery − available cash). "
         f"{caveat} "
         f"Detail: /bhotekoshi-flood/damage and /bhotekoshi-flood/donate."
     )

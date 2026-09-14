@@ -36,10 +36,24 @@ def sanitize_headline(title: str) -> str:
 
 
 def _relief_received_slice(received: dict[str, Any] | None) -> dict[str, Any] | None:
-    """Headlines + as-of only — enough for raised-funds answers, not the bank rows."""
+    """Headlines + as-of + total-available — enough for raised-funds and funding-gap."""
     if not received:
         return None
-    return {
+
+    total_available: float | None = None
+    for group in received.get("breakdowns") or []:
+        if group.get("id") != "pm-fund":
+            continue
+        for row in group.get("aside") or []:
+            label = (row.get("label_en") or "").lower()
+            if "total available" not in label:
+                continue
+            if row.get("value") is None:
+                continue
+            total_available = float(row["value"])
+            break
+
+    out: dict[str, Any] = {
         "as_of": received.get("as_of"),
         "as_of_label_en": received.get("as_of_label_en"),
         "as_of_label_ne": received.get("as_of_label_ne"),
@@ -57,6 +71,10 @@ def _relief_received_slice(received: dict[str, Any] | None) -> dict[str, Any] | 
             if h.get("id")
         ],
     }
+    if total_available is not None:
+        out["total_available_npr"] = total_available
+    return out
+
 
 
 def _damage_rdna_slice(damage: dict[str, Any] | None) -> dict[str, Any] | None:
