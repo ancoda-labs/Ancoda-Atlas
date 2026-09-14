@@ -4,6 +4,7 @@ from app.domains.flood.merge import (
     buildings_close,
     merge_damage,
     merge_sitrep,
+    rdna_totals_close,
     should_overlay,
 )
 from app.domains.flood.sources.bulletin_damage import parse_damage_figure
@@ -173,6 +174,16 @@ class TestBuildingsClose:
         """323+32+78 = 433, 283+31+78 = 392, and 392+1+1+37+2 = 433."""
         assert buildings_close(self._rows()) is True
 
+    def test_aoi03_building_classes_close(self):
+        """2479+246+333 = 3058, 2447+245+309 = 3001, and 3001+29+28 = 3058."""
+        rows = [
+            {"id": "all-buildings", "group": "buildings", "destroyed": 2479, "damaged": 246, "possible": 333, "affected": 3058},
+            {"id": "residential", "group": "buildings", "destroyed": 2447, "damaged": 245, "possible": 309, "affected": 3001},
+            {"id": "commercial", "group": "buildings", "affected": 29},
+            {"id": "other-nonres", "group": "buildings", "affected": 28},
+        ]
+        assert buildings_close(rows) is True
+
     def test_a_broken_class_sum_is_refused(self):
         """392 is inside 433. A scrape that lets a reader add them is refused."""
         assert buildings_close(self._rows(**{"religious": {"affected": 99}})) is False
@@ -206,3 +217,32 @@ class TestMergeDamage:
     def test_a_failed_read_returns_the_reviewed_content_untouched(self):
         reviewed = {"copernicus": {"rows": [{"id": "residential", "affected": 392}]}}
         assert merge_damage(reviewed, {"error": "boom"}) is reviewed
+
+    def test_rdna_overlays_when_totals_close(self):
+        reviewed = {
+            "rdna": {"rows": [{"id": "total", "damage_cr": 1}]},
+            "copernicus": {"rows": []},
+        }
+        live = {
+            "rows": [],
+            "rdna": {
+                "rows": [
+                    {
+                        "id": "total",
+                        "damage_cr": 27448.32,
+                        "losses_cr": 13380.58,
+                        "effects_cr": 40828.91,
+                        "short_cr": 873.50,
+                        "long_cr": 71458.02,
+                        "recovery_cr": 72331.52,
+                    }
+                ],
+                "headline": [{"id": "damage", "value_cr": 27448.32}],
+            },
+            "source": {},
+        }
+        assert merge_damage(reviewed, live)["rdna"]["rows"][0]["damage_cr"] == 27448.32
+
+    def test_rdna_total_must_close(self):
+        rows = [{"id": "total", "damage_cr": 1, "losses_cr": 1, "effects_cr": 99, "short_cr": 1, "long_cr": 1, "recovery_cr": 2}]
+        assert rdna_totals_close(rows) is False

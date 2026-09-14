@@ -604,11 +604,11 @@
       },
       {
         "id": "houses",
-        "label_en": "Houses destroyed",
-        "label_ne": "भत्किएका घर",
-        "value": 323,
-        "detail_en": "destroyed; 32 damaged, 78 possible, of 559 assessed · Copernicus EMSR927",
-        "detail_ne": "ध्वस्त; क्षति ३२, सम्भावित ७८, ५५९ मध्ये · कोपर्निकस EMSR927"
+        "label_en": "Buildings destroyed (Copernicus AOI03)",
+        "label_ne": "ध्वस्त भवन (कोपर्निकस AOI03)",
+        "value": 2479,
+        "detail_en": "destroyed; 246 damaged, 333 possible, of 11,486 in the AOI · EMSR927 Vidur. RDNA corridor 7,570 affected is a separate count.",
+        "detail_ne": "ध्वस्त; क्षति २४६, सम्भावित ३३३, ११,४८६ मध्ये · EMSR927 विदुर। RDNA करिडोर ७,५७० छुट्टै गणना।"
       },
       {
         "id": "power",
@@ -633,8 +633,8 @@
         "value": 40,
         "unit_en": "km",
         "unit_ne": "कि.मी.",
-        "detail_en": "paved road fully destroyed · SitRep-3. Copernicus mapped 7.6 km in its AOI — not added.",
-        "detail_ne": "पक्की सडक पूर्ण ध्वस्त · सिटरेप-३। कोपर्निकसले आफ्नो क्षेत्रमा ७.६ कि.मी. नक्सा गरेको — जोडिँदैन।"
+        "detail_en": "paved road fully destroyed · SitRep-3. Copernicus AOI03 mapped 49.8 km affected — not added. RDNA corridor 69 km is separate.",
+        "detail_ne": "पक्की सडक पूर्ण ध्वस्त · सिटरेप-३। कोपर्निकस AOI03 मा ४९.८ कि.मी. — जोडिँदैन। RDNA ६९ कि.मी. छुट्टै।"
       },
       {
         "id": "vehicles",
@@ -652,6 +652,32 @@
         "value": 1,
         "detail_en": "Galchhi · NDRRMA 13 Bhadra 18:30",
         "detail_ne": "गल्छी · एनडीआरआरएमए १३ भदौ १८:३०"
+      },
+      {
+        "id": "rdna-buildings",
+        "label_en": "Buildings affected (RDNA corridor)",
+        "label_ne": "प्रभावित भवन (RDNA करिडोर)",
+        "value": 7570,
+        "detail_en": "Chitwan, Dhading, Gorkha, Nuwakot, Rasuwa · NPC–NDRRMA RDNA preliminary 28 Bhadra. Not Copernicus AOI or casualty KPIs.",
+        "detail_ne": "चितवन, धादिङ, गोरखा, नुवाकोट, रसुवा · NPC–NDRRMA RDNA २८ भदौ। कोपर्निकस AOI वा casualty KPI होइन।"
+      },
+      {
+        "id": "rdna-roads",
+        "label_en": "Road damage (RDNA corridor)",
+        "label_ne": "सडक क्षति (RDNA करिडोर)",
+        "value": 69,
+        "unit_en": "km",
+        "unit_ne": "कि.मी.",
+        "detail_en": "RDNA corridor assessment · SitRep-3 40 km paved is a separate national count — not added.",
+        "detail_ne": "RDNA करिडोर मूल्यांकन · सिटरेप-३ ४० कि.मी. छुट्टै राष्ट्रिय गणना — जोडिँदैन।"
+      },
+      {
+        "id": "rdna-bridges",
+        "label_en": "Bridges (RDNA corridor)",
+        "label_ne": "पुल (RDNA करिडोर)",
+        "value": 37,
+        "detail_en": "37 motorable (33 washed) + 68 suspension · RDNA. SitRep-3 national 80 is separate — not added.",
+        "detail_ne": "३७ मोटरेबल (३३ बगेको) + ६८ झोलुङ्गे · RDNA। सिटरेप-३ राष्ट्रिय ८० छुट्टै — जोडिँदैन।"
       }
     ]
   },
