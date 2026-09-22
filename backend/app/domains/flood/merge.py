@@ -35,7 +35,7 @@ def should_overlay(
     """Whether a live panel is safe to lay over the reviewed group of the same id.
 
     Deaths never go down. This disaster's toll is recovered bodies, and a
-    compilation that has not caught up would otherwise put 1410 back over 1411 —
+    compilation that has not caught up would otherwise put 1411 back over 1451 —
     which on a page families are reading is not a display bug.
 
     Other groups may fall: uncontacted drops as people are found.
