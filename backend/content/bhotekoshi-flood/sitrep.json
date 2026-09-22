@@ -1,12 +1,12 @@
 {
   "id": "sitrep",
-  "_comment": "Reviewed floor for the Rasuwa-Bhotekoshi flood. Deaths currently NDRRMA / MoHA, 3 Ashwin 19:00 (364+232+222+203+199+79+72+38+2 Kathmandu in treatment = 1411). Uncontacted about 5,875 — the board heads it that way; published parts (Rasuwa local 1,677 + Rasuwa other 1,836 + Nuwakot local 657 + Nuwakot other 1,179 + foreign 636) are exclusive labels and must not be added into a false closing sum; handed-over remains (110) are a cut label; holding-district labels (1,342 across 24 centres: Nuwakot 427 · Rasuwa 794 · Dhading 121) are separate. Currently in treatment 18 across 6 hospitals: NDRRMA also publishes security-force field treatment 10,041 as a label — not a flood-injury total. Earlier SitRep #14 hospital 344 / discharged 290 is history on this board. Deployed 21,022 / NDRRMA rescued graphic 13,784. The ten-minute cycle reads nirajbhusal.github.io/rasuwa-flood-bulletin and merge_sitrep replaces a group only when its parts add up; a failed scrape leaves these numbers standing. Deaths never go down — Nepal Police (1,367 dead / 4,077 missing on the bulletin's police panel) is a separate running count, and a lagging compilation must not put 1,410 back over NDRRMA 1411. The overview also shows live government figures beside this grid (BIPAD corridor incidents, NDRRMA rescued-persons totals, OPMCM portal counters); those come straight from the portals and are never merged into these numbers. Two rules govern edits. (1) Never sum across groups that the source keeps apart - the `exclusive` flags and `do_not_merge` notes exist because several of these counts overlap, and adding them would invent casualties. (2) Every breakdown must sum to its own stated total; app/domains/flood/merge.py re-adds them at load and the page shows a warning if either stops reconciling. Do not add Tibet or India's dead onto Nepal's 1411. Uncontacted (NDRRMA toll) is not the OPMCM family missing-person report count — those are separate filings and must never be added together.",
-  "as_of": "2026-09-19T19:00:00+05:45",
-  "as_of_label_en": "3 Ashwin, 19:00 (NDRRMA / MoHA graphic)",
-  "as_of_label_ne": "३ असोज, १९:०० (एनडीआरआरएमए / गृह ग्राफिक)",
+  "_comment": "Reviewed floor for the Rasuwa-Bhotekoshi flood. Deaths currently NDRRMA / MoHA, 4 Ashwin 19:00 (367+232+222+236+203+79+72+38+2 Kathmandu in treatment = 1451). Uncontacted about 5,786 — the board heads it that way; published parts (Rasuwa local 1,677 + Rasuwa other 1,836 + Nuwakot local 657 + Nuwakot other 1,090 + foreign 636) are exclusive labels and must not be added into a false closing sum; handed-over remains (110) are a cut label; holding-district labels (1,231 across 20 centres: Nuwakot 324 · Rasuwa 786 · Dhading 121) are separate. Currently in treatment 15 across 5 hospitals: NDRRMA also publishes security-force field treatment 10,163 as a label — not a flood-injury total. Earlier SitRep #14 hospital 344 / discharged 290 is history on this board. Deployed 21,022 (the 4 Ashwin board heads 20,929 but its army/police/armed-police parts still add to 21,022) / NDRRMA rescued graphic 13,784. The ten-minute cycle reads nirajbhusal.github.io/rasuwa-flood-bulletin and merge_sitrep replaces a group only when its parts add up; a failed scrape leaves these numbers standing. Deaths never go down — Nepal Police (1,367 dead / 4,077 missing on the bulletin's police panel) is a separate running count, and a lagging compilation must not put 1,411 back over NDRRMA 1451. The overview also shows live government figures beside this grid (BIPAD corridor incidents, NDRRMA rescued-persons totals, OPMCM portal counters); those come straight from the portals and are never merged into these numbers. Two rules govern edits. (1) Never sum across groups that the source keeps apart - the `exclusive` flags and `do_not_merge` notes exist because several of these counts overlap, and adding them would invent casualties. (2) Every breakdown must sum to its own stated total; app/domains/flood/merge.py re-adds them at load and the page shows a warning if either stops reconciling. Do not add Tibet or India's dead onto Nepal's 1451. Uncontacted (NDRRMA toll) is not the OPMCM family missing-person report count — those are separate filings and must never be added together.",
+  "as_of": "2026-09-20T19:00:00+05:45",
+  "as_of_label_en": "4 Ashwin, 19:00 (NDRRMA / MoHA graphic)",
+  "as_of_label_ne": "४ असोज, १९:०० (एनडीआरआरएमए / गृह ग्राफिक)",
   "sources": [
     {
-      "label": "NDRRMA via Rasuwa flood bulletin (3 Ashwin 19:00 / SitRep #15 board, district split that closes 1411 / ~5,875 uncontacted / 13,784 rescued / 21,022 deployed)",
+      "label": "NDRRMA via Rasuwa flood bulletin (4 Ashwin 19:00 board, district split that closes 1451 / ~5,786 uncontacted / 13,784 rescued / 21,022 deployed)",
       "url": "https://nirajbhusal.github.io/rasuwa-flood-bulletin/"
     },
     {
@@ -157,7 +157,7 @@
   "headline": [
     {
       "id": "deaths",
-      "value": 1411,
+      "value": 1451,
       "tone": "critical",
       "label_en": "Deaths",
       "label_ne": "मृत्यु",
@@ -165,7 +165,7 @@
     },
     {
       "id": "injured",
-      "value": 18,
+      "value": 15,
       "tone": "warning",
       "label_en": "In treatment",
       "label_ne": "हाल उपचाररत",
@@ -173,7 +173,7 @@
     },
     {
       "id": "uncontacted",
-      "value": 5875,
+      "value": 5786,
       "approximate": true,
       "tone": "critical",
       "label_en": "Uncontacted",
@@ -200,17 +200,17 @@
   "breakdowns": [
     {
       "id": "deaths",
-      "total": 1411,
+      "total": 1451,
       "title_en": "Deaths",
       "title_ne": "मृत्यु",
       "tone": "critical",
-      "caption_en": "NDRRMA / MoHA, 3 Ashwin 19:00 SitRep #15, by district, including recovered remains. Eight districts sum to 1,409; Kathmandu 2 died in treatment closes 1,411. Gorkha rose to 79. Women 336 · men 549 · human remains 526 on the board gender/remains labels. Earlier 1 Ashwin 19:00 was 1,410. Do not add Tibet or India's dead (Nepal Police 1,367 / 4,077 missing on the bulletin police panel is a separate running count).",
-      "caption_ne": "एनडीआरआरएमए / गृह, ३ असोज १९:०० SitRep #15, जिल्लाअनुसार, विभिन्न मानव अङ्ग सहित। आठ जिल्लाको योग १,४०९; काठमाडौंमा उपचारका क्रममा २ जोड्दा १,४११। गोरखा ७९। महिला ३३६ · पुरुष ५४९ · मानव अवशेष ५२६। अघिल्लो १ असोज १९:०० मा १,४१०। प्रहरी प्यानल १,३६७ / ४,०७७ छुट्टै।",
+      "caption_en": "NDRRMA / MoHA, 4 Ashwin 19:00, by district, including recovered remains. Eight districts sum to 1,449; Kathmandu 2 died in treatment closes 1,451. Chitwan rose to 367; Nuwakot to 236; Rasuwa to 203. Women 336 · men 585 · human remains 530 on the board gender/remains labels. Earlier 3 Ashwin 19:00 was 1,411. Do not add Tibet or India's dead (Nepal Police 1,367 / 4,077 missing on the bulletin police panel is a separate running count).",
+      "caption_ne": "एनडीआरआरएमए / गृह, ४ असोज १९:००, जिल्लाअनुसार, विभिन्न मानव अङ्ग सहित। आठ जिल्लाको योग १,४४९; काठमाडौंमा उपचारका क्रममा २ जोड्दा १,४५१। चितवन ३६७, नुवाकोट २३६, रसुवा २०३। महिला ३३६ · पुरुष ५८५ · मानव अवशेष ५३०। अघिल्लो ३ असोज १९:०० मा १,४११। प्रहरी प्यानल १,३६७ / ४,०७७ छुट्टै।",
       "items": [
         {
           "label_en": "Chitwan",
           "label_ne": "चितवन",
-          "value": 364
+          "value": 367
         },
         {
           "label_en": "Nawalparasi East",
@@ -225,12 +225,12 @@
         {
           "label_en": "Nuwakot",
           "label_ne": "नुवाकोट",
-          "value": 203
+          "value": 236
         },
         {
           "label_en": "Rasuwa",
           "label_ne": "रसुवा",
-          "value": 199
+          "value": 203
         },
         {
           "label_en": "Gorkha",
@@ -264,19 +264,19 @@
     },
     {
       "id": "injured",
-      "total": 18,
+      "total": 15,
       "title_en": "In treatment",
       "title_ne": "हाल उपचाररत",
       "tone": "warning",
-      "caption_en": "NDRRMA / MoHA, 3 Ashwin 19:00 SitRep #15 — currently in treatment 18 across 6 hospitals. The board also publishes security-force field treatment 10,041 as a label; Atlas keeps it exclusive — treatments delivered are not flood injuries. Earlier SitRep #14 hospitalised 344 / discharged 290 / security-force 9,820 is history on this board.",
-      "caption_ne": "एनडीआरआरएमए / गृह, ३ असोज १९:०० SitRep #15 — ६ अस्पतालमा हाल उपचाररत १८। सुरक्षा निकाय उपचार 10,041 लेबल मात्र; एट्लसले exclusive राख्छ। अघिल्लो SitRep #14 अस्पताल ३४४ / डिस्चार्ज २९० / सुरक्षा ९,८२० इतिहास।",
-      "do_not_merge_en": "Deaths in care are already inside the 1,411 deaths — do not add 18 onto 1,411. Security-force treatment 10,041 is not the in-treatment hospital figure.",
-      "do_not_merge_ne": "उपचारका क्रममा मरेका 1,411 मृत्युभित्र छन् — 18 माथि नजोड्नुहोस्। सुरक्षा निकाय उपचार 10,041 अस्पतालका हाल उपचाररत होइन।",
+      "caption_en": "NDRRMA / MoHA, 4 Ashwin 19:00 — currently in treatment 15 across 5 hospitals. The board also publishes security-force field treatment 10,163 as a label; Atlas keeps it exclusive — treatments delivered are not flood injuries. Earlier 3 Ashwin was 18 across 6 hospitals; SitRep #14 hospitalised 344 / discharged 290 / security-force 9,820 is history on this board.",
+      "caption_ne": "एनडीआरआरएमए / गृह, ४ असोज १९:०० — ५ अस्पतालमा हाल उपचाररत १५। सुरक्षा निकाय उपचार 10,163 लेबल मात्र; एट्लसले exclusive राख्छ। अघिल्लो ३ असोज ६ अस्पतालमा १८; SitRep #14 अस्पताल ३४४ / डिस्चार्ज २९० / सुरक्षा ९,८२० इतिहास।",
+      "do_not_merge_en": "Deaths in care are already inside the 1,451 deaths — do not add 15 onto 1,451. Security-force treatment 10,163 is not the in-treatment hospital figure.",
+      "do_not_merge_ne": "उपचारका क्रममा मरेका 1,451 मृत्युभित्र छन् — 15 माथि नजोड्नुहोस्। सुरक्षा निकाय उपचार 10,163 अस्पतालका हाल उपचाररत होइन।",
       "items": [
         {
-          "label_en": "Currently in treatment (6 hospitals)",
-          "label_ne": "हाल उपचाररत (६ अस्पताल)",
-          "value": 18
+          "label_en": "Currently in treatment (5 hospitals)",
+          "label_ne": "हाल उपचाररत (५ अस्पताल)",
+          "value": 15
         }
       ],
       "aside": [
@@ -289,26 +289,26 @@
         {
           "label_en": "Security-force field treatment (NDRRMA label)",
           "label_ne": "सुरक्षा निकाय उपचार (एनडीआरआरएमए लेबल)",
-          "value": 10041,
+          "value": 10163,
           "exclusive": true
         }
       ]
     },
     {
       "id": "uncontacted",
-      "total": 5875,
+      "total": 5786,
       "title_en": "Uncontacted",
       "title_ne": "सम्पर्कविहीन",
       "tone": "critical",
-      "caption_en": "NDRRMA / MoHA, 3 Ashwin 19:00 — about 5,875. Official uncontacted toll, not OPMCM family missing-person reports. Rasuwa/Nuwakot/foreign parts are exclusive labels — do not add into a false sum. Holding districts (1,342 across 24 centres: Nuwakot 427 · Rasuwa 794 · Dhading 121) and Nepal Police 4,077 missing are separate collections. Handed-over 110 is a cut label. Earlier 1 Ashwin ~6,145.",
-      "caption_ne": "एनडीआरआरएमए / गृह, ३ असोज १९:०० — करिब 5,875। आधिकारिक सम्पर्कविहीन, पोर्टलका परिवार रिपोर्ट होइन। होल्डिङ 1342 (२४ सेन्टर: नुवाकोट 427 · रसुवा 794 · धादिङ 121) र प्रहरी ४,०७७ छुट्टै। हस्तान्तरण 110 कट्टी लेबल। अघिल्लो १ असोज करिब ६,१४५।",
-      "do_not_merge_en": "OPMCM portal missing-person reports, Hello Sarkar, Madhesh Police, the tourist list and holding-district labels are separate collections — filings or other tallies, not this toll. Do not add the Rasuwa, Nuwakot and foreign labels on top of about 5,875.",
-      "do_not_merge_ne": "ओपीएमसीएम पोर्टलका हराएका व्यक्तिका रिपोर्ट, हेलो सरकार, मधेश प्रहरी, पर्यटक सूची र होल्डिङ लेबल छुट्टै संकलन हुन्। रसुवा, नुवाकोट र विदेशी लेबल करिब 5,875 माथि नजोड्नुहोस्।",
+      "caption_en": "NDRRMA / MoHA, 4 Ashwin 19:00 — about 5,786. Official uncontacted toll, not OPMCM family missing-person reports. Rasuwa/Nuwakot/foreign parts are exclusive labels — do not add into a false sum. Holding districts (1,231 across 20 centres: Nuwakot 324 · Rasuwa 786 · Dhading 121) and Nepal Police 4,077 missing are separate collections. Handed-over 110 is a cut label. Earlier 3 Ashwin ~5,875.",
+      "caption_ne": "एनडीआरआरएमए / गृह, ४ असोज १९:०० — करिब 5,786। आधिकारिक सम्पर्कविहीन, पोर्टलका परिवार रिपोर्ट होइन। होल्डिङ 1231 (२० सेन्टर: नुवाकोट 324 · रसुवा 786 · धादिङ 121) र प्रहरी ४,०७७ छुट्टै। हस्तान्तरण 110 कट्टी लेबल। अघिल्लो ३ असोज करिब ५,८७५।",
+      "do_not_merge_en": "OPMCM portal missing-person reports, Hello Sarkar, Madhesh Police, the tourist list and holding-district labels are separate collections — filings or other tallies, not this toll. Do not add the Rasuwa, Nuwakot and foreign labels on top of about 5,786.",
+      "do_not_merge_ne": "ओपीएमसीएम पोर्टलका हराएका व्यक्तिका रिपोर्ट, हेलो सरकार, मधेश प्रहरी, पर्यटक सूची र होल्डिङ लेबल छुट्टै संकलन हुन्। रसुवा, नुवाकोट र विदेशी लेबल करिब 5,786 माथि नजोड्नुहोस्।",
       "items": [
         {
           "label_en": "Reported uncontacted",
           "label_ne": "जनाइएको सम्पर्कविहीन",
-          "value": 5875
+          "value": 5786
         }
       ],
       "aside": [
@@ -333,7 +333,7 @@
         {
           "label_en": "Nuwakot — other districts (excl. Rasuwa)",
           "label_ne": "नुवाकोट · अन्य (रसुवाबाहेक)",
-          "value": 1179,
+          "value": 1090,
           "exclusive": true
         },
         {
@@ -343,21 +343,21 @@
           "exclusive": true
         },
         {
-          "label_en": "Holding districts (24 centres)",
-          "label_ne": "होल्डिङ जिल्ला (२४ सेन्टर)",
-          "value": 1342,
+          "label_en": "Holding districts (20 centres)",
+          "label_ne": "होल्डिङ जिल्ला (२० सेन्टर)",
+          "value": 1231,
           "exclusive": true
         },
         {
           "label_en": "Holding — Nuwakot",
           "label_ne": "होल्डिङ · नुवाकोट",
-          "value": 427,
+          "value": 324,
           "exclusive": true
         },
         {
           "label_en": "Holding — Rasuwa",
           "label_ne": "होल्डिङ · रसुवा",
-          "value": 794,
+          "value": 786,
           "exclusive": true
         },
         {
@@ -380,8 +380,8 @@
       "title_en": "Personnel deployed",
       "title_ne": "परिचालित जनशक्ति",
       "tone": "positive",
-      "caption_en": "Security forces, NDRRMA / MoHA 3 Ashwin 19:00. Medical staff, surgical teams and aircraft are counted separately. Army 8,844 + police 7,975 + armed police 4,203 = 21,022.",
-      "caption_ne": "सुरक्षा निकाय, एनडीआरआरएमए / गृह ३ असोज १९:००। स्वास्थ्यकर्मी, सर्जिकल टोली र हवाईजहाज छुट्टै। सेना 8,844 + प्रहरी 7,975 + सशस्त्र 4,203 = 21,022।",
+      "caption_en": "Security forces, NDRRMA / MoHA 4 Ashwin 19:00. Medical staff, surgical teams and aircraft are counted separately. Army 8,844 + police 7,975 + armed police 4,203 = 21,022. The 4 Ashwin board heads 20,929, which its own parts do not close; Atlas keeps the sum the parts support.",
+      "caption_ne": "सुरक्षा निकाय, एनडीआरआरएमए / गृह ४ असोज १९:००। स्वास्थ्यकर्मी, सर्जिकल टोली र हवाईजहाज छुट्टै। सेना 8,844 + प्रहरी 7,975 + सशस्त्र 4,203 = 21,022। ४ असोज बोर्डको शीर्ष 20,929 आफ्नै विभाजनसँग मिल्दैन।",
       "do_not_merge_en": "The 200+ medical staff and 6 surgical teams are not inside the 21,022 security total, and the 14 helicopters are aircraft, not people.",
       "do_not_merge_ne": "२००+ स्वास्थ्यकर्मी र ६ सर्जिकल टोली 21,022 को सुरक्षा जम्मामा समावेश छैनन्, र १४ हेलिकप्टर हवाईजहाज हुन्, मानिस होइनन्।",
       "items": [
@@ -429,8 +429,8 @@
       "title_en": "Rescued by air",
       "title_ne": "हवाई उद्धार",
       "tone": "positive",
-      "caption_en": "SitRep-6 helicopter rescue (people). NDRRMA's 13,784 rescued (air and ground, 3 Ashwin 19:00) is a separate graphic without an army/police/armed-police split on this board, not added here. Army sorties 1,692, armed-police sorties 320 and private-sector Kathmandu flights 129 are flights, not a second people total.",
-      "caption_ne": "सिटरेप-६ हेलि उद्धार (मानिस)। एनडीआरआरएमएको १३,७८४ उद्धार (हवाई र स्थल, ३ असोज १९:००) यो बोर्डमा सेना/प्रहरी/सशस्त्र विभाजनबिनाको छुट्टै ग्राफिक हो, यहाँ जोडिँदैन।",
+      "caption_en": "SitRep-6 helicopter rescue (people). NDRRMA's 13,784 rescued (air and ground, 4 Ashwin 19:00) is a separate graphic without an army/police/armed-police split on this board, not added here. Army sorties 1,692 (SitRep #15 cumulative; 33 today on the 4 Ashwin board), armed-police sorties 320 and private-sector Kathmandu flights 129 are flights, not a second people total.",
+      "caption_ne": "सिटरेप-६ हेलि उद्धार (मानिस)। एनडीआरआरएमएको १३,७८४ उद्धार (हवाई र स्थल, ४ असोज १९:००) यो बोर्डमा सेना/प्रहरी/सशस्त्र विभाजनबिनाको छुट्टै ग्राफिक हो, यहाँ जोडिँदैन।",
       "do_not_merge_en": "14 is the number of helicopters flying, not people rescued. SitRep 1,976, NDRRMA 13,784, sortie counts, private-sector Kathmandu flights 129, and named heli lists are not additive.",
       "do_not_merge_ne": "१४ भनेको उडानरत हेलिकप्टरको संख्या हो, उद्धार भएका मानिस होइन। सिटरेप १,९७६, एनडीआरआरएमए १३,७८४, उडान संख्या, निजी क्षेत्र काठमाडौं उडान १२९ र हेलि नामावली जोडिँदैनन्।",
       "items": [
@@ -463,9 +463,9 @@
       "title_en": "Police: injured and rescued",
       "title_ne": "प्रहरी: घाइते र उद्धार",
       "tone": "positive",
-      "caption_en": "Police, 24 Bhadra board via bulletin. A label, not a substitute for the official in-treatment figure of 18.",
+      "caption_en": "Police, 24 Bhadra board via bulletin. A label, not a substitute for the official in-treatment figure of 15.",
       "caption_ne": "प्रहरी, २४ भदौ बोर्ड (बुलेटिन)। लेबल मात्र, आधिकारिक घाइते ३३९ को सट्टा होइन।",
-      "do_not_merge_en": "Gender split (men 6,380 + women 2,824 + unspecified 50 = 9,254). Not added to the 18 in-treatment hospital figure.",
+      "do_not_merge_en": "Gender split (men 6,380 + women 2,824 + unspecified 50 = 9,254). Not added to the 15 in-treatment hospital figure.",
       "do_not_merge_ne": "लिङ्ग विभाजन (पुरुष ६,३८० + महिला २,८२४ + नखुलेको ५० = ९,२५४)। अस्पतालको ३३९ मा जोडिँदैन।",
       "items": [
         {
