@@ -31,15 +31,24 @@
 #   runs/         a named volume instead of a host bind mount. Coolify builds
 #                 in a temp directory, so a relative bind path would land
 #                 inside the checkout and be discarded on the next deploy.
-#   build context relative to the REPO ROOT, not to this file. Coolify runs
-#                 `docker compose --project-directory <checkout> -f <this file>`,
-#                 and compose resolves a relative context against the project
-#                 directory. `../../backend` became `/backend` and the build
-#                 failed with "unable to prepare context". Run it by hand the
-#                 same way:
+#   images        pulled, never built. CI builds both images once, on hardware
+#                 that is not also serving the site, and publishes them to
+#                 GHCR; this file names them. Coolify used to rebuild the same
+#                 two Dockerfiles on the deployment host, which meant the box
+#                 compiled a toolchain it would then throw away, and ran an
+#                 artifact no test had ever executed. Check what it resolves
+#                 to before deploying:
 #
 #                   docker compose --project-directory . \
 #                     -f infra/coolify/docker-compose.yml config
+#
+#                 ATLAS_IMAGE_TAG defaults to `latest`, which every push to
+#                 main moves. To pin — for a rollback, or to hold a release
+#                 still — set it in Coolify to a commit SHA; CI publishes one
+#                 immutable tag per commit alongside `latest`.
+#
+#                 The packages are private, so Coolify needs a registry
+#                 credential for ghcr.io with read:packages and nothing more.
 #
 # ── The one constraint that survives every topology ──────────────────────────
 #
@@ -118,9 +127,8 @@ services:
     restart: unless-stopped
 
   api:
-    build:
-      context: ./backend
-      dockerfile: ../infra/prod/Dockerfile.api
+    image: ${ATLAS_API_IMAGE:-ghcr.io/ancoda-labs/ancoda-atlas/api}:${ATLAS_IMAGE_TAG:-latest}
+    pull_policy: always
     environment:
       <<: *backend-env
       # Coolify fills this from the domain you set on this service.
@@ -143,9 +151,8 @@ services:
 
   # One replica, always. The sole writer of runs/.
   worker:
-    build:
-      context: ./backend
-      dockerfile: ../infra/prod/Dockerfile.api
+    image: ${ATLAS_API_IMAGE:-ghcr.io/ancoda-labs/ancoda-atlas/api}:${ATLAS_IMAGE_TAG:-latest}
+    pull_policy: always
     environment:
       <<: *backend-env
       ATLAS_RUNS_DIR: /app/runs
@@ -167,9 +174,8 @@ services:
     restart: unless-stopped
 
   beat:
-    build:
-      context: ./backend
-      dockerfile: ../infra/prod/Dockerfile.api
+    image: ${ATLAS_API_IMAGE:-ghcr.io/ancoda-labs/ancoda-atlas/api}:${ATLAS_IMAGE_TAG:-latest}
+    pull_policy: always
     environment:
       <<: *backend-env
     command: /app/docker/beat-entrypoint.sh
@@ -184,14 +190,12 @@ services:
 
   # Drop this service if the frontend is going on Cloudflare instead.
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: ../infra/prod/Dockerfile.frontend
-      args:
-        # BUILD time, baked into the browser bundle. Must be the API's public
-        # URL — changing it means rebuilding, not restarting.
-        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-https://atlas-api.ancodalabs.com}
-        ATLAS_API_BASE_URL: ${ATLAS_API_BASE_URL:-http://api:8000}
+    # NEXT_PUBLIC_API_BASE_URL is frozen into the browser bundle at build time,
+    # which now happens in CI. Changing the API's public address means a new
+    # image, not a restart — set the NEXT_PUBLIC_API_BASE_URL repository
+    # variable in GitHub and push.
+    image: ${ATLAS_FRONTEND_IMAGE:-ghcr.io/ancoda-labs/ancoda-atlas/frontend}:${ATLAS_IMAGE_TAG:-latest}
+    pull_policy: always
     environment:
       SERVICE_FQDN_FRONTEND_3117: ""
       # RUNTIME, for the server-rendered first paint. The API container sits

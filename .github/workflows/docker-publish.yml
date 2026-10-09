@@ -1,4 +1,12 @@
-name: Build & Publish Docker Images
+# Build once, deploy what was tested.
+#
+# The pipeline is three gates in a line: the suite has to pass before an image
+# is published, and an image has to be published before production is told to
+# pull it. Nothing here builds on the deployment host. That was the old shape —
+# GitHub built the images and then Coolify rebuilt the same two Dockerfiles on
+# an 8 GB box with a spinning disk — and it meant production ran an artifact no
+# CI had ever executed.
+name: CI & Publish
 
 on:
   push:
@@ -11,8 +19,65 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
 
+# One deploy at a time. Two merges a minute apart would otherwise race, and the
+# loser would be whichever `docker compose pull` happened to finish second.
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
+  # ─── gate ─────────────────────────────────────────────────────────────────
+  # Until this existed, a green tick meant "Docker built", which is not the
+  # same claim as "the code works". The pre-commit hook ran the real checks,
+  # but it is local, `--no-verify` skips it, and it silently skips the whole
+  # backend when the developer's Docker daemon is down.
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: backend/pyproject.toml
+
+      - name: Install backend
+        working-directory: backend
+        run: pip install -e ".[dev]"
+
+      - name: ruff
+        working-directory: backend
+        run: ruff check app scripts tests
+
+      - name: mypy
+        working-directory: backend
+        run: mypy
+
+      - name: pytest
+        working-directory: backend
+        run: pytest -q
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend
+        working-directory: frontend
+        run: npm ci
+
+      # no-any, node:test, and a real production build.
+      - name: npm run verify
+        working-directory: frontend
+        run: npm run verify
+
+  # ─── publish ──────────────────────────────────────────────────────────────
   build-and-push:
+    needs: test
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -79,6 +144,63 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          # The browser bundle freezes this at build time, so the image the
+          # registry holds is only correct if it is baked here. Set the repo
+          # variable to move the API's public address; the Dockerfile's own
+          # fallback covers the case where it is unset.
+          build-args: |
+            NEXT_PUBLIC_API_BASE_URL=${{ vars.NEXT_PUBLIC_API_BASE_URL }}
           # Scoped per image, or the two builds evict each other's layers.
           cache-from: type=gha,scope=${{ matrix.name }}
           cache-to: type=gha,mode=max,scope=${{ matrix.name }}
+
+  # ─── deploy ───────────────────────────────────────────────────────────────
+  # Coolify is only told to pull. It is deliberately not given a new tag to
+  # run: the token this job holds can start a deploy and nothing else, so a
+  # leaked CI secret cannot repoint production at an arbitrary image or read
+  # the stack's environment. Rollback is a one-field change in the Coolify UI —
+  # every commit is also published as its own immutable `<sha>` tag.
+  deploy:
+    needs: build-and-push
+    # Opt-in, so merging this does not turn main red before the Coolify
+    # secrets exist. Set the DEPLOY_ENABLED repository variable to `true` once
+    # a manual deploy has proved the host can authenticate to GHCR. Left off,
+    # the images still publish and the deploy is simply not attempted — which
+    # is visible as a skipped job, not as a green tick over nothing.
+    if: >-
+      github.event_name == 'push'
+      && github.ref == 'refs/heads/main'
+      && vars.DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    permissions: {}
+    environment: production
+    steps:
+      - name: Trigger Coolify deploy
+        env:
+          COOLIFY_BASE_URL: ${{ secrets.COOLIFY_BASE_URL }}
+          COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
+          COOLIFY_RESOURCE_UUID: ${{ secrets.COOLIFY_RESOURCE_UUID }}
+        run: |
+          set -euo pipefail
+          # DEPLOY_ENABLED is on, so a missing secret is a misconfiguration
+          # and not a "not set up yet". Fail rather than skip: a deploy that
+          # quietly did not happen is worse than one that says so.
+          for v in COOLIFY_BASE_URL COOLIFY_TOKEN COOLIFY_RESOURCE_UUID; do
+            eval "val=\${$v:-}"
+            if [ -z "${val}" ]; then
+              echo "::error::${v} is not set, but DEPLOY_ENABLED is true. See infra/README.md."
+              exit 1
+            fi
+          done
+          # -sS keeps the body on failure; the token is never echoed.
+          code=$(curl -sS -o /tmp/deploy.json -w '%{http_code}' \
+            --max-time 60 \
+            --request GET \
+            --header "Authorization: Bearer ${COOLIFY_TOKEN}" \
+            "${COOLIFY_BASE_URL%/}/api/v1/deploy?uuid=${COOLIFY_RESOURCE_UUID}&force=false")
+          echo "Coolify responded ${code}"
+          cat /tmp/deploy.json
+          echo
+          # Coolify answers 200 with a deployment uuid once the job is queued.
+          # A queued deploy is not a finished one — watch it in the Coolify UI.
+          [ "${code}" = "200" ]
