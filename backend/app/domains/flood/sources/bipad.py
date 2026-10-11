@@ -19,14 +19,16 @@ actually carried figures, and callers are expected to say so.
 
 import asyncio
 import time
-from typing import Any
+from typing import Any, Callable
 
 from app.core.http import is_error, now_iso, safe_fetch
 from app.core.logging import get_logger
 from app.domains.flood.scope import (
     AFFECTED_DISTRICTS,
+    BUDHI_GANDAKI_START,
     EVENT_START,
-    in_corridor,
+    in_budhi_gandaki_scope,
+    in_rasuwa_scope,
     is_placeholder,
     phone,
 )
@@ -56,6 +58,14 @@ HAZARD_THUNDERBOLT = 23
 
 TTL_S = 3 * 60
 _cache: dict[str, tuple[float, Any]] = {}
+
+# Which desk an incident is counted on. Each rule takes the coordinates and the
+# incident date, because the two floods share ground and are told apart by when.
+ScopeRule = Callable[[float | None, float | None, str | None], bool]
+SCOPES: dict[str, ScopeRule] = {
+    "bhotekoshi-flood": in_rasuwa_scope,
+    "budhi-gandaki-flood": in_budhi_gandaki_scope,
+}
 
 
 async def _cached(key: str, loader: Any) -> Any:
@@ -149,8 +159,13 @@ def normalise_loss(raw: dict[str, Any] | None) -> dict[str, Any] | None:
 
 
 async def get_incidents(
-    hazard: int = HAZARD_FLOOD, since: str = EVENT_START, corridor_only: bool = True
+    hazard: int = HAZARD_FLOOD,
+    since: str = EVENT_START,
+    corridor_only: bool = True,
+    scope: str = "bhotekoshi-flood",
 ) -> list[dict[str, Any]]:
+    in_scope = SCOPES[scope]
+
     async def load() -> list[dict[str, Any]]:
         # `expand=loss` returns the loss record inline. Without it every
         # incident needed a second request, which during a live response meant a
@@ -185,11 +200,11 @@ async def get_incidents(
                 "lat": lat,
                 "lon": lon,
             }
-            if not corridor_only or in_corridor(lat, lon):
+            if not corridor_only or in_scope(lat, lon, r.get("incidentOn") or None):
                 out.append(incident)
         return out
 
-    return await _cached(f"incidents:{hazard}:{since}:{corridor_only}", load)
+    return await _cached(f"incidents:{hazard}:{since}:{corridor_only}:{scope}", load)
 
 
 async def get_losses(loss_ids: list[int]) -> dict[int, dict[str, Any] | None]:
@@ -239,14 +254,16 @@ async def get_alerts(limit: int = 40) -> list[dict[str, Any]]:
     return await _cached(f"alerts:{limit}", load)
 
 
-async def get_corridor_incidents(since: str = EVENT_START) -> dict[str, Any]:
-    """Every flood and landslide incident logged since `since`, with whatever
-    loss figures have actually been entered."""
+async def get_corridor_incidents(
+    since: str = EVENT_START, scope: str = "bhotekoshi-flood"
+) -> dict[str, Any]:
+    """Every flood and landslide incident logged since `since` inside a desk's
+    scope, with whatever loss figures have actually been entered."""
     fetched_at = now_iso()
     try:
         floods, slides = await asyncio.gather(
-            get_incidents(hazard=HAZARD_FLOOD, since=since),
-            get_incidents(hazard=HAZARD_LANDSLIDE, since=since),
+            get_incidents(hazard=HAZARD_FLOOD, since=since, scope=scope),
+            get_incidents(hazard=HAZARD_LANDSLIDE, since=since, scope=scope),
         )
         incidents = sorted(
             [*floods, *slides],
@@ -292,7 +309,7 @@ async def get_corridor_incidents(since: str = EVENT_START) -> dict[str, Any]:
             "fetchedAt": fetched_at,
         }
     except Exception as exc:  # noqa: BLE001
-        log.warning("bipad_incidents_unavailable", error=str(exc))
+        log.warning("bipad_incidents_unavailable", scope=scope, error=str(exc))
         return {
             "incidents": [],
             "totals": None,
@@ -372,3 +389,8 @@ async def get_district_contacts() -> dict[str, Any]:
             "source": CONTACTS_SOURCE,
             "fetchedAt": fetched_at,
         }
+
+
+async def get_budhi_gandaki_incidents() -> dict[str, Any]:
+    """The Budhi Gandaki desk's incidents, from the day that flood began."""
+    return await get_corridor_incidents(since=BUDHI_GANDAKI_START, scope="budhi-gandaki-flood")

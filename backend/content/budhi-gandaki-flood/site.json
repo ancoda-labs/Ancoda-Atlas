@@ -1,0 +1,14 @@
+{
+  "id": "site",
+  "report_contact_email": "research@ancodalabs.com",
+  "_comment_report_contact_email": "Same monitored inbox as the Bhotekoshi desk. While it is empty the report link is hidden rather than rendered dead.",
+  "brand_en": "Budhi Gandaki Flood · Gorkha",
+  "brand_ne": "बूढीगण्डकी बाढी · गोरखा",
+  "date_line_en": "11 October 2026 · 25 Asoj 2083 · Event early morning, 25 Asoj / 11 October",
+  "date_line_ne": "११ अक्टोबर २०२६ · २५ असोज २०८३ · घटना २५ असोज बिहान सबेरै",
+  "kicker_en": "Landslide-blocked river burst · Budhi Gandaki valley, Gorkha",
+  "kicker_ne": "पहिरोले थुनिएको नदी फुट्दा आएको बाढी · बूढीगण्डकी उपत्यका, गोरखा",
+  "safety_en": "Stay away from the Budhi Gandaki, and from the Trishuli below Benighat, until officials say the water has passed. Residents saw the flow stop and start again and DHM says levels are still fluctuating, so a river that has dropped is not yet a safe one. Do not go to the bank to watch or film.",
+  "safety_ne": "अधिकारीहरूले पानी गइसक्यो भन्नुअघि बूढीगण्डकी र बेनीघाटभन्दा तलको त्रिशूली नजिक नजानुहोस्। स्थानीयले नदीको बहाव रोकिँदै फेरि आएको देखेका छन् र जल तथा मौसम विज्ञान विभागका अनुसार सतह अझै घटबढ भइरहेको छ, त्यसैले घटेको नदी पनि अझै सुरक्षित होइन। हेर्न वा भिडियो खिच्न किनारमा नजानुहोस्।",
+  "translation_status": "pending_native_review"
+}

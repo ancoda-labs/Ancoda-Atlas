@@ -49,6 +49,12 @@ const T = {
     en: 'Incident counts and families come from BIPAD’s corridor register and refresh on the desk cycle. Deaths, uncontacted and injured are reviewed figures, overlaid from the Rasuwa flood bulletin when that scrape’s parts add up. Deaths never go down. Personnel, air rescue and damage sit in their own sections. Do not add the register and the official toll together.',
     ne: 'दर्ता घटना र परिवार बिपद्को करिडोर अभिलेख हुन् र डेस्क चक्रमा ताजा हुन्छन्। मृत्यु, सम्पर्कविहीन र घाइते जाँचिएका तथ्यांक हुन्, रसुवा बाढी बुलेटिनबाट ओभरले हुन्छ जब भागहरू जोडिन्छन्। मृत्यु घट्दैन। जनशक्ति, हवाई उद्धार र क्षति आ-आफ्नै खण्डमा छन्। अभिलेख र आधिकारिक क्षति नजोड्नुहोस्।',
   },
+  // Every other desk has no bulletin overlay and no Copernicus grading: its
+  // figures are named first-day reports, and the provenance line says so.
+  caveatEvent: {
+    en: 'Incident counts come from BIPAD’s register for this flood’s valley since it began and refresh on the desk cycle. Every other figure is a reviewed report, shown with who gave it; nothing overlays them. Do not add the register and those reports together.',
+    ne: 'दर्ता घटना यो बाढीको उपत्यकाका लागि सुरु भएदेखिको बिपद्को अभिलेखबाट आउँछन् र डेस्क चक्रमा ताजा हुन्छन्। अन्य सबै तथ्यांक जाँचिएका विवरण हुन्, कसले दिएको भन्ने सहित; तिनमा केही ओभरले हुँदैन। अभिलेख र ती विवरण नजोड्नुहोस्।',
+  },
   caveatShort: {
     en: 'Register and official toll are separate — do not add together.',
     ne: 'अभिलेख र आधिकारिक क्षति छुट्टै छन् — जोड्नुहोस् नहोस्।',
@@ -178,7 +184,8 @@ export default function FloodReportedTiles({
   // zeros are never the headline number.
   // The desk payload already carries the reviewed sitrep with the live
   // overlay applied, so there is no separate bundled copy to fall back to.
-  const { desk } = useFloodDesk();
+  const { desk, deskSlug } = useFloodDesk();
+  const isBhotekoshi = deskSlug === 'bhotekoshi-flood';
   const figures = sitrep || (desk.sitrep as SitrepContent | null);
 
   // No reviewed figures means the desk has not answered yet. The tiles render
@@ -191,8 +198,10 @@ export default function FloodReportedTiles({
   const injured = reviewed(figures, 'injured', 'injured');
   const heli = reviewed(figures, 'heli', 'air-rescue');
   const deployed = reviewed(figures, 'deployed', 'deployed');
-  const houses = infra(figures, 'houses', 'Houses destroyed')?.value;
-  const bridges = infra(figures, 'bridges', 'Bridges')?.value;
+  const housesRow = infra(figures, 'houses', 'Houses destroyed');
+  const bridgesRow = infra(figures, 'bridges', 'Bridges');
+  const houses = housesRow?.value;
+  const bridges = bridgesRow?.value;
   const lastAt = newestIso(corridor?.fetchedAt, figures.as_of);
   const lastLabel = lastAt
     ? ageFrom(lastAt, lang)
@@ -202,7 +211,9 @@ export default function FloodReportedTiles({
   const showDamage = scope === 'all';
   const showRegister = scope === 'all';
 
-  if (!totals && deaths == null) return null;
+  // A desk with no death toll yet still has figures to show — a missing count
+  // is the reason to open the page, and "no deaths figure" must not hide it.
+  if (!totals && deaths == null && missing == null && injured == null) return null;
 
   return (
     <>
@@ -235,7 +246,7 @@ export default function FloodReportedTiles({
           </Tile>
         )}
         {missing != null && (
-          <Tile value={n(missing.value, undefined, missing.approximate)} label={t('missing')} tone={missing.tone} scraped={missing.live} lang={lang}>
+          <Tile value={n(missing.value, missing.suffix, missing.approximate)} label={t('missing')} tone={missing.tone} scraped={missing.live} lang={lang}>
             {showRegister ? <BipadUnder value={totals?.missing} lang={lang} /> : null}
           </Tile>
         )}
@@ -274,12 +285,12 @@ export default function FloodReportedTiles({
           />
         )}
         {showDamage && houses != null && (
-          <Tile value={n(houses)} label={t('houses')} lang={lang}>
+          <Tile value={n(houses, housesRow?.suffix)} label={t('houses')} lang={lang}>
             <BipadUnder value={totals?.housesDestroyed} lang={lang} />
           </Tile>
         )}
         {showDamage && bridges != null && (
-          <Tile value={n(bridges)} label={t('bridges')} lang={lang}>
+          <Tile value={n(bridges, bridgesRow?.suffix)} label={t('bridges')} lang={lang}>
             <BipadUnder value={totals?.bridgesDestroyed} lang={lang} />
           </Tile>
         )}
@@ -346,7 +357,7 @@ export default function FloodReportedTiles({
               {' · '}
             </>
           )}
-          <span className="fl-blank">{scope === 'headline' ? t('caveatHeadline') : t('caveat')}</span>
+          <span className="fl-blank">{!isBhotekoshi ? t('caveatEvent') : scope === 'headline' ? t('caveatHeadline') : t('caveat')}</span>
         </p>
       )}
     </>

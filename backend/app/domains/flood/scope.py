@@ -160,12 +160,77 @@ class BBox(NamedTuple):
 CORRIDOR_BBOX = BBox(min_lat=27.4, max_lat=28.6, min_lon=84.3, max_lon=85.9)
 
 
-def in_corridor(lat: float | None, lon: float | None) -> bool:
+def _in_box(box: BBox, lat: float | None, lon: float | None) -> bool:
     if lat is None or lon is None:
         return False
+    return box.min_lat <= lat <= box.max_lat and box.min_lon <= lon <= box.max_lon
+
+
+def in_corridor(lat: float | None, lon: float | None) -> bool:
+    return _in_box(CORRIDOR_BBOX, lat, lon)
+
+
+# ─── The Budhi Gandaki flood, Gorkha ─────────────────────────────────────────
+#
+# A second event with its own desk. A landslide blocked the river in Chumnubri
+# Rural Municipality early on 11 October 2026 and burst, sweeping the valley
+# from Philim and Jagat down past Machhakhola and Arughat to the Trishuli
+# confluence at Benighat.
+#
+# The valley sits inside CORRIDOR_BBOX — the Budhi Gandaki is a Trishuli
+# tributary — so without the rule in in_rasuwa_scope() every incident BIPAD
+# logs for this flood would be counted on the Bhotekoshi desk as well.
+
+BUDHI_GANDAKI_START = os.getenv("BUDHI_GANDAKI_EVENT_START") or "2026-10-11"
+
+# Gorkha, where the valley is; Dhading across the river at Arughat and at the
+# Benighat confluence; and the districts DHM told to stay alert downstream
+# (Mugling and Chitwan, Nawalparasi). The downstream districts are listed for
+# the warning, not because water damage there has been reported.
+BUDHI_GANDAKI_DISTRICTS = [
+    District(44, "Gorkha", "गोरखा"),
+    District(26, "Dhading", "धादिङ"),
+    District(35, "Chitwan", "चितवन"),
+    District(481, "Nawalparasi East", "नवलपरासी पूर्व"),
+    District(482, "Nawalparasi West", "नवलपरासी पश्चिम"),
+]
+
+# The Budhi Gandaki valley from the Tibet border down to just above the
+# Benighat confluence (27.78 N), so a Trishuli incident at Benighat bazaar is
+# not taken for this flood. A box, not the catchment: the Ankhu Khola's lower
+# reach and a strip of north-west Dhading fall inside it too. Positions checked
+# against OpenStreetMap: Chumchet 28.44/84.91, Philim 28.39/84.90, Jagat
+# 28.35/84.90, Machhakhola 28.23/84.87, Arughat 28.05/84.81.
+BUDHI_GANDAKI_BBOX = BBox(min_lat=27.80, max_lat=28.80, min_lon=84.70, max_lon=85.10)
+
+
+def in_budhi_gandaki(lat: float | None, lon: float | None) -> bool:
+    return _in_box(BUDHI_GANDAKI_BBOX, lat, lon)
+
+
+def in_rasuwa_scope(lat: float | None, lon: float | None, incident_on: str | None) -> bool:
+    """Whether an incident belongs on the Bhotekoshi desk.
+
+    The Rasuwa corridor box, minus the Budhi Gandaki valley from the day that
+    flood began. An incident there before 11 October is still the Bhotekoshi
+    flood's; one on or after it is the Budhi Gandaki desk's. An undated incident
+    in the valley is left out rather than guessed at — BIPAD dates almost
+    everything, and counting a Gorkha landslide on the wrong desk is the error
+    this rule exists to prevent.
+    """
+    if not in_corridor(lat, lon):
+        return False
+    if not in_budhi_gandaki(lat, lon):
+        return True
+    return bool(incident_on) and str(incident_on)[:10] < BUDHI_GANDAKI_START
+
+
+def in_budhi_gandaki_scope(lat: float | None, lon: float | None, incident_on: str | None) -> bool:
+    """Whether an incident belongs on the Budhi Gandaki desk."""
     return (
-        CORRIDOR_BBOX.min_lat <= lat <= CORRIDOR_BBOX.max_lat
-        and CORRIDOR_BBOX.min_lon <= lon <= CORRIDOR_BBOX.max_lon
+        in_budhi_gandaki(lat, lon)
+        and bool(incident_on)
+        and str(incident_on)[:10] >= BUDHI_GANDAKI_START
     )
 
 

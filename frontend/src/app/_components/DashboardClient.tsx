@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 import { nextUpdateLabel, useDeskRefresh, useTick } from '@/hooks/use-desk-refresh';
 import { ageFrom } from '@/lib/relative-time';
 import BhotekoshiFloodButton from '@/app/_components/BhotekoshiFloodButton';
+import BudhiGandakiFloodButton from '@/app/_components/BudhiGandakiFloodButton';
 import FloodNewsTicker from '@/components/FloodNewsTicker';
 import AtlasMapPending from '@/components/AtlasMapPending';
 import LoadingUI from '@/components/LoadingUI';
@@ -625,6 +626,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
             {copy('intro', language)}
           </p>
         </div>
+        <BudhiGandakiFloodButton />
         <BhotekoshiFloodButton />
       </section>
 

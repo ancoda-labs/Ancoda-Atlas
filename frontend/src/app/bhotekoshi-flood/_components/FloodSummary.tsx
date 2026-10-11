@@ -33,6 +33,7 @@ import type {
 } from '@/types';
 import { ageFrom } from '@/lib/relative-time';
 import FloodReportedTiles, { ScrapedDot } from '@/app/bhotekoshi-flood/_components/FloodReportedTiles';
+import { useFloodDesk } from '@/app/bhotekoshi-flood/_components/FloodDeskProvider';
 
 // The summary of everything, as it appears above the map on the overview.
 //
@@ -418,6 +419,10 @@ export default function FloodSummary({
   section?: 'chapters' | 'rest' | 'all';
 }) {
   const t = (key: keyof typeof T) => T[key][lang];
+  // The damage note and the Copernicus link describe the Bhotekoshi desk's
+  // sources. On another flood they would credit a grading that does not exist.
+  const { deskSlug } = useFloodDesk();
+  const isBhotekoshi = deskSlug === 'bhotekoshi-flood';
   const [chapter, setChapter] = useState<
     'reported' | 'damage' | 'response' | 'toll' | 'portal' | 'lists'
   >('reported');
@@ -671,10 +676,12 @@ export default function FloodSummary({
                   <DamageCard key={item.id || i} item={item} lang={lang} />
                 ))}
               </div>
-              <ReviewedSource note="damage" compact />
-              <p className="fl-note">
-                <Link href="/bhotekoshi-flood/damage">{t('fullGrading')} →</Link>
-              </p>
+              <ReviewedSource note={isBhotekoshi ? 'damage' : undefined} compact />
+              {isBhotekoshi && (
+                <p className="fl-note">
+                  <Link href="/bhotekoshi-flood/damage">{t('fullGrading')} →</Link>
+                </p>
+              )}
             </div>
           )}
 

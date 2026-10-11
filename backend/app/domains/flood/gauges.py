@@ -60,6 +60,15 @@ CORRIDOR_STATIONS = [
 ]
 
 
+# The stations the Budhi Gandaki desk shows: the river's own gauge at Arughat,
+# and the Narayani below the Trishuli confluence, where DHM told Chitwan and
+# Nawalparasi to stay alert. Ids are from CORRIDOR_STATIONS above.
+BUDHI_GANDAKI_STATION_IDS = frozenset({100, 25, 106})
+BUDHI_GANDAKI_LABELS = frozenset(
+    s.label for s in CORRIDOR_STATIONS if s.id in BUDHI_GANDAKI_STATION_IDS
+)
+
+
 class StationSite(NamedTuple):
     lat: float
     lon: float

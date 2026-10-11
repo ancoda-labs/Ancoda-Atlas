@@ -58,6 +58,26 @@ async def get_desk(response: Response) -> dict[str, Any]:
     return _serve(response, payload, warm=service.is_warm(store), ttl=DESK_TTL_S)
 
 
+@router.get("/desks/{desk}", summary="Another flood's desk overview")
+async def get_event_desk(desk: str, response: Response) -> dict[str, Any]:
+    """A second flood's desk, in the same shape as GET /flood.
+
+    /flood is still the Bhotekoshi desk, so nothing built against it moves.
+    Today the only other desk is `budhi-gandaki-flood`. An unknown name answers
+    404 rather than an empty desk: an empty page under a flood's name would
+    read as "nothing happened".
+    """
+    from app.domains.flood.content import DEFAULT_DESK, is_desk
+
+    if not is_desk(desk) or desk == DEFAULT_DESK:
+        response.status_code = 404
+        no_store(response)
+        return {"error": "unknown_desk"}
+    store = service.get_store()
+    payload = service.event_desk_payload(desk)
+    return _serve(response, payload, warm=service.is_warm(store), ttl=DESK_TTL_S)
+
+
 @router.get("/site", summary="The reviewed site block")
 async def get_site(response: Response) -> dict[str, Any]:
     """The small reviewed strings the chrome needs — the report contact address,

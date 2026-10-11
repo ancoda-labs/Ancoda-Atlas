@@ -45,6 +45,9 @@ _FEED_KEYS = [
     "portalContacts",
     "opmcmPersons", "helpRequests", "officialContacts", "featuredPhotos", "popups",
     "carousel", "donationChannels", "latestActivity", "personPoints",
+    # The Budhi Gandaki desk's BIPAD incidents. Its river gauges are a subset
+    # of `river`, so they are not fetched twice.
+    "budhiGandakiCorridor",
 ]
 
 

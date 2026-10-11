@@ -341,6 +341,12 @@ async def run_flood_refresh() -> dict[str, Any]:
         # No `since` — the source resolves the event's start from the shared
         # scope, so the refresher and a direct call cannot disagree.
         _refresh("corridor", store, bipad.get_corridor_incidents, setter("corridor")),
+        _refresh(
+            "budhiGandakiCorridor",
+            store,
+            bipad.get_budhi_gandaki_incidents,
+            setter("budhiGandakiCorridor"),
+        ),
         _refresh("alerts", store, lambda: bipad.get_alerts(limit=40), setter("alerts")),
         _refresh("rescue", store, _load_rescue, setter("rescue")),
         _refresh("portal", store, _load_portal, setter("portal")),

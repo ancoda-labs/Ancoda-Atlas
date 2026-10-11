@@ -13,6 +13,7 @@ import {
   fetchSiteService,
   fetchSituationService,
   fetchVideosService,
+  type FloodDeskSlug,
 } from '@/services/flood-services';
 import type { Lang } from '@/store/slices/langSlice';
 import type { FloodDeskPayload } from '@/types';
@@ -39,10 +40,10 @@ export const DESK_POLL_MS = 2 * 60 * 1000;
 
 const desk = { refetchInterval: DESK_POLL_MS, staleTime: DESK_POLL_MS / 2 };
 
-export function useDesk(initialData?: FloodDeskPayload) {
+export function useDesk(initialData?: FloodDeskPayload, deskSlug: FloodDeskSlug = 'bhotekoshi-flood') {
   return useQuery({
-    queryKey: ['flood', 'desk'],
-    queryFn: fetchDeskService,
+    queryKey: ['flood', 'desk', deskSlug],
+    queryFn: () => fetchDeskService(deskSlug),
     // Handed in by the server render, so the reviewed content is in the first
     // HTML rather than arriving a round trip later.
     initialData,

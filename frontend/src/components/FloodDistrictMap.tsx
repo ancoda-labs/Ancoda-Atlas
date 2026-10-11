@@ -71,6 +71,16 @@ interface Props {
   lang: 'en' | 'ne';
   /** English district names to emphasise. Used by the /sandbox/ask map coupling. */
   highlightDistricts?: string[];
+  /**
+   * Overrides the bundled severity, by English district name. The shapes file
+   * grades the districts for the Bhotekoshi flood; another desk passes its own
+   * grading here, and any district it does not name is drawn as faint context
+   * — outlined, unlabelled — rather than as part of this flood.
+   */
+  districtStatus?: Record<string, 'severe' | 'affected'>;
+  /** The legend word for the `entry` point. Defaults to where the water
+   *  crossed into Nepal; a flood that began inside the country names its origin. */
+  entryLabel?: { en: string; ne: string };
 }
 
 const SEVERE = '#ff4d5c';
@@ -226,7 +236,7 @@ function stacksEqual(a: OverlayStack[], b: OverlayStack[]): boolean {
   return true;
 }
 
-export default function FloodDistrictMap({ points = [], photos = [], gauges = [], onSelect, onPhotoSelect, lang, highlightDistricts = [] }: Props) {
+export default function FloodDistrictMap({ points = [], photos = [], gauges = [], onSelect, onPhotoSelect, lang, highlightDistricts = [], districtStatus, entryLabel }: Props) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const stageRef = useRef<HTMLDivElement | null>(null);
   const wrapRef = useRef<HTMLDivElement | null>(null);
@@ -321,7 +331,12 @@ export default function FloodDistrictMap({ points = [], photos = [], gauges = []
       for (const f of geo.features) {
         const named = `${f.properties.name_en || ''}`.toLowerCase();
         const lit = highlight.has(named);
-        const severe = f.properties.status === 'severe' || lit;
+        const graded: 'severe' | 'affected' | undefined = districtStatus?.[f.properties.name_en];
+        const status: 'severe' | 'affected' | 'context' = districtStatus
+          ? graded ?? 'context'
+          : f.properties.status;
+        const context = status === 'context' && !lit;
+        const severe = status === 'severe' || lit;
         const path = new Path2D();
         for (const ring of ringsOf(f.geometry)) {
           ring.forEach(([lon, lat], i) => {
@@ -331,6 +346,12 @@ export default function FloodDistrictMap({ points = [], photos = [], gauges = []
           });
           path.closePath();
         }
+        if (context) {
+          ctx.strokeStyle = 'rgba(160,170,185,0.35)';
+          ctx.lineWidth = 0.8 * Math.min(zoom, 2.2);
+          ctx.stroke(path);
+          continue;
+        }
         ctx.fillStyle = severe ? 'rgba(255,77,92,0.30)' : 'rgba(255,176,32,0.20)';
         ctx.fill(path);
         ctx.strokeStyle = severe ? SEVERE : AFFECTED;
@@ -338,7 +359,7 @@ export default function FloodDistrictMap({ points = [], photos = [], gauges = []
         ctx.stroke(path);
         districtHits.push({
           name: ne ? f.properties.name_ne : f.properties.name_en,
-          status: f.properties.status,
+          status,
           path,
         });
 
@@ -557,7 +578,7 @@ export default function FloodDistrictMap({ points = [], photos = [], gauges = []
     const ro = new ResizeObserver(draw);
     ro.observe(stage);
     return () => ro.disconnect();
-  }, [geo, points, photos, gauges, lang, highlightDistricts]);
+  }, [geo, points, photos, gauges, lang, highlightDistricts, districtStatus]);
 
   const applyView = (next: View, paintButtons = true) => {
     const stage = stageRef.current;
@@ -1114,7 +1135,7 @@ export default function FloodDistrictMap({ points = [], photos = [], gauges = []
               <span><i className="line est" />{ne ? 'अनुमानित / जोखिममा' : 'Estimated / at risk'}</span>
             )}
             {points.some(p => p.status === 'entry') && (
-              <span><i style={{ background: ENTRY, borderRadius: '50%' }} />{ne ? 'प्रवेश बिन्दु' : 'Entry'}</span>
+              <span><i style={{ background: ENTRY, borderRadius: '50%' }} />{entryLabel ? (ne ? entryLabel.ne : entryLabel.en) : ne ? 'प्रवेश बिन्दु' : 'Entry'}</span>
             )}
             <span><i style={{ background: CONFIRMED, borderRadius: '50%' }} />{ne ? 'पुगेको' : 'Reached'}</span>
             {points.some(p => isEstimated(p.status)) && (
