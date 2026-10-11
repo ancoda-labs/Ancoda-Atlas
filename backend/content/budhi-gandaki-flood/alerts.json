@@ -1,0 +1,49 @@
+{
+  "id": "alerts",
+  "last_updated": "2026-10-11",
+  "note_en": "First-day warnings. They change through the day — follow the linked source for the current position, and DHM and the District Administration Office Gorkha above anything here.",
+  "note_ne": "पहिलो दिनका चेतावनी हुन्। दिनभरि परिवर्तन हुन सक्छन् — पछिल्लो अवस्थाका लागि स्रोत लिंक हेर्नुहोस्, र यहाँ लेखिएको भन्दा जल तथा मौसम विज्ञान विभाग र जिल्ला प्रशासन कार्यालय गोरखाको सूचनालाई प्राथमिकता दिनुहोस्।",
+  "alerts": [
+    {
+      "id": "dhm-downstream",
+      "severity": "critical",
+      "title_en": "DHM: very high flood risk down the Trishuli to Benighat",
+      "title_ne": "जल तथा मौसम विज्ञान विभाग: बेनीघाटसम्म त्रिशूलीमा बाढीको उच्च जोखिम",
+      "body_en": "The Department of Hydrology and Meteorology warned of a very high risk of flooding along the Trishuli corridor as far downstream as Benighat, where the Budhi Gandaki joins it, and urged residents around Mugling, Chitwan and Nawalparasi to remain alert. River levels were still fluctuating at the time of the warning.",
+      "body_ne": "जल तथा मौसम विज्ञान विभागले बूढीगण्डकी मिसिने बेनीघाटसम्म त्रिशूली करिडोरमा बाढीको अत्यन्त उच्च जोखिम रहेको चेतावनी दिएको छ, र मुग्लिन, चितवन र नवलपरासी आसपासका बासिन्दालाई सतर्क रहन आग्रह गरेको छ। चेतावनीका बेला नदीको सतह अझै घटबढ भइरहेको थियो।",
+      "source": "DHM via Kathmandu Post",
+      "source_url": "https://kathmandupost.com/gandaki-province/2026/10/11/five-things-to-know-about-the-budhi-gandaki-flash-flood"
+    },
+    {
+      "id": "stop-start",
+      "severity": "critical",
+      "title_en": "The river stopped and started again — the blockage may not be clear",
+      "title_ne": "नदी रोकिँदै फेरि बग्यो — थुनिएको भाग पूरै खुलेको निश्चित छैन",
+      "body_en": "A Lokpa resident said the flow appeared to stop and resume repeatedly, and the cause has not been confirmed. The Nepali Army has sent a drone team to the upper reaches of the river. Until officials say the valley is clear, treat a quiet river as one that can rise again without warning.",
+      "body_ne": "लोक्पाका एक बासिन्दाका अनुसार नदीको बहाव पटक-पटक रोकिँदै फेरि आएको देखियो, र कारण पुष्टि भएको छैन। नेपाली सेनाले नदीको माथिल्लो भागमा ड्रोन टोली पठाएको छ। अधिकारीहरूले उपत्यका सुरक्षित भयो नभनेसम्म शान्त देखिएको नदी पनि बिना सूचना फेरि बढ्न सक्छ भनेर बुझ्नुहोस्।",
+      "source": "PTI via Deccan Chronicle; Nepali Army via Onlinekhabar",
+      "source_url": "https://deccanchronicle.com/world/neighbours/nepal-flash-flood-sweeps-away-over-35-houses-bridges-in-gorkha-1994851"
+    },
+    {
+      "id": "salleri-at-risk",
+      "severity": "warning",
+      "title_en": "Around 20–22 houses in Salleri reported at risk",
+      "title_ne": "सल्लेरीका करिब २०–२२ घर जोखिममा",
+      "body_en": "Around 20 to 22 houses in Salleri were reported to be at risk after the flood, beyond those already swept away in the Jagat, Salleri and Paiyu riverbed settlements.",
+      "body_ne": "जगत, सल्लेरी र पैयुका बगर बस्तीमा बगेका घरबाहेक सल्लेरीका करिब २० देखि २२ घर बाढीपछि जोखिममा रहेको जनाइएको छ।",
+      "source": "Kathmandu Post",
+      "source_url": "https://kathmandupost.com/gandaki-province/2026/10/11/what-we-know-so-far-about-the-damage-caused-by-budhi-gandaki-floods"
+    },
+    {
+      "id": "riverside",
+      "severity": "critical",
+      "title_en": "Move away from the riverbank",
+      "title_ne": "नदी किनारबाट टाढा सर्नुहोस्",
+      "body_en": "Residents of Arughat Bazar living along the riverbank were moved to safer locations, and police and local authorities used loudspeakers to tell riverside residents to move to higher ground. If you live beside the Budhi Gandaki or the Trishuli below Benighat, follow those instructions.",
+      "body_ne": "आरुघाट बजारका नदी किनारमा बस्नेहरूलाई सुरक्षित स्थानमा सारिएको छ, र प्रहरी तथा स्थानीय निकायले माइकिङ गरी नदी किनारका बासिन्दालाई अग्लो स्थानमा सर्न भनेका छन्। बूढीगण्डकी वा बेनीघाटभन्दा तलको त्रिशूली किनारमा बस्नुहुन्छ भने ती निर्देशन पालना गर्नुहोस्।",
+      "source": "Kathmandu Post; PTI",
+      "source_url": "https://kathmandupost.com/gandaki-province/2026/10/11/what-we-know-so-far-about-the-damage-caused-by-budhi-gandaki-floods"
+    }
+  ],
+  "translation_status": "pending_native_review"
+}

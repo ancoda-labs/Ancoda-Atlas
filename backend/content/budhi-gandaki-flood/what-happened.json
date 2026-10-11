@@ -1,0 +1,37 @@
+{
+  "id": "what-happened",
+  "last_updated": "2026-10-11",
+  "headline_en": "What happened",
+  "headline_ne": "के भयो",
+  "body_en": [
+    "Early on Sunday 11 October 2026 (25 Asoj 2083) a flash flood came down the Budhi Gandaki river in northern Gorkha. Residents and tourists began fleeing from around 4 am after hearing a loud roar from the tributaries upstream.",
+    "The water swept through Chumnubri and Dharche rural municipalities and on past Arughat, carrying away houses in the riverbed settlements at Jagat, Salleri and Paiyu, the construction camp of the Budhi Gandaki hydropower project at Salleri, and at least six bridges, including the bridge at Arughat that links Gorkha and Dhading.",
+    "The preliminary account is that a landslide blocked the river upstream and the blockage then burst. Accounts differ on where. A Nepali Army reconnaissance team reported a dry landslide blocking the flow at Philim, Chumnubri-3. DHM said a landslide near Chumchet may have blocked a tributary, and other reports place it between Lokpa and Chumling. As of midday on 11 October the cause had not been officially confirmed, and an Army drone team had been sent upstream to establish it.",
+    "We report the cause only as far as sources support it. The figures on this desk are first-day reports and they disagree; each is shown with who gave it."
+  ],
+  "body_ne": [
+    "आइतबार, २०८३ असोज २५ (११ अक्टोबर २०२६) बिहान सबेरै गोरखाको उत्तरी भागमा बूढीगण्डकी नदीमा आकस्मिक बाढी आयो। माथिल्ला सहायक खोलाबाट ठूलो आवाज सुनेपछि करिब बिहान ४ बजेदेखि स्थानीय र पर्यटक सुरक्षित स्थानतर्फ भाग्न थाले।",
+    "बाढीले चुमनुब्री र धार्चे गाउँपालिका हुँदै आरुघाटसम्म जगत, सल्लेरी र पैयुका बगर बस्तीका घर, सल्लेरीमा रहेको बूढीगण्डकी जलविद्युत् आयोजनाको निर्माण क्याम्प, र गोरखा–धादिङ जोड्ने आरुघाटको पुलसहित कम्तीमा छ वटा पुल बगायो।",
+    "प्रारम्भिक विवरणअनुसार माथिल्लो भागमा पहिरोले नदी थुनेर पछि फुट्दा बाढी आएको हो। कहाँ भन्नेमा विवरण फरक छन्। नेपाली सेनाको टोलीले चुमनुब्री–३ फिलिममा सुक्खा पहिरोले बहाव थुनेको जनाएको छ। जल तथा मौसम विज्ञान विभागले चुमचेत नजिकको पहिरोले सहायक नदी थुनिएको हुन सक्ने बताएको छ, र अन्य समाचारले लोक्पा र चुम्लिङबीच भनेका छन्। ११ अक्टोबर मध्याह्नसम्म कारण आधिकारिक रूपमा पुष्टि भएको थिएन, र कारण पत्ता लगाउन सेनाको ड्रोन टोली माथिल्लो भागतर्फ पठाइएको थियो।",
+    "हामी स्रोतले पुष्टि गरेसम्मको कारण मात्र उल्लेख गर्छौं। यस डेस्कका तथ्यांक पहिलो दिनका विवरण हुन् र एकआपसमा मिल्दैनन्; प्रत्येक तथ्यांक कसले दिएको हो भन्ने सहित देखाइएको छ।"
+  ],
+  "sources": [
+    {
+      "label": "Kathmandu Post — What we know so far about the damage caused by Budhi Gandaki floods (11 Oct 2026)",
+      "url": "https://kathmandupost.com/gandaki-province/2026/10/11/what-we-know-so-far-about-the-damage-caused-by-budhi-gandaki-floods"
+    },
+    {
+      "label": "Kathmandu Post — Five things to know about the Budhi Gandaki flash flood (11 Oct 2026)",
+      "url": "https://kathmandupost.com/gandaki-province/2026/10/11/five-things-to-know-about-the-budhi-gandaki-flash-flood"
+    },
+    {
+      "label": "Onlinekhabar — Nepali Army reporting: a dry landslide blocked the flow (25 Asoj, 11:58)",
+      "url": "https://www.onlinekhabar.com/2026/10/2036748/army-reporting-on-floods-in-budhi-gandaki-dry-landslide-blocked-the-flow-and-caused-flooding"
+    },
+    {
+      "label": "PTI via Deccan Chronicle — Nepal flash flood sweeps away over 35 houses, bridges in Gorkha (11 Oct 2026)",
+      "url": "https://deccanchronicle.com/world/neighbours/nepal-flash-flood-sweeps-away-over-35-houses-bridges-in-gorkha-1994851"
+    }
+  ],
+  "translation_status": "pending_native_review"
+}

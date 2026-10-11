@@ -1,0 +1,122 @@
+{
+  "id": "flood-path",
+  "last_updated": "2026-10-11",
+  "lead_en": "Request to people living near the river: move from the riverside to higher ground and stay on high alert.",
+  "lead_ne": "नदी नजिक बस्नेहरूलाई अनुरोध: नदी किनारबाट अग्लो स्थानमा सर्नुहोस् र उच्च सतर्क रहनुहोस्।",
+  "body_en": "The flood began high in the Budhi Gandaki valley in Chumnubri Rural Municipality, where a landslide is reported to have blocked the river and then burst. It ran down past Philim, Sirdibas, Salleri and Jagat, through Machhakhola and Soti, and past Arughat. DHM warned of very high flood risk on down to Benighat, where the Budhi Gandaki joins the Trishuli.",
+  "body_ne": "बाढी चुमनुब्री गाउँपालिकाको बूढीगण्डकी उपत्यकाको माथिल्लो भागबाट सुरु भयो, जहाँ पहिरोले नदी थुनेर पछि फुटेको जनाइएको छ। यो फिलिम, सिर्दिबास, सल्लेरी र जगत हुँदै माछाखोला र सोती पार गर्दै आरुघाटसम्म बग्यो। जल तथा मौसम विज्ञान विभागले बूढीगण्डकी त्रिशूलीमा मिसिने बेनीघाटसम्म बाढीको अत्यन्त उच्च जोखिमको चेतावनी दिएको छ।",
+  "points": [
+    {
+      "id": "philim",
+      "name_en": "Philim",
+      "name_ne": "फिलिम",
+      "district_en": "Gorkha",
+      "district_ne": "गोरखा",
+      "lat": 28.3933,
+      "lng": 84.8966,
+      "status": "entry",
+      "notes_en": "The Nepali Army's reconnaissance team reported a dry landslide blocking the flow here, in Chumnubri-3. The bridge linking Nyakchet and Philim Bazar was destroyed (Home Minister). Upstream, DHM said a landslide near Chumchet (28.44 N, 84.91 E) may instead have blocked a tributary; four people living in a shed on the Ungilung river there were reported missing (a later report said five).",
+      "notes_ne": "नेपाली सेनाको टोलीले चुमनुब्री–३ को यस स्थानमा सुक्खा पहिरोले बहाव थुनेको जनाएको छ। न्याकचेत र फिलिम बजार जोड्ने पुल भत्कियो (गृहमन्त्री)। माथि, जल तथा मौसम विज्ञान विभागका अनुसार चुमचेत नजिकको पहिरोले सहायक नदी थुनेको हुन सक्छ; त्यहाँ उङ्गिलुङ खोला किनारको छाप्रोमा बस्ने चार जना बेपत्ता भएको जनाइएको छ (पछिल्लो समाचारमा पाँच)।"
+    },
+    {
+      "id": "sirdibas",
+      "name_en": "Sirdibas",
+      "name_ne": "सिर्दिबास",
+      "district_en": "Gorkha",
+      "district_ne": "गोरखा",
+      "lat": 28.3809,
+      "lng": 84.8891,
+      "status": "confirmed",
+      "notes_en": "The old suspension footbridge between Nyakchet and Sirdibas was swept away, and a house in Sirdibas was carried off (ward chair, Chumnubri-3).",
+      "notes_ne": "न्याकचेत र सिर्दिबास जोड्ने पुरानो झोलुङ्गे पुल बग्यो, र सिर्दिबासको एउटा घर बग्यो (वडाध्यक्ष, चुमनुब्री–३)।"
+    },
+    {
+      "id": "salleri",
+      "name_en": "Salleri",
+      "name_ne": "सल्लेरी",
+      "district_en": "Gorkha",
+      "district_ne": "गोरखा",
+      "lat": 28.3601,
+      "lng": 84.8884,
+      "status": "confirmed",
+      "notes_en": "The construction camp and some equipment of the 341 MW Budhi Gandaki hydropower project were swept away. Houses in Salleri and Paiyu were carried off, and around 20–22 more are reported at risk.",
+      "notes_ne": "३४१ मेगावाट बूढीगण्डकी जलविद्युत् आयोजनाको निर्माण क्याम्प र केही उपकरण बगे। सल्लेरी र पैयुका घर बगे, र थप करिब २०–२२ घर जोखिममा रहेको जनाइएको छ।"
+    },
+    {
+      "id": "jagat",
+      "name_en": "Jagat",
+      "name_ne": "जगत",
+      "district_en": "Gorkha",
+      "district_ne": "गोरखा",
+      "lat": 28.3514,
+      "lng": 84.8959,
+      "status": "confirmed",
+      "notes_en": "Houses in the Jagat riverbed settlement were swept away (five to seven per the CDO's preliminary report). The Nepali Army rescued six people from Jagat by helicopter.",
+      "notes_ne": "जगतको बगर बस्तीका घर बगे (प्रमुख जिल्ला अधिकारीको प्रारम्भिक विवरणअनुसार पाँचदेखि सात)। नेपाली सेनाले हेलिकप्टरबाट जगतबाट छ जनाको उद्धार गर्‍यो।"
+    },
+    {
+      "id": "machhakhola",
+      "name_en": "Machhakhola",
+      "name_ne": "माछाखोला",
+      "district_en": "Gorkha",
+      "district_ne": "गोरखा",
+      "lat": 28.2293,
+      "lng": 84.8738,
+      "status": "confirmed",
+      "notes_en": "Floodwater entered five to seven houses and temporary structures in lower Machhakhola (Dharche-5). The Machhakhola–Kerauja suspension footbridge was swept away.",
+      "notes_ne": "तल्लो माछाखोला (धार्चे–५) का पाँचदेखि सात घर र अस्थायी संरचनामा पानी पस्यो। माछाखोला–केरौजा झोलुङ्गे पुल बग्यो।"
+    },
+    {
+      "id": "soti",
+      "name_en": "Soti",
+      "name_ne": "सोती",
+      "district_en": "Gorkha",
+      "district_ne": "गोरखा",
+      "lat": 28.1353,
+      "lng": 84.8547,
+      "status": "confirmed",
+      "notes_en": "The motorable iron bridge at Soti, linking Arughat-2 and 3, was swept away.",
+      "notes_ne": "आरुघाट–२ र ३ जोड्ने सोतीको मोटरेबल फलामे पुल बग्यो।"
+    },
+    {
+      "id": "arughat",
+      "name_en": "Arughat",
+      "name_ne": "आरुघाट",
+      "district_en": "Gorkha",
+      "district_ne": "गोरखा",
+      "lat": 28.0462,
+      "lng": 84.8124,
+      "status": "confirmed",
+      "notes_en": "The bridge at Arughat linking Gorkha and Dhading was swept away. Riverside residents of Arughat Bazar were moved to safer places.",
+      "notes_ne": "गोरखा र धादिङ जोड्ने आरुघाटको पुल बग्यो। आरुघाट बजारका नदी किनारका बासिन्दालाई सुरक्षित स्थानमा सारियो।"
+    },
+    {
+      "id": "benighat",
+      "name_en": "Benighat",
+      "name_ne": "बेनीघाट",
+      "district_en": "Dhading",
+      "district_ne": "धादिङ",
+      "lat": 27.7835,
+      "lng": 84.7951,
+      "status": "estimated",
+      "notes_en": "Where the Budhi Gandaki joins the Trishuli. DHM's warning of very high flood risk runs to here. Shown as a warning, not as an observation of the water.",
+      "notes_ne": "बूढीगण्डकी त्रिशूलीमा मिसिने स्थान। जल तथा मौसम विज्ञान विभागको अत्यन्त उच्च जोखिमको चेतावनी यहाँसम्म छ। यो चेतावनी हो, पानी पुगेको अवलोकन होइन।"
+    }
+  ],
+  "sources": [
+    {
+      "label": "Kathmandu Post — damage so far (11 Oct 2026)",
+      "url": "https://kathmandupost.com/gandaki-province/2026/10/11/what-we-know-so-far-about-the-damage-caused-by-budhi-gandaki-floods"
+    },
+    {
+      "label": "Nepali Army via Onlinekhabar (25 Asoj, 11:58)",
+      "url": "https://www.onlinekhabar.com/2026/10/2036748/army-reporting-on-floods-in-budhi-gandaki-dry-landslide-blocked-the-flow-and-caused-flooding"
+    },
+    {
+      "label": "Place positions — OpenStreetMap (Nominatim), checked 11 Oct 2026",
+      "url": "https://www.openstreetmap.org/"
+    }
+  ],
+  "_comment_status": "Same rules as the Bhotekoshi desk. 'entry' marks where the water started — here the landslide dam the Army reported at Philim, which is the only origin a responding agency has placed by name. 'confirmed' = damage reported at that place by a named source. 'estimated' = a warning reach (Benighat), drawn dashed and never as an observation. Chumchet, DHM's possible origin, is a note on Philim rather than a point: the map dashes the line from the first 'estimated' point onward, so an estimated point at the head would draw the whole confirmed course as a projection. Coordinates are OpenStreetMap village positions, not the exact point of damage.",
+  "translation_status": "pending_native_review"
+}

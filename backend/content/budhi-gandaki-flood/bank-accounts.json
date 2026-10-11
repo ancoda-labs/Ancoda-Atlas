@@ -1,0 +1,11 @@
+{
+  "id": "bank-accounts",
+  "_comment": "Empty on purpose. No relief account, appeal or fund for the Budhi Gandaki flood had been verified against a primary government source when this desk opened. Donation routes are curated, never scraped, and a wrong account on a disaster page sends money to the wrong place. Add a fund only from an official notice (OPMCM, the District Administration Office Gorkha, or the rural municipality), with that notice as `source_url`.",
+  "last_verified": "2026-10-11",
+  "verification": {
+    "note_en": "No relief account for this flood has been verified yet. Atlas lists one only once an official notice names it. Until then, do not send money to an account shared on social media in the flood's name.",
+    "note_ne": "यस बाढीका लागि कुनै राहत खाता अझै प्रमाणित भएको छैन। आधिकारिक सूचनाले नाम उल्लेख गरेपछि मात्र एट्लसले खाता राख्नेछ। त्यतिन्जेल बाढीको नाममा सामाजिक सञ्जालमा फैलिएको खातामा पैसा नपठाउनुहोस्।",
+    "source_url": "https://opmcm.gov.np/"
+  },
+  "funds": []
+}

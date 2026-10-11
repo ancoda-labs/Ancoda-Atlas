@@ -1,0 +1,145 @@
+{
+  "id": "sitrep",
+  "_comment": "Reviewed floor for the Budhi Gandaki flood, first day. No numbered NDRRMA sitrep or bulletin publishes this flood's toll yet, so every figure is a named official or outlet's first-day report, and nothing overlays it — service.event_desk_payload never merges a live source into this file. Rules, same as the Bhotekoshi desk. (1) Zero is a claim: there is no deaths tile, because 'no casualties reported so far' (CDO, morning of 11 Oct) is not a count of zero dead; add one only when an official count is published. (2) The missing reports disagree and may overlap — four or five in a shed at Chumchet, four or five herders between Sirdibas and Chumling, 'at least 10' out of contact in Karobar — so the uncontacted group is `no_total_check` and its parts must never be summed into a new total. (3) Houses: the CDO's preliminary 5–7 is for the Jagat riverbank alone; the rural municipality's 35–40 covers Jagat Bagar, Salleri and Ghattikhola. They are different scopes, not a revision, and must not be added. (4) Every breakdown that does not set no_total_check must sum to its own total; content.reconcile checks at load.",
+  "as_of": "2026-10-11T11:58:00+05:45",
+  "as_of_label_en": "25 Asoj, 11:58 — first-day reports, preliminary",
+  "as_of_label_ne": "२५ असोज, ११:५८ — पहिलो दिनका प्रारम्भिक विवरण",
+  "sources": [
+    {
+      "label": "Nepali Army via Onlinekhabar (25 Asoj 11:58 — landslide dam at Philim, 6 rescued from Jagat by helicopter)",
+      "url": "https://www.onlinekhabar.com/2026/10/2036748/army-reporting-on-floods-in-budhi-gandaki-dry-landslide-blocked-the-flow-and-caused-flooding"
+    },
+    {
+      "label": "Kathmandu Post — Five things to know (updated 11:49 — 35–40 houses per Chumnubri RM; 5 missing at Chumchet; 4–5 herders out of contact)",
+      "url": "https://kathmandupost.com/gandaki-province/2026/10/11/five-things-to-know-about-the-budhi-gandaki-flash-flood"
+    },
+    {
+      "label": "Kathmandu Post — damage so far (updated 09:18 — CDO: 5–7 houses at Jagat; bridges by name)",
+      "url": "https://kathmandupost.com/gandaki-province/2026/10/11/what-we-know-so-far-about-the-damage-caused-by-budhi-gandaki-floods"
+    },
+    {
+      "label": "Kathmandu Post — Four people unaccounted for (updated 09:12)",
+      "url": "https://kathmandupost.com/gandaki-province/2026/10/11/four-people-unaccounted-for-after-budhi-gandaki-floods"
+    },
+    {
+      "label": "Karobar Daily (Assistant CDO Netraprasad Sharma: 6 bridges, 2 motorable + 4 suspension; at least 10 out of contact)",
+      "url": "https://www.karobardaily.com/news/426362"
+    },
+    {
+      "label": "PTI via Deccan Chronicle (CDO Dharmendra Kumar Mishra: no casualties reported so far)",
+      "url": "https://deccanchronicle.com/world/neighbours/nepal-flash-flood-sweeps-away-over-35-houses-bridges-in-gorkha-1994851"
+    },
+    {
+      "label": "Gorkhapatra (25 Asoj — hydropower camp and Salleri bazaar swept away; CDO: human loss still being assessed)",
+      "url": "https://gorkhapatraonline.com/news/226248"
+    }
+  ],
+  "headline": [
+    {
+      "id": "uncontacted",
+      "value": 10,
+      "suffix": "+",
+      "tone": "critical",
+      "label_en": "Out of contact",
+      "label_ne": "सम्पर्कविहीन",
+      "source": "Karobar Daily"
+    },
+    {
+      "id": "heli",
+      "value": 6,
+      "tone": "positive",
+      "label_en": "Rescued by helicopter",
+      "label_ne": "हेलिकप्टरबाट उद्धार",
+      "source": "Nepali Army"
+    }
+  ],
+  "breakdowns": [
+    {
+      "id": "uncontacted",
+      "total": 10,
+      "suffix": "+",
+      "title_en": "Out of contact",
+      "title_ne": "सम्पर्कविहीन",
+      "tone": "critical",
+      "caption_en": "Karobar Daily reports at least 10 people out of contact, without saying where. The Kathmandu Post names two groups: people living in a shed on the Ungilung river at Chumchet, Chumnubri-6 (four in the 09:12 report, five by 11:49), and four to five herders travelling from Sirdibas toward Chumling. No official missing count had been published by midday.",
+      "caption_ne": "कारोबार दैनिकका अनुसार कम्तीमा १० जना सम्पर्कविहीन छन्, कहाँ भन्ने खुलाइएको छैन। काठमाडौं पोस्टले दुई समूह उल्लेख गरेको छ: चुमनुब्री–६ चुमचेतमा उङ्गिलुङ खोला किनारको छाप्रोमा बस्ने (०९:१२ को समाचारमा चार, ११:४९ सम्म पाँच), र सिर्दिबासबाट चुम्लिङतर्फ जाँदै गरेका चारदेखि पाँच गोठाला। मध्याह्नसम्म आधिकारिक बेपत्ता संख्या सार्वजनिक भएको थिएन।",
+      "do_not_merge_en": "These are separate reports that may describe some of the same people. Do not add the shed and herder groups to each other or to the 10.",
+      "do_not_merge_ne": "यी छुट्टाछुट्टै विवरण हुन् र केही मानिस दोहोरिन सक्छन्। छाप्रो र गोठालाका समूह एकआपसमा वा १० मा नजोड्नुहोस्।",
+      "items": [
+        {
+          "label_en": "Shed on the Ungilung, Chumchet (Chumnubri-6)",
+          "label_ne": "उङ्गिलुङ किनारको छाप्रो, चुमचेत (चुमनुब्री–६)",
+          "value": 4,
+          "note_en": "Four at 09:12; five in the 11:49 update.",
+          "note_ne": "०९:१२ मा चार; ११:४९ को अद्यावधिकमा पाँच।"
+        },
+        {
+          "label_en": "Herders, Sirdibas toward Chumling",
+          "label_ne": "गोठाला, सिर्दिबासबाट चुम्लिङतर्फ",
+          "value": 4,
+          "suffix": "–5"
+        }
+      ],
+      "no_total_check": true
+    },
+    {
+      "id": "air-rescue",
+      "total": 6,
+      "title_en": "Rescued by helicopter",
+      "title_ne": "हेलिकप्टरबाट उद्धार",
+      "tone": "positive",
+      "caption_en": "Nepali Army: six people rescued safely by Army helicopter from Jagat, Chumnubri-3, an area at risk of landslides. Helicopters were also deployed for relief and evacuation (Home Minister); no further count has been published.",
+      "caption_ne": "नेपाली सेना: पहिरोको जोखिम रहेको चुमनुब्री–३ जगतबाट सेनाको हेलिकप्टरमार्फत छ जनाको सकुशल उद्धार। राहत र स्थानान्तरणका लागि पनि हेलिकप्टर खटाइएको छ (गृहमन्त्री); थप संख्या सार्वजनिक भएको छैन।",
+      "do_not_merge_en": "This is one Army report from Jagat. Other rescue figures circulating on 11 October could not be traced to an article or an official, and are not added here.",
+      "do_not_merge_ne": "यो जगतबाट सेनाको एउटा विवरण हो। ११ अक्टोबरमा फैलिएका अन्य उद्धार संख्या कुनै समाचार वा अधिकारीसम्म पुष्टि गर्न सकिएन, त्यसैले यहाँ जोडिएका छैनन्।",
+      "items": [
+        {
+          "label_en": "Jagat, Chumnubri-3 (Army helicopter)",
+          "label_ne": "जगत, चुमनुब्री–३ (सेनाको हेलिकप्टर)",
+          "value": 6
+        }
+      ]
+    }
+  ],
+  "infrastructure": {
+    "title_en": "Damage reported",
+    "title_ne": "जनाइएको क्षति",
+    "items": [
+      {
+        "id": "bridges",
+        "label_en": "Bridges swept away",
+        "label_ne": "बगेका पुल",
+        "value": 6,
+        "note_en": "Assistant CDO Netraprasad Sharma: two motorable and four suspension bridges. Named in reports: Arughat (Gorkha–Dhading), Soti (Arughat-2/3), Nyakchet–Sirdibas, Machhakhola–Kerauja, and Nyakchet–Philim Bazar.",
+        "note_ne": "सहायक प्रमुख जिल्ला अधिकारी नेत्रप्रसाद शर्मा: दुई मोटरेबल र चार झोलुङ्गे पुल। समाचारमा नाम आएका: आरुघाट (गोरखा–धादिङ), सोती (आरुघाट–२/३), न्याकचेत–सिर्दिबास, माछाखोला–केरौजा, र न्याकचेत–फिलिम बजार।"
+      },
+      {
+        "id": "houses",
+        "label_en": "Houses swept away",
+        "label_ne": "बगेका घर",
+        "value": 35,
+        "suffix": "–40",
+        "note_en": "Narayan Prasad Sapkota, administrative chief of Chumnubri RM: 35–40 houses in Jagat Bagar, Salleri and Ghattikhola. The CDO's earlier preliminary 5–7 was for the Jagat riverbank alone — a different scope, not a revision; do not add them.",
+        "note_ne": "चुमनुब्री गाउँपालिकाका प्रमुख प्रशासकीय अधिकृत नारायणप्रसाद सापकोटा: जगत बगर, सल्लेरी र घट्टीखोलामा ३५–४० घर। प्रजिअको अघिल्लो प्रारम्भिक ५–७ जगतको बगरका लागि मात्र हो — फरक दायरा, संशोधन होइन; नजोड्नुहोस्।"
+      },
+      {
+        "id": "hydropower-camp",
+        "label_en": "Hydropower construction camp swept away",
+        "label_ne": "बगेको जलविद्युत् निर्माण क्याम्प",
+        "value": 1,
+        "note_en": "The 341 MW Budhi Gandaki hydropower project's construction camp at Salleri, Chumnubri-3, with some equipment (Kathmandu Post; Gorkhapatra).",
+        "note_ne": "चुमनुब्री–३ सल्लेरीमा ३४१ मेगावाट बूढीगण्डकी जलविद्युत् आयोजनाको निर्माण क्याम्प र केही उपकरण (काठमाडौं पोस्ट; गोरखापत्र)।"
+      }
+    ]
+  },
+  "notes": [
+    {
+      "id": "no-death-count",
+      "title_en": "No death toll yet — which is not the same as zero",
+      "title_ne": "मृत्यु संख्या अझै छैन — यसको अर्थ शून्य होइन",
+      "body_en": "On the morning of 11 October the Gorkha Chief District Officer said no casualties had been reported so far, and no deaths or injuries had been confirmed by midday. With people still out of contact, this desk shows no deaths figure until an official count is published.",
+      "body_ne": "११ अक्टोबर बिहान गोरखाका प्रमुख जिल्ला अधिकारीले हालसम्म कुनै हताहत नभएको बताएका थिए, र मध्याह्नसम्म कुनै मृत्यु वा घाइते पुष्टि भएको थिएन। मानिसहरू अझै सम्पर्कविहीन रहेकाले आधिकारिक संख्या सार्वजनिक नभएसम्म यो डेस्कले मृत्युको तथ्यांक देखाउँदैन।"
+    }
+  ],
+  "translation_status": "pending_native_review"
+}

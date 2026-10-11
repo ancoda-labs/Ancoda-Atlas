@@ -1,7 +1,8 @@
 """The reviewed flood-desk content.
 
-Every fund, helpline and figure under content/bhotekoshi-flood/ has a primary
-source on the record. This module only loads and validates arithmetic — it
+Every fund, helpline and figure under content/<desk>/ has a primary source on
+the record. There is one folder per flood desk — content/bhotekoshi-flood/ and
+content/budhi-gandaki-flood/ — and each is loaded and cached on its own. This module only loads and validates arithmetic — it
 never fetches, and it never fills a gap with a plausible value.
 
 Read from disk rather than bundled. The Node build static-imported these files
@@ -20,8 +21,35 @@ from app.core.logging import get_logger
 
 log = get_logger(__name__)
 
-CONTENT_DIR = Path(__file__).resolve().parents[3] / "content" / "bhotekoshi-flood"
-GEO_DIR = Path(__file__).resolve().parents[3] / "content" / "geo"
+CONTENT_ROOT = Path(__file__).resolve().parents[3] / "content"
+GEO_DIR = CONTENT_ROOT / "geo"
+
+# The desk /flood has always served. Every function below defaults to it, so
+# callers written before there was a second desk keep their meaning.
+DEFAULT_DESK = "bhotekoshi-flood"
+DESKS = ("bhotekoshi-flood", "budhi-gandaki-flood")
+CONTENT_DIR = CONTENT_ROOT / DEFAULT_DESK
+
+# Sections a desk has deliberately not published. A new event has no relief
+# ledger, no demand list and no damage assessment on its first day, and the
+# rule for this desk is empty rather than approximate — so those files are
+# absent, the payload carries None, and the page renders its empty state. A
+# missing file a desk IS expected to carry is still logged as a deploy error.
+_UNPUBLISHED: dict[str, frozenset[str]] = {
+    "budhi-gandaki-flood": frozenset(
+        {"relief-received.json", "relief-needed.json", "damage.json", "relief-funds"}
+    ),
+}
+
+
+def desk_dir(desk: str) -> Path:
+    if desk not in DESKS:
+        raise KeyError(desk)
+    return CONTENT_ROOT / desk
+
+
+def is_desk(desk: str) -> bool:
+    return desk in DESKS
 
 
 # Mtime-aware content cache 
@@ -91,17 +119,22 @@ class _MtimeCache(Generic[T]):
         self._checked_at = 0.0
 
 
-_content_cache = _MtimeCache[dict[str, Any]](CONTENT_DIR)
-_funds_cache = _MtimeCache[list[dict[str, Any]]](CONTENT_DIR / "relief-funds", pattern="*.json")
+_content_caches = {desk: _MtimeCache[dict[str, Any]](desk_dir(desk)) for desk in DESKS}
+_funds_caches = {
+    desk: _MtimeCache[list[dict[str, Any]]](desk_dir(desk) / "relief-funds", pattern="*.json")
+    for desk in DESKS
+}
 _geo_cache = _MtimeCache[list[dict[str, Any]]](GEO_DIR, pattern="*.json")
 
 
-def _read(name: str) -> Any:
-    path = CONTENT_DIR / name
+def _read(name: str, desk: str = DEFAULT_DESK) -> Any:
+    path = desk_dir(desk) / name
     try:
         with path.open("r", encoding="utf-8") as handle:
             return json.load(handle)
     except FileNotFoundError:
+        if name in _UNPUBLISHED.get(desk, frozenset()):
+            return None
         log.error("content_missing", file=str(path))
         return None
     except json.JSONDecodeError as exc:
@@ -146,12 +179,13 @@ def reconcile(breakdowns: list[dict[str, Any]] | None) -> list[dict[str, Any]]:
     return discrepancies
 
 
-def _load_relief_funds() -> list[dict[str, Any]]:
+def _load_relief_funds(desk: str = DEFAULT_DESK) -> list[dict[str, Any]]:
     """Read every reviewed donation route from disk."""
-    funds_dir = CONTENT_DIR / "relief-funds"
+    funds_dir = desk_dir(desk) / "relief-funds"
     funds: list[dict[str, Any]] = []
     if not funds_dir.is_dir():
-        log.error("relief_funds_missing", dir=str(funds_dir))
+        if "relief-funds" not in _UNPUBLISHED.get(desk, frozenset()):
+            log.error("relief_funds_missing", dir=str(funds_dir))
         return funds
 
     for path in sorted(funds_dir.glob("*.json")):
@@ -170,45 +204,49 @@ def _load_relief_funds() -> list[dict[str, Any]]:
     return sorted(funds, key=lambda f: f.get("tier") or 9)
 
 
-def relief_funds() -> list[dict[str, Any]]:
+def relief_funds(desk: str = DEFAULT_DESK) -> list[dict[str, Any]]:
     """Every reviewed donation route, most-trusted tier first.
 
     Tier 3 is community-submitted. Nothing ships at tier 3 today, but the gate
     exists so an unreviewed donation link can never reach the page — this is
     money reaching people during a disaster.
     """
-    return _funds_cache.get(_load_relief_funds)
+    return _funds_caches[desk].get(lambda: _load_relief_funds(desk))
 
 
-def _load_flood_content() -> dict[str, Any]:
+def _load_flood_content(desk: str = DEFAULT_DESK) -> dict[str, Any]:
     """Build the full content dict from disk."""
-    sitrep = _read("sitrep.json") or {}
+
+    def read(name: str) -> Any:
+        return _read(name, desk)
+
+    sitrep = read("sitrep.json") or {}
     if sitrep:
         sitrep = {**sitrep, "discrepancies": reconcile(sitrep.get("breakdowns"))}
 
-    received = _read("relief-received.json") or {}
+    received = read("relief-received.json") or {}
     if received:
         received = {**received, "discrepancies": reconcile(received.get("breakdowns"))}
 
     return {
-        "site": _read("site.json"),
-        "whatHappened": _read("what-happened.json"),
-        "alerts": _read("alerts.json"),
-        "floodPath": _read("flood-path.json"),
-        "helplines": _read("helplines.json"),
-        "bankAccounts": _read("bank-accounts.json"),
-        "districtContacts": _read("district-contacts.json"),
+        "site": read("site.json"),
+        "whatHappened": read("what-happened.json"),
+        "alerts": read("alerts.json"),
+        "floodPath": read("flood-path.json"),
+        "helplines": read("helplines.json"),
+        "bankAccounts": read("bank-accounts.json"),
+        "districtContacts": read("district-contacts.json"),
         "sitrep": sitrep or None,
         "reliefReceived": received or None,
-        "reliefNeeded": _read("relief-needed.json"),
-        "damage": _read("damage.json"),
-        "funds": relief_funds(),
+        "reliefNeeded": read("relief-needed.json"),
+        "damage": read("damage.json"),
+        "funds": relief_funds(desk),
     }
 
 
-def load_flood_content() -> dict[str, Any]:
-    """The reviewed content, cached and invalidated by file mtime."""
-    return _content_cache.get(_load_flood_content)
+def load_flood_content(desk: str = DEFAULT_DESK) -> dict[str, Any]:
+    """A desk's reviewed content, cached and invalidated by file mtime."""
+    return _content_caches[desk].get(lambda: _load_flood_content(desk))
 
 
 def reload_content() -> dict[str, Any]:
@@ -218,8 +256,10 @@ def reload_content() -> dict[str, Any]:
     picks up edits within `_CHECK_INTERVAL_S` seconds on its own; this is
     for when a maintainer wants the change live immediately.
     """
-    _content_cache.clear()
-    _funds_cache.clear()
+    for content_cache in _content_caches.values():
+        content_cache.clear()
+    for funds_cache in _funds_caches.values():
+        funds_cache.clear()
     _geo_cache.clear()
     from app.domains.climate.content import clear_source_facts
 
@@ -233,6 +273,10 @@ def reload_content() -> dict[str, Any]:
         "reloaded": True,
         "contentKeys": sorted(content.keys()),
         "funds": len(content.get("funds") or []),
+        "desks": {
+            desk: sorted(k for k, v in load_flood_content(desk).items() if v)
+            for desk in DESKS
+        },
         "districtShapes": len(shapes),
     }
 

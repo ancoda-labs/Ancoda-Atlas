@@ -470,6 +470,8 @@ export interface FloodDeskPayload extends FloodContent {
   refreshedAt?: string | null;
   nextRefreshAt?: string | null;
   refreshIntervalMinutes?: number;
+  /** The day a desk's incident window opens. Sent by desks other than /flood. */
+  since?: string;
   /** True while a cycle is running, so the page can say so rather than
    *  reporting the previous cycle as overdue. */
   refreshing?: boolean;

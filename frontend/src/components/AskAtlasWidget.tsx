@@ -129,7 +129,9 @@ export default function AskAtlasWidget() {
   const pathname = usePathname();
   // The flood desk mounts its own Ask panel. Two boxes on one page, with
   // separate threads and language pickers, would disagree in front of a reader.
-  if (pathname?.startsWith('/bhotekoshi-flood')) {
+  // The Budhi Gandaki desk has no panel, and the ask tools only know the
+  // Bhotekoshi flood's figures — an answer there would be about the wrong flood.
+  if (pathname?.startsWith('/bhotekoshi-flood') || pathname?.startsWith('/budhi-gandaki-flood')) {
     return null;
   }
 

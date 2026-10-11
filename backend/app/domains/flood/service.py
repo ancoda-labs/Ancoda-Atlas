@@ -18,10 +18,12 @@ from typing import Any
 
 from app.core.http import now_iso
 
-__all__ = ["desk_payload", "empty_feed", "get_store", "is_warm", "now_iso"]
+__all__ = ["desk_payload", "empty_feed", "event_desk_payload", "get_store", "is_warm", "now_iso"]
 from app.domains.flood import store as desk_store
 from app.domains.flood.content import load_flood_content
+from app.domains.flood.gauges import BUDHI_GANDAKI_LABELS
 from app.domains.flood.merge import merge_damage, merge_sitrep
+from app.domains.flood.scope import BUDHI_GANDAKI_START
 from app.domains.media.proxy import proxy_url_for, resign_proxy_url
 
 
@@ -107,6 +109,48 @@ def desk_payload() -> dict[str, Any]:
         "popups": store.get("popups"),
         # The cycle's own timings, so every page can say how old its figures
         # are without asking a second route.
+        "refreshedAt": store.get("lastRunAt"),
+        "nextRefreshAt": store.get("nextRunAt"),
+        "refreshIntervalMinutes": store.get("intervalMinutes"),
+        "generatedAt": now_iso(),
+    }
+
+
+def event_desk_payload(desk: str) -> dict[str, Any]:
+    """The overview payload for a desk other than the Bhotekoshi one.
+
+    Same shape as desk_payload(), so the page components serve both. What it
+    leaves out is deliberate: the NDRRMA rescue register, the OPMCM portal, the
+    Rasuwa bulletin and the ministry feeds are all about the Bhotekoshi flood,
+    and laying them over another event's page would put that flood's figures
+    under this one's name. Those keys answer None and the sections hide.
+
+    No bulletin publishes this flood's toll as data yet, so the sitrep is the
+    reviewed file as it stands — never merged with anything.
+    """
+    store = get_store()
+    content = load_flood_content(desk)
+    river = store.get("river") or {"gauges": [], "error": None, "fetchedAt": now_iso()}
+
+    return {
+        **content,
+        "river": {
+            **river,
+            "gauges": [
+                g for g in river.get("gauges") or [] if g.get("label") in BUDHI_GANDAKI_LABELS
+            ],
+        },
+        "corridor": store.get("budhiGandakiCorridor"),
+        "since": BUDHI_GANDAKI_START,
+        "rescueSummary": None,
+        "rescueFetchedAt": None,
+        "portal": None,
+        "dailyBulletin": None,
+        "advisories": None,
+        "govEfforts": None,
+        "govUpdates": None,
+        "portalContacts": None,
+        "popups": None,
         "refreshedAt": store.get("lastRunAt"),
         "nextRefreshAt": store.get("nextRunAt"),
         "refreshIntervalMinutes": store.get("intervalMinutes"),

@@ -3,10 +3,15 @@
 import React, { createContext, useContext, useMemo } from 'react';
 
 import { useDesk } from '@/hooks/useFlood';
+import type { FloodDeskSlug } from '@/services/flood-services';
 import type { FloodContent, FloodDeskPayload } from '@/types';
 
 /**
- * The desk payload, fetched once for every page under /bhotekoshi-flood.
+ * The desk payload, fetched once for every page under a flood desk —
+ * /bhotekoshi-flood, or /budhi-gandaki-flood with `desk` set.
+ *
+ * `desk` rides in the context so a shared component can tell which flood it is
+ * drawing for, and drop wording that only holds for the Bhotekoshi desk.
  *
  * The reviewed content arrives in the first HTML — the layout fetches it
  * server-side and hands it in as `initialDesk` — and the live overlay refreshes
@@ -17,6 +22,7 @@ import type { FloodContent, FloodDeskPayload } from '@/types';
  * no consumer had to be touched when the fetching moved.
  */
 interface FloodDeskContextValue {
+  deskSlug: FloodDeskSlug;
   content: FloodContent;
   live: FloodDeskPayload | null;
   desk: FloodDeskPayload;
@@ -43,17 +49,19 @@ const EMPTY_DESK = {
 
 export function FloodDeskProvider({
   initialDesk,
+  desk: deskSlug = 'bhotekoshi-flood',
   children,
 }: {
   initialDesk: FloodDeskPayload | null;
+  desk?: FloodDeskSlug;
   children: React.ReactNode;
 }) {
-  const { data } = useDesk(initialDesk ?? undefined);
+  const { data } = useDesk(initialDesk ?? undefined, deskSlug);
   const desk = data ?? initialDesk ?? EMPTY_DESK;
 
   const value = useMemo(
-    () => ({ content: desk as unknown as FloodContent, live: data ?? null, desk }),
-    [desk, data],
+    () => ({ deskSlug, content: desk as unknown as FloodContent, live: data ?? null, desk }),
+    [deskSlug, desk, data],
   );
 
   return <FloodDeskContext.Provider value={value}>{children}</FloodDeskContext.Provider>;

@@ -28,8 +28,16 @@ export interface VideoFeed {
 }
 
 /** The overview: reviewed content with the live ten-minute cycle laid over it. */
-export async function fetchDeskService(): Promise<FloodDeskPayload> {
-  const { data } = await api.get<FloodDeskPayload>('/flood');
+/** The flood desks Atlas runs. `/flood` is the Bhotekoshi desk; every other
+ *  desk is served under `/flood/desks/<slug>` in the same shape. */
+export type FloodDeskSlug = 'bhotekoshi-flood' | 'budhi-gandaki-flood';
+
+export function deskPath(desk: FloodDeskSlug = 'bhotekoshi-flood'): string {
+  return desk === 'bhotekoshi-flood' ? '/flood' : `/flood/desks/${desk}`;
+}
+
+export async function fetchDeskService(desk: FloodDeskSlug = 'bhotekoshi-flood'): Promise<FloodDeskPayload> {
+  const { data } = await api.get<FloodDeskPayload>(deskPath(desk));
   return data;
 }
 
